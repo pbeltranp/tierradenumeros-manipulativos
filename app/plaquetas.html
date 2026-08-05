@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Plaquetas numéricas · manipulativo virtual</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       font-size:14px;color:#2b2f36;background:#fff;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;height:100%;width:100%}
+
+  #side{width:172px;flex:0 0 172px;background:#f4f5f7;border-right:1px solid #dfe2e7;
+        overflow-y:auto;padding:10px 10px 24px}
+  #side h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:14px 0 7px;font-weight:600}
+  #side h2:first-child{margin-top:2px}
+  #plaquetas{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;align-items:end}
+  .pl{background:#fff;border:1px solid #e3e6eb;border-radius:7px;padding:4px 2px 2px;cursor:grab;
+      touch-action:none;display:flex;flex-direction:column;align-items:center;gap:2px}
+  .pl:hover{border-color:#b9c0ca;background:#fbfcfd}
+  .pl:active{cursor:grabbing}
+  .pl span{font-size:10.5px;font-weight:700;color:#6b7280}
+  .pl svg{display:block}
+  #swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+  .sw{width:100%;aspect-ratio:1;min-height:20px;border-radius:5px;border:1px solid rgba(0,0,0,.16);cursor:pointer;padding:0}
+  .sw.on{outline:2px solid #2f62a8;outline-offset:1px}
+  #custom{margin-top:7px;display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280}
+  #custom input{width:26px;height:24px;padding:0;border:1px solid #d5d9e0;border-radius:5px;background:none;cursor:pointer}
+  .act{display:block;width:100%;text-align:left;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+       padding:6px 9px;margin-bottom:4px;font-size:12.5px;color:#3d4450;cursor:pointer}
+  .act:hover:not(:disabled){background:#f0f2f5;border-color:#c8cdd6}
+  .act:disabled{opacity:.42;cursor:default}
+  .act kbd{float:right;font:inherit;font-size:10.5px;color:#9aa1ab}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px}
+  .pair .act{margin:0;text-align:center;padding:6px 4px}
+  #stats{font-size:11.5px;color:#6b7280;line-height:1.6;margin-top:12px;border-top:1px solid #e3e6eb;padding-top:9px}
+  #stats b{color:#2b2f36}
+  #total{font-size:20px;font-weight:700;color:#2b2f36;line-height:1.1}
+  .note{font-size:10.5px;line-height:1.45;color:#8a919c;margin-top:12px}
+
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #dfe2e7;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn.on:hover{background:#2a589a}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  #avanzado{display:none;align-items:center;gap:5px}
+  #avanzado.show{display:inline-flex}
+  #stage{position:relative;flex:1;min-height:0;background:#fff}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:272px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:124px;flex:0 0 124px;padding:8px 6px}
+    #plaquetas{grid-template-columns:repeat(4,1fr)}
+    #swatches{grid-template-columns:repeat(4,1fr)}
+    .btn{padding:5px 7px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <h2>Plaquetas</h2>
+    <div id="plaquetas"></div>
+
+    <h2>Color</h2>
+    <div id="swatches"></div>
+    <div id="custom"><input type="color" id="cpick" value="#e03a30">otro</div>
+    <button class="act" id="volverColor" style="margin-top:6px">Resetear color<kbd>O</kbd></button>
+
+    <h2>Plaqueta seleccionada</h2>
+    <div class="pair">
+      <button class="act" id="rotL" disabled title="Girar 90° a la izquierda">Girar ↺</button>
+      <button class="act" id="rotR" disabled title="Girar 90° a la derecha">Girar ↻</button>
+    </div>
+    <button class="act" id="voltear" disabled title="Darle la vuelta, como se hace con la plaqueta de plástico">Voltear ⇋<kbd>V</kbd></button>
+    <div class="pair">
+      <button class="act" id="alFondo" disabled title="Ponerla debajo de las demás">Al fondo</button>
+      <button class="act" id="alFrenteB" disabled title="Ponerla encima de las demás">Al frente</button>
+    </div>
+    <button class="act" id="dup" disabled>Duplicar<kbd>D</kbd></button>
+    <button class="act" id="pintar" disabled>Pintar<kbd>P</kbd></button>
+    <button class="act" id="borrar" disabled>Quitar<kbd>Supr</kbd></button>
+
+    <div id="stats"></div>
+    <div class="note">Arrastra una plaqueta al tablero. Se colocan sobre la retícula y se pueden montar unas sobre otras.</div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn on" data-tool="move" title="Mover plaquetas (1)">✥ Mover</button>
+      <button class="btn" data-tool="fill" title="Colorear (2)">◍ Color</button>
+      <button class="btn" data-tool="del" title="Quitar plaquetas (3)">✕ Quitar</button>
+      <span class="sep"></span>
+      <button class="btn" id="trans" title="Ver a través de las plaquetas lo que hay debajo (T)">◑ Transparencia</button>
+      <button class="btn" id="pisos" title="Escribe en cada casilla cuántas plaquetas hay encima (N)">② Pisos</button>
+      <span class="sep"></span>
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <label class="chk" title="Muestra herramientas de comprobación"><input type="checkbox" id="avz">Comprobaciones</label>
+      <span id="avanzado">
+        <label class="chk" title="Escribe el número sobre cada plaqueta. Déjalo desactivado si quieres que la cantidad se reconozca por la forma."><input type="checkbox" id="shownum">Nº en las plaquetas</label>
+        <button class="btn" id="ordenar" title="Alinea las plaquetas por tamaño, como en la caja">↕ Ordenar</button>
+      </span>
+      <span class="sep"></span>
+      <label class="chk"><input type="checkbox" id="showgrid" checked>Retícula</label>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar en un archivo">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir el contenido de un archivo a lo que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="clear">Limpiar</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo de plaquetas</div>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LAS PLAQUETAS
+   La plaqueta del número n ocupa un rectángulo de 2 columnas y ceil(n/2)
+   filas, lleno salvo un hueco arriba a la derecha cuando n es impar.
+   La del 1 es una sola casilla.
+   ========================================================================= */
+function forma(n){
+  if(n===1) return [{x:0,y:0}];
+  var filas=Math.ceil(n/2), cs=[], impar=(n%2===1);
+  for(var f=0;f<filas;f++){
+    cs.push({x:0,y:f});
+    if(!(impar && f===0)) cs.push({x:1,y:f});
+  }
+  return cs;
+}
+var NUMICON=['#f0913a','#b7c4e2','#f2d33f','#a9d18e','#e03a30',
+             '#35bcc9','#f2a7b8','#2e9e4b','#5b3f97','#1f5fb0'];
+function colorDe(n){ return NUMICON[n-1]; }
+
+var CELL=36;
+var pieces=[], nid=1, sel=null;
+var tool='move', color='#e03a30';
+var view={x:0,y:0,z:1};
+var drag=null, undoStack=[], importMode='replace';
+var opt={grid:1,num:0,trans:0,pisos:0};
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop'), statsEl=document.getElementById('stats');
+var flashMsg=null, flashT=0;
+
+function K(x,y){ return x+','+y; }
+function byId(id){ for(var i=0;i<pieces.length;i++) if(pieces[i].id===id) return pieces[i]; return null; }
+function ocupadas(excepto){
+  var m={};
+  pieces.forEach(function(p){ if(p.id===excepto) return;
+    p.cells.forEach(function(c){ m[K(c.x,c.y)]=p.id; }); });
+  return m;
+}
+function libre(cells,excepto){
+  var m=ocupadas(excepto);
+  for(var i=0;i<cells.length;i++) if(m[K(cells[i].x,cells[i].y)]) return false;
+  return true;
+}
+function pushUndo(){ undoStack.push(JSON.stringify({p:pieces,n:nid})); if(undoStack.length>80) undoStack.shift(); }
+function doUndo(){ if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var st=JSON.parse(undoStack.pop()); pieces=st.p; nid=st.n; sel=null; draw(); }
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2100); }
+
+/* =========================================================================
+   2. GEOMETRÍA
+   ========================================================================= */
+function bb(cells){
+  var b={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
+  cells.forEach(function(c){ b.x0=Math.min(b.x0,c.x); b.x1=Math.max(b.x1,c.x);
+                             b.y0=Math.min(b.y0,c.y); b.y1=Math.max(b.y1,c.y); });
+  return b;
+}
+function setPivot(p){
+  var b=bb(p.cells);
+  p.px=Math.round((b.x0+b.x1+1)/2);
+  p.py=Math.round((b.y0+b.y1+1)/2);
+  return p;
+}
+/* giro exacto alrededor de un vértice de la retícula: cuatro giros vuelven al sitio */
+function rotCells(cells,px,py,horario){
+  return cells.map(function(c){
+    return horario ? {x:px-(c.y-py)-1, y:py+(c.x-px)}
+                   : {x:px+(c.y-py),   y:py-(c.x-px)-1};
+  });
+}
+function volteaCells(cells){                 // se le da la vuelta sobre sí misma
+  var b=bb(cells), an=b.x1-b.x0+1;
+  return cells.map(function(c){ return {x:b.x0+(an-1-(c.x-b.x0)), y:c.y}; });
+}
+function moveCells(cells,dx,dy){
+  return cells.map(function(c){ return {x:c.x+dx, y:c.y+dy}; });
+}
+/* Las plaquetas pueden montarse unas sobre otras: es lo que permite comprobar
+   que la del 1 y la del 2 juntas cubren exactamente la del 3. */
+function transform(fn){
+  if(sel==null){ flash('Selecciona antes una plaqueta'); return false; }
+  var p=byId(sel); if(!p) return false;
+  var r=fn(p); if(!r) return false;
+  pushUndo();
+  p.cells=r.cells; p.px=r.px; p.py=r.py; draw(); return true;
+}
+function opRot(h){ return function(p){ return {cells:rotCells(p.cells,p.px,p.py,h), px:p.px, py:p.py}; }; }
+function opVolt(){ return function(p){ var c=volteaCells(p.cells); var q=setPivot({cells:c}); return {cells:c, px:q.px, py:q.py}; }; }
+function opMove(dx,dy){ return function(p){ return {cells:moveCells(p.cells,dx,dy), px:p.px+dx, py:p.py+dy}; }; }
+
+function nueva(n,x,y,col){
+  var p={id:nid++, n:n, cells:moveCells(forma(n),x,y), c:col||colorDe(n)};
+  setPivot(p); pieces.push(p); return p;
+}
+function duplicar(){
+  if(sel==null){ flash('Selecciona antes una plaqueta'); return; }
+  var p=byId(sel); if(!p) return;
+  var b=bb(p.cells), an=b.x1-b.x0+1;
+  for(var d=1;d<60;d++){
+    var cand=moveCells(p.cells,d*(an+1),0);
+    if(libre(cand,null)){ pushUndo();
+      var q={id:nid++, n:p.n, cells:cand, c:p.c}; setPivot(q); pieces.push(q); sel=q.id; draw(); return; }
+  }
+  flash('No hay hueco para el duplicado');
+}
+function ordenar(){                          // alinea las plaquetas por tamaño
+  if(!pieces.length){ flash('No hay plaquetas que ordenar'); return; }
+  pushUndo();
+  var orden=pieces.slice().sort(function(a,b){ return a.n-b.n || a.id-b.id; });
+  var x=0;
+  orden.forEach(function(p){
+    p.cells=moveCells(forma(p.n),x,0);
+    var b=bb(p.cells); setPivot(p);
+    x += (b.x1-b.x0+1)+1;
+  });
+  pieces=orden; sel=null; fitView();
+}
+
+/* =========================================================================
+   3. DIBUJO
+   ========================================================================= */
+function w2s(p){ return {x:p.x*view.z+view.x, y:p.y*view.z+view.y}; }
+function s2w(p){ return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z}; }
+function celda(wp){ return {x:Math.floor(wp.x/CELL), y:Math.floor(wp.y/CELL)}; }
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0); draw();
+}
+function shade(hex,f){
+  var h=(hex||'#e03a30').replace('#',''); if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
+  r=Math.round(r+(f>0?(255-r)*f:r*f)); g=Math.round(g+(f>0?(255-g)*f:g*f)); b=Math.round(b+(f>0?(255-b)*f:b*f));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function drawGrid(c,W,H){
+  var s=CELL*view.z; if(s<10) return;
+  var x0=((view.x%s)+s)%s, y0=((view.y%s)+s)%s;
+  c.save(); c.strokeStyle='#e6e9ee'; c.lineWidth=1; c.beginPath();
+  for(var x=x0;x<W;x+=s){ c.moveTo(Math.round(x)+.5,0); c.lineTo(Math.round(x)+.5,H); }
+  for(var y=y0;y<H;y+=s){ c.moveTo(0,Math.round(y)+.5); c.lineTo(W,Math.round(y)+.5); }
+  c.stroke(); c.restore();
+}
+var RH=0.29;                                  // radio del agujero, en fracción de casilla
+/* mapa de cuántas plaquetas cubren cada casilla */
+function mapaPisos(){
+  var m={};
+  pieces.forEach(function(p){ p.cells.forEach(function(c){ m[K(c.x,c.y)]=(m[K(c.x,c.y)]||0)+1; }); });
+  return m;
+}
+function drawPieza(c,p,seleccionada){
+  var set={}; p.cells.forEach(function(cl){ set[K(cl.x,cl.y)]=1; });
+  var r=CELL*RH;
+  // cuerpo: un solo camino con los agujeros recortados de verdad, para que se vea
+  // a través de ellos lo que haya debajo
+  c.save();
+  if(opt.trans) c.globalAlpha=0.5;
+  c.beginPath();
+  p.cells.forEach(function(cl){ c.rect(cl.x*CELL, cl.y*CELL, CELL, CELL); });
+  p.cells.forEach(function(cl){
+    var cx=cl.x*CELL+CELL/2, cy=cl.y*CELL+CELL/2;
+    c.moveTo(cx+r,cy); c.arc(cx,cy,r,0,6.2832);
+  });
+  c.fillStyle=p.c; c.fill('evenodd');
+  c.globalAlpha=1;
+  // contorno exterior, redondeado como el plástico
+  c.beginPath();
+  p.cells.forEach(function(cl){
+    var x=cl.x*CELL, y=cl.y*CELL;
+    if(!set[K(cl.x,cl.y-1)]){ c.moveTo(x,y); c.lineTo(x+CELL,y); }
+    if(!set[K(cl.x,cl.y+1)]){ c.moveTo(x,y+CELL); c.lineTo(x+CELL,y+CELL); }
+    if(!set[K(cl.x-1,cl.y)]){ c.moveTo(x,y); c.lineTo(x,y+CELL); }
+    if(!set[K(cl.x+1,cl.y)]){ c.moveTo(x+CELL,y); c.lineTo(x+CELL,y+CELL); }
+  });
+  c.lineWidth=3; c.lineJoin='round'; c.lineCap='round'; c.strokeStyle=shade(p.c,-0.28); c.stroke();
+  // aro de cada agujero
+  c.beginPath();
+  p.cells.forEach(function(cl){
+    var cx=cl.x*CELL+CELL/2, cy=cl.y*CELL+CELL/2;
+    c.moveTo(cx+r,cy); c.arc(cx,cy,r,0,6.2832);
+  });
+  c.lineWidth=1.4; c.strokeStyle=shade(p.c,-0.35); c.globalAlpha=.75; c.stroke(); c.globalAlpha=1;
+  c.restore();
+  if(opt.num){
+    var b=bb(p.cells);
+    var cx2=(b.x0+b.x1+1)/2*CELL, cy2=(b.y0+b.y1+1)/2*CELL;
+    c.save();
+    c.font='700 '+Math.round(CELL*0.62)+'px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.textAlign='center'; c.textBaseline='middle';
+    c.lineWidth=4; c.strokeStyle='rgba(255,255,255,.92)'; c.strokeText(p.n,cx2,cy2);
+    c.fillStyle=shade(p.c,-0.5); c.fillText(p.n,cx2,cy2);
+    c.restore();
+  }
+  if(seleccionada){
+    var b2=bb(p.cells);
+    c.save(); c.setLineDash([6/view.z,4/view.z]); c.lineWidth=2/view.z; c.strokeStyle='#2f62a8';
+    c.strokeRect(b2.x0*CELL-5, b2.y0*CELL-5, (b2.x1-b2.x0+1)*CELL+10, (b2.y1-b2.y0+1)*CELL+10);
+    c.restore();
+  }
+}
+function escena(c,W,H,paraExportar){
+  c.save();
+  if(opt.grid && !paraExportar) drawGrid(c,W,H);
+  c.translate(view.x,view.y); c.scale(view.z,view.z);
+  pieces.forEach(function(p){ drawPieza(c,p,!paraExportar && p.id===sel); });
+  /* el contador de pisos: lo único que sigue siendo legible cuando hay muchas
+     plaquetas apiladas y los colores ya no se distinguen */
+  if(opt.pisos){
+    var m=mapaPisos();
+    c.save();
+    c.font='700 '+Math.round(CELL*0.34)+'px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.textAlign='center'; c.textBaseline='middle';
+    Object.keys(m).forEach(function(k){
+      if(m[k]<2) return;
+      var q=k.split(','), cx=(+q[0])*CELL+CELL/2, cy=(+q[1])*CELL+CELL/2;
+      c.beginPath(); c.arc(cx,cy,CELL*RH*0.92,0,6.2832);
+      c.fillStyle='rgba(255,255,255,.9)'; c.fill();
+      c.lineWidth=1.2; c.strokeStyle='#2f62a8'; c.stroke();
+      c.fillStyle='#2f62a8'; c.fillText(m[k],cx,cy);
+    });
+    c.restore();
+  }
+  c.restore();
+}
+/* --- tiradores de giro junto a la plaqueta seleccionada ------------------ */
+function cajaPantalla(p){
+  var b=bb(p.cells);
+  var a={x:b.x0*CELL*view.z+view.x, y:b.y0*CELL*view.z+view.y};
+  var c={x:(b.x1+1)*CELL*view.z+view.x, y:(b.y1+1)*CELL*view.z+view.y};
+  return {x0:a.x, y0:a.y, x1:c.x, y1:c.y};
+}
+function tiradores(){
+  if(sel==null || tool!=='move') return [];
+  var p=byId(sel); if(!p) return [];
+  var W=cv.width/(window.devicePixelRatio||1);
+  var c=cajaPantalla(p), R=14, g=5;
+  var x=c.x1+R+12;
+  if(x+R>W-6) x=c.x0-R-12;
+  var y=(c.y0+c.y1)/2;
+  return [{x:x, y:y-R-g/2, r:R, s:'↺', h:false},
+          {x:x, y:y+R+g/2, r:R, s:'↻', h:true}];
+}
+function dibujaTiradores(c){
+  tiradores().forEach(function(t){
+    c.save();
+    c.beginPath(); c.arc(t.x,t.y,t.r,0,6.2832);
+    c.fillStyle='#fff'; c.fill();
+    c.lineWidth=1.8; c.strokeStyle='#2f62a8'; c.stroke();
+    c.fillStyle='#2f62a8'; c.font='700 17px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.textAlign='center'; c.textBaseline='middle';
+    c.fillText(t.s, t.x, t.y+1);
+    c.restore();
+  });
+}
+function tiradorEn(sp){
+  var ts=tiradores();
+  for(var i=0;i<ts.length;i++)
+    if(Math.hypot(sp.x-ts[i].x, sp.y-ts[i].y)<=ts[i].r+3) return ts[i];
+  return null;
+}
+function draw(){
+  var W=cv.width/(window.devicePixelRatio||1), H=cv.height/(window.devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  escena(ctx,W,H,false);
+  dibujaTiradores(ctx);
+  updateUI();
+}
+
+/* =========================================================================
+   4. INTERACCIÓN
+   ========================================================================= */
+function evPos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function piezaEn(g){
+  for(var i=pieces.length-1;i>=0;i--){
+    var p=pieces[i];
+    for(var j=0;j<p.cells.length;j++) if(p.cells[j].x===g.x && p.cells[j].y===g.y) return p;
+  }
+  return null;
+}
+function alFrente(id){
+  var i=-1; for(var k=0;k<pieces.length;k++) if(pieces[k].id===id){ i=k; break; }
+  if(i>=0) pieces.push(pieces.splice(i,1)[0]);
+}
+function alFondo(id){
+  var i=-1; for(var k=0;k<pieces.length;k++) if(pieces[k].id===id){ i=k; break; }
+  if(i>=0) pieces.unshift(pieces.splice(i,1)[0]);
+}
+function onDown(e){
+  cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);
+  var sp=evPos(e), g=celda(s2w(sp)), p=piezaEn(g);
+
+  var tir=tiradorEn(sp);                       // giro desde el propio tablero
+  if(tir){ transform(opRot(tir.h)); return; }
+
+  if(tool==='del'){ if(p){ pushUndo(); pieces=pieces.filter(function(q){return q!==p;}); if(sel===p.id) sel=null; } draw(); return; }
+  if(tool==='fill'){ if(p){ sel=p.id; pushUndo(); p.c=color; } draw(); return; }
+  if(p){
+    sel=p.id; alFrente(p.id);
+    drag={mode:'move', id:p.id, from:g, movido:false, mal:false, fantasma:[],
+          base:p.cells.map(function(c){ return {x:c.x,y:c.y}; }), bp:{px:p.px,py:p.py}};
+    draw(); return;
+  }
+  sel=null;
+  drag={mode:'pan', sp:sp, v0:{x:view.x,y:view.y}};
+  draw();
+}
+function onMove(e){
+  if(!drag) return;
+  var sp=evPos(e);
+  if(drag.mode==='pan'){ view.x=drag.v0.x+(sp.x-drag.sp.x); view.y=drag.v0.y+(sp.y-drag.sp.y); draw(); return; }
+  if(drag.mode==='move'){
+    var p=byId(drag.id); if(!p) return;
+    var g=celda(s2w(sp));
+    var dx=g.x-drag.from.x, dy=g.y-drag.from.y;
+    if(!drag.movido && (dx||dy)){ pushUndo(); drag.movido=true; }
+    p.cells=moveCells(drag.base,dx,dy);
+    p.px=drag.bp.px+dx; p.py=drag.bp.py+dy;
+    draw(); return;
+  }
+}
+function onUp(){ if(drag&&drag.mode==='move') drag.mal=false; drag=null; draw(); }
+
+stage.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var sp=evPos(e), antes=s2w(sp);
+  view.z=Math.max(0.25,Math.min(3.5,view.z*Math.exp(-e.deltaY*0.0015)));
+  var desp=s2w(sp);
+  view.x+=(desp.x-antes.x)*view.z; view.y+=(desp.y-antes.y)*view.z;
+  draw();
+},{passive:false});
+cv.addEventListener('pointerdown',onDown);
+window.addEventListener('pointermove',onMove);
+window.addEventListener('pointerup',onUp);
+window.addEventListener('pointercancel',onUp);
+
+window.addEventListener('keydown',function(e){
+  var t=(e.target&&e.target.tagName)||''; if(t==='INPUT') return;
+  var k=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey)&&k==='z'){ doUndo(); e.preventDefault(); return; }
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(k==='escape'){ sel=null; draw(); }
+  else if(e.key==='Delete'||e.key==='Backspace'){
+    if(sel!=null){ pushUndo(); pieces=pieces.filter(function(p){return p.id!==sel;}); sel=null; draw(); e.preventDefault(); } }
+  else if(k==='r'){ transform(opRot(true)); }
+  else if(k==='l'){ transform(opRot(false)); }
+  else if(k==='v'){ transform(opVolt()); }
+  else if(k==='d'){ duplicar(); }
+  else if(k==='p'){ if(sel!=null){ var q=byId(sel); if(q){ pushUndo(); q.c=color; draw(); } } }
+  else if(k==='o'){ if(sel!=null){ var s2=byId(sel); if(s2){ pushUndo(); s2.c=colorDe(s2.n); draw(); } } }
+  else if(k==='t'){ opt.trans=opt.trans?0:1;
+    document.getElementById('trans').classList.toggle('on',!!opt.trans); draw(); }
+  else if(k==='n'){ opt.pisos=opt.pisos?0:1;
+    document.getElementById('pisos').classList.toggle('on',!!opt.pisos); draw(); }
+  else if(k==='1') setTool('move');
+  else if(k==='2') setTool('fill');
+  else if(k==='3') setTool('del');
+  else if(k==='arrowleft'){ transform(opMove(-1,0)); e.preventDefault(); }
+  else if(k==='arrowright'){ transform(opMove(1,0)); e.preventDefault(); }
+  else if(k==='arrowup'){ transform(opMove(0,-1)); e.preventDefault(); }
+  else if(k==='arrowdown'){ transform(opMove(0,1)); e.preventDefault(); }
+});
+
+/* =========================================================================
+   5. INTERFAZ
+   ========================================================================= */
+function miniSVG(n){
+  var cs=forma(n), b=bb(cs), u=7, w=(b.x1-b.x0+1)*u+3, h=(b.y1-b.y0+1)*u+3;
+  var s='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">';
+  cs.forEach(function(c){
+    s+='<rect x="'+(c.x*u+1.5)+'" y="'+(c.y*u+1.5)+'" width="'+u+'" height="'+u+'" fill="'+colorDe(n)+'"/>';
+    s+='<circle cx="'+(c.x*u+1.5+u/2)+'" cy="'+(c.y*u+1.5+u/2)+'" r="'+(u*0.26)+'" fill="#fff"/>';
+  });
+  return s+'</svg>';
+}
+(function(){
+  var cont=document.getElementById('plaquetas'), html='';
+  for(var n=1;n<=10;n++) html+='<div class="pl" data-n="'+n+'" title="Plaqueta del '+n+'">'+miniSVG(n)+'<span>'+n+'</span></div>';
+  cont.innerHTML=html;
+  cont.querySelectorAll('.pl').forEach(function(el){
+    el.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      var n=parseInt(el.dataset.n,10);
+      var r=stage.getBoundingClientRect(), sp=evPos(e);
+      var dentro = sp.x>0 && sp.y>0 && sp.x<r.width && sp.y<r.height;
+      var g = celda(s2w(dentro ? sp : {x:r.width/2, y:r.height/2}));
+      var cs=moveCells(forma(n),g.x,g.y), intento=0;
+      while(!libre(cs,null) && intento<400){ intento++; cs=moveCells(forma(n), g.x+intento, g.y); }
+      pushUndo();
+      var p={id:nid++, n:n, cells:cs, c:colorDe(n)}; setPivot(p); pieces.push(p);
+      sel=p.id; setTool('move');
+      drag={mode:'move', id:p.id, from:{x:cs[0].x,y:cs[0].y}, movido:true, mal:false, fantasma:[],
+            base:cs.map(function(c){ return {x:c.x,y:c.y}; }), bp:{px:p.px,py:p.py}};
+      draw();
+    });
+  });
+})();
+
+var COLORS=NUMICON.concat(['#ffffff','#8b93a1','#3a4048','#8d6e5a']);
+(function(){
+  var w=document.getElementById('swatches');
+  COLORS.forEach(function(col){
+    var b=document.createElement('button');
+    b.className='sw'+(col===color?' on':''); b.style.background=col; b.dataset.c=col; b.title=col;
+    b.addEventListener('click',function(){ setColor(col); });
+    w.appendChild(b);
+  });
+})();
+function setColor(col){
+  color=col;
+  document.querySelectorAll('.sw').forEach(function(b){ b.classList.toggle('on', b.dataset.c===col); });
+  document.getElementById('cpick').value=/^#[0-9a-f]{6}$/i.test(col)?col:'#e03a30';
+}
+document.getElementById('cpick').addEventListener('input',function(e){ setColor(e.target.value); });
+function setTool(t){
+  tool=t;
+  document.querySelectorAll('[data-tool]').forEach(function(b){ b.classList.toggle('on', b.dataset.tool===t); });
+  cv.style.cursor=(t==='move')?'default':'crosshair';
+  draw();
+}
+document.querySelectorAll('[data-tool]').forEach(function(b){
+  b.addEventListener('click',function(){ setTool(b.dataset.tool); });
+});
+document.getElementById('rotR').addEventListener('click',function(){ transform(opRot(true)); });
+document.getElementById('rotL').addEventListener('click',function(){ transform(opRot(false)); });
+document.getElementById('voltear').addEventListener('click',function(){ transform(opVolt()); });
+document.getElementById('dup').addEventListener('click',duplicar);
+document.getElementById('pintar').addEventListener('click',function(){
+  if(sel==null) return; var p=byId(sel); if(!p) return; pushUndo(); p.c=color; draw(); });
+document.getElementById('volverColor').addEventListener('click',function(){
+  if(sel==null){ flash('Selecciona antes una plaqueta'); return; }
+  var p=byId(sel); if(!p) return; pushUndo(); p.c=colorDe(p.n); draw(); });
+document.getElementById('borrar').addEventListener('click',function(){
+  if(sel==null) return; pushUndo();
+  pieces=pieces.filter(function(p){return p.id!==sel;}); sel=null; draw(); });
+document.getElementById('alFondo').addEventListener('click',function(){
+  if(sel==null) return; pushUndo(); alFondo(sel); draw(); });
+document.getElementById('alFrenteB').addEventListener('click',function(){
+  if(sel==null) return; pushUndo(); alFrente(sel); draw(); });
+document.getElementById('trans').addEventListener('click',function(){
+  opt.trans=opt.trans?0:1;
+  this.classList.toggle('on',!!opt.trans); draw(); });
+document.getElementById('pisos').addEventListener('click',function(){
+  opt.pisos=opt.pisos?0:1;
+  this.classList.toggle('on',!!opt.pisos); draw(); });
+document.getElementById('ordenar').addEventListener('click',ordenar);
+document.getElementById('undo').addEventListener('click',doUndo);
+document.getElementById('avz').addEventListener('change',function(e){
+  document.getElementById('avanzado').classList.toggle('show', e.target.checked); draw(); });
+document.getElementById('shownum').addEventListener('change',function(e){ opt.num=e.target.checked?1:0; draw(); });
+document.getElementById('showgrid').addEventListener('change',function(e){ opt.grid=e.target.checked?1:0; draw(); });
+document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.2); });
+document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.2); });
+function zoomAt(f){ var r=stage.getBoundingClientRect(), c={x:r.width/2,y:r.height/2};
+  var b=s2w(c); view.z=Math.max(0.25,Math.min(3.5,view.z*f)); var a=s2w(c);
+  view.x+=(a.x-b.x)*view.z; view.y+=(a.y-b.y)*view.z; draw(); }
+document.getElementById('fit').addEventListener('click',fitView);
+function caja(){
+  if(!pieces.length) return null;
+  var todas=[]; pieces.forEach(function(p){ todas=todas.concat(p.cells); });
+  var b=bb(todas);
+  return {x0:b.x0*CELL, y0:b.y0*CELL, x1:(b.x1+1)*CELL, y1:(b.y1+1)*CELL};
+}
+function fitView(){
+  var r=stage.getBoundingClientRect(), b=caja();
+  if(!b){ view={x:r.width/2-4*CELL, y:r.height/2-3*CELL, z:1}; draw(); return; }
+  var m=52, z=Math.min((r.width-2*m)/(b.x1-b.x0), (r.height-2*m)/(b.y1-b.y0));
+  view.z=Math.max(0.25,Math.min(2.2,z));
+  view.x=r.width/2-((b.x0+b.x1)/2)*view.z; view.y=r.height/2-((b.y0+b.y1)/2)*view.z;
+  draw();
+}
+document.getElementById('clear').addEventListener('click',function(){
+  if(!pieces.length) return; pushUndo(); pieces=[]; sel=null; draw(); });
+document.getElementById('png').addEventListener('click',function(){
+  var b=caja(); if(!b){ flash('No hay nada que exportar'); return; }
+  var m=22, sc=2, W=b.x1-b.x0+2*m, H=b.y1-b.y0+2*m;
+  var oc=document.createElement('canvas'); oc.width=W*sc; oc.height=H*sc;
+  var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
+  var g={x:view.x,y:view.y,z:view.z};
+  view.x=-b.x0+m; view.y=-b.y0+m; view.z=1;
+  escena(o,W,H,true);
+  view=g; draw();
+  var a=document.createElement('a'); a.download='plaquetas.png'; a.href=oc.toDataURL('image/png'); a.click();
+});
+
+/* --- guardar y abrir ----------------------------------------------------- */
+document.getElementById('save').addEventListener('click',function(){
+  if(!pieces.length){ flash('No hay plaquetas que guardar'); return; }
+  var d={formato:'plaquetas', version:1,
+         piezas:pieces.map(function(p){
+           return {n:p.n, color:p.c, casillas:p.cells.map(function(c){ return [c.x,c.y]; })}; })};
+  var blob=new Blob([JSON.stringify(d,null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download='plaquetas.json'; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+document.getElementById('add').addEventListener('click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leer(f); });
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }catch(err){ flash('No he podido leer ese archivo'); } };
+  r.readAsText(f);
+}
+function loadData(d){
+  var lista=d && (d.piezas||d.pieces);
+  if(!lista || !lista.length){ flash('El archivo no contiene plaquetas'); return; }
+  var nuevas=[];
+  for(var i=0;i<lista.length;i++){
+    var q=lista[i], n=q.n|0;
+    if(n<1 || n>10) return flash('El archivo tiene una plaqueta que no existe: '+q.n);
+    var cs=(q.casillas||q.cells||[]).map(function(c){
+      return Array.isArray(c) ? {x:c[0]|0, y:c[1]|0} : {x:c.x|0, y:c.y|0}; });
+    if(cs.length!==n) return flash('El archivo está mal: la plaqueta del '+n+' no tiene '+n+' casillas');
+    var p={id:nid++, n:n, cells:cs, c:q.color||q.c||colorDe(n)};
+    setPivot(p); nuevas.push(p);
+  }
+  pushUndo();
+  if(importMode==='replace'){ pieces=nuevas; }
+  else {
+    var t0=[]; pieces.forEach(function(p){ t0=t0.concat(p.cells); });
+    var t1=[]; nuevas.forEach(function(p){ t1=t1.concat(p.cells); });
+    if(t0.length){ var dy=bb(t0).y1-bb(t1).y0+2;
+      nuevas.forEach(function(p){ p.cells=moveCells(p.cells,0,dy); setPivot(p); }); }
+    pieces=pieces.concat(nuevas);
+  }
+  sel=null; fitView();
+  flash(nuevas.length+(nuevas.length===1?' plaqueta cargada':' plaquetas cargadas'));
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); }); });
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); }); });
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='add'; leer(f); }
+});
+
+document.getElementById('help').addEventListener('click',function(){ infoEl.classList.toggle('show'); });
+infoEl.innerHTML=
+ '<b>Plaquetas numéricas</b><br>Cada número tiene una forma propia: dos columnas que van creciendo, '+
+ 'con un hueco arriba cuando el número es impar. Esa forma es lo que permite reconocer la cantidad de un '+
+ 'vistazo, sin contar, y ver a simple vista qué números son pares.'+
+ '<div style="margin-top:7px">Son las plaquetas de Herbinière-Lebert, el mismo material que hoy se '+
+ 'conoce sobre todo por la marca Numicon.</div>'+
+ '<div style="margin-top:7px"><b>Herramientas</b><br>'+
+ 'Arrastra una plaqueta de la columna izquierda al tablero. Se colocan sobre la retícula y se pueden '+
+ 'montar unas encima de otras.<br>'+
+ '✥ Mover: arrastra la plaqueta; ↺ ↻ la giran y ⇋ le da la vuelta. <b>Al fondo</b> y <b>Al frente</b> '+
+ 'deciden cuál queda encima de cuál.<br>'+
+ '◍ Color: cambia el color de una plaqueta. El botón <b>Resetear color</b> le devuelve el suyo.<br>'+
+ '✕ Quitar: la retira del tablero.</div>'+
+ '<div style="margin-top:7px">Para comprobar, por ejemplo, que la plaqueta del 1 y la del 2 juntas cubren '+
+ 'exactamente la del 3, hay dos ayudas que se activan por separado:<br>'+
+ '<b>◑ Transparencia</b> deja ver las plaquetas de abajo a través de las de arriba. Con dos pisos se lee '+
+ 'perfectamente; con tres o más, los colores se emborronan y solo quedan claros los contornos.<br>'+
+ '<b>② Pisos</b> escribe en cada casilla cuántas plaquetas hay encima, y eso sigue siendo exacto por muchas '+
+ 'que se apilen. Si el 1 y el 2 cubren el 3 sin sobrar ni faltar, todas las casillas marcan 2 y ninguna '+
+ 'queda sin número.</div>'+
+ '<div style="margin-top:7px">La columna de la izquierda lleva la cuenta de lo que hay puesto: el total y '+
+ 'cuántas plaquetas de cada número.</div>'+
+ '<div style="margin-top:7px">En <b>Comprobaciones</b> está la opción de escribir el número sobre cada '+
+ 'plaqueta. Déjala desactivada mientras se trabaje el reconocimiento de la cantidad por la forma, que es '+
+ 'de lo que va el material.</div>'+
+ '<div style="margin-top:7px;color:#8a919c">Atajos: 1-3 herramientas · R y L giran · V voltea · '+
+ 'T transparencia · N pisos · D duplicar · P pintar · O resetear color · flechas mover · Supr quitar · '+
+ 'Ctrl+Z deshacer.</div>'+
+ '<div class="lic">Plaquetas numéricas · Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · @pbeltranp<br>'+
+ 'Se puede usar, copiar y adaptar citando la autoría: licencia '+
+ '<a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>.</div>';
+
+function updateUI(){
+  var hay = sel!=null && byId(sel);
+  ['rotL','rotR','voltear','dup','pintar','borrar','alFondo','alFrenteB'].forEach(function(id){
+    document.getElementById(id).disabled=!hay; });
+  document.getElementById('volverColor').disabled=!hay;
+  var total=0, cuenta={};
+  pieces.forEach(function(p){ total+=p.n; cuenta[p.n]=(cuenta[p.n]||0)+1; });
+  var det=Object.keys(cuenta).sort(function(a,b){return a-b;}).map(function(k){
+    return cuenta[k]+' × '+k; }).join(' · ');
+  statsEl.innerHTML='<div id="total">'+total+'</div>'+
+    pieces.length+(pieces.length===1?' plaqueta':' plaquetas')+
+    (det?'<br>'+det:'')+
+    (hay?'<br><br>Seleccionada: plaqueta del '+byId(sel).n:'');
+
+  var t;
+  if(flashMsg && Date.now()-flashT<2000) t=flashMsg;
+  else if(tool==='move') t='Arrastra las plaquetas · se pueden montar unas sobre otras · R y L las giran, V las voltea · T transparencia, N contador de pisos';
+  else if(tool==='fill') t='Haz clic en una plaqueta para pintarla del color elegido';
+  else t='Haz clic en una plaqueta para quitarla del tablero';
+  hintEl.textContent=t;
+}
+
+/* =========================================================================
+   6. ARRANQUE
+   ========================================================================= */
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+(function init(){
+  var r=stage.getBoundingClientRect();
+  view.x=r.width/2-4*CELL; view.y=r.height/2-3*CELL;
+  resize();
+})();
+
+/* =========================================================================
+   7. AUTOCOMPROBACIÓN  ·  añade #test al final de la URL
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){ out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':'')); if(!c) fails++; }
+  function key(cs){ return cs.map(function(c){ return c.x+','+c.y; }).sort().join(' '); }
+
+  /* --- las diez formas --------------------------------------------------- */
+  for(var n=1;n<=10;n++){
+    var f=forma(n), b=bb(f);
+    ok('la plaqueta del '+n+' tiene '+n+' agujeros', f.length===n, f.length);
+    var an=b.x1-b.x0+1, al=b.y1-b.y0+1;
+    if(n===1) ok('la del 1 ocupa una sola casilla', an===1&&al===1);
+    else {
+      ok('la del '+n+' ocupa 2 columnas y '+Math.ceil(n/2)+' filas',
+         an===2 && al===Math.ceil(n/2), an+'×'+al);
+      if(n%2===0) ok('la del '+n+', par, es un rectángulo lleno', f.length===an*al);
+      else ok('la del '+n+', impar, es el rectángulo menos un hueco', f.length===an*al-1);
+    }
+    var claves={}; f.forEach(function(c){ claves[c.x+','+c.y]=1; });
+    ok('la del '+n+' no repite casillas', Object.keys(claves).length===n);
+  }
+  ok('cada plaqueta tiene exactamente un agujero más que la anterior',
+     [2,3,4,5,6,7,8,9,10].every(function(m){ return forma(m).length===forma(m-1).length+1; }));
+  ok('las pares se emparejan de dos en dos sin sobrar nada',
+     [2,4,6,8,10].every(function(m){ return forma(m).length%2===0 && bb(forma(m)).x1===1; }));
+
+  /* --- giros y volteos ---------------------------------------------------- */
+  [1,3,4,5,7,10].forEach(function(m){
+    var p=setPivot({cells:forma(m)}), k0=key(p.cells), cs, r;
+    cs=p.cells; for(r=0;r<4;r++) cs=rotCells(cs,p.px,p.py,true);
+    ok('4 giros a la derecha dejan la del '+m+' en su sitio', key(cs)===k0);
+    cs=p.cells; for(r=0;r<4;r++) cs=rotCells(cs,p.px,p.py,false);
+    ok('4 giros a la izquierda dejan la del '+m+' en su sitio', key(cs)===k0);
+    var ida=rotCells(p.cells,p.px,p.py,true);
+    ok('girar y desgirar la del '+m+' la deja igual', key(rotCells(ida,p.px,p.py,false))===k0);
+    ok('el giro de la del '+m+' conserva los agujeros', ida.length===m);
+    ok('voltear dos veces la del '+m+' la deja igual', key(volteaCells(volteaCells(p.cells)))===k0);
+    ok('el volteo de la del '+m+' conserva los agujeros', volteaCells(p.cells).length===m);
+    ok('el giro de la del '+m+' cae en casillas enteras',
+       ida.every(function(c){ return c.x===Math.round(c.x)&&c.y===Math.round(c.y); }));
+  });
+  ok('voltear la del 3 la cambia (no es simétrica)',
+     key(volteaCells(forma(3)))!==key(forma(3)));
+  ok('voltear la del 4 la deja igual (sí es simétrica)',
+     key(volteaCells(forma(4)))===key(forma(4)));
+
+  /* --- retícula, apilado y superposición ---------------------------------- */
+  pieces=[]; sel=null; nid=1;
+  var a=nueva(4,0,0), b2=nueva(6,2,0);
+  ok('dos plaquetas colocadas sin tocarse conviven', pieces.length===2);
+  ok('libre() detecta que una casilla está ocupada', !libre(moveCells(forma(4),0,0),null));
+  ok('y que un hueco está libre', libre(moveCells(forma(4),10,10),null));
+  ok('libre() ignora la propia plaqueta al comprobar', libre(a.cells,a.id));
+  ok('las plaquetas nacen con su color', a.c===colorDe(4) && b2.c===colorDe(6));
+  ok('el 4 es verde claro y el 5 rojo', colorDe(4)==='#a9d18e' && colorDe(5)==='#e03a30');
+  alFondo(b2.id);
+  ok('«al fondo» pone la plaqueta la primera de la lista', pieces[0].id===b2.id);
+  alFrente(b2.id);
+  ok('«al frente» la pone la última', pieces[pieces.length-1].id===b2.id);
+
+  /* --- la comprobación de que 1 + 2 = 3 ----------------------------------- */
+  pieces=[]; sel=null; nid=1;
+  var tres=nueva(3,0,0);
+  nueva(1,0,0); nueva(2,0,1);
+  var m=mapaPisos();
+  ok('se pueden montar plaquetas unas encima de otras', pieces.length===3);
+  ok('la del 1 y la del 2 cubren todas las casillas de la del 3',
+     tres.cells.every(function(c){ return m[c.x+','+c.y]===2; }));
+  ok('y no sobresale ninguna casilla fuera de la del 3', Object.keys(m).length===3);
+  ok('el mapa de pisos cuenta bien las capas',
+     Object.keys(m).every(function(k){ return m[k]===2; }));
+  nueva(1,0,0);
+  var m2=mapaPisos();
+  ok('con una plaqueta más encima, esa casilla marca tres pisos', m2['0,0']===3, m2['0,0']);
+  ok('y el resto sigue con dos', m2['0,1']===2 && m2['1,1']===2);
+
+  /* --- total -------------------------------------------------------------- */
+  pieces=[]; nid=1;
+  nueva(3,0,0); nueva(7,3,0); nueva(10,6,0);
+  var suma=0; pieces.forEach(function(p){ suma+=p.n; });
+  ok('el total suma los números de las plaquetas puestas', suma===20, suma);
+  ok('y el número de agujeros coincide con el total',
+     pieces.reduce(function(s,p){ return s+p.cells.length; },0)===20);
+
+  /* --- guardar y volver a abrir ------------------------------------------ */
+  pieces=[]; sel=null; nid=1;
+  var p1=nueva(5,0,0,'#3a4048'), p2=nueva(9,3,0);
+  p1.cells=rotCells(p1.cells,p1.px,p1.py,true);
+  var antes=pieces.map(function(p){ return p.n+':'+key(p.cells)+':'+p.c; }).sort().join(' | ');
+  var data={formato:'plaquetas',version:1,
+            piezas:pieces.map(function(p){ return {n:p.n, color:p.c, casillas:p.cells.map(function(c){ return [c.x,c.y]; })}; })};
+  importMode='replace'; loadData(JSON.parse(JSON.stringify(data)));
+  ok('guardar y volver a abrir conserva plaquetas, giro y color',
+     pieces.map(function(p){ return p.n+':'+key(p.cells)+':'+p.c; }).sort().join(' | ')===antes);
+  ok('las plaquetas cargadas tienen centro de giro', pieces.every(function(p){ return p.px!==undefined; }));
+  var nAntes=pieces.length;
+  importMode='add'; loadData(JSON.parse(JSON.stringify(data)));
+  ok('el botón ＋ añade sin borrar lo anterior', pieces.length===nAntes*2, pieces.length);
+  var choque=false, vistas={};
+  pieces.forEach(function(p){ p.cells.forEach(function(c){
+    if(vistas[c.x+','+c.y]) choque=true; vistas[c.x+','+c.y]=1; }); });
+  ok('lo añadido no se solapa con lo que ya había', !choque);
+  importMode='replace';
+
+  /* --- ordenar ------------------------------------------------------------ */
+  pieces=[]; nid=1;
+  nueva(7,0,0); nueva(2,4,0); nueva(9,8,0);
+  ordenar();
+  ok('ordenar las coloca de menor a mayor',
+     pieces.map(function(p){ return p.n; }).join(',')==='2,7,9', pieces.map(function(p){return p.n;}).join(','));
+  ok('y las deja sin solaparse', (function(){ var v={}, mal=false;
+     pieces.forEach(function(p){ p.cells.forEach(function(c){ if(v[c.x+','+c.y]) mal=true; v[c.x+','+c.y]=1; }); });
+     return !mal; })());
+
+  pieces=[]; sel=null; nid=1; undoStack=[]; draw();
+
+  /* --- informe ----------------------------------------------------------- */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación de Plaquetas numéricas</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__plaquetas={
+  test:runSelfTest, forma:forma, colorDe:colorDe, pieces:function(){return pieces;},
+  mapaPisos:mapaPisos, alFondo:alFondo, alFrente:alFrente, opt:opt,
+  nueva:nueva, rot:rotCells, voltea:volteaCells, move:moveCells, bb:bb, setPivot:setPivot,
+  libre:libre, byId:byId, load:loadData, setMode:function(m){importMode=m;}, ordenar:ordenar,
+  redraw:draw, reset:function(){ pieces=[]; sel=null; }
+};
+
+})();
+</script>
+</body>
+</html>

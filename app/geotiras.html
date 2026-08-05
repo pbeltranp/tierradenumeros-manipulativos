@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Geotiras · manipulativo virtual</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       font-size:14px;color:#2b2f36;background:#fff;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;height:100%;width:100%}
+
+  /* ---------- paleta ---------- */
+  #palette{width:158px;flex:0 0 158px;background:#f4f5f7;border-right:1px solid #dfe2e7;
+           overflow-y:auto;padding:10px 10px 24px;}
+  #palette h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:14px 0 6px;font-weight:600}
+  #palette h2:first-child{margin-top:2px}
+  .pitem{display:flex;align-items:center;gap:7px;padding:5px 6px;margin-bottom:3px;border-radius:7px;
+         cursor:grab;background:#fff;border:1px solid #e3e6eb;touch-action:none}
+  .pitem:hover{border-color:#b9c0ca;background:#fbfcfd}
+  .pitem:active{cursor:grabbing}
+  .pitem .lab{font-size:11px;font-weight:600;color:#5a626d;min-width:19px}
+  .pitem .med{font-size:10px;color:#9aa1ab;margin-left:auto}
+  .pitem svg{display:block;overflow:visible}
+  .note{font-size:10.5px;line-height:1.45;color:#8a919c;margin-top:12px}
+
+  /* ---------- zona principal ---------- */
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #dfe2e7;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn.on:hover{background:#2a589a}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;
+       padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  #cordcol{width:26px;height:24px;padding:0;border:1px solid #d5d9e0;border-radius:6px;background:none;cursor:pointer}
+  #stage{position:relative;flex:1;min-height:0;background:#fff}
+  canvas{display:block;width:100%;height:100%;touch-action:none;cursor:default}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:250px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none}
+  #info.show{display:block}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  #info b{color:#2b2f36}
+  #info table{border-collapse:collapse;width:100%;margin-top:5px}
+  #info td{padding:1px 0}
+  #info td:last-child{text-align:right;color:#8a919c}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  @media (max-width:640px){
+    #palette{width:104px;flex:0 0 104px;padding:8px 6px}
+    .pitem .med{display:none}
+    .btn{padding:5px 7px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="palette"></aside>
+  <main>
+    <div id="toolbar">
+      <button class="btn on" data-tool="move" title="Mover y girar (V)">✥ Mover</button>
+      <button class="btn" data-tool="pin" title="Encuadernador (E)">◉ Encuadernador</button>
+      <button class="btn" data-tool="cord" title="Goma (G)">～ Goma</button>
+      <button class="btn" data-tool="del" title="Borrar (D)">✕ Borrar</button>
+      <span class="sep"></span>
+      <label class="chk" title="Las tiras se atraen cuando dos agujeros están cerca"><input type="checkbox" id="magnet" checked>Imán</label>
+      <label class="chk"><input type="checkbox" id="showang" checked>Ángulos</label>
+      <label class="chk"><input type="checkbox" id="showlab" checked>Nombres</label>
+      <label class="chk"><input type="checkbox" id="showgrid" checked>Rejilla</label>
+      <input type="color" id="cordcol" value="#d0322f" title="Color de la goma">
+      <span class="sep"></span>
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar la construcción en un archivo">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir el contenido de un archivo a lo que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="clear">Limpiar</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo de geotiras</div>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. GEOMETRÍA DE LAS TIRAS  (Invicta Geo Strips, IP014159)
+   u = longitud de R1.  p = u/2 = paso entre agujeros consecutivos de las rojas.
+   R2 = 2·R1, R3 = 4·R1 · B1 = R1√2, B2 = R2√2 · Y1 = R1√3, Y2 = R2√3 · W1 = R1√5
+   W2 = longitud especial: diagonal mayor del octógono de lado R1 = R1·√(4+2√2)
+   Agujeros: R1 3, R2 3, R3 9 (equiespaciados a p) · B1 3, B2 5 · Y1 5, Y2 7 · W1 3, W2 5.
+   En las amarillas, los dos agujeros contiguos al central dividen la tira en tres partes iguales.
+   El fijador de ángulos tiene los agujeros a p del centro, para que encajen con las rojas.
+   ========================================================================= */
+var S2=Math.SQRT2, S3=Math.sqrt(3), S5=Math.sqrt(5), OC=Math.sqrt(4+2*Math.SQRT2);
+var HP=0.5;  // paso entre agujeros de las tiras rojas (y radio del fijador)
+var TYPES = {
+  R1:{fam:'Rojas',   c:'#cf3a2e', dk:'#8e2018', len:1,    holes:[0,HP,1],                 med:'1 u · 3 agujeros'},
+  R2:{fam:'Rojas',   c:'#cf3a2e', dk:'#8e2018', len:2,    holes:[0,1,2],                  med:'2 u · 3 agujeros'},
+  R3:{fam:'Rojas',   c:'#cf3a2e', dk:'#8e2018', len:4,    holes:[0,.5,1,1.5,2,2.5,3,3.5,4], med:'4 u · 9 agujeros'},
+  B1:{fam:'Azules',  c:'#2f62a8', dk:'#1b3d69', len:S2,   holes:[0,S2/2,S2],              med:'√2 u · 3 agujeros'},
+  /* B2: central, extremos y dos a un paso p de cada extremo */
+  B2:{fam:'Azules',  c:'#2f62a8', dk:'#1b3d69', len:2*S2, holes:[0,HP,S2,2*S2-HP,2*S2],   med:'2√2 u · 5 agujeros'},
+  /* Y1: extremos, central y los dos que dividen la tira en tres partes iguales */
+  Y1:{fam:'Amarillas',c:'#e8bb1e',dk:'#a37f00', len:S3,   holes:[0,S3/3,S3/2,2*S3/3,S3],  med:'√3 u · 5 agujeros'},
+  /* Y2: extremos, dos a un paso p de ellos, central y los dos de los tercios */
+  Y2:{fam:'Amarillas',c:'#e8bb1e',dk:'#a37f00', len:2*S3, holes:[0,HP,2*S3/3,S3,4*S3/3,2*S3-HP,2*S3], med:'2√3 u · 7 agujeros'},
+  W1:{fam:'Blancas', c:'#f5f2ec', dk:'#a9a49a', len:S5,   holes:[0,S5/2,S5],              med:'√5 u · 3 agujeros'},
+  /* W2: central, extremos y dos a un paso p de cada extremo */
+  W2:{fam:'Blancas', c:'#f5f2ec', dk:'#a9a49a', len:OC,   holes:[0,HP,OC/2,OC-HP,OC],     med:'√(4+2√2) u · 5 agujeros'},
+  /* Fijador de ángulos: semicírculo con agujeros cada 15° a un paso p del centro */
+  P :{fam:'Herramientas', c:'#e9ecf0', dk:'#98a0ab', shape:'arc', R:HP, Rb:HP+0.19, lip:0.10, len:2*HP,
+      med:'agujeros cada 15°, a un paso del centro', name:'Fijador de ángulos'}
+};
+/* posiciones de los agujeros en coordenadas locales (unidades) */
+Object.keys(TYPES).forEach(function(k){ var T=TYPES[k];
+  if(T.shape==='arc'){
+    T.pts=[{x:0,y:0}];
+    for(var d=0; d<=180; d+=15)
+      T.pts.push({x:Math.cos(d*Math.PI/180)*T.R, y:-Math.sin(d*Math.PI/180)*T.R, deg:d});
+    T.cen={x:0,y:-0.40*T.Rb}; T.inr=0.3*T.Rb*T.Rb;
+  } else {
+    T.pts=T.holes.map(function(h){return {x:h,y:0};});
+    T.cen={x:T.len/2,y:0}; T.inr=T.len*T.len/12;
+  }
+});
+var ORDER=['R1','R2','R3','B1','B2','Y1','Y2','W1','W2','P'];
+
+/* medidas de dibujo (unidades de mundo, zoom 1) */
+var U=56;               // px por unidad (longitud de R1)
+var HW=0.105*U;         // media anchura de la tira
+var HR=0.05*U;          // radio del agujero
+var PINR=0.078*U;       // radio del encuadernador
+var SNAP=15;            // px de pantalla para el efecto imán
+
+/* =========================================================================
+   2. ESTADO
+   ========================================================================= */
+var strips=[], pins=[], cords=[], nid=1;
+var sel=new Set(), primary=null;
+var tool='move', drag=null, cordDraft=null, snapMark=null, hoverHole=null, importMode='replace';
+var view={x:0,y:0,z:1};
+var undoStack=[];
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var opt={magnet:1,ang:1,lab:1,grid:1};
+var cordColor='#d0322f';
+
+function byId(id){for(var i=0;i<strips.length;i++) if(strips[i].id===id) return strips[i]; return null;}
+function snapshot(){return JSON.stringify({s:strips,p:pins,c:cords,n:nid});}
+function pushUndo(){undoStack.push(snapshot()); if(undoStack.length>60) undoStack.shift();}
+function doUndo(){ if(!undoStack.length) return; var st=JSON.parse(undoStack.pop());
+  strips=st.s; pins=st.p; cords=st.c; nid=st.n; sel.clear(); primary=null; cordDraft=null; draw(); }
+
+/* =========================================================================
+   3. GEOMETRÍA AUXILIAR
+   ========================================================================= */
+function holesOf(s){return TYPES[s.t].pts;}
+function lenOf(s){return TYPES[s.t].len;}
+function isArc(s){return TYPES[s.t].shape==='arc';}
+function holeW(s,i){ var p=TYPES[s.t].pts[i], co=Math.cos(s.a), si=Math.sin(s.a);
+  return {x:s.x+(p.x*co-p.y*si)*U, y:s.y+(p.x*si+p.y*co)*U}; }
+function toLocal(s,p){ var co=Math.cos(-s.a), si=Math.sin(-s.a);
+  var dx=(p.x-s.x)/U, dy=(p.y-s.y)/U;
+  return {x:dx*co-dy*si, y:dx*si+dy*co}; }
+function endA(s){return {x:s.x,y:s.y};}
+function endB(s){var d=lenOf(s)*U;return {x:s.x+d*Math.cos(s.a), y:s.y+d*Math.sin(s.a)};}
+function pinPos(p){ var s=byId(p.m[0].s); return s?holeW(s,p.m[0].h):{x:p.x||0,y:p.y||0}; }
+function dist(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+function distSeg(p,a,b){ var vx=b.x-a.x, vy=b.y-a.y, L=vx*vx+vy*vy;
+  var t = L? ((p.x-a.x)*vx+(p.y-a.y)*vy)/L : 0; t=Math.max(0,Math.min(1,t));
+  return Math.hypot(p.x-(a.x+t*vx), p.y-(a.y+t*vy)); }
+function rotPt(p,c,th){ var dx=p.x-c.x, dy=p.y-c.y, co=Math.cos(th), si=Math.sin(th);
+  return {x:c.x+dx*co-dy*si, y:c.y+dx*si+dy*co}; }
+
+function w2s(p){return {x:p.x*view.z+view.x, y:p.y*view.z+view.y};}
+function s2w(p){return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z};}
+
+/* conectividad: componente conexa de una tira a través de encuadernadores */
+function component(ids){
+  var seen=new Set(ids), q=Array.from(ids);
+  while(q.length){ var id=q.pop();
+    for(var i=0;i<pins.length;i++){ var p=pins[i];
+      if(p.m.some(function(m){return m.s===id;}))
+        p.m.forEach(function(m){ if(!seen.has(m.s)){seen.add(m.s); q.push(m.s);} });
+    } }
+  return seen;
+}
+function pinsOfStrip(id){ return pins.filter(function(p){return p.m.some(function(m){return m.s===id;});}); }
+
+/* =========================================================================
+   4. ACCIONES SOBRE EL MODELO
+   ========================================================================= */
+function addStrip(t,x,y,a){ var s={id:nid++,t:t,x:x,y:y,a:a||0}; strips.push(s); return s; }
+
+function removeStrip(id){
+  strips=strips.filter(function(s){return s.id!==id;});
+  pins.forEach(function(p){ p.m=p.m.filter(function(m){return m.s!==id;}); });
+  pins=pins.filter(function(p){return p.m.length>=2;});
+  cords.forEach(function(c){ c.n=c.n.filter(function(n){return n.s!==id;}); });
+  cords=cords.filter(function(c){return c.n.length>=2;});
+  sel.delete(id); if(primary===id) primary=null;
+}
+
+/* une los agujeros que coinciden en un punto */
+function joinAt(pt,tol){
+  tol=tol||8;
+  var members=[];
+  strips.forEach(function(s){ holesOf(s).forEach(function(_,i){
+    if(dist(holeW(s,i),pt)<=tol) members.push({s:s.id,h:i});
+  });});
+  if(members.length<2) return null;
+  // evita duplicar tira en un mismo encuadernador
+  var seenS={}, mm=[];
+  members.forEach(function(m){ if(!seenS[m.s]){seenS[m.s]=1; mm.push(m);} });
+  if(mm.length<2) return null;
+  // ¿ya existe un encuadernador ahí?
+  for(var i=0;i<pins.length;i++){
+    if(dist(pinPos(pins[i]),pt)<=tol){
+      mm.forEach(function(m){ if(!pins[i].m.some(function(x){return x.s===m.s;})) pins[i].m.push(m); });
+      return pins[i];
+    }
+  }
+  var p={id:nid++,m:mm}; pins.push(p); return p;
+}
+
+function translate(ids,dx,dy){ ids.forEach(function(id){ var s=byId(id); if(s){s.x+=dx; s.y+=dy;} }); }
+
+/* ---- solver de barras articuladas (PBD) -----------------------------------
+   Permite que un cuadrilátero se deforme (cuadrado -> rombo) mientras que un
+   triángulo se comporta como estructura rígida.                              */
+function centerOf(s){ var g=TYPES[s.t].cen, co=Math.cos(s.a), si=Math.sin(s.a);
+  return {x:s.x+(g.x*co-g.y*si)*U, y:s.y+(g.x*si+g.y*co)*U}; }
+function inertiaOf(s){ return TYPES[s.t].inr*U*U+1; }
+function applyCorr(s,hi,dx,dy){
+  var mag=Math.hypot(dx,dy); if(mag<1e-9) return;
+  var nx=dx/mag, ny=dy/mag;
+  var c=centerOf(s), hp=holeW(s,hi);
+  var rx=hp.x-c.x, ry=hp.y-c.y, I=inertiaOf(s);
+  var rn=rx*ny-ry*nx;
+  var lam=mag/(1+rn*rn/I);
+  s.x+=lam*nx; s.y+=lam*ny;
+  var dth=lam*rn/I;
+  if(dth){ var c2=centerOf(s), np=rotPt({x:s.x,y:s.y},c2,dth); s.x=np.x; s.y=np.y; s.a+=dth; }
+}
+function relax(pinned,anchor,iters){
+  pinned=pinned||new Set();
+  for(var it=0;it<iters;it++){
+    for(var i=0;i<pins.length;i++){
+      var p=pins[i], pts=[], fixedPt=null;
+      for(var j=0;j<p.m.length;j++){ var s=byId(p.m[j].s); if(!s) continue;
+        var hp=holeW(s,p.m[j].h); pts.push(hp); if(pinned.has(p.m[j].s)) fixedPt=hp; }
+      if(pts.length<2 && !(anchor&&anchor.pin===p)) continue;
+      var t;
+      if(anchor && anchor.pin===p) t=anchor.t;
+      else if(fixedPt) t=fixedPt;
+      else { var sx=0,sy=0; pts.forEach(function(q){sx+=q.x;sy+=q.y;}); t={x:sx/pts.length,y:sy/pts.length}; }
+      for(var k=0;k<p.m.length;k++){
+        var m=p.m[k]; if(pinned.has(m.s)) continue;
+        var st=byId(m.s); if(!st) continue;
+        var q2=holeW(st,m.h); applyCorr(st,m.h,t.x-q2.x,t.y-q2.y);
+      }
+    }
+  }
+}
+function maxResidual(){
+  var r=0;
+  pins.forEach(function(p){ var q=pinPos(p);
+    p.m.forEach(function(m){ var s=byId(m.s); if(s) r=Math.max(r,dist(holeW(s,m.h),q)); }); });
+  return r;
+}
+
+/* rota rotIds alrededor de pivot; el resto de la estructura conectada
+   se arrastra por traslación. Si la estructura es rígida (bucle), se anula. */
+function rotateGroup(rotIds,pivot,dth){
+  var before={}; strips.forEach(function(s){before[s.id]={x:s.x,y:s.y,a:s.a};});
+  var pinBefore=pins.map(function(p){return pinPos(p);});
+
+  rotIds.forEach(function(id){ var s=byId(id); if(!s) return;
+    var np=rotPt({x:s.x,y:s.y},pivot,dth); s.x=np.x; s.y=np.y; s.a+=dth; });
+
+  // BFS de traslación hacia el resto
+  var moved=new Set(rotIds);
+  var queue=[];
+  pins.forEach(function(p,i){
+    var inR=p.m.filter(function(m){return rotIds.has(m.s);});
+    var out=p.m.filter(function(m){return !rotIds.has(m.s);});
+    if(inR.length && out.length){
+      var np=holeW(byId(inR[0].s),inR[0].h), op=pinBefore[i];
+      queue.push({pin:p,d:{x:np.x-op.x,y:np.y-op.y}});
+    }
+  });
+  var guard=0;
+  while(queue.length && guard++<500){
+    var it=queue.shift();
+    it.pin.m.forEach(function(m){
+      if(moved.has(m.s)) return;
+      var s=byId(m.s); if(!s) return;
+      s.x+=it.d.x; s.y+=it.d.y; moved.add(m.s);
+      pinsOfStrip(m.s).forEach(function(p2){ if(p2!==it.pin) queue.push({pin:p2,d:it.d}); });
+    });
+  }
+  if(maxResidual()<=0.6) return true;
+
+  /* La traslación no basta (hay un bucle cerrado). Se vuelve al estado previo,
+     se aplica solo el giro y se deja que el mecanismo se acomode. Si aun así no
+     cierra, la estructura es rígida (p. ej. un triángulo) y se anula el giro. */
+  strips.forEach(function(s){ var b=before[s.id]; if(b){s.x=b.x;s.y=b.y;s.a=b.a;} });
+  rotIds.forEach(function(id){ var s=byId(id); if(!s) return;
+    var np=rotPt({x:s.x,y:s.y},pivot,dth); s.x=np.x; s.y=np.y; s.a+=dth; });
+  relax(rotIds,null,120);
+  if(maxResidual()<=1.0) return true;
+
+  strips.forEach(function(s){ var b=before[s.id]; if(b){s.x=b.x;s.y=b.y;s.a=b.a;} });
+  return false;
+}
+
+function toFront(id){
+  var i=-1; for(var k=0;k<strips.length;k++) if(strips[k].id===id){i=k;break;}
+  if(i>=0) strips.push(strips.splice(i,1)[0]);
+}
+
+/* imán: busca el mejor emparejamiento entre agujeros móviles y fijos */
+function findSnap(movingIds){
+  var best=null, tol=SNAP/view.z;
+  var mov=[], fix=[];
+  strips.forEach(function(s){
+    var arr = movingIds.has(s.id)? mov : fix;
+    holesOf(s).forEach(function(_,i){ arr.push({s:s.id,h:i,p:holeW(s,i)}); });
+  });
+  mov.forEach(function(a){ fix.forEach(function(b){
+    var d=dist(a.p,b.p);
+    if(d<tol && (!best || d<best.d)) best={d:d,a:a,b:b,dx:b.p.x-a.p.x,dy:b.p.y-a.p.y};
+  });});
+  return best;
+}
+
+/* imán al girar: busca el giro extra que hace coincidir dos agujeros.
+   Es lo que permite fijar el ángulo de una tira en el fijador de ángulos. */
+function findSnapRot(movingIds,pivot){
+  var tol=SNAP/view.z, best=null;
+  var comp=component(movingIds);          // solo con piezas ya unidas al grupo
+  var mov=[], fix=[];
+  strips.forEach(function(s){
+    if(movingIds.has(s.id)){ holesOf(s).forEach(function(_,i){ mov.push({p:holeW(s,i)}); }); }
+    else if(comp.has(s.id)){ holesOf(s).forEach(function(_,i){ fix.push({p:holeW(s,i)}); }); }
+  });
+  if(!mov.length || !fix.length) return null;
+  mov.forEach(function(a){
+    var r1=dist(a.p,pivot); if(r1<HR) return;
+    fix.forEach(function(b){
+      var r2=dist(b.p,pivot);
+      if(Math.abs(r1-r2)>tol*0.8) return;
+      if(dist(b.p,pivot)<HR) return;
+      if(dist(a.p,b.p)>tol) return;
+      var da=Math.atan2(b.p.y-pivot.y,b.p.x-pivot.x)-Math.atan2(a.p.y-pivot.y,a.p.x-pivot.x);
+      while(da>Math.PI) da-=2*Math.PI;
+      while(da<-Math.PI) da+=2*Math.PI;
+      var sc=Math.abs(da)*r1+Math.abs(r1-r2);
+      if(!best || sc<best.sc) best={sc:sc,da:da,p:b.p};
+    });
+  });
+  return best;
+}
+
+/* pivote y tirador de giro: el encuadernador con más brazo disponible */
+function pivotOf(s){
+  var ps=pinsOfStrip(s.id), pts=TYPES[s.t].pts;
+  if(!ps.length) return {p:centerOf(s), i:-1};
+  var bi=null, bestScore=-1;
+  ps.forEach(function(p){
+    var m=p.m.filter(function(x){return x.s===s.id;})[0]; if(!m) return;
+    var lp=pts[m.h], sc=0;
+    pts.forEach(function(q){ sc=Math.max(sc,Math.hypot(q.x-lp.x,q.y-lp.y)); });
+    if(sc>bestScore){bestScore=sc; bi=m.h;}
+  });
+  if(bi===null) return {p:centerOf(s), i:-1};
+  return {p:holeW(s,bi), i:bi};
+}
+function handleOf(s){
+  var pv=pivotOf(s), pts=TYPES[s.t].pts;
+  var lp = pv.i>=0 ? pts[pv.i] : TYPES[s.t].cen;
+  var bi=0, bd=-1;
+  pts.forEach(function(q,i){ var d=Math.hypot(q.x-lp.x,q.y-lp.y); if(d>bd){bd=d;bi=i;} });
+  var far=holeW(s,bi);
+  var dx=far.x-pv.p.x, dy=far.y-pv.p.y, m=Math.hypot(dx,dy);
+  if(m<1e-6){ dx=Math.cos(s.a); dy=Math.sin(s.a); m=1; }
+  var k=26/view.z;
+  return {p:{x:far.x+dx/m*k, y:far.y+dy/m*k}, pivot:pv.p};
+}
+
+/* =========================================================================
+   5. DIBUJO
+   ========================================================================= */
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0); draw();
+}
+function rrect(c,x,y,w,h,r){ c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y); c.closePath(); }
+
+function drawHole(c,x,y,dk){
+  c.beginPath(); c.arc(x,y,HR,0,6.2832);
+  c.fillStyle='#ffffff'; c.fill();
+  c.lineWidth=1; c.strokeStyle=dk; c.globalAlpha=.7; c.stroke(); c.globalAlpha=1;
+}
+
+/* fijador de ángulos: semicírculo con agujeros cada 15° */
+function drawProt(c,s,selected){
+  var T=TYPES[s.t], Rb=T.Rb*U, R=T.R*U, lip=T.lip*U;
+  c.save(); c.translate(s.x,s.y); c.rotate(s.a);
+  c.beginPath();
+  c.moveTo(-Rb,lip); c.lineTo(-Rb,0);
+  c.arc(0,0,Rb,Math.PI,2*Math.PI,false);
+  c.lineTo(Rb,lip); c.closePath();
+  c.shadowColor='rgba(20,25,35,.18)'; c.shadowBlur=5; c.shadowOffsetY=2;
+  c.fillStyle=T.c; c.fill();
+  c.shadowColor='transparent'; c.shadowBlur=0; c.shadowOffsetY=0;
+  c.lineWidth=1.2; c.strokeStyle=T.dk; c.globalAlpha=.8; c.stroke(); c.globalAlpha=1;
+  // arco de referencia y marcas
+  c.beginPath(); c.arc(0,0,R,Math.PI,2*Math.PI,false);
+  c.lineWidth=1; c.strokeStyle='rgba(120,128,140,.45)'; c.stroke();
+  c.beginPath(); c.moveTo(-Rb,0); c.lineTo(Rb,0);
+  c.strokeStyle='rgba(120,128,140,.45)'; c.stroke();
+  T.pts.forEach(function(p,i){
+    if(i===0) return;
+    var ux=p.x/T.R, uy=p.y/T.R, r0=R+HR+1.5, big=(p.deg%45===0);
+    c.beginPath(); c.moveTo(ux*r0,uy*r0); c.lineTo(ux*(Rb-(big?1.5:3.5)),uy*(Rb-(big?1.5:3.5)));
+    c.lineWidth=big?1.5:0.9; c.strokeStyle='rgba(110,118,130,'+(big?.75:.5)+')'; c.stroke();
+  });
+  // agujeros
+  T.pts.forEach(function(p){ drawHole(c,p.x*U,p.y*U,T.dk); });
+  c.restore();
+  if(selected){
+    c.save(); c.translate(s.x,s.y); c.rotate(s.a);
+    c.beginPath();
+    c.moveTo(-Rb-3,lip+3); c.lineTo(-Rb-3,0);
+    c.arc(0,0,Rb+3,Math.PI,2*Math.PI,false);
+    c.lineTo(Rb+3,lip+3); c.closePath();
+    c.lineWidth=2/view.z; c.strokeStyle='#2f62a8'; c.setLineDash([5/view.z,4/view.z]);
+    c.stroke(); c.setLineDash([]); c.restore();
+  }
+}
+
+function drawStrip(c,s,selected){
+  if(TYPES[s.t].shape==='arc') return drawProt(c,s,selected);
+  var T=TYPES[s.t], L=T.len*U;
+  c.save(); c.translate(s.x,s.y); c.rotate(s.a);
+  c.shadowColor='rgba(20,25,35,.18)'; c.shadowBlur=5; c.shadowOffsetY=2;
+  rrect(c,-HW,-HW,L+2*HW,2*HW,HW);
+  c.fillStyle=T.c; c.fill();
+  c.shadowColor='transparent'; c.shadowBlur=0; c.shadowOffsetY=0;
+  c.lineWidth=1.2; c.strokeStyle=T.dk; c.globalAlpha=.55; c.stroke(); c.globalAlpha=1;
+  // brillo superior
+  rrect(c,-HW+2,-HW+2,L+2*HW-4,HW*0.75,HW*0.4);
+  c.fillStyle='rgba(255,255,255,.22)'; c.fill();
+  // agujeros
+  T.holes.forEach(function(t){ drawHole(c,t*U,0,T.dk); });
+  if(opt.lab){
+    var flip = Math.cos(s.a)<0;
+    c.save(); c.translate(L/2, 0); if(flip) c.rotate(Math.PI);
+    c.translate(0,-HW-9);
+    c.font='600 11px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.textAlign='center'; c.textBaseline='middle';
+    c.fillStyle='rgba(60,66,76,.75)'; c.fillText(s.t,0,0); c.restore();
+  }
+  c.restore();
+  if(selected){
+    c.save(); c.translate(s.x,s.y); c.rotate(s.a);
+    rrect(c,-HW-3,-HW-3,L+2*HW+6,2*HW+6,HW+3);
+    c.lineWidth=2/view.z; c.strokeStyle='#2f62a8'; c.setLineDash([5/view.z,4/view.z]); c.stroke();
+    c.setLineDash([]); c.restore();
+  }
+}
+
+function drawPin(c,p){
+  var q=pinPos(p);
+  c.beginPath(); c.arc(q.x,q.y,PINR,0,6.2832);
+  var g=c.createRadialGradient(q.x-2,q.y-2,1,q.x,q.y,PINR);
+  g.addColorStop(0,'#ffe9a8'); g.addColorStop(1,'#b8891f');
+  c.fillStyle=g; c.fill();
+  c.lineWidth=1.1; c.strokeStyle='#7a5a10'; c.stroke();
+  c.beginPath(); c.moveTo(q.x-PINR*0.55,q.y); c.lineTo(q.x+PINR*0.55,q.y);
+  c.lineWidth=1; c.strokeStyle='rgba(90,66,10,.65)'; c.stroke();
+}
+
+function drawCord(c,cd,previewTo){
+  var pts=cd.n.map(function(n){ var s=byId(n.s); return s?holeW(s,n.h):null; }).filter(Boolean);
+  if(!pts.length) return;
+  c.save();
+  c.lineWidth=2.6; c.strokeStyle=cd.col||cordColor; c.lineJoin='round'; c.lineCap='round';
+  c.beginPath(); c.moveTo(pts[0].x,pts[0].y);
+  for(var i=1;i<pts.length;i++) c.lineTo(pts[i].x,pts[i].y);
+  if(cd.closed && pts.length>2) c.closePath();
+  if(previewTo){ c.lineTo(previewTo.x,previewTo.y); }
+  c.stroke();
+  pts.forEach(function(p){ c.beginPath(); c.arc(p.x,p.y,3.1,0,6.2832);
+    c.fillStyle=cd.col||cordColor; c.fill(); });
+  c.restore();
+}
+
+function armOf(s,hi){
+  if(isArc(s)) return null;
+  var L=lenOf(s)*U, t=TYPES[s.t].pts[hi].x*U;
+  var dir = (t < L/2) ? 1 : -1;
+  return {dir:dir, len:Math.max(t,L-t), ang: s.a + (dir>0?0:Math.PI)};
+}
+function drawAngle(c,p){
+  if(p.m.length!==2) return;
+  var s1=byId(p.m[0].s), s2=byId(p.m[1].s); if(!s1||!s2) return;
+  var a1=armOf(s1,p.m[0].h), a2=armOf(s2,p.m[1].h);
+  if(!a1||!a2) return;
+  var q=pinPos(p);
+  var d=((a2.ang-a1.ang)*180/Math.PI)%360; if(d<0)d+=360;
+  var show = d>180 ? 360-d : d;
+  var r=Math.min(30, Math.min(a1.len,a2.len)*0.55); if(r<12) r=12;
+  var from=a1.ang, to=a2.ang, ccw = (d>180);
+  c.save();
+  c.beginPath(); c.arc(q.x,q.y,r,from,to,ccw);
+  c.lineWidth=1.6; c.strokeStyle='rgba(47,98,168,.85)'; c.stroke();
+  var mid = from + (ccw? -(360-d):d)*Math.PI/360;
+  var lx=q.x+Math.cos(mid)*(r+15), ly=q.y+Math.sin(mid)*(r+15);
+  var txt=show.toFixed(1).replace('.0','')+'°';
+  c.font='600 12px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.textAlign='center'; c.textBaseline='middle';
+  var w=c.measureText(txt).width+8;
+  rrect(c,lx-w/2,ly-9,w,18,9); c.fillStyle='rgba(255,255,255,.92)'; c.fill();
+  c.strokeStyle='rgba(47,98,168,.35)'; c.lineWidth=1; c.stroke();
+  c.fillStyle='#25406b'; c.fillText(txt,lx,ly);
+  c.restore();
+}
+
+/* Rejilla de referencia. Es solo visual: las tiras no se ajustan a ella, el imán
+   funciona por proximidad entre agujeros. Los puntos van cada media unidad, que
+   es el paso de los agujeros de las rojas y el radio del fijador de ángulos;
+   los que caen en unidades enteras se marcan un poco más. */
+function drawGrid(c,w,h){
+  var paso=U*HP, step=paso*view.z;
+  if(step<10) return;
+  var i0=Math.floor((0-view.x)/view.z/paso), i1=Math.ceil((w-view.x)/view.z/paso);
+  var j0=Math.floor((0-view.y)/view.z/paso), j1=Math.ceil((h-view.y)/view.z/paso);
+  c.save();
+  for(var i=i0;i<=i1;i++){
+    var x=i*step+view.x, par=(i%2===0);
+    for(var j=j0;j<=j1;j++){
+      var y=j*step+view.y, entero=par&&(j%2===0);
+      c.fillStyle = entero ? '#aeb6c3' : '#d2d7df';
+      var r = entero ? 1.6 : 1.1;
+      c.fillRect(x-r,y-r,2*r,2*r);
+    }
+  }
+  c.restore();
+}
+
+function scene(c,W,H,forExport){
+  c.save();
+  if(opt.grid && !forExport) drawGrid(c,W,H);
+  c.translate(view.x,view.y); c.scale(view.z,view.z);
+
+  cords.forEach(function(cd){ drawCord(c,cd); });
+  if(cordDraft) drawCord(c,cordDraft,cordDraft.preview);
+
+  // el fijador va siempre por debajo de las tiras
+  strips.forEach(function(s){ if(isArc(s)) drawStrip(c,s,sel.has(s.id)); });
+  strips.forEach(function(s){ if(!isArc(s)) drawStrip(c,s,sel.has(s.id)); });
+  pins.forEach(function(p){ drawPin(c,p); });
+  if(opt.ang) pins.forEach(function(p){ drawAngle(c,p); });
+
+  if(!forExport){
+    // tirador de giro
+    if(primary!=null && sel.has(primary)){
+      var s=byId(primary);
+      if(s){ var h=handleOf(s);
+        c.save();
+        c.setLineDash([3,3]); c.lineWidth=1.2; c.strokeStyle='rgba(47,98,168,.55)';
+        c.beginPath(); c.moveTo(h.pivot.x,h.pivot.y); c.lineTo(h.p.x,h.p.y); c.stroke();
+        c.setLineDash([]);
+        c.beginPath(); c.arc(h.pivot.x,h.pivot.y,3.4,0,6.2832); c.fillStyle='#2f62a8'; c.fill();
+        c.beginPath(); c.arc(h.p.x,h.p.y,9.5/view.z,0,6.2832);
+        c.fillStyle='#fff'; c.fill(); c.lineWidth=2/view.z; c.strokeStyle='#2f62a8'; c.stroke();
+        c.beginPath(); c.arc(h.p.x,h.p.y,4.6/view.z,0.6,5.1); c.lineWidth=1.7/view.z;
+        c.strokeStyle='#2f62a8'; c.stroke();
+        c.restore();
+      }
+    }
+    if(snapMark){
+      c.save(); c.beginPath(); c.arc(snapMark.x,snapMark.y,PINR*1.9,0,6.2832);
+      c.lineWidth=2/view.z; c.strokeStyle='#19a06a'; c.stroke();
+      c.restore();
+    }
+    if(hoverHole){
+      c.save(); c.beginPath(); c.arc(hoverHole.p.x,hoverHole.p.y,HR*1.9,0,6.2832);
+      c.lineWidth=2/view.z; c.strokeStyle= tool==='cord'? cordColor : '#b8891f'; c.stroke();
+      c.restore();
+    }
+  }
+  c.restore();
+}
+
+function draw(){
+  var W=cv.width/(window.devicePixelRatio||1), H=cv.height/(window.devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+  scene(ctx,W,H,false);
+  updateHint();
+}
+
+/* =========================================================================
+   6. HIT TESTS
+   ========================================================================= */
+function holeAt(p,tolPx){
+  var tol=(tolPx||13)/view.z, best=null;
+  for(var i=strips.length-1;i>=0;i--){ var s=strips[i];
+    var hs=holesOf(s);
+    for(var j=0;j<hs.length;j++){ var q=holeW(s,j), d=dist(p,q);
+      if(d<tol && (!best||d<best.d)) best={s:s.id,h:j,p:q,d:d}; } }
+  return best;
+}
+/* las tiras tienen prioridad sobre el fijador, igual que en el dibujo */
+function stripAt(p){
+  var i,s;
+  for(i=strips.length-1;i>=0;i--){ s=strips[i];
+    if(!isArc(s) && distSeg(p,endA(s),endB(s))<=HW+2) return s; }
+  for(i=strips.length-1;i>=0;i--){ s=strips[i];
+    if(isArc(s)){ var T=TYPES[s.t], l=toLocal(s,p), r=Math.hypot(l.x,l.y);
+      if(l.y<=T.lip+0.03 && r<=T.Rb+0.03) return s; } }
+  return null;
+}
+function pinAt(p){
+  for(var i=pins.length-1;i>=0;i--){ if(dist(p,pinPos(pins[i]))<=PINR+4/view.z) return pins[i]; }
+  return null;
+}
+function cordAt(p){
+  for(var i=cords.length-1;i>=0;i--){ var cd=cords[i];
+    var pts=cd.n.map(function(n){var s=byId(n.s);return s?holeW(s,n.h):null;}).filter(Boolean);
+    var lim = cd.closed? pts.length : pts.length-1;
+    for(var j=0;j<lim;j++){ var a=pts[j], b=pts[(j+1)%pts.length];
+      if(distSeg(p,a,b)<=6/view.z) return cd; } }
+  return null;
+}
+
+/* =========================================================================
+   7. INTERACCIÓN
+   ========================================================================= */
+function evPos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+
+function onDown(e){
+  cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);
+  var sp=evPos(e), wp=s2w(sp);
+
+  if(tool==='del'){
+    var pn=pinAt(wp); if(pn){ pushUndo(); pins=pins.filter(function(x){return x!==pn;}); draw(); return; }
+    var cd=cordAt(wp); if(cd){ pushUndo(); cords=cords.filter(function(x){return x!==cd;}); draw(); return; }
+    var st=stripAt(wp); if(st){ pushUndo(); removeStrip(st.id); draw(); return; }
+    return;
+  }
+
+  if(tool==='pin'){
+    var h=holeAt(wp,15);
+    if(h){ pushUndo(); var made=joinAt(h.p, 10/view.z);
+      if(!made) flash('Necesitas dos agujeros superpuestos para poner un encuadernador');
+      draw(); }
+    return;
+  }
+
+  if(tool==='cord'){
+    var h2=holeAt(wp,15);
+    if(!h2){ finishCord(); draw(); return; }
+    if(!cordDraft){ cordDraft={id:nid++,n:[{s:h2.s,h:h2.h}],closed:false,col:cordColor}; draw(); return; }
+    var first=cordDraft.n[0];
+    if(cordDraft.n.length>2 && first.s===h2.s && first.h===h2.h){ cordDraft.closed=true; finishCord(); draw(); return; }
+    var last=cordDraft.n[cordDraft.n.length-1];
+    if(last.s===h2.s && last.h===h2.h){ finishCord(); draw(); return; }
+    cordDraft.n.push({s:h2.s,h:h2.h}); draw(); return;
+  }
+
+  /* --- herramienta mover --- */
+  // tirador de giro
+  if(primary!=null && sel.has(primary)){
+    var ps=byId(primary);
+    if(ps){ var hh=handleOf(ps);
+      if(dist(wp,hh.p) < 13/view.z){
+        pushUndo();
+        var rotIds = sel.size>1 ? new Set(sel) : new Set([primary]);
+        drag={mode:'rot', ids:rotIds, pivot:hh.pivot,
+              a0:Math.atan2(wp.y-hh.pivot.y, wp.x-hh.pivot.x), acc:0};
+        return;
+      } }
+  }
+  // arrastrar un encuadernador deforma el mecanismo (cuadrado -> rombo)
+  var pn0=pinAt(wp);
+  if(pn0){ pushUndo(); sel.clear(); primary=null; drag={mode:'joint',pin:pn0}; draw(); return; }
+
+  var st2=stripAt(wp);
+  if(st2){
+    if(e.shiftKey){ if(sel.has(st2.id)) sel.delete(st2.id); else sel.add(st2.id); primary=st2.id; draw(); return; }
+    if(!sel.has(st2.id)){ sel.clear(); sel.add(st2.id); }
+    primary=st2.id; toFront(st2.id);
+    // Alt = girar directamente
+    if(e.altKey){
+      pushUndo(); var pv=pivotOf(st2);
+      drag={mode:'rot', ids:new Set(sel.size>1?sel:[st2.id]), pivot:pv.p,
+            a0:Math.atan2(wp.y-pv.p.y, wp.x-pv.p.x), acc:0};
+      draw(); return;
+    }
+    pushUndo();
+    var comp=component(sel.size>1?sel:new Set([st2.id]));
+    drag={mode:'move', ids:comp, grab:wp, off:{x:0,y:0}};
+    draw(); return;
+  }
+  sel.clear(); primary=null;
+  drag={mode:'pan', sp:sp, v0:{x:view.x,y:view.y}};
+  draw();
+}
+
+function onMove(e){
+  var sp=evPos(e), wp=s2w(sp);
+  if(!drag){
+    hoverHole = (tool==='pin'||tool==='cord') ? holeAt(wp,15) : null;
+    if(cordDraft){ cordDraft.preview=wp; }
+    cv.style.cursor = (tool==='move' && stripAt(wp)) ? 'move' : (tool==='move'?'default':'crosshair');
+    draw(); return;
+  }
+  if(drag.mode==='pan'){ view.x=drag.v0.x+(sp.x-drag.sp.x); view.y=drag.v0.y+(sp.y-drag.sp.y); draw(); return; }
+
+  if(drag.mode==='move'){
+    var dx=wp.x-drag.grab.x-drag.off.x, dy=wp.y-drag.grab.y-drag.off.y;
+    translate(Array.from(drag.ids),dx,dy);
+    drag.off.x+=dx; drag.off.y+=dy;
+    snapMark=null;
+    if(opt.magnet){
+      var sn=findSnap(drag.ids);
+      if(sn){ translate(Array.from(drag.ids),sn.dx,sn.dy);
+        drag.off.x+=sn.dx; drag.off.y+=sn.dy;
+        snapMark=sn.b.p; drag.snap=sn; }
+      else drag.snap=null;
+    }
+    draw(); return;
+  }
+  if(drag.mode==='joint'){
+    relax(null,{pin:drag.pin,t:wp},70);
+    draw(); return;
+  }
+  if(drag.mode==='rot'){
+    var a=Math.atan2(wp.y-drag.pivot.y, wp.x-drag.pivot.x);
+    var want=a-drag.a0;                                   // giro total pedido
+    if(e.shiftKey){ var step=Math.PI/12; want=Math.round(want/step)*step; }
+    var d=want-drag.acc;
+    if(Math.abs(d)>1e-7){
+      if(rotateGroup(drag.ids, drag.pivot, d)) drag.acc=want;
+      else flash('Esa estructura es rígida: no puede girar');
+    }
+    snapMark=null; drag.snap=null;
+    if(opt.magnet && !e.shiftKey){
+      var sn=findSnapRot(drag.ids, drag.pivot);
+      if(sn){
+        if(Math.abs(sn.da)<1e-9 || rotateGroup(drag.ids, drag.pivot, sn.da)){
+          drag.acc+=sn.da; snapMark=sn.p; drag.snap={b:{p:sn.p}};
+        }
+      }
+    }
+    draw(); return;
+  }
+}
+
+function onUp(e){
+  if(drag && (drag.mode==='move'||drag.mode==='rot')){
+    if(drag.snap && opt.magnet){ joinAt(drag.snap.b.p, 6/view.z); }
+  }
+  drag=null; snapMark=null; draw();
+}
+
+function finishCord(){
+  if(cordDraft && cordDraft.n.length>=2){ delete cordDraft.preview; pushUndo(); cords.push(cordDraft); }
+  cordDraft=null;
+}
+
+/* --- rueda: zoom --- */
+stage.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var sp=evPos(e), before=s2w(sp);
+  var f=Math.exp(-e.deltaY*0.0015);
+  view.z=Math.max(0.3,Math.min(3.2,view.z*f));
+  var after=s2w(sp);
+  view.x+=(after.x-before.x)*view.z; view.y+=(after.y-before.y)*view.z;
+  draw();
+},{passive:false});
+
+cv.addEventListener('pointerdown',onDown);
+window.addEventListener('pointermove',function(e){
+  if(!drag){ var r=cv.getBoundingClientRect();
+    if(e.clientX<r.left||e.clientY<r.top||e.clientX>r.right||e.clientY>r.bottom) return; }
+  onMove(e);
+});
+window.addEventListener('pointerup',onUp);
+window.addEventListener('pointercancel',onUp);
+cv.addEventListener('dblclick',function(){ if(cordDraft){finishCord(); draw();} });
+
+window.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ cordDraft=null; sel.clear(); primary=null; draw(); }
+  else if(e.key==='Delete'||e.key==='Backspace'){
+    if(sel.size){ pushUndo(); Array.from(sel).forEach(removeStrip); draw(); e.preventDefault(); } }
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){ doUndo(); e.preventDefault(); }
+  else if(e.key==='v'||e.key==='V') setTool('move');
+  else if(e.key==='e'||e.key==='E') setTool('pin');
+  else if(e.key==='g'||e.key==='G'||e.key==='c'||e.key==='C') setTool('cord');
+  else if(e.key==='d'||e.key==='D') setTool('del');
+  else if((e.key==='ArrowLeft'||e.key==='ArrowRight') && primary!=null && sel.has(primary)){
+    var s=byId(primary); if(!s) return;
+    var st=(e.shiftKey?15:1)*Math.PI/180*(e.key==='ArrowRight'?1:-1);
+    pushUndo(); rotateGroup(new Set(sel.size>1?sel:[primary]), pivotOf(s).p, st); draw(); e.preventDefault();
+  }
+});
+
+/* =========================================================================
+   8. PALETA
+   ========================================================================= */
+function miniSVG(t){
+  var T=TYPES[t];
+  if(T.shape==='arc'){
+    var R=13, s='<svg width="34" height="17" viewBox="0 0 34 17">';
+    s+='<path d="M4 14 L4 13 A13 13 0 0 1 30 13 L30 14 Z" fill="'+T.c+'" stroke="'+T.dk+'" stroke-opacity=".7"/>';
+    for(var d=0;d<=180;d+=30) s+='<circle cx="'+(17+Math.cos(d*Math.PI/180)*9.5).toFixed(1)+'" cy="'+(13-Math.sin(d*Math.PI/180)*9.5).toFixed(1)+'" r="1.4" fill="#fff" stroke="'+T.dk+'" stroke-width=".7" stroke-opacity=".7"/>';
+    s+='<circle cx="17" cy="13" r="1.4" fill="#fff" stroke="'+T.dk+'" stroke-width=".7" stroke-opacity=".7"/>';
+    return s+'</svg>';
+  }
+  var w=Math.min(T.len,4)*17+8, sc=Math.min(T.len,4)/T.len*17;
+  var h=13, y=h/2;
+  var s2='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">';
+  s2+='<rect x="1" y="'+(y-4.5)+'" width="'+(T.len*sc+6)+'" height="9" rx="4.5" fill="'+T.c+'" stroke="'+T.dk+'" stroke-opacity=".55"/>';
+  T.holes.forEach(function(d){ s2+='<circle cx="'+(4+d*sc)+'" cy="'+y+'" r="1.9" fill="#fff" stroke="'+T.dk+'" stroke-opacity=".6" stroke-width=".8"/>'; });
+  return s2+'</svg>';
+}
+(function buildPalette(){
+  var pal=document.getElementById('palette'), fam=null, html='';
+  ORDER.forEach(function(t){
+    var T=TYPES[t];
+    if(T.fam!==fam){ fam=T.fam; html+='<h2>'+fam+'</h2>'; }
+    html+='<div class="pitem" data-t="'+t+'" title="'+T.med+'"><span class="lab">'+(T.shape==='arc'?'∠':t)+'</span>'+miniSVG(t)+'</div>';
+  });
+  html+='<div class="note">Arrastra una pieza al tablero. Las medidas y los agujeros, en el panel ?</div>';
+  pal.innerHTML=html;
+  pal.querySelectorAll('.pitem').forEach(function(el){
+    el.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      var t=el.dataset.t;
+      var sp=evPos(e), wp=s2w(sp);
+      var inside = sp.x>0 && sp.y>0;
+      if(!inside){ var r=stage.getBoundingClientRect(); wp=s2w({x:r.width/2,y:r.height/2}); }
+      pushUndo();
+      var g=TYPES[t].cen;
+      var s=addStrip(t, wp.x-g.x*U, wp.y-g.y*U, 0);
+      sel.clear(); sel.add(s.id); primary=s.id; setTool('move');
+      drag={mode:'move', ids:new Set([s.id]), grab:{x:wp.x,y:wp.y}, off:{x:0,y:0}};
+      draw();
+    });
+  });
+})();
+
+/* =========================================================================
+   9. BARRA DE HERRAMIENTAS
+   ========================================================================= */
+function setTool(t){
+  if(t!=='cord'){ finishCord(); }
+  tool=t; hoverHole=null;
+  document.querySelectorAll('[data-tool]').forEach(function(b){ b.classList.toggle('on', b.dataset.tool===t); });
+  if(t!=='move'){ sel.clear(); primary=null; }
+  draw();
+}
+document.querySelectorAll('[data-tool]').forEach(function(b){
+  b.addEventListener('click',function(){ setTool(b.dataset.tool); });
+});
+['magnet','ang','lab','grid'].forEach(function(k,i){
+  var ids=['magnet','showang','showlab','showgrid'];
+  var el=document.getElementById(ids[i]);
+  el.addEventListener('change',function(){ opt[k]=el.checked?1:0; draw(); });
+});
+document.getElementById('cordcol').addEventListener('input',function(e){ cordColor=e.target.value; if(cordDraft)cordDraft.col=cordColor; draw(); });
+document.getElementById('undo').addEventListener('click',doUndo);
+document.getElementById('clear').addEventListener('click',function(){
+  if(!strips.length) return;
+  pushUndo(); strips=[]; pins=[]; cords=[]; sel.clear(); primary=null; cordDraft=null; draw(); });
+document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.2); });
+document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.2); });
+function zoomAt(f){ var r=stage.getBoundingClientRect(), c={x:r.width/2,y:r.height/2};
+  var b=s2w(c); view.z=Math.max(0.3,Math.min(3.2,view.z*f)); var a=s2w(c);
+  view.x+=(a.x-b.x)*view.z; view.y+=(a.y-b.y)*view.z; draw(); }
+document.getElementById('fit').addEventListener('click',fitView);
+function bboxOf(arr){
+  if(!arr || !arr.length) return null;
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  arr.forEach(function(s){ var T=TYPES[s.t];
+    var m = T.shape==='arc' ? (T.Rb-T.R)*U+HW : HW;
+    T.pts.forEach(function(_,i){ var p=holeW(s,i);
+      x0=Math.min(x0,p.x-m); y0=Math.min(y0,p.y-m);
+      x1=Math.max(x1,p.x+m); y1=Math.max(y1,p.y+m); }); });
+  return {x0:x0,y0:y0,x1:x1,y1:y1};
+}
+function bbox(){ return bboxOf(strips); }
+function fitView(){
+  var b=bbox(); var r=stage.getBoundingClientRect();
+  if(!b){ view={x:r.width/2,y:r.height/2,z:1}; draw(); return; }
+  var m=50, z=Math.min((r.width-2*m)/(b.x1-b.x0||1),(r.height-2*m)/(b.y1-b.y0||1));
+  z=Math.max(0.3,Math.min(2.2,z)); view.z=z;
+  view.x=r.width/2-((b.x0+b.x1)/2)*z; view.y=r.height/2-((b.y0+b.y1)/2)*z;
+  draw();
+}
+document.getElementById('png').addEventListener('click',function(){
+  var b=bbox(); if(!b){ flash('No hay nada que exportar'); return; }
+  var m=40, scale=2;
+  var w=(b.x1-b.x0+2*m), h=(b.y1-b.y0+2*m);
+  var oc=document.createElement('canvas'); oc.width=w*scale; oc.height=h*scale;
+  var o=oc.getContext('2d'); o.scale(scale,scale);
+  o.fillStyle='#ffffff'; o.fillRect(0,0,w,h);
+  var save={x:view.x,y:view.y,z:view.z};
+  view.x=-b.x0+m; view.y=-b.y0+m; view.z=1;
+  scene(o,w,h,true);
+  view=save; draw();
+  var a=document.createElement('a');
+  a.download='geotiras.png'; a.href=oc.toDataURL('image/png'); a.click();
+});
+/* =========================================================================
+   9 bis. GUARDAR Y ABRIR
+   Las coordenadas se guardan en unidades (no en píxeles) y los encuadernadores
+   y gomas apuntan a las tiras por su posición en la lista, para que el
+   archivo siga valiendo aunque cambie la escala del dibujo.
+   ========================================================================= */
+function serializar(){
+  var pos={}; strips.forEach(function(s,i){ pos[s.id]=i; });
+  return {
+    formato:'geotiras', version:1,
+    piezas: strips.map(function(s){
+      return {t:s.t, x:+(s.x/U).toFixed(6), y:+(s.y/U).toFixed(6), a:+s.a.toFixed(8)}; }),
+    encuadernadores: pins.map(function(p){
+      return {m:p.m.map(function(m){ return [pos[m.s], m.h]; })}; }),
+    gomas: cords.map(function(c){
+      return {color:c.col, cerrado:!!c.closed, n:c.n.map(function(n){ return [pos[n.s], n.h]; })}; })
+  };
+}
+function deserializar(d){
+  var lista = d && (d.piezas||d.pieces);
+  if(!lista || !lista.length) return null;
+  var ns=[];
+  for(var i=0;i<lista.length;i++){
+    var q=lista[i], T=TYPES[q.t];
+    if(!T) return null;                                   // tipo de tira desconocido
+    var x=Number(q.x), y=Number(q.y), a=Number(q.a);
+    if(!isFinite(x)||!isFinite(y)||!isFinite(a)) return null;
+    ns.push({id:nid++, t:q.t, x:x*U, y:y*U, a:a});
+  }
+  function ref(par){                                      // [índice de tira, índice de agujero]
+    if(!par || par.length<2) return null;
+    var s=ns[par[0]|0]; if(!s) return null;
+    var h=par[1]|0; if(h<0 || h>=TYPES[s.t].pts.length) return null;
+    return {s:s.id, h:h};
+  }
+  var np=[];
+  (d.encuadernadores||d.pins||[]).forEach(function(p){
+    var ms=(p.m||[]).map(ref).filter(Boolean);
+    var vistas={}, limpio=[];
+    ms.forEach(function(m){ if(!vistas[m.s]){ vistas[m.s]=1; limpio.push(m); } });
+    if(limpio.length>=2) np.push({id:nid++, m:limpio});
+  });
+  var nc=[];
+  (d.gomas||d.cordeles||d.cords||[]).forEach(function(c){
+    var nn=(c.n||[]).map(ref).filter(Boolean);
+    if(nn.length>=2) nc.push({id:nid++, n:nn, closed:!!c.cerrado||!!c.closed, col:c.color||c.col||cordColor});
+  });
+  return {strips:ns, pins:np, cords:nc};
+}
+function loadData(d){
+  var r=deserializar(d);
+  if(!r){ flash('Ese archivo no tiene el formato de geotiras esperado'); return; }
+  pushUndo();
+  if(importMode==='replace'){ strips=r.strips; pins=r.pins; cords=r.cords; }
+  else {
+    var b0=bboxOf(strips), b1=bboxOf(r.strips);
+    if(b0 && b1){ var dy=b0.y1-b1.y0+1.5*U;
+      r.strips.forEach(function(s){ s.y+=dy; }); }
+    strips=strips.concat(r.strips); pins=pins.concat(r.pins); cords=cords.concat(r.cords);
+  }
+  sel.clear(); primary=null; cordDraft=null; drag=null; fitView();
+  flash(r.strips.length+(r.strips.length===1?' pieza cargada':' piezas cargadas')+
+        (r.pins.length?' · '+r.pins.length+' encuadernadores':'')+
+        (r.cords.length?' · '+r.cords.length+' gomas':''));
+}
+document.getElementById('save').addEventListener('click',function(){
+  if(!strips.length){ flash('No hay nada que guardar'); return; }
+  var blob=new Blob([JSON.stringify(serializar(),null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download='geotiras.json'; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+document.getElementById('add').addEventListener('click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) readFile(f); });
+function readFile(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }
+                       catch(err){ flash('No he podido leer ese archivo'); } };
+  r.readAsText(f);
+}
+var dropEl=document.getElementById('drop');
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); }); });
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); }); });
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='add'; readFile(f); }
+});
+
+document.getElementById('help').addEventListener('click',function(){ infoEl.classList.toggle('show'); });
+infoEl.innerHTML='<b>Medidas de las geotiras</b><br>u = longitud de R1. Las rojas tienen los agujeros cada u/2.'+
+ '<table>'+ORDER.filter(function(t){return TYPES[t].shape!=='arc';})
+   .map(function(t){return '<tr><td>'+t+'</td><td>'+TYPES[t].med+'</td></tr>';}).join('')+'</table>'+
+ '<div style="margin-top:7px">R2 = 2·R1, R3 = 4·R1 · B1 = R1√2, B2 = R2√2 · Y1 = R1√3, Y2 = R2√3 · W1 = R1√5. '+
+ 'W2 es la diagonal mayor del octógono de lado R1.<br>'+
+ 'En las amarillas, los dos agujeros contiguos al central dividen la tira en tres partes iguales. '+
+ 'En B2, Y2 y W2 los agujeros que siguen a los extremos están a u/2, como en las rojas.</div>'+
+ '<div style="margin-top:7px"><b>Fijador de ángulos</b>: agujeros cada 15° a u/2 del centro, más el del centro. '+
+ 'Sujeta la tira con un encuadernador en el centro y otro en la marca del ángulo; al girarla, el imán '+
+ 'la lleva sola a cada múltiplo de 15°.</div>'+
+ '<div style="margin-top:7px"><b>Guardar y abrir</b> descarga y recupera un archivo con las tiras, '+
+ 'los encuadernadores y las gomas, para seguir otro día o repartir una construcción ya montada. '+
+ 'El botón ＋ añade el archivo debajo de lo que ya tengas, en vez de sustituirlo; también puedes '+
+ 'soltar el archivo sobre el tablero.</div>'+
+ '<div style="margin-top:7px;color:#8a919c">Atajos: V mover · E encuadernador · G goma · D borrar · Alt+arrastrar gira · Mayús limita el giro a 15° · Supr borra · Ctrl+Z deshace.</div>'+
+ '<div class="lic">Geotiras · Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · @pbeltranp<br>'+
+ 'Se puede usar, copiar y adaptar citando la autoría: licencia '+
+ '<a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>.</div>';
+
+var flashMsg=null, flashT=0;
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,1900); }
+function updateHint(){
+  var t;
+  if(flashMsg && Date.now()-flashT<1800) t=flashMsg;
+  else if(tool==='move') t='Arrastra una tira para mover todo el grupo · el tirador ⟳ gira solo esa tira · arrastra un encuadernador para deformar la figura · Mayús+clic selecciona varias';
+  else if(tool==='pin') t='Haz clic en un agujero donde se superpongan dos tiras para poner el encuadernador';
+  else if(tool==='cord') t='Haz clic en agujeros sucesivos para pasar la goma · vuelve al primero para cerrarla · doble clic o Esc para terminar';
+  else t='Haz clic sobre una tira, un encuadernador o una goma para borrarlo';
+  hintEl.textContent=t;
+}
+
+/* =========================================================================
+   10. ARRANQUE
+   ========================================================================= */
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+(function init(){
+  var r=stage.getBoundingClientRect();
+  view.x=r.width/2; view.y=r.height/2;
+  resize();
+})();
+
+/* =========================================================================
+   11. AUTOCOMPROBACIÓN  ·  abre el archivo añadiendo #test al final de la URL
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){ out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':'')); if(!c) fails++; }
+  function reset(){ strips=[]; pins=[]; cords=[]; sel.clear(); primary=null; }
+  function D(a,b){ return dist(a,b); }
+  function gr(r){ return r*180/Math.PI; }
+  var L=function(t){ return TYPES[t].len; };
+  var HO=function(t){ return TYPES[t].holes; };
+
+  /* --- proporciones del manual ------------------------------------------ */
+  ok('R2 = 2·R1', Math.abs(L('R2')-2*L('R1'))<1e-12);
+  ok('R3 = 4·R1', Math.abs(L('R3')-4*L('R1'))<1e-12);
+  ok('B1 = R1·√2', Math.abs(L('B1')-L('R1')*Math.SQRT2)<1e-12);
+  ok('B2 = R2·√2', Math.abs(L('B2')-L('R2')*Math.SQRT2)<1e-12);
+  ok('Y1 = R1·√3', Math.abs(L('Y1')-L('R1')*Math.sqrt(3))<1e-12);
+  ok('Y2 = R2·√3', Math.abs(L('Y2')-L('R2')*Math.sqrt(3))<1e-12);
+  ok('W1 = R1·√5', Math.abs(L('W1')-L('R1')*Math.sqrt(5))<1e-12);
+  ok('W2 = diagonal mayor del octógono de lado R1', Math.abs(L('W2')-Math.sqrt(4+2*Math.SQRT2))<1e-12);
+  ok('W2 es más larga que W1', L('W2')>L('W1'));
+
+  /* --- agujeros ---------------------------------------------------------- */
+  ok('R1: 3 agujeros con paso u/2', HO('R1').length===3 && Math.abs(HO('R1')[1]-0.5)<1e-12);
+  ok('R2: 3 agujeros, el de en medio a 1 u', HO('R2').length===3 && Math.abs(HO('R2')[1]-1)<1e-12);
+  ok('R3: 9 agujeros equiespaciados a u/2',
+     HO('R3').length===9 && HO('R3').every(function(x,i){return Math.abs(x-i/2)<1e-12;}));
+  ok('B1: 3 agujeros con el central', HO('B1').length===3 && Math.abs(HO('B1')[1]-L('B1')/2)<1e-12);
+  ok('B2: 5 agujeros con el central', HO('B2').length===5 && Math.abs(HO('B2')[2]-L('B2')/2)<1e-12);
+  ok('W1: 3 agujeros con el central', HO('W1').length===3 && Math.abs(HO('W1')[1]-L('W1')/2)<1e-12);
+  ok('W2: 5 agujeros con el central', HO('W2').length===5 && Math.abs(HO('W2')[2]-L('W2')/2)<1e-12);
+  ok('Y1: 5 agujeros; los contiguos al central dividen la tira en tres partes iguales',
+     HO('Y1').length===5 && Math.abs(HO('Y1')[1]-L('Y1')/3)<1e-12 &&
+     Math.abs(HO('Y1')[2]-L('Y1')/2)<1e-12 && Math.abs(HO('Y1')[3]-2*L('Y1')/3)<1e-12);
+  ok('Y2: 7 agujeros; los contiguos al central dividen la tira en tres partes iguales',
+     HO('Y2').length===7 && Math.abs(HO('Y2')[2]-L('Y2')/3)<1e-12 &&
+     Math.abs(HO('Y2')[3]-L('Y2')/2)<1e-12 && Math.abs(HO('Y2')[4]-2*L('Y2')/3)<1e-12);
+  ok('B2, Y2 y W2: el segundo agujero está a u/2 del extremo',
+     Math.abs(HO('B2')[1]-0.5)<1e-12 && Math.abs(HO('Y2')[1]-0.5)<1e-12 && Math.abs(HO('W2')[1]-0.5)<1e-12);
+  ['R1','R2','R3','B1','B2','Y1','Y2','W1','W2'].forEach(function(t){
+    var h=HO(t);
+    ok(t+': agujeros en los dos extremos y en orden creciente',
+       Math.abs(h[0])<1e-12 && Math.abs(h[h.length-1]-L(t))<1e-12 &&
+       h.every(function(x,i){ return i===0 || x>h[i-1]; }));
+  });
+
+  /* --- fijador de ángulos ------------------------------------------------ */
+  var P=TYPES.P;
+  ok('fijador: 14 agujeros (centro + 13 marcas)', P.pts.length===14);
+  ok('fijador: el primero es el del centro', Math.abs(P.pts[0].x)<1e-12 && Math.abs(P.pts[0].y)<1e-12);
+  ok('fijador: las marcas están a u/2 del centro',
+     P.pts.slice(1).every(function(p){ return Math.abs(Math.hypot(p.x,p.y)-0.5)<1e-12; }));
+  ok('fijador: de 0° a 180° cada 15°',
+     P.pts.slice(1).every(function(p,i){ return p.deg===i*15; }) && P.pts[13].deg===180);
+
+  /* --- qué tiras se pueden fijar ----------------------------------------- */
+  function pares(t){ var h=HO(t), r=[]; for(var i=0;i<h.length;i++) for(var j=i+1;j<h.length;j++) r.push(h[j]-h[i]); return r; }
+  function cuerda(k){ return 2*0.5*Math.sin(k*7.5*Math.PI/180); }
+  function porRadio(t){ return pares(t).some(function(d){return Math.abs(d-0.5)<1e-9;}); }
+  function porCuerda(t){ return pares(t).some(function(d){
+      for(var k=1;k<=12;k++) if(Math.abs(d-cuerda(k))<1e-9) return true; return false; }); }
+  ['R1','R3','B2','Y2','W2'].forEach(function(t){ ok(t+' encaja en el fijador por el radio', porRadio(t)); });
+  ['R2','B1','Y1','W1'].forEach(function(t){ ok(t+' no encaja por el radio', !porRadio(t)); });
+  ok('R2 encaja entre las marcas de 0° y 180° (cuerda 1 u)', porCuerda('R2'));
+  ok('B1 encaja entre dos marcas separadas 90°', pares('B1').some(function(d){return Math.abs(d-cuerda(6))<1e-9;}));
+  ok('Y1 encaja entre dos marcas separadas 120°', pares('Y1').some(function(d){return Math.abs(d-cuerda(8))<1e-9;}));
+  ok('W1 no encaja de ninguna forma: √5/2 supera el diámetro', !porCuerda('W1') && !porRadio('W1'));
+
+  /* --- unir y girar ------------------------------------------------------ */
+  reset();
+  var a=addStrip('R3',0,0,0), b=addStrip('R3',4*U,0,0);
+  var pin=joinAt(holeW(a,8),1);
+  ok('encuadernador creado con dos tiras', !!pin && pin.m.length===2);
+  var piv=pivotOf(b).p;
+  ok('el pivote de la tira girada es el encuadernador', D(piv,holeW(a,8))<0.01);
+  var a0=b.a;
+  ok('el giro se admite', rotateGroup(new Set([b.id]),piv,Math.PI/3)===true);
+  ok('la otra tira no se ha movido', a.x===0 && a.y===0 && a.a===0);
+  ok('la tira ha girado 60°', Math.abs(gr(b.a-a0)-60)<1e-9);
+  ok('la unión sigue cerrada', D(holeW(a,8),holeW(b,0))<1e-6);
+  ok('la tira no ha cambiado de longitud', Math.abs(D(holeW(b,0),holeW(b,8))-4*U)<1e-9);
+
+  reset();
+  a=addStrip('R2',0,0,0); b=addStrip('R2',2*U,0,0); var c=addStrip('R2',4*U,0,0);
+  joinAt(holeW(a,2),1); joinAt(holeW(b,2),1);
+  var cA={x:c.x,y:c.y,a:c.a};
+  ok('en una cadena, girar la tira de en medio se admite',
+     rotateGroup(new Set([b.id]),holeW(b,0),Math.PI/2)===true);
+  ok('la primera tira no se mueve', a.x===0 && a.y===0 && a.a===0);
+  ok('la tercera se arrastra sin girar',
+     D({x:c.x,y:c.y},cA)>1 && Math.abs(c.a-cA.a)<1e-12);
+  ok('las uniones de la cadena siguen cerradas', maxResidual()<1e-6, maxResidual().toFixed(6));
+
+  /* --- triángulo rígido -------------------------------------------------- */
+  reset();
+  var LL=2*U;
+  a=addStrip('R2',0,0,0);
+  b=addStrip('R2',LL,0,2*Math.PI/3);
+  c=addStrip('R2',LL/2,LL*Math.sqrt(3)/2,4*Math.PI/3);
+  ok('los tres vértices del triángulo coinciden',
+     D(holeW(b,2),holeW(c,0))<1e-6 && D(holeW(c,2),holeW(a,0))<1e-6);
+  joinAt(holeW(a,2),1); joinAt(holeW(b,2),1); joinAt(holeW(c,2),1);
+  ok('tres encuadernadores', pins.length===3, pins.length);
+  var V0=[holeW(a,0),holeW(b,0),holeW(c,0)], pv=holeW(a,0);
+  ok('el triángulo se puede girar', rotateGroup(new Set([a.id]),pv,0.4)===true);
+  ok('las uniones del triángulo siguen cerradas', maxResidual()<1.0, maxResidual().toFixed(5));
+  var V1=[holeW(a,0),holeW(b,0),holeW(c,0)];
+  ok('el triángulo sigue siendo congruente (es rígido)',
+     [0,1,2].every(function(i){ return Math.abs(D(V1[i],V1[(i+1)%3])-D(V0[i],V0[(i+1)%3]))<1e-6; }));
+  ok('el triángulo ha girado en bloque 0,4 rad', [0,1,2].every(function(i){
+      var co=Math.cos(0.4), si=Math.sin(0.4), p0=V0[i];
+      var ex={x:pv.x+(p0.x-pv.x)*co-(p0.y-pv.y)*si, y:pv.y+(p0.x-pv.x)*si+(p0.y-pv.y)*co};
+      return D(V1[i],ex)<0.5; }));
+
+  /* --- cuadrilátero deformable ------------------------------------------ */
+  reset();
+  a=addStrip('R2',0,0,0); b=addStrip('R2',LL,0,Math.PI/2);
+  c=addStrip('R2',LL,LL,Math.PI); var d=addStrip('R2',0,LL,-Math.PI/2);
+  joinAt(holeW(a,2),1); joinAt(holeW(b,2),1); joinAt(holeW(c,2),1); joinAt(holeW(d,2),1);
+  ok('cuatro encuadernadores en el cuadrilátero', pins.length===4, pins.length);
+  var diag0=D(holeW(a,0),holeW(c,0));
+  ok('el cuadrilátero se puede girar (es articulado)', rotateGroup(new Set([a.id]),holeW(a,0),0.3)===true);
+  ok('el cuadrilátero se ha deformado', Math.abs(D(holeW(a,0),holeW(c,0))-diag0)>1);
+  ok('las uniones siguen cerradas tras deformarlo', maxResidual()<1.0, maxResidual().toFixed(5));
+  [a,b,c,d].forEach(function(s,i){
+    ok('el lado '+(i+1)+' conserva su longitud', Math.abs(D(holeW(s,0),holeW(s,2))-LL)<1e-6); });
+  relax(null,{pin:pins[0],t:{x:holeW(a,2).x+34,y:holeW(a,2).y-21}},140);
+  ok('arrastrar un vértice deja las uniones cerradas', maxResidual()<1.0, maxResidual().toFixed(5));
+  ok('arrastrar un vértice no estira las barras',
+     [a,b,c,d].every(function(s){ return Math.abs(D(holeW(s,0),holeW(s,2))-LL)<1e-6; }));
+
+  /* --- rombo a partir de las diagonales ---------------------------------- */
+  reset();
+  var hh=addStrip('R3',0,0,0), vv=addStrip('R2',2*U,-U,Math.PI/2);
+  ok('los centros de las dos diagonales coinciden', D(holeW(hh,4),holeW(vv,1))<1e-6);
+  joinAt(holeW(hh,4),1);
+  var vert=[holeW(hh,0),holeW(vv,0),holeW(hh,8),holeW(vv,2)];
+  var lados=vert.map(function(q,i){ return D(q,vert[(i+1)%4]); });
+  ok('los cuatro lados del rombo son iguales', Math.max.apply(null,lados)-Math.min.apply(null,lados)<1e-6);
+  ok('y el lado del rombo mide √5 u, la longitud de W1',
+     Math.abs(lados[0]/U-Math.sqrt(5))<1e-9, (lados[0]/U).toFixed(5));
+
+  /* --- imán de giro sobre el fijador de ángulos -------------------------- */
+  reset();
+  var fij=addStrip('P',0,0,0);
+  var tira=addStrip('R1',0,0,-0.30);            // -17,2°: cerca de la marca de 15°
+  var pj=joinAt(holeW(fij,0),1);
+  ok('la tira se une al centro del fijador', !!pj && pj.m.length===2);
+  var pivF=holeW(fij,0);
+  var sn=findSnapRot(new Set([tira.id]),pivF);
+  ok('el imán encuentra una marca del fijador a la que saltar', !!sn);
+  if(sn){
+    rotateGroup(new Set([tira.id]),pivF,sn.da);
+    var ang=gr(tira.a), m=Math.abs(ang/15-Math.round(ang/15));
+    ok('tras el imán, la tira queda en un múltiplo exacto de 15°', m<1e-9, ang.toFixed(4)+'°');
+    ok('y su agujero cae justo sobre la marca del fijador',
+       P.pts.slice(1).some(function(p,i){ return D(holeW(tira,1),holeW(fij,i+1))<1e-6; }));
+    ok('el imán ha elegido la marca de 15° y no la de 0°', Math.abs(Math.abs(ang)-15)<1e-9, ang.toFixed(2)+'°');
+  }
+  reset();
+  var suelta=addStrip('R1',300,300,0.21), f2=addStrip('P',600,600,0);
+  ok('sin unión previa, el imán de giro no actúa (se puede girar libremente)',
+     findSnapRot(new Set([suelta.id]),holeW(suelta,0))===null);
+
+  /* --- guardar y volver a abrir ------------------------------------------ */
+  reset();
+  var g1=addStrip('R3',0,0,0), g2=addStrip('R2',2*U,-U,Math.PI/2), g3=addStrip('P',5*U,0,0.3);
+  joinAt(holeW(g1,4),1);
+  cords.push({id:nid++, closed:true, col:'#d0322f',
+              n:[{s:g1.id,h:0},{s:g2.id,h:0},{s:g1.id,h:8},{s:g2.id,h:2}]});
+  var antesP=strips.map(function(s){ return s.t+'@'+s.x.toFixed(4)+','+s.y.toFixed(4)+','+s.a.toFixed(6); }).join(' | ');
+  var antesV=[holeW(g1,0),holeW(g2,0),holeW(g1,8),holeW(g2,2)].map(function(p){return p.x.toFixed(3)+','+p.y.toFixed(3);}).join(' ');
+  var json=JSON.parse(JSON.stringify(serializar()));
+  ok('el archivo guarda las tres piezas, el encuadernador y la goma',
+     json.piezas.length===3 && json.encuadernadores.length===1 && json.gomas.length===1);
+  ok('las coordenadas se guardan en unidades, no en píxeles', Math.abs(json.piezas[1].x-2)<1e-6, json.piezas[1].x);
+  importMode='replace'; loadData(json);
+  ok('abrir devuelve las mismas piezas en la misma posición',
+     strips.map(function(s){ return s.t+'@'+s.x.toFixed(4)+','+s.y.toFixed(4)+','+s.a.toFixed(6); }).join(' | ')===antesP);
+  ok('abrir devuelve el encuadernador y la goma',
+     pins.length===1 && pins[0].m.length===2 && cords.length===1 && cords[0].n.length===4 && cords[0].closed===true);
+  ok('la goma vuelve a pasar por los mismos vértices',
+     [holeW(strips[0],0),holeW(strips[1],0),holeW(strips[0],8),holeW(strips[1],2)]
+       .map(function(p){return p.x.toFixed(3)+','+p.y.toFixed(3);}).join(' ')===antesV);
+  ok('el fijador también se recupera', strips.some(function(s){return s.t==='P';}));
+  ok('la unión cargada está cerrada', maxResidual()<1e-6, maxResidual().toFixed(7));
+  var nAntes=strips.length;
+  importMode='add'; loadData(json);
+  ok('el botón ＋ añade sin borrar lo anterior', strips.length===nAntes*2, strips.length);
+  ok('lo añadido no se solapa con lo que ya había',
+     bboxOf(strips.slice(nAntes)).y0 > bboxOf(strips.slice(0,nAntes)).y1 - 1);
+  ok('los encuadernadores añadidos apuntan a las piezas nuevas', pins.length===2 && maxResidual()<1e-6);
+  importMode='replace';
+  ok('un archivo con una tira inexistente se rechaza', deserializar({piezas:[{t:'ZZ',x:0,y:0,a:0}]})===null);
+  ok('un archivo vacío se rechaza', deserializar({piezas:[]})===null);
+
+  reset(); view.z=1; draw();
+
+  /* --- informe ----------------------------------------------------------- */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación de Geotiras</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+/* API mínima de depuración (útil para pruebas automáticas) */
+window.__geotiras={
+  test:runSelfTest,
+  strips:function(){return strips;}, pins:function(){return pins;}, cords:function(){return cords;},
+  add:addStrip, join:joinAt, rotate:rotateGroup, translate:translate,
+  holeW:holeW, holesOf:holesOf, lenOf:lenOf, dist:dist, pivotOf:pivotOf, byId:byId,
+  relax:relax, residual:maxResidual,
+  U:function(){return U;}, redraw:draw, reset:function(){strips=[];pins=[];cords=[];sel.clear();primary=null;}
+};
+
+})();
+</script>
+</body>
+</html>

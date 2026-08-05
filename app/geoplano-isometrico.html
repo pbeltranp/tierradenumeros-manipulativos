@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Geoplano isométrico · manipulativo virtual</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       font-size:14px;color:#2b2f36;background:#fff;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;height:100%;width:100%}
+
+  #side{width:180px;flex:0 0 180px;background:#f4f5f7;border-right:1px solid #dfe2e7;
+        overflow-y:auto;padding:10px 10px 24px}
+  #side h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:14px 0 7px;font-weight:600}
+  #side h2:first-child{margin-top:2px}
+  #swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+  .sw{width:100%;aspect-ratio:1;min-height:20px;border-radius:5px;border:1px solid rgba(0,0,0,.16);cursor:pointer;padding:0}
+  .sw.on{outline:2px solid #2f62a8;outline-offset:1px}
+  #custom{margin-top:7px;display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280}
+  #custom input{width:26px;height:24px;padding:0;border:1px solid #d5d9e0;border-radius:5px;background:none;cursor:pointer}
+  .act{display:block;width:100%;text-align:left;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+       padding:6px 9px;margin-bottom:4px;font-size:12.5px;color:#3d4450;cursor:pointer}
+  .act:hover:not(:disabled){background:#f0f2f5;border-color:#c8cdd6}
+  .act:disabled{opacity:.42;cursor:default}
+  .act kbd{float:right;font:inherit;font-size:10.5px;color:#9aa1ab}
+  .cordbox{border:1px solid #d9e6d5;background:#f5faf3;border-radius:8px;padding:8px;margin-bottom:6px}
+  .cordbox .fila{display:grid;grid-template-columns:30px 1fr 30px;gap:5px;align-items:center}
+  .cordbox button{border:1px solid #cfe0ca;background:#fff;border-radius:6px;padding:5px 0;
+                  font-size:13px;color:#2f6b34;cursor:pointer;width:100%}
+  .cordbox button:hover{background:#eef6ec}
+  .cordbox .val{text-align:center;font-size:14px;font-weight:700;color:#2f6b34}
+  .cordbox .tit{font-size:10.5px;color:#6f8a6d;text-align:center;margin-bottom:5px}
+  .cordbox .modo{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:7px}
+  .cordbox .modo button{font-size:11px;padding:5px 0}
+  .cordbox .modo button.on{background:#2f6b34;border-color:#2f6b34;color:#fff}
+  #cordlong.oculto{display:none}
+  .luzbox{border:1px solid #ecdfc4;background:#fdfaf1;border-radius:8px;padding:8px}
+  .luzbox .cruz{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+  .luzbox button{border:1px solid #e6d6b4;background:#fff;border-radius:6px;padding:5px 0;
+                 font-size:13px;color:#8a6d1f;cursor:pointer;width:100%}
+  .luzbox button:hover{background:#fbf3e2}
+  .luzbox button.on{background:#c98a12;border-color:#c98a12;color:#fff}
+  .luzbox .pie{font-size:10px;line-height:1.4;color:#a9925f;margin-top:6px;text-align:center}
+  #medidas{font-size:11.5px;color:#6b7280;line-height:1.65;margin-top:12px;border-top:1px solid #e3e6eb;padding-top:9px}
+  #medidas b{color:#2b2f36}
+  #medidas .g{color:#9aa1ab}
+  .note{font-size:10.5px;line-height:1.45;color:#8a919c;margin-top:12px}
+
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #dfe2e7;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn.on:hover{background:#2a589a}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  #avanzado{display:none;align-items:center;gap:5px}
+  #avanzado.show{display:inline-flex}
+  #stage{position:relative;flex:1;min-height:0;background:#fff}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:292px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:130px;flex:0 0 130px;padding:8px 6px}
+    #swatches{grid-template-columns:repeat(4,1fr)}
+    .btn{padding:5px 7px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <h2>Color</h2>
+    <div id="swatches"></div>
+    <div id="custom"><input type="color" id="cpick" value="#d23b30">otro</div>
+
+    <h2>Cordel</h2>
+    <div class="cordbox">
+      <div class="modo">
+        <button id="mlibre" class="on" title="El cordel da lo que haga falta; la figura se termina con doble clic en una clavija">libre</button>
+        <button id="mfija" title="El cordel tiene una longitud fija que no se puede superar">longitud fija</button>
+      </div>
+      <div id="cordlong" class="oculto">
+        <div class="tit">longitud del cordel</div>
+        <div class="fila">
+          <button id="lmenos" title="Acortar el cordel">−</button>
+          <span class="val" id="lval">12</span>
+          <button id="lmas" title="Alargar el cordel">+</button>
+        </div>
+      </div>
+    </div>
+
+    <h2>Luz 3D</h2>
+    <div class="luzbox">
+      <div class="cruz">
+        <span></span><button data-luz="arriba" title="Luz desde arriba">↑</button><span></span>
+        <button data-luz="izquierda" title="Luz desde la izquierda">←</button>
+        <button data-luz="no" id="luzNo" class="on" title="Sin luz">✕</button>
+        <button data-luz="derecha" title="Luz desde la derecha">→</button>
+        <span></span><button data-luz="abajo" title="Luz desde abajo">↓</button><span></span>
+      </div>
+      <div class="pie">Las figuras que son la cara de un cuerpo se iluminan según hacia dónde miren.</div>
+    </div>
+
+    <h2>Figura seleccionada</h2>
+    <button class="act" id="pintar" disabled>Pintar<kbd>P</kbd></button>
+    <button class="act" id="duplicar" disabled>Duplicar<kbd>D</kbd></button>
+    <button class="act" id="cerrar" disabled>Abrir / cerrar<kbd>C</kbd></button>
+    <button class="act" id="borrar" disabled>Quitar<kbd>Supr</kbd></button>
+
+    <div id="medidas"></div>
+    <div class="note">En la trama triangular las seis clavijas vecinas están todas a la misma distancia, pero las diagonales del rombo miden √3.</div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn on" data-tool="goma" title="Poner una goma elástica (1)">◯ Goma</button>
+      <button class="btn" data-tool="cordel" title="Poner un cordel (2)">～ Cordel</button>
+      <button class="btn" data-tool="move" title="Mover vértices y figuras (3)">✥ Mover</button>
+      <button class="btn" data-tool="fill" title="Cambiar el color de una figura (4)">◍ Color</button>
+      <button class="btn" data-tool="del" title="Quitar figuras (5)">✕ Quitar</button>
+      <span class="sep"></span>
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <label class="chk" title="Muestra las medidas de las figuras"><input type="checkbox" id="avz">Comprobaciones</label>
+      <span id="avanzado">
+        <label class="chk" title="Escribe el área y el perímetro junto a cada figura"><input type="checkbox" id="showmed">Medidas en el tablero</label>
+        <label class="chk" title="Cuenta las clavijas del borde y del interior, para el teorema de Pick"><input type="checkbox" id="showpick">Pick</label>
+        <label class="chk" title="Dibuja la retícula de triángulos"><input type="checkbox" id="showtri">Triángulos</label>
+      </span>
+      <span class="sep"></span>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar en un archivo">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir el contenido de un archivo a lo que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="clear">Limpiar</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo del geoplano</div>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LA TRAMA TRIANGULAR
+   Cada clavija se identifica por dos enteros (a,b). En el plano:
+       x = (a + b/2)·PASO        y = b·(√3/2)·PASO
+   Las seis vecinas —(±1,0), (0,±1), (1,−1), (−1,1)— están todas a distancia 1.
+   La distancia entre dos clavijas es √(da² + da·db + db²).
+   El área natural es el triangulito: una figura con vértices en las clavijas
+   siempre encierra un número entero de ellos.
+   ========================================================================= */
+var LIM=150;
+var PASO=48;
+var H3=Math.sqrt(3)/2;
+
+var figuras=[], nid=1, sel=null;
+var tool='goma', color='#d23b30', cordL=12, cordFijo=false;
+var view={x:0,y:0,z:1};
+var drag=null, borrador=null, undoStack=[], importMode='replace';
+var opt={med:0, pick:0, tri:0, luz:0};
+
+var COLORS=['#d23b30','#e8890c','#e3b90b','#4f9e3f','#2f8f86','#2f62a8',
+            '#6c4bb6','#c2418c','#8d6e5a','#7c8794','#2b2f36','#ffffff'];
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop'), medEl=document.getElementById('medidas');
+var flashMsg=null, flashT=0;
+
+function byId(id){ for(var i=0;i<figuras.length;i++) if(figuras[i].id===id) return figuras[i]; return null; }
+function pushUndo(){ undoStack.push(JSON.stringify({f:figuras,n:nid})); if(undoStack.length>80) undoStack.shift(); }
+function doUndo(){ if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var st=JSON.parse(undoStack.pop()); figuras=st.f; nid=st.n; sel=null; borrador=null; draw(); }
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2200); }
+
+/* --- paso de coordenadas -------------------------------------------------- */
+function xy(p){ return {x:(p.a + p.b/2)*PASO, y:p.b*H3*PASO}; }
+function ab(w){ var b=w.y/(H3*PASO); return {a:w.x/PASO - b/2, b:b}; }
+/* redondeo a la clavija más cercana: el de siempre no vale en trama triangular */
+function redondea(a,b){
+  var x=a, z=b, y=-x-z;
+  var rx=Math.round(x), ry=Math.round(y), rz=Math.round(z);
+  var dx=Math.abs(rx-x), dy=Math.abs(ry-y), dz=Math.abs(rz-z);
+  if(dx>dy && dx>dz) rx=-ry-rz; else if(dy>dz) ry=-rx-rz; else rz=-rx-ry;
+  return {a:rx, b:rz};
+}
+
+/* =========================================================================
+   2. MEDIDAS
+   ========================================================================= */
+function dist(p,q){ var da=q.a-p.a, db=q.b-p.b; return Math.sqrt(da*da + da*db + db*db); }
+function mcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=b; b=a%b; a=t; } return a; }
+
+function longitud(f){
+  var s=0, p=f.pts;
+  for(var i=0;i+1<p.length;i++) s+=dist(p[i],p[i+1]);
+  if(f.cerrada && p.length>2) s+=dist(p[p.length-1],p[0]);
+  return s;
+}
+/* área en triangulitos: el doble del determinante en coordenadas de la trama */
+function area(f){
+  if(!f.cerrada || f.pts.length<3) return 0;
+  var p=f.pts, s=0;
+  for(var i=0;i<p.length;i++){ var q=p[(i+1)%p.length]; s += p[i].a*q.b - q.a*p[i].b; }
+  return Math.abs(s);
+}
+function puntosBorde(f){
+  if(!f.cerrada || f.pts.length<3) return 0;
+  var p=f.pts, s=0;
+  for(var i=0;i<p.length;i++){ var q=p[(i+1)%p.length]; s+=mcd(q.a-p[i].a, q.b-p[i].b); }
+  return s;
+}
+/* dentro y borde se calculan en coordenadas de la trama: como es una
+   transformación afín del plano, el resultado es el mismo */
+function enSegmento(pt,a,b){
+  var cruz=(b.a-a.a)*(pt.b-a.b)-(b.b-a.b)*(pt.a-a.a);
+  if(cruz!==0) return false;
+  return pt.a>=Math.min(a.a,b.a) && pt.a<=Math.max(a.a,b.a) &&
+         pt.b>=Math.min(a.b,b.b) && pt.b<=Math.max(a.b,b.b);
+}
+function enBorde(f,pt){
+  var p=f.pts;
+  for(var i=0;i<p.length;i++){ var q=p[(i+1)%p.length];
+    if(i+1===p.length && !f.cerrada) break;
+    if(enSegmento(pt,p[i],q)) return true; }
+  return false;
+}
+function dentro(f,pt){
+  if(enBorde(f,pt)) return false;
+  var p=f.pts, d=false;
+  for(var i=0,j=p.length-1;i<p.length;j=i++){
+    if(((p[i].b>pt.b)!==(p[j].b>pt.b)) &&
+       (pt.a < (p[j].a-p[i].a)*(pt.b-p[i].b)/(p[j].b-p[i].b)+p[i].a)) d=!d;
+  }
+  return d;
+}
+function puntosInteriores(f){
+  if(!f.cerrada || f.pts.length<3) return 0;
+  var as=f.pts.map(function(p){return p.a;}), bs=f.pts.map(function(p){return p.b;});
+  var a0=Math.min.apply(null,as), a1=Math.max.apply(null,as);
+  var b0=Math.min.apply(null,bs), b1=Math.max.apply(null,bs);
+  var n=0;
+  for(var a=a0;a<=a1;a++) for(var b=b0;b<=b1;b++) if(dentro(f,{a:a,b:b})) n++;
+  return n;
+}
+function num(v){
+  var r=Math.round(v*100)/100;
+  return (Math.abs(r-Math.round(r))<1e-9 ? String(Math.round(r)) : r.toFixed(2)).replace('.',',');
+}
+
+/* =========================================================================
+   3. FIGURAS
+   ========================================================================= */
+function nueva(tipo,col,L){
+  var f={id:nid++, tipo:tipo, pts:[], cerrada:false, col:col||color};
+  if(tipo==='cordel' && L) f.L=L;
+  return f;
+}
+function limitado(f){ return f.tipo==='cordel' && typeof f.L==='number' && isFinite(f.L); }
+function cabe(f,extra){ if(!limitado(f)) return true; return longitud(f)+extra <= f.L+1e-9; }
+function sobrante(f){ return limitado(f) ? f.L-longitud(f) : Infinity; }
+
+function clavoEn(wp){
+  var r=ab(wp), c=redondea(r.a,r.b);
+  if(Math.abs(c.a)>LIM||Math.abs(c.b)>LIM) return null;
+  var q=xy(c);
+  return Math.hypot(wp.x-q.x, wp.y-q.y)<=PASO*0.40 ? c : null;
+}
+function distSeg(p,a,b){
+  var vx=b.x-a.x, vy=b.y-a.y, L=vx*vx+vy*vy;
+  var t=L?((p.x-a.x)*vx+(p.y-a.y)*vy)/L:0; t=Math.max(0,Math.min(1,t));
+  return Math.hypot(p.x-(a.x+t*vx), p.y-(a.y+t*vy));
+}
+function figuraEn(wp){
+  for(var i=figuras.length-1;i>=0;i--){
+    var f=figuras[i], p=f.pts;
+    for(var j=0;j<p.length;j++){
+      var q=p[(j+1)%p.length];
+      if(j+1===p.length && !f.cerrada) break;
+      if(distSeg(wp, xy(p[j]), xy(q))<=10) return f;
+    }
+  }
+  return null;
+}
+function verticeEn(wp){
+  for(var i=figuras.length-1;i>=0;i--){
+    var f=figuras[i];
+    for(var j=0;j<f.pts.length;j++){
+      var q=xy(f.pts[j]);
+      if(Math.hypot(wp.x-q.x, wp.y-q.y)<=13) return {f:f,i:j};
+    }
+  }
+  return null;
+}
+
+/* =========================================================================
+   4. DIBUJO
+   ========================================================================= */
+function w2s(p){ return {x:p.x*view.z+view.x, y:p.y*view.z+view.y}; }
+function s2w(p){ return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z}; }
+function P(p){ return w2s(xy(p)); }
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0); draw();
+}
+function conAlfa(hex,al){ return tinta(hex,0,al); }
+/* aclara (f>0) u oscurece (f<0) un color y le pone transparencia */
+function tinta(hex,f,al){
+  var h=(hex||'#d23b30').replace('#',''); if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
+  r=Math.round(r+(f>0?(255-r)*f:r*f)); g=Math.round(g+(f>0?(255-g)*f:g*f)); b=Math.round(b+(f>0?(255-b)*f:b*f));
+  return 'rgba('+r+','+g+','+b+','+al+')';
+}
+
+/* =========================================================================
+   LUZ 3D
+   En trama triangular hay tres direcciones. Una figura cerrada cuyos lados
+   usan solo dos de ellas es la proyección de una cara plana, y la tercera
+   dirección —la que no usa— es por donde apunta su normal. De ahí sale el
+   sombreado sin necesidad de reconstruir el cuerpo.
+   ========================================================================= */
+function direccionDe(da,db){                 // 1, 2 o 3; 0 si no es principal
+  var g=mcd(da,db); if(!g) return -1;        // -1: tramo nulo, se ignora
+  da/=g; db/=g;
+  if(da<0 || (da===0 && db<0)){ da=-da; db=-db; }
+  if(da===1 && db===0) return 1;
+  if(da===0 && db===1) return 2;
+  if(da===1 && db===-1) return 3;
+  return 0;
+}
+function orientacion(f){                     // la dirección que NO usa, o 0
+  if(!f.cerrada || f.pts.length<3) return 0;
+  var p=f.pts, usa={};
+  for(var i=0;i<p.length;i++){
+    var q=p[(i+1)%p.length];
+    var d=direccionDe(q.a-p[i].a, q.b-p[i].b);
+    if(d===-1) continue;
+    if(d===0) return 0;                      // hay un lado que no sigue la trama
+    usa[d]=1;
+  }
+  var k=Object.keys(usa);
+  if(k.length!==2) return 0;
+  return 6 - (+k[0]) - (+k[1]);              // 1+2+3 = 6
+}
+/* Un hexágono con los lados opuestos iguales y contrarios, cada uno en una
+   dirección de la trama y usando las tres, es el contorno de un prisma: el
+   dibujo de un cubo o de un ortoedro. Se parte en sus tres caras, que se
+   reúnen en el vértice interior O.                                          */
+function carasDeCuerpo(f){
+  if(!f.cerrada || f.pts.length!==6) return null;
+  var p=f.pts, s=[], i;
+  for(i=0;i<6;i++) s.push({a:p[(i+1)%6].a-p[i].a, b:p[(i+1)%6].b-p[i].b});
+  for(i=0;i<3;i++) if(s[i].a!==-s[i+3].a || s[i].b!==-s[i+3].b) return null;
+  var dirs={};
+  for(i=0;i<3;i++){ var d=direccionDe(s[i].a,s[i].b); if(d<=0) return null; dirs[d]=1; }
+  if(Object.keys(dirs).length!==3) return null;
+  /* el vértice interior es el que cierra el paralelogramo p0-p1-O-p5:
+     O = p5 + s0. Ojo, no vale p0 + s1, que solo coincide si todas las
+     aristas del cuerpo miden lo mismo. */
+  var O={a:p[5].a+s[0].a, b:p[5].b+s[0].b};
+  return [[p[0],p[1],O,p[5]], [p[1],p[2],p[3],O], [p[3],p[4],p[5],O]];
+}
+
+/* Normal aparente de cada orientación, en pantalla. Comprobado sobre el cubo
+   unidad: la cara que no usa la dirección 1 queda a la derecha del hexágono, la
+   que no usa la 2 arriba a la izquierda, y la que no usa la 3 abajo a la
+   izquierda. Las tres van a 120° y suman cero, como las caras visibles de un
+   cuerpo convexo. */
+var NORMAL={1:{x:1,y:0},
+            2:{x:-0.5,y:-Math.sqrt(3)/2},
+            3:{x:-0.5,y: Math.sqrt(3)/2}};
+var LUZ={arriba:{x:0,y:-1}, abajo:{x:0,y:1}, izquierda:{x:-1,y:0}, derecha:{x:1,y:0}};
+function brillo(ori){
+  if(!ori || !opt.luz || !LUZ[opt.luz]) return 0;
+  var n=NORMAL[ori], l=LUZ[opt.luz];
+  return (n.x*l.x + n.y*l.y) * 0.34;
+}
+function rangoVisible(W,H){
+  var esq=[{x:0,y:0},{x:W,y:0},{x:0,y:H},{x:W,y:H}].map(function(s){ return ab(s2w(s)); });
+  var as=esq.map(function(e){return e.a;}), bs=esq.map(function(e){return e.b;});
+  return {a0:Math.max(-LIM,Math.floor(Math.min.apply(null,as))-1),
+          a1:Math.min(LIM,Math.ceil(Math.max.apply(null,as))+1),
+          b0:Math.max(-LIM,Math.floor(Math.min.apply(null,bs))-1),
+          b1:Math.min(LIM,Math.ceil(Math.max.apply(null,bs))+1)};
+}
+function drawTrama(c,r,W,H){
+  var s=PASO*view.z; if(s<8) return;
+  if(opt.tri && s>=16){                       // retícula de triángulos
+    c.save(); c.lineWidth=1; c.strokeStyle='#eceff3'; c.beginPath();
+    for(var b=r.b0;b<=r.b1;b++){
+      var i0=P({a:r.a0,b:b}), i1=P({a:r.a1,b:b});
+      c.moveTo(i0.x,i0.y); c.lineTo(i1.x,i1.y);
+    }
+    for(var a=r.a0;a<=r.a1;a++){
+      var j0=P({a:a,b:r.b0}), j1=P({a:a,b:r.b1});
+      c.moveTo(j0.x,j0.y); c.lineTo(j1.x,j1.y);
+      var k0=P({a:a,b:r.b0}), k1=P({a:a-(r.b1-r.b0),b:r.b1});
+      c.moveTo(k0.x,k0.y); c.lineTo(k1.x,k1.y);
+    }
+    c.stroke(); c.restore();
+  }
+  var rad=Math.min(4.2, 4.2/view.z*view.z);
+  c.save();
+  for(var a2=r.a0;a2<=r.a1;a2++) for(var b2=r.b0;b2<=r.b1;b2++){
+    var q=P({a:a2,b:b2});
+    if(q.x<-6||q.y<-6||q.x>W+6||q.y>H+6) continue;
+    c.beginPath(); c.arc(q.x,q.y,rad,0,6.2832);
+    c.fillStyle='#aab2be'; c.fill();
+    if(s>18){ c.beginPath(); c.arc(q.x-1.2,q.y-1.2,1.4,0,6.2832);
+      c.fillStyle='#e2e6ec'; c.fill(); }
+  }
+  c.restore();
+}
+function trazo(c,f){
+  var p=f.pts; if(!p.length) return;
+  var q=P(p[0]);
+  c.beginPath(); c.moveTo(q.x,q.y);
+  for(var i=1;i<p.length;i++){ var r=P(p[i]); c.lineTo(r.x,r.y); }
+  if(f.cerrada && p.length>2) c.closePath();
+}
+function drawFigura(c,f,seleccionada){
+  var p=f.pts; if(!p.length) return;
+  c.save();
+  if(f.cerrada && p.length>2){
+    var ori = opt.luz ? orientacion(f) : 0;
+    var caras = (opt.luz && !ori) ? carasDeCuerpo(f) : null;
+    if(caras){
+      /* es el contorno de un cuerpo: se pinta cara a cara */
+      caras.forEach(function(q){
+        var o2=orientacion({cerrada:true, pts:q});
+        var r0=P(q[0]);
+        c.beginPath(); c.moveTo(r0.x,r0.y);
+        for(var i=1;i<q.length;i++){ var r=P(q[i]); c.lineTo(r.x,r.y); }
+        c.closePath();
+        c.fillStyle=tinta(f.col, brillo(o2), 0.9); c.fill();
+        c.lineWidth=1.4; c.strokeStyle=tinta(f.col,-0.30,0.55); c.stroke();
+      });
+    } else {
+      trazo(c,f);
+      /* si es una cara y la luz está puesta, se rellena como una cara de verdad;
+         si no, con el tinte tenue de siempre para que se vea el tablero */
+      c.fillStyle = ori ? tinta(f.col, brillo(ori), 0.88) : conAlfa(f.col,0.14);
+      c.fill('evenodd');
+    }
+  }
+  if(f.tipo==='goma'){
+    trazo(c,f); c.lineWidth=7; c.lineJoin='round'; c.lineCap='round';
+    c.strokeStyle=conAlfa(f.col,0.30); c.stroke();
+    trazo(c,f); c.lineWidth=4.2; c.strokeStyle=f.col; c.stroke();
+  } else {
+    trazo(c,f); c.lineWidth=3.4; c.lineJoin='round'; c.lineCap='round';
+    c.strokeStyle=f.col; c.stroke();
+    trazo(c,f); c.lineWidth=1.2; c.strokeStyle='rgba(255,255,255,.55)';
+    c.setLineDash([4,4]); c.stroke(); c.setLineDash([]);
+    p.forEach(function(t){ var q=P(t);
+      c.beginPath(); c.arc(q.x,q.y,3.4,0,6.2832); c.fillStyle=f.col; c.fill(); });
+  }
+  if(seleccionada){
+    p.forEach(function(t){ var q=P(t);
+      c.beginPath(); c.arc(q.x,q.y,7,0,6.2832);
+      c.lineWidth=2; c.strokeStyle='#2f62a8'; c.stroke(); });
+  }
+  c.restore();
+  if(opt.med && f.cerrada && p.length>2){
+    var sa=0, sb=0;
+    p.forEach(function(t){ sa+=t.a; sb+=t.b; });
+    var cen=P({a:sa/p.length, b:sb/p.length});
+    var txt='A '+num(area(f))+'△  P '+num(longitud(f));
+    c.save();
+    c.font='700 13px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.textAlign='center'; c.textBaseline='middle';
+    var w=c.measureText(txt).width+12;
+    c.fillStyle='rgba(255,255,255,.9)';
+    c.beginPath(); c.rect(cen.x-w/2,cen.y-11,w,22); c.fill();
+    c.lineWidth=1; c.strokeStyle=conAlfa(f.col,0.5); c.stroke();
+    c.fillStyle='#3a4048'; c.fillText(txt,cen.x,cen.y);
+    c.restore();
+  }
+}
+function drawPick(c){
+  if(!opt.pick || sel==null) return;
+  var f=byId(sel); if(!f || !f.cerrada || f.pts.length<3) return;
+  var as=f.pts.map(function(p){return p.a;}), bs=f.pts.map(function(p){return p.b;});
+  var a0=Math.min.apply(null,as), a1=Math.max.apply(null,as);
+  var b0=Math.min.apply(null,bs), b1=Math.max.apply(null,bs);
+  c.save();
+  for(var a=a0;a<=a1;a++) for(var b=b0;b<=b1;b++){
+    var pt={a:a,b:b}, q=P(pt);
+    if(enBorde(f,pt)){ c.beginPath(); c.arc(q.x,q.y,6,0,6.2832); c.fillStyle='#e8890c'; c.fill(); }
+    else if(dentro(f,pt)){ c.beginPath(); c.arc(q.x,q.y,6,0,6.2832); c.fillStyle='#2f8f86'; c.fill(); }
+  }
+  c.restore();
+}
+function escena(c,W,H,paraExportar,rangoFijo){
+  drawTrama(c, rangoFijo || rangoVisible(W,H), W, H);
+  figuras.forEach(function(f){ drawFigura(c,f,!paraExportar && f.id===sel); });
+  if(!paraExportar){
+    drawPick(c);
+    if(borrador && borrador.pts.length){
+      drawFigura(c,borrador,false);
+      if(borrador.prev){
+        var u=P(borrador.pts[borrador.pts.length-1]), v=P(borrador.prev);
+        c.save(); c.setLineDash([6,5]); c.lineWidth=2;
+        c.strokeStyle=conAlfa(borrador.col,0.7);
+        c.beginPath(); c.moveTo(u.x,u.y); c.lineTo(v.x,v.y); c.stroke(); c.restore();
+      }
+    }
+  }
+}
+function draw(){
+  var W=cv.width/(window.devicePixelRatio||1), H=cv.height/(window.devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  escena(ctx,W,H,false);
+  updateUI();
+}
+
+/* =========================================================================
+   5. INTERACCIÓN
+   ========================================================================= */
+function evPos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function terminaBorrador(){
+  if(borrador && borrador.pts.length>=2){ pushUndo(); delete borrador.prev; figuras.push(borrador); sel=borrador.id; }
+  borrador=null;
+}
+function onDown(e){
+  cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);
+  var sp=evPos(e), wp=s2w(sp), clavo=clavoEn(wp);
+
+  if(tool==='goma'||tool==='cordel'){
+    if(!clavo){ terminaBorrador(); draw(); return; }
+    if(!borrador){ borrador=nueva(tool,color,(tool==='cordel'&&cordFijo)?cordL:0);
+      borrador.pts.push(clavo); draw(); return; }
+    var ult=borrador.pts[borrador.pts.length-1], pri=borrador.pts[0];
+    if(clavo.a===ult.a && clavo.b===ult.b){ terminaBorrador(); draw(); return; }
+    if(borrador.pts.length>=3 && clavo.a===pri.a && clavo.b===pri.b){
+      if(!cabe(borrador,dist(ult,pri))){ flash('El cordel no llega para cerrar la figura'); draw(); return; }
+      borrador.cerrada=true; terminaBorrador(); draw(); return;
+    }
+    if(!cabe(borrador,dist(ult,clavo))){ flash('El cordel no llega hasta ahí'); draw(); return; }
+    borrador.pts.push(clavo); draw(); return;
+  }
+  if(tool==='del'){
+    var fd=figuraEn(wp);
+    if(fd){ pushUndo(); figuras=figuras.filter(function(q){return q!==fd;}); if(sel===fd.id) sel=null; }
+    draw(); return;
+  }
+  if(tool==='fill'){
+    var ff=figuraEn(wp);
+    if(ff){ sel=ff.id; pushUndo(); ff.col=color; }
+    draw(); return;
+  }
+  var v=verticeEn(wp);
+  if(v){ sel=v.f.id;
+    drag={mode:'vert', id:v.f.id, i:v.i, movido:false}; draw(); return; }
+  var fm=figuraEn(wp);
+  if(fm){ sel=fm.id;
+    var r0=ab(wp), c0=redondea(r0.a,r0.b);
+    drag={mode:'fig', id:fm.id, from:c0, movido:false,
+          base:fm.pts.map(function(q){ return {a:q.a,b:q.b}; })};
+    draw(); return; }
+  sel=null;
+  drag={mode:'pan', sp:sp, v0:{x:view.x,y:view.y}};
+  draw();
+}
+function onMove(e){
+  var sp=evPos(e), wp=s2w(sp);
+  if(!drag){
+    if(borrador && borrador.pts.length){ borrador.prev=clavoEn(wp)||null; draw(); }
+    return;
+  }
+  if(drag.mode==='pan'){ view.x=drag.v0.x+(sp.x-drag.sp.x); view.y=drag.v0.y+(sp.y-drag.sp.y); draw(); return; }
+  if(drag.mode==='vert'){
+    var f=byId(drag.id); if(!f) return;
+    var clavo=clavoEn(wp); if(!clavo) return;
+    var antes={a:f.pts[drag.i].a, b:f.pts[drag.i].b};
+    if(clavo.a===antes.a && clavo.b===antes.b) return;
+    f.pts[drag.i]={a:clavo.a,b:clavo.b};
+    if(limitado(f) && longitud(f)>f.L+1e-9){
+      f.pts[drag.i]=antes; flash('El cordel no se estira: no llega hasta ahí'); draw(); return; }
+    if(!drag.movido){ pushUndo(); drag.movido=true; }
+    draw(); return;
+  }
+  if(drag.mode==='fig'){
+    var g=byId(drag.id); if(!g) return;
+    var r=ab(wp), c=redondea(r.a,r.b);
+    var da=c.a-drag.from.a, db=c.b-drag.from.b;
+    var cand=drag.base.map(function(q){ return {a:q.a+da, b:q.b+db}; });
+    if(cand.some(function(q){ return Math.abs(q.a)>LIM||Math.abs(q.b)>LIM; })) return;
+    if(!drag.movido && (da||db)){ pushUndo(); drag.movido=true; }
+    g.pts=cand; draw(); return;
+  }
+}
+function onUp(){ drag=null; draw(); }
+
+stage.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var sp=evPos(e), antes=s2w(sp);
+  view.z=Math.max(0.2,Math.min(3.5,view.z*Math.exp(-e.deltaY*0.0015)));
+  var desp=s2w(sp);
+  view.x+=(desp.x-antes.x)*view.z; view.y+=(desp.y-antes.y)*view.z;
+  draw();
+},{passive:false});
+cv.addEventListener('pointerdown',onDown);
+window.addEventListener('pointermove',onMove);
+window.addEventListener('pointerup',onUp);
+window.addEventListener('pointercancel',onUp);
+cv.addEventListener('dblclick',function(){ if(borrador){ terminaBorrador(); draw(); } });
+
+window.addEventListener('keydown',function(e){
+  var t=(e.target&&e.target.tagName)||''; if(t==='INPUT'||t==='SELECT') return;
+  var k=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey)&&k==='z'){ doUndo(); e.preventDefault(); return; }
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(k==='escape'){ borrador=null; sel=null; draw(); }
+  else if(e.key==='Delete'||e.key==='Backspace'){
+    if(sel!=null){ pushUndo(); figuras=figuras.filter(function(f){return f.id!==sel;}); sel=null; draw(); e.preventDefault(); } }
+  else if(k==='enter'){ if(borrador){ terminaBorrador(); draw(); } }
+  else if(k==='p'){ if(sel!=null){ var f=byId(sel); if(f){ pushUndo(); f.col=color; draw(); } } }
+  else if(k==='d'){ duplicar(); }
+  else if(k==='c'){ cerrarAbrir(); }
+  else if(k==='1') setTool('goma');
+  else if(k==='2') setTool('cordel');
+  else if(k==='3') setTool('move');
+  else if(k==='4') setTool('fill');
+  else if(k==='5') setTool('del');
+});
+function cerrarAbrir(){
+  if(sel==null){ flash('Selecciona antes una figura'); return; }
+  var f=byId(sel); if(!f || f.pts.length<3) return;
+  if(!f.cerrada && !cabe(f,dist(f.pts[f.pts.length-1],f.pts[0]))){
+    flash('El cordel no llega para cerrar la figura'); return; }
+  pushUndo(); f.cerrada=!f.cerrada; draw();
+}
+function duplicar(){
+  if(sel==null){ flash('Selecciona antes una figura'); return; }
+  var f=byId(sel); if(!f) return;
+  var bs=f.pts.map(function(p){return p.b;});
+  var d=(Math.max.apply(null,bs)-Math.min.apply(null,bs))+2;
+  if(f.pts.some(function(p){ return p.b+d>LIM; })) d=-d;
+  pushUndo();
+  var g={id:nid++, tipo:f.tipo, cerrada:f.cerrada, col:f.col,
+         pts:f.pts.map(function(p){ return {a:p.a, b:p.b+d}; })};
+  if(limitado(f)) g.L=f.L;
+  figuras.push(g); sel=g.id; draw();
+}
+
+/* =========================================================================
+   6. INTERFAZ
+   ========================================================================= */
+(function(){
+  var w=document.getElementById('swatches');
+  COLORS.forEach(function(col){
+    var b=document.createElement('button');
+    b.className='sw'+(col===color?' on':''); b.style.background=col; b.dataset.c=col; b.title=col;
+    b.addEventListener('click',function(){ setColor(col); });
+    w.appendChild(b);
+  });
+})();
+function setColor(col){
+  color=col;
+  document.querySelectorAll('.sw').forEach(function(b){ b.classList.toggle('on', b.dataset.c===col); });
+  document.getElementById('cpick').value=/^#[0-9a-f]{6}$/i.test(col)?col:'#d23b30';
+  if(borrador){ borrador.col=col; draw(); }
+}
+document.getElementById('cpick').addEventListener('input',function(e){ setColor(e.target.value); });
+function setTool(t){
+  if(t!=='goma' && t!=='cordel') terminaBorrador();
+  tool=t;
+  document.querySelectorAll('[data-tool]').forEach(function(b){ b.classList.toggle('on', b.dataset.tool===t); });
+  cv.style.cursor=(t==='move')?'default':'crosshair';
+  draw();
+}
+document.querySelectorAll('[data-tool]').forEach(function(b){
+  b.addEventListener('click',function(){ setTool(b.dataset.tool); });
+});
+function setCordL(v){
+  cordL=Math.max(1,Math.min(400,v));
+  document.getElementById('lval').textContent=num(cordL);
+  if(cordFijo){
+    if(borrador && borrador.tipo==='cordel'){
+      if(longitud(borrador)>cordL+1e-9) flash('El cordel que estás tendiendo ya usa más que eso');
+      else borrador.L=cordL;
+    } else if(sel!=null){
+      var f=byId(sel);
+      if(f && f.tipo==='cordel'){
+        if(longitud(f)>cordL+1e-9) flash('Esa figura ya usa más cordel que eso');
+        else { pushUndo(); f.L=cordL; }
+      }
+    }
+  }
+  draw();
+}
+document.getElementById('lmenos').addEventListener('click',function(){ setCordL(cordL-1); });
+document.getElementById('lmas').addEventListener('click',function(){ setCordL(cordL+1); });
+function setModoCordel(fijo){
+  cordFijo=fijo;
+  document.getElementById('mfija').classList.toggle('on',fijo);
+  document.getElementById('mlibre').classList.toggle('on',!fijo);
+  document.getElementById('cordlong').classList.toggle('oculto',!fijo);
+  if(borrador && borrador.tipo==='cordel'){
+    if(fijo){ if(longitud(borrador)<=cordL+1e-9) borrador.L=cordL; }
+    else delete borrador.L;
+  }
+  draw();
+}
+document.getElementById('mfija').addEventListener('click',function(){ setModoCordel(true); });
+document.getElementById('mlibre').addEventListener('click',function(){ setModoCordel(false); });
+document.querySelectorAll('[data-luz]').forEach(function(b){
+  b.addEventListener('click',function(){
+    var v=b.dataset.luz;
+    opt.luz = (v==='no') ? 0 : v;
+    document.querySelectorAll('[data-luz]').forEach(function(o){
+      o.classList.toggle('on', o.dataset.luz===(opt.luz||'no')); });
+    draw();
+  });
+});
+document.getElementById('pintar').addEventListener('click',function(){
+  if(sel==null) return; var f=byId(sel); if(!f) return; pushUndo(); f.col=color; draw(); });
+document.getElementById('duplicar').addEventListener('click',duplicar);
+document.getElementById('cerrar').addEventListener('click',cerrarAbrir);
+document.getElementById('borrar').addEventListener('click',function(){
+  if(sel==null) return; pushUndo();
+  figuras=figuras.filter(function(f){return f.id!==sel;}); sel=null; draw(); });
+document.getElementById('undo').addEventListener('click',doUndo);
+document.getElementById('avz').addEventListener('change',function(e){
+  document.getElementById('avanzado').classList.toggle('show', e.target.checked);
+  if(!e.target.checked){ opt.med=0; opt.pick=0; opt.tri=0;
+    document.getElementById('showmed').checked=false;
+    document.getElementById('showpick').checked=false;
+    document.getElementById('showtri').checked=false; }
+  draw();
+});
+document.getElementById('showmed').addEventListener('change',function(e){ opt.med=e.target.checked?1:0; draw(); });
+document.getElementById('showpick').addEventListener('change',function(e){ opt.pick=e.target.checked?1:0; draw(); });
+document.getElementById('showtri').addEventListener('change',function(e){ opt.tri=e.target.checked?1:0; draw(); });
+document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.2); });
+document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.2); });
+function zoomAt(fz){ var r=stage.getBoundingClientRect(), c={x:r.width/2,y:r.height/2};
+  var b=s2w(c); view.z=Math.max(0.15,Math.min(3.5,view.z*fz)); var a=s2w(c);
+  view.x+=(a.x-b.x)*view.z; view.y+=(a.y-b.y)*view.z; draw(); }
+function cajaFiguras(){
+  if(!figuras.length) return null;
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  figuras.forEach(function(f){ f.pts.forEach(function(p){ var q=xy(p);
+    x0=Math.min(x0,q.x); x1=Math.max(x1,q.x); y0=Math.min(y0,q.y); y1=Math.max(y1,q.y); }); });
+  return {x0:x0,y0:y0,x1:x1,y1:y1};
+}
+document.getElementById('fit').addEventListener('click',fitView);
+function fitView(){
+  var r=stage.getBoundingClientRect(), b=cajaFiguras(), m=54;
+  if(!b) b={x0:0,y0:0,x1:6*PASO,y1:5*PASO};
+  var an=(b.x1-b.x0)||PASO, al=(b.y1-b.y0)||PASO;
+  var z=Math.min((r.width-2*m)/an, (r.height-2*m)/al);
+  view.z=Math.max(0.2,Math.min(2.2,z));
+  view.x=r.width/2-((b.x0+b.x1)/2)*view.z; view.y=r.height/2-((b.y0+b.y1)/2)*view.z;
+  draw();
+}
+document.getElementById('clear').addEventListener('click',function(){
+  if(!figuras.length) return; pushUndo(); figuras=[]; sel=null; borrador=null; draw(); });
+document.getElementById('png').addEventListener('click',function(){
+  var b=cajaFiguras(); if(!b){ flash('No hay nada que exportar'); return; }
+  var m=PASO*0.8, sc=2, W=(b.x1-b.x0)+2*m, H=(b.y1-b.y0)+2*m;
+  var oc=document.createElement('canvas'); oc.width=W*sc; oc.height=H*sc;
+  var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
+  var g={x:view.x,y:view.y,z:view.z};
+  view.x=m-b.x0; view.y=m-b.y0; view.z=1;
+  escena(o,W,H,true,rangoVisible(W,H));
+  view=g; draw();
+  var a=document.createElement('a'); a.download='geoplano-isometrico.png'; a.href=oc.toDataURL('image/png'); a.click();
+});
+
+/* --- guardar y abrir ----------------------------------------------------- */
+document.getElementById('save').addEventListener('click',function(){
+  if(!figuras.length){ flash('No hay figuras que guardar'); return; }
+  var d={formato:'geoplano-isometrico', version:1,
+         figuras:figuras.map(function(f){
+           var o={tipo:f.tipo, color:f.col, cerrada:!!f.cerrada,
+                  clavos:f.pts.map(function(p){ return [p.a,p.b]; })};
+           if(limitado(f)) o.longitud=f.L;
+           return o; })};
+  var blob=new Blob([JSON.stringify(d,null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download='geoplano-isometrico.json'; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+document.getElementById('add').addEventListener('click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leer(f); });
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }catch(err){ flash('No he podido leer ese archivo'); } };
+  r.readAsText(f);
+}
+function loadData(d){
+  var lista=d && (d.figuras||d.figures);
+  if(!lista || !lista.length){ flash('El archivo no contiene figuras'); return; }
+  var nuevas=[];
+  for(var i=0;i<lista.length;i++){
+    var q=lista[i];
+    var pts=(q.clavos||q.pts||[]).map(function(p){
+      return Array.isArray(p) ? {a:p[0]|0, b:p[1]|0} : {a:p.a|0, b:p.b|0}; });
+    if(pts.length<2) continue;
+    var tipo=(q.tipo==='cordel')?'cordel':'goma';
+    var f={id:nid++, tipo:tipo, pts:pts, cerrada:!!q.cerrada, col:q.color||q.col||color};
+    var L=Number(q.longitud);
+    if(tipo==='cordel' && isFinite(L) && L>0) f.L=L;
+    nuevas.push(f);
+  }
+  if(!nuevas.length){ flash('El archivo no contiene figuras'); return; }
+  pushUndo();
+  figuras = importMode==='replace' ? nuevas : figuras.concat(nuevas);
+  sel=null; borrador=null; fitView();
+  flash(nuevas.length+(nuevas.length===1?' figura cargada':' figuras cargadas'));
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); }); });
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); }); });
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='add'; leer(f); }
+});
+
+document.getElementById('help').addEventListener('click',function(){ infoEl.classList.toggle('show'); });
+infoEl.innerHTML=
+ '<b>Geoplano de trama triangular</b><br>Las clavijas forman triángulos equiláteros. Cada una tiene '+
+ '<b>seis vecinas y todas a la misma distancia</b>, a diferencia de la trama cuadrada, donde las cuatro de '+
+ 'los lados están a 1 y las cuatro de las diagonales a √2.'+
+ '<div style="margin-top:7px">Eso no significa que aquí todo sea redondo: la diagonal corta de un rombo '+
+ 'mide 1, pero la larga mide <b>√3</b>. Quien vaya contando clavijas en vez de midiendo se lleva la misma '+
+ 'sorpresa que en la trama cuadrada, solo que con otro número.</div>'+
+ '<div style="margin-top:7px"><b>El área se mide en triangulitos.</b> Cualquier figura con los vértices en '+
+ 'las clavijas encierra un número entero de triángulos unidad, así que no hacen falta decimales ni raíces '+
+ 'para hablar de superficie.</div>'+
+ '<div style="margin-top:7px"><b>Goma y cordel</b><br>'+
+ 'La <b>goma</b> se estira lo que haga falta. El <b>cordel</b> tiene dos modos: en <b>libre</b> también, y '+
+ 'la figura se termina con doble clic en una clavija; en <b>longitud fija</b> no da más de sí que la '+
+ 'longitud que elijas, y si no llega, no llega.</div>'+
+ '<div style="margin-top:7px">Con una longitud fija de cordel se pueden formar figuras muy distintas. '+
+ '¿Cuáles? ¿Encierran todas la misma superficie? Con 12 unidades hay unas cuantas que cierran justas, '+
+ 'y compararlas da bastante juego.</div>'+
+ '<div style="margin-top:7px"><b>Luz 3D</b><br>En esta trama es muy frecuente dibujar cuerpos: un cubo son '+
+ 'tres rombos, y las figuras que se hacen son en realidad caras vistas en perspectiva. Al encender la luz '+
+ 'y elegir de dónde viene, cada cara se ilumina según hacia dónde mire.<br>'+
+ 'Funciona porque una figura cerrada cuyos lados usan solo dos de las tres direcciones de la trama es la '+
+ 'proyección de una cara plana, y la dirección que no usa es justamente por donde apunta su normal.<br>'+
+ 'Si dibujas el cubo entero de una vez, el hexágono usa las tres direcciones y por tanto no es una cara, '+
+ 'sino el contorno de un cuerpo. También se reconoce: se parte solo en sus tres caras y cada una se '+
+ 'ilumina como le corresponde. Vale para cualquier ortoedro, no solo para el cubo.<br>'+
+ 'Lo que no se sombrea es lo que no es ni una cosa ni la otra, como un triángulo o una figura con lados '+
+ 'que no siguen la trama.<br>'+
+ 'La luz de <b>arriba</b> y la de <b>abajo</b> son las que dan los tres niveles de claridad y hacen que el '+
+ 'cubo se levante mejor. Con la luz lateral, dos de las tres caras quedan igual de oscuras, porque son '+
+ 'simétricas respecto de la horizontal.</div>'+
+ '<div style="margin-top:7px">En <b>Comprobaciones</b> están las medidas, el dibujo de la retícula de '+
+ 'triángulos y el recuento de <b>Pick</b>, que marca en naranja las clavijas del borde y en verde las del '+
+ 'interior. Aquí el teorema toma la forma <b>2i + b − 2</b> triangulitos, porque la unidad de área es el '+
+ 'triángulo y no el paralelogramo.</div>'+
+ '<div style="margin-top:7px;color:#8a919c">Atajos: 1-5 herramientas · Intro o doble clic terminan la figura · '+
+ 'Esc la cancela · C abre o cierra · D duplicar · P pintar · Supr quitar · Ctrl+Z deshacer.</div>'+
+ '<div class="lic">Geoplano isométrico · Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · @pbeltranp<br>'+
+ 'Se puede usar, copiar y adaptar citando la autoría: licencia '+
+ '<a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>.</div>';
+
+function updateUI(){
+  var f = sel!=null ? byId(sel) : null;
+  ['pintar','duplicar','cerrar','borrar'].forEach(function(id){ document.getElementById(id).disabled=!f; });
+  var h='';
+  if(borrador){
+    h='<b>Tendiendo '+(borrador.tipo==='goma'?'una goma':'un cordel')+'</b>';
+    if(limitado(borrador)) h+='<br><span class="g">cordel de '+num(borrador.L)+'</span>';
+  } else if(f){
+    h='<b>'+(f.tipo==='goma'?'Goma':'Cordel')+'</b>';
+    if(limitado(f)) h+=' de '+num(f.L);
+    if(opt.med||opt.pick){
+      h+='<br>longitud: <b>'+num(longitud(f))+'</b>';
+      if(limitado(f)) h+='<br>sobra: <b>'+num(sobrante(f))+'</b>';
+      if(f.cerrada && f.pts.length>2){
+        var A=area(f), B=puntosBorde(f), I=puntosInteriores(f);
+        h+='<br>área: <b>'+num(A)+'</b> triángulos';
+        if(opt.pick) h+='<br><span class="g">i = '+I+' · b = '+B+'<br>2i + b − 2 = '+num(2*I+B-2)+'</span>';
+      }
+    } else {
+      h+='<br><span class="g">las medidas están en Comprobaciones</span>';
+    }
+  } else {
+    h='<span class="g">'+figuras.length+(figuras.length===1?' figura en el tablero':' figuras en el tablero')+'</span>';
+  }
+  medEl.innerHTML=h;
+
+  var t;
+  if(flashMsg && Date.now()-flashT<2100) t=flashMsg;
+  else if(tool==='goma') t='Haz clic en clavijas sucesivas para tender la goma · vuelve a la primera para cerrar la figura, o Intro para dejarla abierta';
+  else if(tool==='cordel') t = cordFijo
+      ? 'Cordel de '+num(cordL)+' unidades · haz clic en clavijas sucesivas; cuando se acabe, no dará más de sí'
+      : 'Cordel libre · haz clic en clavijas sucesivas · doble clic en una clavija, o Intro, para terminar';
+  else if(tool==='move') t='Arrastra un vértice para cambiarlo de clavija, o el interior de la figura para moverla entera';
+  else if(tool==='fill') t='Haz clic en una figura para pintarla del color elegido';
+  else t='Haz clic en una figura para quitarla del tablero';
+  hintEl.textContent=t;
+}
+
+/* =========================================================================
+   7. ARRANQUE
+   ========================================================================= */
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+(function init(){ setModoCordel(false); setCordL(12); fitView(); resize(); })();
+
+/* =========================================================================
+   8. AUTOCOMPROBACIÓN  ·  añade #test al final de la URL
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){ out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':'')); if(!c) fails++; }
+  function fig(tipo,pts,cerrada,L){
+    var f={id:nid++, tipo:tipo, pts:pts.map(function(p){return {a:p[0],b:p[1]};}), cerrada:!!cerrada, col:'#d23b30'};
+    if(tipo==='cordel' && L) f.L=L;
+    return f;
+  }
+  var R3=Math.sqrt(3), R7=Math.sqrt(7);
+
+  /* --- la trama ----------------------------------------------------------- */
+  var vecinas=[[1,0],[-1,0],[0,1],[0,-1],[1,-1],[-1,1]];
+  ok('las seis clavijas vecinas están todas a distancia 1',
+     vecinas.every(function(v){ return Math.abs(dist({a:0,b:0},{a:v[0],b:v[1]})-1)<1e-12; }));
+  ok('la diagonal larga del rombo mide √3', Math.abs(dist({a:0,b:0},{a:1,b:1})-R3)<1e-12);
+  ok('dos clavijas en línea miden 2', Math.abs(dist({a:0,b:0},{a:2,b:0})-2)<1e-12);
+  ok('el salto (2,1) mide √7', Math.abs(dist({a:0,b:0},{a:2,b:1})-R7)<1e-12, num(R7));
+  ok('ir y volver da la misma distancia',
+     Math.abs(dist({a:3,b:-2},{a:-1,b:5})-dist({a:-1,b:5},{a:3,b:-2}))<1e-12);
+  /* el redondeo a la clavija más cercana */
+  ok('el centro de una clavija se redondea a ella misma',
+     (function(){ var c=redondea(3,-2); return c.a===3 && c.b===-2; })());
+  ok('un punto entre dos clavijas cae en la más cercana',
+     (function(){ var c=redondea(0.1,0.05); return c.a===0 && c.b===0; })());
+  ok('el redondeo devuelve siempre clavijas enteras',
+     (function(){ var ok2=true;
+       for(var i=0;i<200;i++){ var c=redondea(Math.random()*10-5, Math.random()*10-5);
+         if(c.a!==Math.round(c.a)||c.b!==Math.round(c.b)) ok2=false; }
+       return ok2; })());
+  ok('cada punto se redondea a la clavija más próxima de verdad',
+     (function(){ var ok2=true;
+       for(var i=0;i<200;i++){
+         var ra=Math.random()*8-4, rb=Math.random()*8-4;
+         var c=redondea(ra,rb), w=xy({a:ra,b:rb}), d0=Math.hypot(w.x-xy(c).x, w.y-xy(c).y);
+         for(var da=-2;da<=2;da++) for(var db=-2;db<=2;db++){
+           var q=xy({a:c.a+da,b:c.b+db});
+           if(Math.hypot(w.x-q.x,w.y-q.y) < d0-1e-9) ok2=false;
+         }
+       }
+       return ok2; })());
+
+  /* --- áreas en triangulitos --------------------------------------------- */
+  var uno=fig('goma',[[0,0],[1,0],[0,1]],true);
+  ok('el triángulo unidad tiene área 1', Math.abs(area(uno)-1)<1e-12, area(uno));
+  ok('y perímetro 3', Math.abs(longitud(uno)-3)<1e-12);
+  var rombo=fig('goma',[[0,0],[1,0],[1,1],[0,1]],true);
+  ok('el rombo unidad tiene área 2', Math.abs(area(rombo)-2)<1e-12, area(rombo));
+  ok('y perímetro 4', Math.abs(longitud(rombo)-4)<1e-12);
+  [[1,1],[2,4],[3,9],[4,16],[5,25]].forEach(function(t){
+    var n=t[0], tri=fig('goma',[[0,0],[n,0],[0,n]],true);
+    ok('el triángulo equilátero de lado '+n+' tiene '+t[1]+' triangulitos', Math.abs(area(tri)-t[1])<1e-9, area(tri));
+    ok('  y perímetro '+(3*n), Math.abs(longitud(tri)-3*n)<1e-12);
+  });
+  [[1,6],[2,24],[3,54]].forEach(function(t){
+    var n=t[0];
+    var hex=fig('goma',[[n,0],[0,n],[-n,n],[-n,0],[0,-n],[n,-n]],true);
+    ok('el hexágono regular de lado '+n+' tiene '+t[1]+' triangulitos', Math.abs(area(hex)-t[1])<1e-9, area(hex));
+    ok('  y perímetro '+(6*n), Math.abs(longitud(hex)-6*n)<1e-12, num(longitud(hex)));
+  });
+  ok('una figura abierta no tiene área', area(fig('goma',[[0,0],[2,0],[0,2]],false))===0);
+
+  /* --- Pick en trama triangular: A = 2i + b − 2 --------------------------- */
+  [[ [[0,0],[1,0],[0,1]],            1,  3, 0],
+   [[ [0,0],[1,0],[1,1],[0,1]],      2,  4, 0],
+   [[ [0,0],[4,0],[0,4]],           16, 12, 3],
+   [[ [2,0],[0,2],[-2,2],[-2,0],[0,-2],[2,-2]], 24, 12, 7],
+   [[ [0,0],[3,0],[3,1],[0,3]],     12,  8, 3]
+  ].forEach(function(t){
+    var f=fig('goma',t[0],true);
+    var A=area(f), B=puntosBorde(f), I=puntosInteriores(f);
+    ok('área de la figura de '+t[0].length+' vértices = '+t[1], Math.abs(A-t[1])<1e-9, A);
+    ok('  clavijas del borde = '+t[2], B===t[2], B);
+    ok('  clavijas interiores = '+t[3], I===t[3], I);
+    ok('  y se cumple Pick: A = 2i + b − 2', Math.abs(A-(2*I+B-2))<1e-9, 2*I+B-2);
+  });
+
+  /* --- goma y cordel ------------------------------------------------------ */
+  ok('la goma no tiene límite', cabe(fig('goma',[[0,0],[5,0]],false),1000));
+  ok('el cordel libre tampoco', !limitado(fig('cordel',[[0,0],[5,0]],false,0)));
+  var t4=fig('cordel',[[0,0],[4,0],[0,4]],true,12);
+  var h2=fig('cordel',[[2,0],[0,2],[-2,2],[-2,0],[0,-2],[2,-2]],true,12);
+  ok('con 12 de cordel se hace justo el triángulo de lado 4', Math.abs(longitud(t4)-12)<1e-12);
+  ok('y también el hexágono de lado 2', Math.abs(longitud(h2)-12)<1e-12);
+  ok('a los dos no les sobra nada', Math.abs(sobrante(t4))<1e-12 && Math.abs(sobrante(h2))<1e-12);
+  ok('pero el hexágono encierra más: 24 frente a 16',
+     area(h2)===24 && area(t4)===16, num(area(h2))+' > '+num(area(t4)));
+  var corto=fig('cordel',[[0,0],[3,0],[0,3]],false,9);
+  ok('un cordel de 9 llega justo a dos lados del triángulo de lado 3', cabe(corto,0));
+  ok('y no da para el tercero si solo quedan 2', !cabe(fig('cordel',[[0,0],[3,0],[0,3]],false,8),3));
+  var conRaiz=fig('cordel',[[0,0],[1,1]],false,2);
+  ok('un tramo de √3 cabe en un cordel de 2', Math.abs(longitud(conRaiz)-R3)<1e-12 && cabe(conRaiz,0));
+  ok('pero dos tramos de √3 no', !cabe(conRaiz,R3));
+
+  /* --- luz 3D: reconocer las caras --------------------------------------- */
+  ok('el rombo de direcciones 1 y 2 es una cara, y su normal es la 3',
+     orientacion(fig('goma',[[0,0],[1,0],[1,1],[0,1]],true))===3);
+  ok('el rombo de direcciones 1 y 3 es una cara, y su normal es la 2',
+     orientacion(fig('goma',[[0,0],[1,0],[2,-1],[1,-1]],true))===2);
+  ok('el rombo de direcciones 2 y 3 es una cara, y su normal es la 1',
+     orientacion(fig('goma',[[0,0],[0,1],[1,0],[1,-1]],true))===1);
+  ok('un paralelogramo alargado sigue siendo la misma cara',
+     orientacion(fig('goma',[[0,0],[3,0],[3,2],[0,2]],true))===3);
+  ok('el triángulo equilátero no es una cara: usa las tres direcciones',
+     orientacion(fig('goma',[[0,0],[3,0],[0,3]],true))===0);
+  ok('el hexágono tampoco es una cara', orientacion(fig('goma',[[2,0],[0,2],[-2,2],[-2,0],[0,-2],[2,-2]],true))===0);
+
+  /* --- el cubo: contorno de un cuerpo, no una cara ------------------------ */
+  var cubo=fig('goma',[[1,0],[0,1],[-1,1],[-1,0],[0,-1],[1,-1]],true);
+  var caras=carasDeCuerpo(cubo);
+  ok('el hexágono del cubo se reconoce como contorno de un cuerpo', !!caras);
+  ok('y se parte en tres caras', caras && caras.length===3);
+  ok('cada cara es un rombo de cuatro vértices',
+     caras && caras.every(function(q){ return q.length===4; }));
+  ok('las tres caras tienen orientaciones distintas', caras && (function(){
+      var o=caras.map(function(q){ return orientacion({cerrada:true,pts:q}); });
+      return o[0] && o[1] && o[2] && o[0]!==o[1] && o[1]!==o[2] && o[0]!==o[2]; })(),
+     caras && caras.map(function(q){return orientacion({cerrada:true,pts:q});}).join(','));
+  ok('las tres caras suman el área del cubo', caras && (function(){
+      var s=0; caras.forEach(function(q){ s+=area({cerrada:true,pts:q}); });
+      return Math.abs(s-area(cubo))<1e-9; })(), area(cubo));
+  /* ortoedro de aristas 2, 1 y 3 sobre las tres direcciones de la trama */
+  var orto=fig('goma',[[0,0],[-3,3],[-5,3],[-5,2],[-2,-1],[0,-1]],true);
+  ok('se reconoce también un ortoedro de aristas distintas', !!carasDeCuerpo(orto));
+  ok('y también se parte en tres caras de orientaciones distintas', (function(){
+      var q=carasDeCuerpo(orto); if(!q) return false;
+      var o=q.map(function(r){ return orientacion({cerrada:true,pts:r}); });
+      return o[0] && o[1] && o[2] && o[0]!==o[1] && o[1]!==o[2] && o[0]!==o[2]; })(),
+     (function(){ var q=carasDeCuerpo(orto);
+       return q? q.map(function(r){return orientacion({cerrada:true,pts:r});}).join(',') : '-'; })());
+  ok('las caras del ortoedro suman su área', (function(){
+      var q=carasDeCuerpo(orto); if(!q) return false;
+      var s=0; q.forEach(function(r){ s+=area({cerrada:true,pts:r}); });
+      return Math.abs(s-area(orto))<1e-9; })(), area(orto));
+  ok('el vértice interior es común a las tres caras', (function(){
+      var q=carasDeCuerpo(orto); if(!q) return false;
+      var O=q[0][2];
+      return q[1][3].a===O.a && q[1][3].b===O.b && q[2][3].a===O.a && q[2][3].b===O.b; })());
+  ok('un hexágono regular grande también es un cubo',
+     !!carasDeCuerpo(fig('goma',[[2,0],[0,2],[-2,2],[-2,0],[0,-2],[2,-2]],true)));
+  ok('una figura de cinco lados no es un cuerpo',
+     carasDeCuerpo(fig('goma',[[0,0],[2,0],[2,1],[1,2],[0,2]],true))===null);
+  ok('un hexágono con los lados opuestos desiguales tampoco',
+     carasDeCuerpo(fig('goma',[[0,0],[2,0],[3,-1],[3,-2],[2,-2],[1,-1]],true))===null);
+  ok('y una figura abierta tampoco',
+     carasDeCuerpo(fig('goma',[[1,0],[0,1],[-1,1],[-1,0],[0,-1],[1,-1]],false))===null);
+  ok('una figura abierta no es una cara', orientacion(fig('goma',[[0,0],[1,0],[1,1]],false))===0);
+  ok('un lado que no sigue la trama descarta la cara',
+     orientacion(fig('goma',[[0,0],[2,1],[2,2],[0,1]],true))===0);
+  var luzAntes=opt.luz;
+  opt.luz=0;
+  ok('con la luz apagada no hay sombreado', brillo(1)===0 && brillo(2)===0 && brillo(3)===0);
+  opt.luz='arriba';
+  ok('con luz de arriba salen los tres niveles del cubo',
+     brillo(2)>brillo(1) && brillo(1)>brillo(3),
+     [brillo(2),brillo(1),brillo(3)].map(function(v){return v.toFixed(2);}).join(' > '));
+  ok('y la cara de normal horizontal se queda neutra', Math.abs(brillo(1))<1e-12);
+  opt.luz='abajo';
+  ok('con luz de abajo se invierte el orden', brillo(3)>brillo(1) && brillo(1)>brillo(2));
+  opt.luz='derecha';
+  ok('con luz de la derecha, la cara que mira a la derecha es la más clara',
+     brillo(1)>brillo(2) && brillo(1)>brillo(3));
+  ok('y las otras dos quedan igual de oscuras, que es lo que toca por simetría',
+     Math.abs(brillo(2)-brillo(3))<1e-12 && brillo(2)<0);
+  opt.luz='izquierda';
+  ok('con luz de la izquierda, esa misma cara es la más oscura',
+     brillo(1)<brillo(2) && brillo(1)<brillo(3) && brillo(2)>0);
+  ok('las tres normales son unitarias',
+     [1,2,3].every(function(o){ return Math.abs(Math.hypot(NORMAL[o].x,NORMAL[o].y)-1)<1e-9; }));
+  ok('y están a 120° unas de otras',
+     Math.abs(NORMAL[1].x+NORMAL[2].x+NORMAL[3].x)<1e-9 &&
+     Math.abs(NORMAL[1].y+NORMAL[2].y+NORMAL[3].y)<1e-9);
+  opt.luz=luzAntes;
+
+  /* --- duplicar ----------------------------------------------------------- */
+  figuras=[]; sel=null; nid=1;
+  var orig=fig('cordel',[[0,0],[3,0],[0,3]],true,9);
+  figuras.push(orig); sel=orig.id;
+  duplicar();
+  ok('duplicar crea una figura más', figuras.length===2);
+  ok('la copia conserva tipo, color, longitud y forma',
+     figuras[1].tipo==='cordel' && figuras[1].L===9 &&
+     Math.abs(area(figuras[1])-area(orig))<1e-9 && Math.abs(longitud(figuras[1])-longitud(orig))<1e-12);
+
+  /* --- guardar y volver a abrir ------------------------------------------ */
+  figuras=[]; sel=null; nid=1;
+  figuras.push(fig('goma',[[0,0],[4,0],[0,4]],true));
+  figuras.push(fig('cordel',[[-3,-2],[-1,-2],[-1,0]],false,0));
+  figuras.push(fig('cordel',[[2,0],[0,2],[-2,2],[-2,0],[0,-2],[2,-2]],true,12));
+  figuras[2].col='#2f62a8';
+  var antes=figuras.map(function(f){
+    return f.tipo+':'+f.col+':'+f.cerrada+':'+f.pts.map(function(p){return p.a+','+p.b;}).join(' ')+':'+(f.L||''); }).sort().join(' | ');
+  var data={formato:'geoplano-isometrico',version:1,
+    figuras:figuras.map(function(f){
+      var o={tipo:f.tipo,color:f.col,cerrada:f.cerrada,clavos:f.pts.map(function(p){return [p.a,p.b];})};
+      if(limitado(f)) o.longitud=f.L; return o; })};
+  importMode='replace'; loadData(JSON.parse(JSON.stringify(data)));
+  ok('guardar y volver a abrir conserva las figuras',
+     figuras.map(function(f){
+       return f.tipo+':'+f.col+':'+f.cerrada+':'+f.pts.map(function(p){return p.a+','+p.b;}).join(' ')+':'+(f.L||''); }).sort().join(' | ')===antes);
+  ok('se conserva el cordel limitado y el libre',
+     figuras.filter(function(f){return limitado(f);}).length===1 &&
+     figuras.filter(function(f){return f.tipo==='cordel'&&!limitado(f);}).length===1);
+  ok('se admiten coordenadas negativas',
+     figuras.some(function(f){ return f.pts.some(function(p){ return p.a<0||p.b<0; }); }));
+  ok('el área se recupera igual',
+     Math.abs(area(figuras.filter(function(f){return f.pts.length===6;})[0])-24)<1e-9);
+  var nAntes=figuras.length;
+  importMode='add'; loadData(JSON.parse(JSON.stringify(data)));
+  ok('el botón ＋ añade sin borrar lo anterior', figuras.length===nAntes*2, figuras.length);
+  importMode='replace';
+
+  figuras=[]; sel=null; borrador=null; nid=1; undoStack=[]; fitView();
+
+  /* --- informe ----------------------------------------------------------- */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación del Geoplano isométrico</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__geoplanoIso={
+  test:runSelfTest, figuras:function(){return figuras;}, byId:byId,
+  xy:xy, ab:ab, redondea:redondea, dist:dist,
+  longitud:longitud, area:area, puntosBorde:puntosBorde, puntosInteriores:puntosInteriores,
+  dentro:dentro, enBorde:enBorde, cabe:cabe, sobrante:sobrante, limitado:limitado,
+  orientacion:orientacion, brillo:brillo, direccionDe:direccionDe, opt:opt,
+  carasDeCuerpo:carasDeCuerpo,
+  nueva:nueva, duplicar:duplicar, load:loadData, setMode:function(m){importMode=m;},
+  redraw:draw, reset:function(){ figuras=[]; sel=null; borrador=null; }
+};
+
+})();
+</script>
+</body>
+</html>

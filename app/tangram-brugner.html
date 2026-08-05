@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Tangram mínimo de Brügner · manipulativo virtual</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       font-size:14px;color:#2b2f36;background:#fff;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;height:100%;width:100%}
+
+  #side{width:186px;flex:0 0 186px;background:#f4f5f7;border-right:1px solid #dfe2e7;
+        overflow-y:auto;padding:10px 10px 24px}
+  #side h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:14px 0 7px;font-weight:600}
+  #side h2:first-child{margin-top:2px}
+  .act{display:block;width:100%;text-align:left;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+       padding:6px 9px;margin-bottom:4px;font-size:12.5px;color:#3d4450;cursor:pointer}
+  .act:hover:not(:disabled){background:#f0f2f5;border-color:#c8cdd6}
+  .act:disabled{opacity:.42;cursor:default}
+  .act kbd{float:right;font:inherit;font-size:10.5px;color:#9aa1ab}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px}
+  .pair .act{margin:0;text-align:center;padding:6px 4px}
+  .retobox{border:1px solid #d7dbe6;background:#f8f9fc;border-radius:8px;padding:8px}
+  .retobox .nom{font-size:12.5px;font-weight:600;color:#3d4450;text-align:center;margin-bottom:2px}
+  .retobox .cnt{font-size:10.5px;color:#9aa1ab;text-align:center;margin-bottom:7px}
+  .retobox .nav{display:grid;grid-template-columns:30px 1fr 30px;gap:4px;margin-bottom:5px}
+  .retobox button{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:5px 0;
+                  font-size:12px;color:#3d4450;cursor:pointer;width:100%}
+  .retobox button:hover{background:#eef0f4}
+  .retobox .estado{font-size:11.5px;text-align:center;margin-top:6px;font-weight:600}
+  .ok{color:#15803d} .no{color:#9aa1ab}
+  #piezas{font-size:11.5px;color:#6b7280;line-height:1.7;margin-top:12px;border-top:1px solid #e3e6eb;padding-top:9px}
+  #piezas .p{display:flex;align-items:center;gap:7px}
+  #piezas .sw{width:13px;height:13px;border-radius:3px;border:1px solid rgba(0,0,0,.2);flex:0 0 13px}
+  .note{font-size:10.5px;line-height:1.45;color:#8a919c;margin-top:12px}
+
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #dfe2e7;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  #stage{position:relative;flex:1;min-height:0;background:#fff}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:296px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #figuras{position:absolute;left:10px;top:10px;right:10px;background:rgba(255,255,255,.97);
+           border:1px solid #dfe2e7;border-radius:10px;padding:10px 12px;display:none;
+           box-shadow:0 6px 22px rgba(20,25,35,.10);max-height:calc(100% - 20px);overflow:auto}
+  #figuras.show{display:block}
+  #figuras .tit{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;
+                font-weight:600;margin-bottom:8px}
+  #figuras .rej{display:flex;flex-wrap:wrap;gap:10px}
+  #figuras canvas{display:block;border:1px solid #eef0f3;border-radius:8px;background:#fff;cursor:pointer}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:136px;flex:0 0 136px;padding:8px 6px}
+    .btn{padding:5px 7px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <h2>Pieza seleccionada</h2>
+    <div class="pair">
+      <button class="act" id="gIzq" disabled title="Girar 15° a la izquierda">Girar ↺</button>
+      <button class="act" id="gDer" disabled title="Girar 15° a la derecha">Girar ↻</button>
+    </div>
+    <button class="act" id="voltear" disabled title="Darle la vuelta a la pieza">Voltear ⇋<kbd>V</kbd></button>
+    <button class="act" id="alFrente" disabled>Traer al frente<kbd>F</kbd></button>
+
+    <h2>Retos</h2>
+    <div class="retobox">
+      <div class="nom" id="retoNom">Libre</div>
+      <div class="cnt" id="retoCnt"></div>
+      <div class="nav">
+        <button id="retoPrev" title="Reto anterior">‹</button>
+        <button id="retoLibre" title="Quitar el reto y jugar libre">libre</button>
+        <button id="retoNext" title="Reto siguiente">›</button>
+      </div>
+      <button id="retoComp">¿Está resuelto?</button>
+      <div class="estado no" id="retoEstado"></div>
+    </div>
+    <button class="act" id="retoNuevo" style="margin-top:6px">Guardar esto como reto…</button>
+    <button class="act" id="retoOlvida" style="font-size:11px;color:#9aa1ab">Empezar de cero</button>
+
+    <div id="piezas"></div>
+    <div class="note">Cada pieza tiene una textura distinta por cada cara, para saber si está del derecho o del revés.</div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <button class="btn" id="recoger" title="Volver a dejar las piezas separadas">⤢ Repartir</button>
+      <span class="sep"></span>
+      <label class="chk" title="Al soltar una pieza, sus vértices se enganchan a los de las demás"><input type="checkbox" id="iman" checked>Imán</label>
+      <label class="chk" title="Al girar, la pieza se ajusta sola a las orientaciones en que alguno de sus lados queda paralelo a un lado de otra pieza"><input type="checkbox" id="paso" checked>Ajustar giro</label>
+      <span class="sep"></span>
+      <button class="btn" id="pistas" title="Ayudas para explorar">💡 Pistas</button>
+      <span id="cajapistas" style="display:none;align-items:center;gap:5px">
+        <label class="chk" title="Pinta del mismo color los lados que miden lo mismo"><input type="checkbox" id="pLados">Lados iguales</label>
+        <label class="chk" title="Muestra las siluetas de todas las figuras convexas"><input type="checkbox" id="pFiguras">Figuras posibles</label>
+      </span>
+      <span class="sep"></span>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar la posición de las piezas y los retos">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir los retos de un archivo a los que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="figuras"></div>
+      <div id="drop">Suelta aquí el archivo del tangram</div>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LAS TRES PIEZAS
+   Brügner (1984) parte un rectángulo en tres triángulos rectángulos
+   semejantes. Para que encajen de muchas maneras se eligen los lados de modo
+   que la hipotenusa de cada triángulo sea el cateto mayor del siguiente; eso
+   obliga a que los catetos estén en razón √φ, con φ el número áureo, y hace
+   que las tres piezas formen una progresión geométrica de razón 1/√φ.
+   ========================================================================= */
+var PHI=(1+Math.sqrt(5))/2;
+var RQ=Math.sqrt(PHI);                 // 1,27202 : razón entre los catetos
+var U=168;                             // cateto menor de la pieza grande, en px
+var ANG=Math.atan2(1,RQ);              // 38,17° : ángulo menor de los triángulos
+
+var TIPOS=[
+  {n:'grande',  L:U*RQ,    S:U,        col:'#c8443a'},
+  {n:'mediana', L:U,       S:U/RQ,     col:'#2f7fbf'},
+  {n:'pequeña', L:U/RQ,    S:U/(RQ*RQ),col:'#3f9153'}
+];
+/* vértices locales: ángulo recto en el origen, cateto mayor sobre +x */
+function local(t){ return [{x:0,y:0},{x:TIPOS[t].L,y:0},{x:0,y:TIPOS[t].S}]; }
+
+var piezas=[], sel=null;
+var view={x:0,y:0,z:1};
+var drag=null, undoStack=[], importMode='replace';
+var opt={iman:1, paso:1, lados:0, figuras:0};
+var retos=[], reto=-1, estado='';
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop');
+var flashMsg=null, flashT=0;
+
+function pushUndo(){ undoStack.push(JSON.stringify(piezas)); if(undoStack.length>80) undoStack.shift(); }
+function doUndo(){ if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  piezas=JSON.parse(undoStack.pop()); sel=null; estado=''; draw(); }
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2200); }
+
+/* =========================================================================
+   2. GEOMETRÍA
+   ========================================================================= */
+function verts(p){
+  var co=Math.cos(p.a), si=Math.sin(p.a);
+  return local(p.t).map(function(v){
+    var y = p.f ? -v.y : v.y;                 // voltear = espejo en el cateto mayor
+    return {x:p.x + v.x*co - y*si, y:p.y + v.x*si + y*co};
+  });
+}
+function areaTri(A,B,C){ return Math.abs((B.x-A.x)*(C.y-A.y)-(B.y-A.y)*(C.x-A.x))/2; }
+function dentroTri(P,A,B,C){
+  var d1=(B.x-A.x)*(P.y-A.y)-(B.y-A.y)*(P.x-A.x);
+  var d2=(C.x-B.x)*(P.y-B.y)-(C.y-B.y)*(P.x-B.x);
+  var d3=(A.x-C.x)*(P.y-C.y)-(A.y-C.y)*(P.x-C.x);
+  var neg=(d1<0)||(d2<0)||(d3<0), pos=(d1>0)||(d2>0)||(d3>0);
+  return !(neg&&pos);
+}
+function dentroPieza(P,p){ var v=verts(p); return dentroTri(P,v[0],v[1],v[2]); }
+function cajaDe(lista){
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  lista.forEach(function(p){ verts(p).forEach(function(v){
+    x0=Math.min(x0,v.x); x1=Math.max(x1,v.x); y0=Math.min(y0,v.y); y1=Math.max(y1,v.y); }); });
+  return lista.length? {x0:x0,y0:y0,x1:x1,y1:y1} : null;
+}
+
+/* =========================================================================
+   3. EL CONTORNO DE UN GRUPO DE PIEZAS
+   Para dibujar una silueta sin que se vean las costuras hay que tener el
+   borde exterior de verdad, no tres triángulos pintados del mismo gris. Se
+   consigue partiendo los nueve lados por todos los vértices que caen encima
+   y tachando los trozos que aparecen recorridos en los dos sentidos: esos
+   son interiores. Lo que sobra se encadena y da el contorno.
+   ========================================================================= */
+var TOLP=0.02;                       // dos puntos son el mismo si están a menos de esto
+var TOLS=0.5;                        // solape mínimo para considerar que dos piezas chocan
+
+function mismoPunto(A,B){ return Math.abs(A.x-B.x)<TOLP && Math.abs(A.y-B.y)<TOLP; }
+
+function contorno(ps){
+  var segs=[];
+  ps.forEach(function(p){
+    var v=verts(p);
+    var s=(v[1].x-v[0].x)*(v[2].y-v[0].y)-(v[1].y-v[0].y)*(v[2].x-v[0].x);
+    if(s<0) v=[v[0],v[2],v[1]];                  // todas con el mismo sentido de giro
+    for(var i=0;i<3;i++) segs.push([v[i], v[(i+1)%3]]);
+  });
+  var pts=[];
+  segs.forEach(function(s){ s.forEach(function(P){
+    if(!pts.some(function(Q){ return mismoPunto(P,Q); })) pts.push(P); }); });
+
+  var sub=[];
+  segs.forEach(function(s){
+    var A=s[0], dx=s[1].x-A.x, dy=s[1].y-A.y, L2=dx*dx+dy*dy;
+    if(L2<1e-9) return;
+    var ts=[0,1];
+    pts.forEach(function(P){
+      var t=((P.x-A.x)*dx+(P.y-A.y)*dy)/L2;
+      if(t<=1e-7 || t>=1-1e-7) return;
+      if(Math.abs(A.x+t*dx-P.x)<TOLP && Math.abs(A.y+t*dy-P.y)<TOLP) ts.push(t);
+    });
+    ts.sort(function(a,b){ return a-b; });
+    for(var i=0;i+1<ts.length;i++){
+      if(ts[i+1]-ts[i]<1e-7) continue;
+      sub.push([{x:A.x+ts[i]*dx,   y:A.y+ts[i]*dy},
+                {x:A.x+ts[i+1]*dx, y:A.y+ts[i+1]*dy}]);
+    }
+  });
+
+  var vivo=sub.map(function(){ return true; });
+  for(var i=0;i<sub.length;i++){
+    if(!vivo[i]) continue;
+    for(var j=i+1;j<sub.length;j++){
+      if(!vivo[j]) continue;
+      if(mismoPunto(sub[i][0],sub[j][1]) && mismoPunto(sub[i][1],sub[j][0])){
+        vivo[i]=false; vivo[j]=false; break;
+      }
+    }
+  }
+  var libres=sub.filter(function(s,i){ return vivo[i]; });
+  if(libres.length<3) return null;
+
+  var usado=libres.map(function(){ return false; });
+  var poli=[libres[0][0]], cur=libres[0][1], n=1;
+  usado[0]=true;
+  while(!mismoPunto(cur,poli[0])){
+    var k=-1, cuantos=0;
+    for(var i=0;i<libres.length;i++)
+      if(!usado[i] && mismoPunto(libres[i][0],cur)){ if(k<0) k=i; cuantos++; }
+    if(k<0 || cuantos>1) return null;            // cadena rota, o vértice de pellizco
+    poli.push(cur); cur=libres[k][1]; usado[k]=true; n++;
+    if(n>60) return null;
+  }
+  if(n!==libres.length) return null;             // sobran trozos: hay un agujero
+
+  var out=[];
+  for(var i=0;i<poli.length;i++){
+    var A=poli[(i-1+poli.length)%poli.length], B=poli[i], C=poli[(i+1)%poli.length];
+    var cr=(B.x-A.x)*(C.y-B.y)-(B.y-A.y)*(C.x-B.x);
+    var l1=Math.hypot(B.x-A.x,B.y-A.y), l2=Math.hypot(C.x-B.x,C.y-B.y);
+    if(l1<1e-7||l2<1e-7) continue;
+    if(Math.abs(cr)/(l1*l2)>1e-5) out.push(B);   // fuera los vértices alineados
+  }
+  return out.length>=3 ? out : null;
+}
+
+/* =========================================================================
+   4. EL CATÁLOGO DE FIGURAS
+   Con tres piezas el número de figuras distintas es finito y se puede
+   calcular en vez de copiarlo: se apoya la segunda pieza sobre cada lado de
+   la primera haciendo coincidir vértice con vértice, la tercera sobre cada
+   lado de las dos anteriores, y se tiran las colocaciones que se solapan.
+   De todo lo que sale nos quedamos con las figuras convexas, que son las que
+   se proponen buscar: hay triángulos, cuadriláteros y pentágonos.
+   ========================================================================= */
+function separadas(A,B){
+  return eje(A,B) || eje(B,A);
+  function eje(P,Q){
+    for(var i=0;i<P.length;i++){
+      var a=P[i], b=P[(i+1)%P.length];
+      var nx=-(b.y-a.y), ny=b.x-a.x, m=Math.hypot(nx,ny);
+      if(m<1e-9) continue;
+      nx/=m; ny/=m;
+      var p0=1e9,p1=-1e9,q0=1e9,q1=-1e9;
+      P.forEach(function(v){ var s=v.x*nx+v.y*ny; if(s<p0)p0=s; if(s>p1)p1=s; });
+      Q.forEach(function(v){ var s=v.x*nx+v.y*ny; if(s<q0)q0=s; if(s>q1)q1=s; });
+      if(q0>p1-TOLS || p0>q1-TOLS) return true;
+    }
+    return false;
+  }
+}
+function solapan(p,q){ return !separadas(verts(p),verts(q)); }
+
+/* coloca una pieza con su lado local li apoyado en el segmento que sale de Z
+   hacia W, con un vértice justo en Z. «rev» dice cuál de los dos extremos del
+   lado es el que se pone en Z: son colocaciones distintas, y volteando la
+   pieza no se consigue la otra. */
+function apoya(t,f,li,rev,Z,W){
+  var lv=local(t).map(function(v){ return {x:v.x, y:f? -v.y : v.y}; });
+  var a1=rev? lv[(li+1)%3] : lv[li];
+  var b1=rev? lv[li] : lv[(li+1)%3];
+  var d=Math.hypot(W.x-Z.x, W.y-Z.y);
+  if(d<1e-6) return null;
+  /* no se exige que el lado quepa dentro del otro: puede sobresalir, o cubrir
+     dos lados seguidos que estén alineados. De lo que no vale ya se encargan
+     el detector de solapes y el filtro de convexidad. */
+  var ang=Math.atan2(W.y-Z.y,W.x-Z.x)-Math.atan2(b1.y-a1.y,b1.x-a1.x);
+  var co=Math.cos(ang), si=Math.sin(ang);
+  return {t:t, f:f, a:ang, x:Z.x-(a1.x*co-a1.y*si), y:Z.y-(a1.x*si+a1.y*co)};
+}
+/* todos los apoyos posibles: cada lado de cada pieza, desde cada vértice que
+   haya sobre él, en los dos sentidos */
+function apoyos(ps){
+  var out=[], visto={}, vs=[];
+  ps.forEach(function(p){ verts(p).forEach(function(v){ vs.push(v); }); });
+  function mete(Z,W){
+    var dx=W.x-Z.x, dy=W.y-Z.y, d=Math.hypot(dx,dy);
+    if(d<1e-6) return;
+    var k=Z.x.toFixed(2)+','+Z.y.toFixed(2)+','+(dx/d).toFixed(4)+','+(dy/d).toFixed(4);
+    if(visto[k]) return;
+    visto[k]=1; out.push({Z:Z,W:W});
+  }
+  ps.forEach(function(p){
+    var v=verts(p);
+    for(var i=0;i<3;i++){
+      var A=v[i], B=v[(i+1)%3], dx=B.x-A.x, dy=B.y-A.y, L2=dx*dx+dy*dy;
+      var puntos=[A,B];
+      vs.forEach(function(P){
+        var t=((P.x-A.x)*dx+(P.y-A.y)*dy)/L2;
+        if(t<=1e-7||t>=1-1e-7) return;
+        if(Math.abs(A.x+t*dx-P.x)<TOLP && Math.abs(A.y+t*dy-P.y)<TOLP) puntos.push(P);
+      });
+      puntos.forEach(function(Z){ mete(Z,B); mete(Z,A); });
+    }
+  });
+  return out;
+}
+function esConvexo(poli){
+  var n=poli.length, s=0;
+  for(var i=0;i<n;i++){
+    var A=poli[i], B=poli[(i+1)%n], C=poli[(i+2)%n];
+    var cr=(B.x-A.x)*(C.y-B.y)-(B.y-A.y)*(C.x-B.x);
+    if(Math.abs(cr)<1e-6) continue;
+    var sg=cr>0?1:-1;
+    if(s===0) s=sg; else if(sg!==s) return false;
+  }
+  return s!==0;
+}
+function claveDir(poli){
+  var n=poli.length, s=[];
+  for(var i=0;i<n;i++){
+    var A=poli[i], B=poli[(i+1)%n], C=poli[(i+2)%n];
+    var L=Math.hypot(B.x-A.x,B.y-A.y)/U;
+    var g=Math.atan2(C.y-B.y,C.x-B.x)-Math.atan2(B.y-A.y,B.x-A.x);
+    g=((g+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+    s.push(L.toFixed(2)+':'+Math.round(g*180/Math.PI));
+  }
+  var best=null;
+  for(var k=0;k<n;k++){
+    var r=[];
+    for(var i=0;i<n;i++) r.push(s[(k+i)%n]);
+    var t=r.join(' ');
+    if(best===null||t<best) best=t;
+  }
+  return best;
+}
+/* la misma figura del derecho y del revés cuenta una sola vez */
+function claveFig(poli){
+  var esp=poli.map(function(P){ return {x:-P.x, y:P.y}; }).reverse();
+  var a=claveDir(poli), b=claveDir(esp);
+  return a<b? a : b;
+}
+function giraLista(ps,ang){
+  var co=Math.cos(ang), si=Math.sin(ang);
+  return ps.map(function(p){
+    return {t:p.t, f:p.f, a:p.a+ang, x:p.x*co-p.y*si, y:p.x*si+p.y*co}; });
+}
+function ladoMasLargo(poli){
+  var n=poli.length, k=0, lmax=-1;
+  for(var i=0;i<n;i++){
+    var L=Math.hypot(poli[(i+1)%n].x-poli[i].x, poli[(i+1)%n].y-poli[i].y);
+    if(L>lmax+1e-9){ lmax=L; k=i; }
+  }
+  return k;
+}
+/* deja la figura apoyada sobre su lado más largo y centrada en el origen */
+function orienta(ps){
+  var poli=contorno(ps); if(!poli) return null;
+  var k=ladoMasLargo(poli), A=poli[k], B=poli[(k+1)%poli.length];
+  var ang=-Math.atan2(B.y-A.y, B.x-A.x), co=Math.cos(ang), si=Math.sin(ang);
+  var ye=A.x*si+A.y*co, cy=0;                  // altura del lado largo, ya girado
+  poli.forEach(function(P){ cy+=P.x*si+P.y*co; }); cy/=poli.length;
+  ps=giraLista(ps,ang);
+  if(cy>ye) ps=giraLista(ps,Math.PI);          // el cuerpo, por encima del lado largo
+  poli=contorno(ps);
+  if(!poli) return null;
+  var b=cajaDe(ps), cx=(b.x0+b.x1)/2, cyy=(b.y0+b.y1)/2;
+  ps=ps.map(function(p){ return {t:p.t,f:p.f,a:p.a,x:p.x-cx,y:p.y-cyy}; });
+  poli=contorno(ps);
+  return poli? {piezas:ps, poli:poli} : null;
+}
+
+var CAT=null;
+function catalogo(){
+  if(CAT) return CAT;
+  try{ CAT=calculaCatalogo(); }catch(e){ CAT=[]; }
+  return CAT;
+}
+function clavePieza(q){
+  var a=((q.a%(2*Math.PI))+2*Math.PI)%(2*Math.PI);
+  return q.t+':'+q.x.toFixed(2)+','+q.y.toFixed(2)+','+a.toFixed(3)+','+(q.f?1:0);
+}
+/* todas las formas de añadir una pieza del tipo t apoyándola en las que ya hay */
+function anadidos(ps, t){
+  var out=[], visto={};
+  apoyos(ps).forEach(function(s){
+    [false,true].forEach(function(f){
+      [false,true].forEach(function(rev){
+        for(var li=0;li<3;li++){
+          var q=apoya(t,f,li,rev,s.Z,s.W);
+          if(!q) continue;
+          var k=clavePieza(q);
+          if(visto[k]) continue;
+          visto[k]=1;
+          if(ps.some(function(p){ return solapan(p,q); })) continue;
+          out.push(q);
+        }
+      });
+    });
+  });
+  return out;
+}
+function calculaCatalogo(){
+  var base={t:0,x:0,y:0,a:0,f:false};
+  var vistas={}, res=[];
+  /* la segunda pieza se pega a la grande, y la tercera a cualquiera de las dos.
+     Hay que probar los dos órdenes: si no, se escapan las figuras en las que la
+     mediana y la pequeña no se tocan entre sí. */
+  [[1,2],[2,1]].forEach(function(orden){
+    anadidos([base], orden[0]).forEach(function(q1){
+      var par=[base,q1];
+      anadidos(par, orden[1]).forEach(function(q2){
+        var ps=[base,q1,q2];
+        var poli=contorno(ps);
+        if(!poli || !esConvexo(poli)) return;
+        var k=claveFig(poli);
+        if(vistas[k]) return;
+        var o=orienta(ps);
+        if(!o) return;
+        vistas[k]=1;
+        res.push({clave:k, poli:o.poli, piezas:o.piezas, n:poli.length});
+      });
+    });
+  });
+  res.sort(function(a,b){ return a.n-b.n || (a.clave<b.clave?-1:1); });
+  var cuenta={};
+  res.forEach(function(f){
+    cuenta[f.n]=(cuenta[f.n]||0)+1;
+    f.nombre=(f.n===3?'Triángulo':f.n===4?'Cuadrilátero':f.n===5?'Pentágono':
+              f.n===6?'Hexágono':'Figura de '+f.n+' lados')+' '+cuenta[f.n];
+  });
+  return res;
+}
+/* el contorno de un reto, calculado una sola vez */
+function bordeDe(r){
+  if(r._poli===undefined) r._poli=contorno(r.piezas);
+  return r._poli;
+}
+
+/* =========================================================================
+   5. LOS RETOS
+   Un reto se guarda como la colocación de las tres piezas; la silueta se
+   dibuja rellenando las tres en gris, sin bordes interiores. Para saber si
+   está resuelto se comparan las dos regiones muestreando puntos, así que
+   vale cualquier solución que cubra la misma silueta.
+   ========================================================================= */
+function retoBase(){
+  /* el rectángulo original: la pieza grande y, sobre la diagonal, las otras dos */
+  var L=TIPOS[0].L, S=TIPOS[0].S, c=Math.sqrt(L*L+S*S);
+  var Px=L*L/c*(L/c), Py=L*L/c*(S/c);        // pie de la perpendicular
+  return [{t:0, x:0, y:S, a:0, f:true},
+          {t:1, x:Px, y:Py, a:Math.PI+ANG, f:false},
+          {t:2, x:Px, y:Py, a:ANG-Math.PI/2, f:false}];
+}
+/* Aquí había además un «triángulo» y un «paralelogramo» colocados a mano. Los
+   he quitado: el test destapó que el primero solapaba las piezas un 12% y que
+   el segundo ni siquiera cerraba. Ahora las figuras salen todas del catálogo,
+   que se calcula y se comprueba solo. */
+
+/* de entrada, un solo reto: el rectángulo del que salen las piezas. Las demás
+   figuras están en el catálogo, y se ponen como reto al pulsarlas ahí. */
+function retosIniciales(){
+  return [{nombre:'Rectángulo de partida', piezas:retoBase()}];
+}
+function siluetaActual(){ return piezas.map(function(p){
+  return {t:p.t, x:p.x, y:p.y, a:p.a, f:p.f}; }); }
+
+/* Los retos se quedan guardados en el navegador de quien juega, así que no se
+   pierden al recargar. El archivo sigue siendo la forma de repartirlos. */
+var CLAVE='tangram-brugner-retos-v2';
+function guardaLocal(){
+  try{ localStorage.setItem(CLAVE, JSON.stringify(retos.map(function(r){
+    return {nombre:r.nombre, piezas:r.piezas.map(function(p){
+      return {t:p.t,x:+p.x.toFixed(2),y:+p.y.toFixed(2),a:+p.a.toFixed(6),f:!!p.f}; })}; }))); }
+  catch(e){}
+}
+function cargaLocal(){
+  try{
+    var s=localStorage.getItem(CLAVE); if(!s) return null;
+    var d=JSON.parse(s); if(!Array.isArray(d)||!d.length) return null;
+    var out=d.map(function(r){
+      var ps=limpiaPiezas(r.piezas); return ps? {nombre:String(r.nombre||'Figura'), piezas:ps} : null;
+    }).filter(Boolean);
+    return out.length? out : null;
+  }catch(e){ return null; }
+}
+function olvidaLocal(){ try{ localStorage.removeItem(CLAVE); }catch(e){} }
+
+/* comparación de regiones por muestreo */
+function comparaRegiones(A,B){
+  var todo=A.concat(B), caja=cajaDe(todo);
+  if(!caja) return {j:0, solape:0};
+  var paso=Math.max(2.5, Math.min(caja.x1-caja.x0, caja.y1-caja.y0)/90);
+  var enA=0, enB=0, enAmbas=0, doble=0, n=0;
+  for(var x=caja.x0; x<=caja.x1; x+=paso) for(var y=caja.y0; y<=caja.y1; y+=paso){
+    var P={x:x,y:y}, a=0, b=0;
+    A.forEach(function(p){ if(dentroPieza(P,p)) a++; });
+    B.forEach(function(p){ if(dentroPieza(P,p)) b++; });
+    if(a) enA++; if(b) enB++; if(a&&b) enAmbas++;
+    if(b>1) doble++;
+    n++;
+  }
+  var union=enA+enB-enAmbas;
+  return {j: union? enAmbas/union : 0, solape: enB? doble/enB : 0};
+}
+function compruebaReto(){
+  if(reto<0 || !retos[reto]){ flash('No hay ningún reto puesto'); return; }
+  var r=comparaRegiones(retos[reto].piezas, piezas);
+  if(r.j>0.97 && r.solape<0.04){ estado='ok'; flash('¡Resuelto!'); }
+  else if(r.j>0.85){ estado='casi'; flash('Casi: revisa los bordes'); }
+  else { estado='no'; flash('Todavía no cubre la silueta'); }
+  draw();
+}
+
+/* =========================================================================
+   6. DIBUJO
+   ========================================================================= */
+function w2s(p){ return {x:p.x*view.z+view.x, y:p.y*view.z+view.y}; }
+function s2w(p){ return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z}; }
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0); draw();
+}
+function tinta(hex,f,al){
+  var h=hex.replace('#',''); if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
+  r=Math.round(r+(f>0?(255-r)*f:r*f)); g=Math.round(g+(f>0?(255-g)*f:g*f)); b=Math.round(b+(f>0?(255-b)*f:b*f));
+  return 'rgba('+r+','+g+','+b+','+(al===undefined?1:al)+')';
+}
+function camino(c,v){
+  var a=w2s(v[0]); c.beginPath(); c.moveTo(a.x,a.y);
+  for(var i=1;i<v.length;i++){ var q=w2s(v[i]); c.lineTo(q.x,q.y); }
+  c.closePath();
+}
+function drawSilueta(c){
+  if(reto<0 || !retos[reto]) return;
+  c.save();
+  c.fillStyle = estado==='ok' ? 'rgba(21,128,61,.16)' : 'rgba(120,128,140,.18)';
+  var borde=bordeDe(retos[reto]);
+  if(borde){                                  // el contorno de verdad: sin costuras
+    camino(c,borde); c.fill();
+    c.lineWidth=1.4; c.lineJoin='round';
+    c.strokeStyle = estado==='ok' ? 'rgba(21,128,61,.45)' : 'rgba(90,100,112,.45)';
+    c.stroke();
+  } else {
+    retos[reto].piezas.forEach(function(p){ camino(c,verts(p)); c.fill(); });
+  }
+  c.restore();
+}
+/* Las cinco longitudes distintas que hay entre los nueve lados de las piezas.
+   Pintar del mismo color los que miden igual enseña qué se puede pegar con qué. */
+var LARGOS=null;
+function largosClave(){
+  if(LARGOS) return LARGOS;
+  var s=[];
+  TIPOS.forEach(function(T){
+    [T.L, T.S, Math.sqrt(T.L*T.L+T.S*T.S)].forEach(function(v){
+      if(!s.some(function(w){ return Math.abs(w-v)<0.05; })) s.push(v);
+    });
+  });
+  s.sort(function(a,b){ return a-b; });
+  LARGOS=s; return s;
+}
+var COLLADO=['#8a5cd6','#0d9488','#d97706','#be185d','#1d4ed8'];
+function colorLado(len){
+  var s=largosClave();
+  for(var i=0;i<s.length;i++) if(Math.abs(s[i]-len)<0.05) return COLLADO[i%COLLADO.length];
+  return null;
+}
+function drawLadosIguales(c,p){
+  var v=verts(p);
+  c.save(); c.lineCap='round';
+  for(var i=0;i<3;i++){
+    var a=v[i], b=v[(i+1)%3];
+    var col=colorLado(Math.hypot(b.x-a.x, b.y-a.y));
+    if(!col) continue;
+    var qa=w2s(a), qb=w2s(b);
+    c.beginPath(); c.moveTo(qa.x,qa.y); c.lineTo(qb.x,qb.y);
+    c.lineWidth=5; c.strokeStyle=col; c.stroke();
+  }
+  c.restore();
+}
+function drawPieza(c,p,seleccionada){
+  var v=verts(p), T=TIPOS[p.t];
+  c.save();
+  camino(c,v);
+  c.fillStyle=tinta(T.col, p.f?-0.06:0.10);
+  c.fill();
+  c.save(); c.clip();
+  /* la textura distingue una cara de la otra, con el mismo color */
+  var caja=cajaDe([p]), s=w2s({x:caja.x0,y:caja.y0}), e=w2s({x:caja.x1,y:caja.y1});
+  if(!p.f){                                   // derecho: rayas finas
+    c.strokeStyle=tinta(T.col,-0.20,0.55); c.lineWidth=1.1;
+    c.beginPath();
+    for(var d=s.x-(e.y-s.y); d<e.x; d+=9){ c.moveTo(d,e.y); c.lineTo(d+(e.y-s.y),s.y); }
+    c.stroke();
+  } else {                                    // revés: puntos
+    c.fillStyle=tinta(T.col,-0.28,0.6);
+    for(var x=s.x; x<e.x; x+=8) for(var y=s.y; y<e.y; y+=8){
+      c.beginPath(); c.arc(x+((y/8)%2)*4, y, 1.5, 0, 6.2832); c.fill();
+    }
+  }
+  c.restore();
+  camino(c,v);
+  c.lineWidth=seleccionada?2.6:1.6; c.lineJoin='round';
+  c.strokeStyle=seleccionada? '#2f62a8' : tinta(T.col,-0.42);
+  c.stroke();
+  c.restore();
+}
+function tirador(p){
+  var v=verts(p), cx=(v[0].x+v[1].x+v[2].x)/3, cy=(v[0].y+v[1].y+v[2].y)/3;
+  var q=w2s({x:cx,y:cy}), caja=cajaDe([p]);
+  var r=Math.max(w2s({x:caja.x1,y:0}).x-w2s({x:caja.x0,y:0}).x,
+                 w2s({x:0,y:caja.y1}).y-w2s({x:0,y:caja.y0}).y)/2;
+  return {x:q.x, y:q.y-r-22, r:13};
+}
+function draw(){
+  var W=cv.width/(window.devicePixelRatio||1), H=cv.height/(window.devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  drawSilueta(ctx);
+  piezas.forEach(function(p){ drawPieza(ctx,p,p.id===sel); });
+  if(opt.lados) piezas.forEach(function(p){ drawLadosIguales(ctx,p); });
+  if(sel!=null){
+    var p=porId(sel);
+    if(p){ var t=tirador(p), c=ctx;
+      c.save();
+      c.beginPath(); c.arc(t.x,t.y,t.r,0,6.2832);
+      c.fillStyle='#fff'; c.fill();
+      c.lineWidth=2; c.strokeStyle='#2f62a8'; c.stroke();
+      c.beginPath(); c.arc(t.x,t.y,6,0.5,5.2);
+      c.lineWidth=2; c.strokeStyle='#2f62a8'; c.stroke();
+      c.restore();
+    }
+  }
+  updateUI();
+}
+
+/* =========================================================================
+   7. INTERACCIÓN
+   ========================================================================= */
+function evPos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function porId(id){ for(var i=0;i<piezas.length;i++) if(piezas[i].id===id) return piezas[i]; return null; }
+function piezaEn(wp){
+  for(var i=piezas.length-1;i>=0;i--) if(dentroPieza(wp,piezas[i])) return piezas[i];
+  return null;
+}
+function alFrenteP(id){
+  var i=-1; for(var k=0;k<piezas.length;k++) if(piezas[k].id===id){ i=k; break; }
+  if(i>=0) piezas.push(piezas.splice(i,1)[0]);
+}
+/* =========================================================================
+   AJUSTE DEL GIRO
+   Los ángulos de estos triángulos son 38,17° y 51,83°, que no son múltiplos de
+   15°: con un paso fijo hay uniones imposibles. Lo que hace falta es ajustar el
+   giro a las orientaciones en que un lado de la pieza queda paralelo a un lado
+   de otra, que son las que permiten unirlas.
+   ========================================================================= */
+function ladosDe(p){
+  var v=verts(p), out=[];
+  for(var i=0;i<3;i++){
+    var a=v[i], b=v[(i+1)%3];
+    out.push(((Math.atan2(b.y-a.y,b.x-a.x)%Math.PI)+Math.PI)%Math.PI);
+  }
+  return out;
+}
+function basesDe(p){ return ladosDe({t:p.t, x:0, y:0, a:0, f:p.f}); }
+function dirsObjetivo(excluir){
+  var d=[];
+  piezas.forEach(function(q){ if(q.id!==excluir) ladosDe(q).forEach(function(x){ d.push(x); }); });
+  if(reto>=0 && retos[reto]) retos[reto].piezas.forEach(function(q){
+    ladosDe(q).forEach(function(x){ d.push(x); }); });
+  return d;
+}
+function candidatosGiro(p){
+  var bases=basesDe(p), objs=dirsObjetivo(p.id), out=[];
+  bases.forEach(function(b){ objs.forEach(function(d){
+    var a0=d-b;
+    for(var k=-4;k<=4;k++) out.push(a0+k*Math.PI);
+  });});
+  return out;
+}
+function difAng(a,b){
+  var d=(a-b)%(2*Math.PI);
+  d=((d+3*Math.PI)%(2*Math.PI))-Math.PI;
+  return Math.abs(d);
+}
+function ajustaGiro(p,na){
+  if(!opt.paso) return na;
+  var mejor=null, tol=7*Math.PI/180;
+  candidatosGiro(p).forEach(function(a){
+    var d=difAng(a,na);
+    if(d<tol && (!mejor||d<mejor.d)) mejor={a:a,d:d};
+  });
+  if(mejor) return mejor.a;
+  var q=Math.PI/12, r=Math.round(na/q)*q;          // si no hay lados cerca, de 15 en 15
+  return difAng(r,na)<4*Math.PI/180 ? r : na;
+}
+/* los botones de giro saltan a la siguiente orientación aprovechable */
+function siguienteOrientacion(p,s){
+  var cand=candidatosGiro(p), q=Math.PI/12;
+  for(var k=1;k<=24;k++) cand.push(p.a + s*k*q);
+  var mejor=null;
+  cand.forEach(function(a){
+    var d=(s>0? a-p.a : p.a-a)%(2*Math.PI);
+    d=(d+2*Math.PI)%(2*Math.PI);
+    if(d>0.009 && (!mejor||d<mejor.d)) mejor={a:a,d:d};
+  });
+  return mejor? mejor.a : p.a+s*q;
+}
+
+/* imán: al soltar, si un vértice queda cerca de otro, se ajusta */
+function imanta(p){
+  if(!opt.iman) return;
+  var mios=verts(p), mejor=null;
+  var otros=[];
+  piezas.forEach(function(q){ if(q!==p) verts(q).forEach(function(v){ otros.push(v); }); });
+  if(reto>=0 && retos[reto]) retos[reto].piezas.forEach(function(q){
+    verts(q).forEach(function(v){ otros.push(v); }); });
+  var tol=14/view.z;
+  mios.forEach(function(a){ otros.forEach(function(b){
+    var d=Math.hypot(a.x-b.x, a.y-b.y);
+    if(d<tol && (!mejor||d<mejor.d)) mejor={d:d, dx:b.x-a.x, dy:b.y-a.y};
+  });});
+  if(mejor){ p.x+=mejor.dx; p.y+=mejor.dy; }
+}
+function onDown(e){
+  cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);
+  var sp=evPos(e), wp=s2w(sp);
+  if(sel!=null){
+    var ps=porId(sel);
+    if(ps){ var t=tirador(ps);
+      if(Math.hypot(sp.x-t.x, sp.y-t.y)<=t.r+4){
+        pushUndo();
+        var v=verts(ps), cx=(v[0].x+v[1].x+v[2].x)/3, cy=(v[0].y+v[1].y+v[2].y)/3;
+        drag={mode:'giro', id:sel, cx:cx, cy:cy, a0:Math.atan2(wp.y-cy,wp.x-cx), ini:ps.a};
+        return;
+      } }
+  }
+  var p=piezaEn(wp);
+  if(p){
+    sel=p.id; alFrenteP(p.id); pushUndo();
+    drag={mode:'mover', id:p.id, dx:wp.x-p.x, dy:wp.y-p.y};
+    draw(); return;
+  }
+  sel=null;
+  drag={mode:'pan', sp:sp, v0:{x:view.x,y:view.y}};
+  draw();
+}
+function onMove(e){
+  if(!drag) return;
+  var sp=evPos(e), wp=s2w(sp);
+  if(drag.mode==='pan'){ view.x=drag.v0.x+(sp.x-drag.sp.x); view.y=drag.v0.y+(sp.y-drag.sp.y); draw(); return; }
+  var p=porId(drag.id); if(!p) return;
+  if(drag.mode==='mover'){ p.x=wp.x-drag.dx; p.y=wp.y-drag.dy; estado=''; draw(); return; }
+  if(drag.mode==='giro'){
+    var a=Math.atan2(wp.y-drag.cy, wp.x-drag.cx);
+    var na=ajustaGiro(p, drag.ini + (a-drag.a0));
+    /* se gira alrededor del baricentro, no del vértice */
+    var v0=verts(p), c0={x:(v0[0].x+v0[1].x+v0[2].x)/3, y:(v0[0].y+v0[1].y+v0[2].y)/3};
+    p.a=na;
+    var v1=verts(p), c1={x:(v1[0].x+v1[1].x+v1[2].x)/3, y:(v1[0].y+v1[1].y+v1[2].y)/3};
+    p.x+=c0.x-c1.x; p.y+=c0.y-c1.y;
+    estado=''; draw(); return;
+  }
+}
+function onUp(){
+  if(drag && (drag.mode==='mover'||drag.mode==='giro')){
+    var p=porId(drag.id); if(p) imanta(p);
+  }
+  drag=null; draw();
+}
+stage.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var sp=evPos(e), antes=s2w(sp);
+  view.z=Math.max(0.25,Math.min(3.5,view.z*Math.exp(-e.deltaY*0.0015)));
+  var desp=s2w(sp);
+  view.x+=(desp.x-antes.x)*view.z; view.y+=(desp.y-antes.y)*view.z;
+  draw();
+},{passive:false});
+cv.addEventListener('pointerdown',onDown);
+window.addEventListener('pointermove',onMove);
+window.addEventListener('pointerup',onUp);
+window.addEventListener('pointercancel',onUp);
+
+window.addEventListener('keydown',function(e){
+  var t=(e.target&&e.target.tagName)||''; if(t==='INPUT') return;
+  var k=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey)&&k==='z'){ doUndo(); e.preventDefault(); return; }
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(k==='escape'){ sel=null; draw(); }
+  else if(k==='v'){ voltea(); }
+  else if(k==='f'){ if(sel!=null){ pushUndo(); alFrenteP(sel); draw(); } }
+  else if(k==='r'||k==='arrowright'){ gira(1); e.preventDefault(); }
+  else if(k==='l'||k==='arrowleft'){ gira(-1); e.preventDefault(); }
+});
+function gira(s){
+  if(sel==null){ flash('Selecciona antes una pieza'); return; }
+  var p=porId(sel); if(!p) return;
+  pushUndo();
+  var v0=verts(p), c0={x:(v0[0].x+v0[1].x+v0[2].x)/3, y:(v0[0].y+v0[1].y+v0[2].y)/3};
+  p.a = opt.paso ? siguienteOrientacion(p,s) : p.a + s*Math.PI/12;
+  var v1=verts(p), c1={x:(v1[0].x+v1[1].x+v1[2].x)/3, y:(v1[0].y+v1[1].y+v1[2].y)/3};
+  p.x+=c0.x-c1.x; p.y+=c0.y-c1.y;
+  estado=''; draw();
+}
+function voltea(){
+  if(sel==null){ flash('Selecciona antes una pieza'); return; }
+  var p=porId(sel); if(!p) return;
+  pushUndo();
+  var v0=verts(p), c0={x:(v0[0].x+v0[1].x+v0[2].x)/3, y:(v0[0].y+v0[1].y+v0[2].y)/3};
+  p.f=!p.f;
+  var v1=verts(p), c1={x:(v1[0].x+v1[1].x+v1[2].x)/3, y:(v1[0].y+v1[1].y+v1[2].y)/3};
+  p.x+=c0.x-c1.x; p.y+=c0.y-c1.y;
+  estado=''; draw();
+}
+
+/* =========================================================================
+   8. INTERFAZ
+   ========================================================================= */
+function reparte(){
+  pushUndo();
+  var r=stage.getBoundingClientRect();
+  piezas=[{t:0, id:1, x:-U*1.5, y:-U*0.5, a:0, f:false},
+          {t:1, id:2, x:-U*0.1, y:U*0.7, a:0, f:false},
+          {t:2, id:3, x:U*1.1,  y:-U*0.2, a:0, f:false}];
+  sel=null; estado=''; fitView();
+}
+document.getElementById('recoger').addEventListener('click',reparte);
+document.getElementById('gIzq').addEventListener('click',function(){ gira(-1); });
+document.getElementById('gDer').addEventListener('click',function(){ gira(1); });
+document.getElementById('voltear').addEventListener('click',voltea);
+document.getElementById('alFrente').addEventListener('click',function(){
+  if(sel==null) return; pushUndo(); alFrenteP(sel); draw(); });
+document.getElementById('undo').addEventListener('click',doUndo);
+document.getElementById('iman').addEventListener('change',function(e){ opt.iman=e.target.checked?1:0; });
+document.getElementById('paso').addEventListener('change',function(e){ opt.paso=e.target.checked?1:0; });
+document.getElementById('retoPrev').addEventListener('click',function(){ ponReto(reto-1); });
+document.getElementById('retoNext').addEventListener('click',function(){ ponReto(reto+1); });
+document.getElementById('retoLibre').addEventListener('click',function(){ reto=-1; estado=''; draw(); });
+document.getElementById('retoComp').addEventListener('click',compruebaReto);
+document.getElementById('retoNuevo').addEventListener('click',function(){
+  var n=prompt('Nombre de la figura:', 'Figura '+(retos.length+1));
+  if(n===null) return;
+  retos.push({nombre:n||('Figura '+(retos.length+1)), piezas:siluetaActual()});
+  reto=retos.length-1; estado=''; guardaLocal(); pintaFiguras(); draw();
+  flash('Reto guardado. Se queda en este navegador; con ⤓ Guardar te lo llevas en un archivo.');
+});
+document.getElementById('retoOlvida').addEventListener('click',function(){
+  if(!confirm('¿Borrar los retos guardados en este navegador y dejar solo el rectángulo de partida?')) return;
+  olvidaLocal(); retos=retosIniciales(); reto=-1; estado=''; pintaFiguras(); draw();
+});
+function ponReto(i){
+  if(!retos.length) return;
+  reto=((i%retos.length)+retos.length)%retos.length;
+  estado=''; fitView();
+}
+/* al pulsar una figura del catálogo: si ya está entre los retos se selecciona,
+   y si no (porque se ha abierto otra colección) se añade al final */
+function ponFigura(f){
+  var i=-1;
+  for(var j=0;j<retos.length;j++){
+    var b=bordeDe(retos[j]);
+    if(b && claveFig(b)===f.clave){ i=j; break; }
+  }
+  if(i<0){
+    retos.push({nombre:f.nombre, piezas:f.piezas.map(function(p){
+      return {t:p.t,x:p.x,y:p.y,a:p.a,f:p.f}; }), _poli:f.poli});
+    i=retos.length-1;
+  }
+  ponReto(i);
+}
+/* --- pistas -------------------------------------------------------------- */
+document.getElementById('pistas').addEventListener('click',function(){
+  var caja=document.getElementById('cajapistas');
+  var abierto=caja.style.display!=='none';
+  caja.style.display = abierto ? 'none' : 'inline-flex';
+  this.classList.toggle('on', !abierto);
+  if(abierto){ opt.lados=0; opt.figuras=0;
+    document.getElementById('pLados').checked=false;
+    document.getElementById('pFiguras').checked=false;
+    document.getElementById('figuras').classList.remove('show');
+  }
+  draw();
+});
+document.getElementById('pLados').addEventListener('change',function(e){ opt.lados=e.target.checked?1:0; draw(); });
+document.getElementById('pFiguras').addEventListener('change',function(e){
+  opt.figuras=e.target.checked?1:0; pintaFiguras(); draw(); });
+/* miniaturas de las figuras guardadas, solo la silueta: ni nombres ni piezas */
+function pintaFiguras(){
+  var cont=document.getElementById('figuras');
+  cont.classList.toggle('show', !!opt.figuras);
+  if(!opt.figuras) return;
+  var cat=catalogo();
+  if(!cat.length){ cont.innerHTML='<div class="tit">No he podido calcular el catálogo</div>'; return; }
+  cont.innerHTML='<div class="tit">Las '+cat.length+' figuras convexas</div>'+
+                 '<div class="rej"></div>';
+  var rej=cont.querySelector('.rej');
+  cat.forEach(function(f){
+    var lado=84, oc=document.createElement('canvas');
+    oc.width=lado*2; oc.height=lado*2; oc.style.width=lado+'px'; oc.style.height=lado+'px';
+    oc.title='Poner esta figura como reto';
+    var o=oc.getContext('2d'); o.scale(2,2);
+    var b={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
+    f.poli.forEach(function(P){
+      b.x0=Math.min(b.x0,P.x); b.x1=Math.max(b.x1,P.x);
+      b.y0=Math.min(b.y0,P.y); b.y1=Math.max(b.y1,P.y);
+    });
+    var m=9, z=Math.min((lado-2*m)/((b.x1-b.x0)||1), (lado-2*m)/((b.y1-b.y0)||1));
+    o.beginPath();
+    f.poli.forEach(function(P,k){
+      var X=(P.x-(b.x0+b.x1)/2)*z+lado/2, Y=(P.y-(b.y0+b.y1)/2)*z+lado/2;
+      if(k===0) o.moveTo(X,Y); else o.lineTo(X,Y);
+    });
+    o.closePath();
+    o.fillStyle='#dfe3e8'; o.fill();           // solo la silueta: ni piezas ni nombres
+    o.lineWidth=1.6; o.lineJoin='round'; o.strokeStyle='#3d4450'; o.stroke();
+    oc.addEventListener('click',function(){ ponFigura(f); });
+    rej.appendChild(oc);
+  });
+}
+document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.2); });
+document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.2); });
+function zoomAt(fz){ var r=stage.getBoundingClientRect(), c={x:r.width/2,y:r.height/2};
+  var b=s2w(c); view.z=Math.max(0.25,Math.min(3.5,view.z*fz)); var a=s2w(c);
+  view.x+=(a.x-b.x)*view.z; view.y+=(a.y-b.y)*view.z; draw(); }
+document.getElementById('fit').addEventListener('click',fitView);
+function fitView(){
+  var r=stage.getBoundingClientRect(), m=70;
+  var todo=piezas.slice();
+  if(reto>=0 && retos[reto]) todo=todo.concat(retos[reto].piezas);
+  var b=cajaDe(todo);
+  if(!b){ view={x:r.width/2,y:r.height/2,z:1}; draw(); return; }
+  var z=Math.min((r.width-2*m)/((b.x1-b.x0)||1), (r.height-2*m)/((b.y1-b.y0)||1));
+  view.z=Math.max(0.25,Math.min(2,z));
+  view.x=r.width/2-((b.x0+b.x1)/2)*view.z; view.y=r.height/2-((b.y0+b.y1)/2)*view.z;
+  draw();
+}
+document.getElementById('png').addEventListener('click',function(){
+  var todo=piezas.slice();
+  if(reto>=0 && retos[reto]) todo=todo.concat(retos[reto].piezas);
+  var b=cajaDe(todo); if(!b){ flash('No hay nada que exportar'); return; }
+  var m=30, sc=2, W=(b.x1-b.x0)+2*m, H=(b.y1-b.y0)+2*m;
+  var oc=document.createElement('canvas'); oc.width=W*sc; oc.height=H*sc;
+  var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
+  var g={x:view.x,y:view.y,z:view.z}, ctx0=ctx;
+  view.x=m-b.x0; view.y=m-b.y0; view.z=1; ctx=o;
+  drawSilueta(o); piezas.forEach(function(p){ drawPieza(o,p,false); });
+  ctx=ctx0; view=g; draw();
+  var a=document.createElement('a'); a.download='tangram-brugner.png'; a.href=oc.toDataURL('image/png'); a.click();
+});
+
+/* --- guardar y abrir ----------------------------------------------------- */
+document.getElementById('save').addEventListener('click',function(){
+  var d={formato:'tangram-brugner', version:1,
+         piezas:piezas.map(function(p){ return {t:p.t, x:+p.x.toFixed(2), y:+p.y.toFixed(2),
+                                                a:+p.a.toFixed(6), f:!!p.f}; }),
+         retos:retos.map(function(r){ return {nombre:r.nombre,
+           piezas:r.piezas.map(function(p){ return {t:p.t, x:+p.x.toFixed(2), y:+p.y.toFixed(2),
+                                                   a:+p.a.toFixed(6), f:!!p.f}; })}; })};
+  var blob=new Blob([JSON.stringify(d,null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download='tangram-brugner.json'; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+document.getElementById('add').addEventListener('click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leer(f); });
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }catch(err){ flash('No he podido leer ese archivo'); } };
+  r.readAsText(f);
+}
+function limpiaPiezas(lista){
+  if(!Array.isArray(lista)) return null;
+  var out=[];
+  for(var i=0;i<lista.length;i++){
+    var q=lista[i], t=q.t|0;
+    if(t<0||t>2) return null;
+    var x=Number(q.x), y=Number(q.y), a=Number(q.a);
+    if(!isFinite(x)||!isFinite(y)||!isFinite(a)) return null;
+    out.push({t:t, x:x, y:y, a:a, f:!!q.f, id:nidPieza++});
+  }
+  return out.length===3 ? out : null;
+}
+var nidPieza=100;
+function loadData(d){
+  var nuevos=(d && Array.isArray(d.retos)) ? d.retos.map(function(r){
+    var ps=limpiaPiezas(r.piezas); return ps? {nombre:String(r.nombre||'Figura'), piezas:ps} : null;
+  }).filter(Boolean) : [];
+  var np=d && limpiaPiezas(d.piezas);
+  pushUndo();
+  if(importMode==='replace'){
+    if(np) piezas=np;
+    if(nuevos.length) retos=nuevos;
+  } else {
+    retos=retos.concat(nuevos);
+  }
+  sel=null; estado=''; reto = retos.length? Math.min(reto<0?-1:reto, retos.length-1) : -1;
+  guardaLocal(); pintaFiguras(); fitView();
+  flash((np&&importMode==='replace'?'Piezas y ':'')+nuevos.length+' retos cargados');
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); }); });
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); }); });
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='add'; leer(f); }
+});
+
+document.getElementById('help').addEventListener('click',function(){ infoEl.classList.toggle('show'); });
+infoEl.innerHTML=
+ '<b>Tangram mínimo de Brügner</b><br>En 1984, G. Brügner estudió el rompecabezas que sale de partir un '+
+ 'rectángulo en tres triángulos rectángulos semejantes. Es el tangram más pequeño que da juego: con solo '+
+ 'tres piezas se pueden formar bastantes polígonos convexos distintos.'+
+ '<div style="margin-top:7px">Las medidas no son cualesquiera. Están elegidas para que la hipotenusa de '+
+ 'cada triángulo mida lo mismo que el cateto mayor del siguiente, y eso obliga a que los catetos estén en '+
+ 'razón √φ, con φ el número áureo. Las tres piezas forman así una progresión geométrica: cada una es la '+
+ 'anterior reducida en esa misma razón.</div>'+
+ '<div style="margin-top:7px"><b>Manejo</b><br>'+
+ 'Arrastra las piezas para moverlas. Al seleccionar una aparece un tirador ⟳ encima para girarla, y con '+
+ '<b>Voltear</b> le das la vuelta. Cada pieza tiene una textura distinta por cada cara —rayas por un lado, '+
+ 'puntos por el otro— manteniendo su color, así se ve de un vistazo cuáles están del revés.<br>'+
+ 'Con el <b>imán</b>, al soltar una pieza sus vértices se enganchan a los de las demás.<br>'+
+ '<b>Ajustar giro</b> lleva la pieza a las orientaciones en que uno de sus lados queda paralelo a un lado '+
+ 'de otra pieza, que son justamente las que permiten unirlas. Hace falta porque los ángulos de estos '+
+ 'triángulos son 38,17° y 51,83°, y con un paso fijo de 15° habría uniones imposibles de conseguir. '+
+ 'Los botones ↺ ↻ saltan a la siguiente orientación aprovechable.</div>'+
+ '<div style="margin-top:7px"><b>💡 Pistas</b><br>'+
+ '<b>Lados iguales</b> pinta del mismo color los lados que miden lo mismo. Entre los nueve lados de las '+
+ 'tres piezas solo hay cinco medidas distintas, y ver cuáles coinciden es media solución.<br>'+
+ '<b>Figuras posibles</b> enseña el catálogo de siluetas convexas, en gris y sin ninguna línea interior: '+
+ 'dice qué se puede conseguir, no cómo. Haciendo clic en una se pone como reto. El catálogo no está '+
+ 'copiado de ningún sitio: el programa lo calcula al arrancar, probando a pegar las piezas por todos sus '+
+ 'lados haciendo coincidir vértice con vértice, tirando lo que se solapa y quedándose con lo convexo. Las '+
+ 'figuras cóncavas, que son muchísimas más, quedan para explorar por libre.</div>'+
+ '<div style="margin-top:7px"><b>Retos</b><br>Los botones ‹ › pasan de una silueta a otra, y <b>¿Está '+
+ 'resuelto?</b> comprueba si las piezas la cubren. La comprobación se hace comparando las dos regiones, '+
+ 'así que vale cualquier solución que la cubra, no solo la que yo tenía en mente.<br>'+
+ 'Con <b>Guardar esto como reto</b> conviertes lo que hayas construido en una silueta nueva. Los retos '+
+ 'se quedan guardados en el propio navegador, así que siguen ahí al volver a entrar; pero son de ese '+
+ 'navegador y de ese ordenador. Para repartirlos o llevártelos a otro sitio, usa ⤓ Guardar, que baja un '+
+ 'archivo con la colección entera, y ⤒ Abrir o ＋ para recuperarla.</div>'+
+ '<div style="margin-top:7px">De entrada solo hay un reto, el rectángulo del que salen las tres piezas. '+
+ 'Los demás se van añadiendo al pulsarlos en el catálogo o al guardar los vuestros. Averiguar cuántas '+
+ 'figuras convexas hay, y por qué no hay más, es una investigación que da para varias sesiones; conviene '+
+ 'no abrir el catálogo antes de tiempo.</div>'+
+ '<div style="margin-top:7px;color:#8a919c">Atajos: V voltear · R y L o las flechas giran · F traer al '+
+ 'frente · Esc soltar la selección · Ctrl+Z deshacer.</div>'+
+ '<div class="lic">Tangram mínimo de Brügner · Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · @pbeltranp<br>'+
+ 'Se puede usar, copiar y adaptar citando la autoría: licencia '+
+ '<a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>.</div>';
+
+function updateUI(){
+  var hay = sel!=null && porId(sel);
+  ['gIzq','gDer','voltear','alFrente'].forEach(function(id){ document.getElementById(id).disabled=!hay; });
+  document.getElementById('retoNom').textContent = reto>=0 && retos[reto] ? retos[reto].nombre : 'Libre';
+  document.getElementById('retoCnt').textContent = retos.length
+    ? (reto>=0 ? (reto+1)+' de '+retos.length
+               : retos.length+(retos.length===1?' figura guardada':' figuras guardadas')) : 'sin retos';
+  var est=document.getElementById('retoEstado');
+  est.textContent = estado==='ok' ? '¡Resuelto!' : estado==='casi' ? 'Casi…' : '';
+  est.className = 'estado '+(estado==='ok'?'ok':'no');
+  var pz=document.getElementById('piezas');
+  pz.innerHTML = TIPOS.map(function(T,i){
+    var p=piezas.filter(function(q){return q.t===i;})[0];
+    return '<div class="p"><span class="sw" style="background:'+T.col+'"></span>'+T.n+
+           (p&&p.f?' <span style="color:#9aa1ab">(del revés)</span>':'')+'</div>';
+  }).join('');
+
+  var t;
+  if(flashMsg && Date.now()-flashT<2100) t=flashMsg;
+  else if(opt.lados) t='Los lados del mismo color miden lo mismo: son los que se pueden pegar entre sí';
+  else if(reto>=0) t='Coloca las tres piezas sobre la silueta · el tirador ⟳ gira la pieza y V la voltea';
+  else t='Arrastra las piezas · selecciona una y usa el tirador ⟳ para girarla, o V para voltearla';
+  hintEl.textContent=t;
+}
+
+/* =========================================================================
+   9. ARRANQUE
+   ========================================================================= */
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+(function init(){
+  retos=cargaLocal() || retosIniciales();
+  piezas=[{t:0, id:1, x:-U*1.5, y:-U*0.5, a:0, f:false},
+          {t:1, id:2, x:-U*0.1, y:U*0.7, a:0, f:false},
+          {t:2, id:3, x:U*1.1,  y:-U*0.2, a:0, f:false}];
+  resize(); fitView();
+})();
+
+/* =========================================================================
+  10. AUTOCOMPROBACIÓN  ·  añade #test al final de la URL
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){ out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':'')); if(!c) fails++; }
+  function num(v){ return (Math.round(v*100)/100).toString().replace('.',','); }
+  function hip(t){ return Math.sqrt(TIPOS[t].L*TIPOS[t].L+TIPOS[t].S*TIPOS[t].S); }
+  function areaT(t){ return TIPOS[t].L*TIPOS[t].S/2; }
+
+  /* Si algo revienta a mitad de las pruebas, el informe tiene que salir igual
+     diciendo dónde: si no, la pantalla se queda en blanco y no hay por dónde
+     coger el fallo. */
+  try{
+
+  /* --- las proporciones de Brügner --------------------------------------- */
+  ok('φ cumple φ² = φ + 1', Math.abs(PHI*PHI-(PHI+1))<1e-12);
+  ok('los catetos de las tres piezas están en razón √φ',
+     [0,1,2].every(function(t){ return Math.abs(TIPOS[t].L/TIPOS[t].S-RQ)<1e-9; }), num(RQ));
+  ok('los tres triángulos son semejantes',
+     Math.abs(TIPOS[0].L/TIPOS[0].S-TIPOS[2].L/TIPOS[2].S)<1e-9);
+  ok('la hipotenusa de la mediana es el cateto mayor de la grande',
+     Math.abs(hip(1)-TIPOS[0].L)<1e-9, num(hip(1))+' = '+num(TIPOS[0].L));
+  ok('la hipotenusa de la pequeña es el cateto mayor de la mediana',
+     Math.abs(hip(2)-TIPOS[1].L)<1e-9, num(hip(2))+' = '+num(TIPOS[1].L));
+  ok('la hipotenusa de la grande es φ veces su cateto menor',
+     Math.abs(hip(0)-TIPOS[0].S*PHI)<1e-9);
+  ok('cada pieza es la anterior reducida en razón 1/√φ',
+     Math.abs(TIPOS[1].L/TIPOS[0].L-1/RQ)<1e-9 && Math.abs(TIPOS[2].L/TIPOS[1].L-1/RQ)<1e-9);
+  ok('las áreas de las tres suman la del rectángulo',
+     Math.abs(areaT(0)+areaT(1)+areaT(2)-TIPOS[0].L*TIPOS[0].S)<1e-9,
+     num(areaT(0)+areaT(1)+areaT(2))+' = '+num(TIPOS[0].L*TIPOS[0].S));
+  ok('la mediana y la pequeña juntas tienen el área de la grande',
+     Math.abs(areaT(1)+areaT(2)-areaT(0))<1e-9);
+  ok('el ángulo menor es el mismo en las tres', Math.abs(ANG-Math.atan2(TIPOS[2].S,TIPOS[2].L))<1e-9,
+     num(ANG*180/Math.PI)+'°');
+
+  /* --- las piezas colocadas ------------------------------------------------ */
+  var g={t:0,x:0,y:0,a:0,f:false};
+  ok('la pieza sin girar tiene el ángulo recto en su posición', (function(){
+      var v=verts(g);
+      return Math.abs(v[0].x)<1e-9 && Math.abs(v[0].y)<1e-9 &&
+             Math.abs(v[1].x-TIPOS[0].L)<1e-9 && Math.abs(v[2].y-TIPOS[0].S)<1e-9; })());
+  ok('girar no cambia el área de la pieza', (function(){
+      var a={t:0,x:30,y:-20,a:0.7,f:false}, v=verts(a);
+      return Math.abs(areaTri(v[0],v[1],v[2])-areaT(0))<1e-6; })());
+  ok('voltear tampoco', (function(){
+      var a={t:1,x:5,y:5,a:1.1,f:true}, v=verts(a);
+      return Math.abs(areaTri(v[0],v[1],v[2])-areaT(1))<1e-6; })());
+  ok('voltear dos veces deja la pieza igual', (function(){
+      var a={t:2,x:7,y:-3,a:0.4,f:false}, v0=verts(a);
+      a.f=true; a.f=false; var v1=verts(a);
+      return v0.every(function(q,i){ return Math.abs(q.x-v1[i].x)<1e-12 && Math.abs(q.y-v1[i].y)<1e-12; }); })());
+  ok('voltear cambia la orientación del triángulo', (function(){
+      function orient(p){ var v=verts(p);
+        return (v[1].x-v[0].x)*(v[2].y-v[0].y)-(v[1].y-v[0].y)*(v[2].x-v[0].x); }
+      return orient({t:0,x:0,y:0,a:0.3,f:false}) * orient({t:0,x:0,y:0,a:0.3,f:true}) < 0; })());
+  ok('un punto de dentro se detecta dentro',
+     dentroPieza({x:TIPOS[0].L*0.2, y:TIPOS[0].S*0.2}, g));
+  ok('y uno de fuera, fuera', !dentroPieza({x:-10,y:-10}, g));
+
+  /* --- tres figuras conocidas ---------------------------------------------- */
+  function areaUnion(lista){
+    var caja=cajaDe(lista), paso=Math.min(caja.x1-caja.x0, caja.y1-caja.y0)/160, n=0;
+    for(var x=caja.x0;x<=caja.x1;x+=paso) for(var y=caja.y0;y<=caja.y1;y+=paso){
+      var P={x:x,y:y};
+      for(var i=0;i<lista.length;i++) if(dentroPieza(P,lista[i])){ n++; break; }
+    }
+    return n*paso*paso;
+  }
+  function areaSuma(){ return areaT(0)+areaT(1)+areaT(2); }
+  function clona(lista){ return lista.map(function(p){
+    return {t:p.t,x:p.x,y:p.y,a:p.a,f:p.f}; }); }
+  var rect=retoBase(), cajaR=cajaDe(rect);
+  ok('el rectángulo de partida usa las tres piezas, una de cada',
+     rect.length===3 && [0,1,2].every(function(t){
+       return rect.filter(function(p){return p.t===t;}).length===1; }));
+  ok('y las piezas encajan sin huecos ni solapes',
+     Math.abs(areaUnion(rect)-areaSuma())/areaSuma()<0.02,
+     num(areaUnion(rect))+' ≈ '+num(areaSuma()));
+  ok('es efectivamente un rectángulo', (function(){
+      var an=cajaR.x1-cajaR.x0, al=cajaR.y1-cajaR.y0;
+      var A=areaUnion(rect);
+      return Math.abs(A-an*al)/(an*al)<0.02; })());
+  ok('y sus lados están en razón √φ', (function(){
+      var an=cajaR.x1-cajaR.x0, al=cajaR.y1-cajaR.y0;
+      return Math.abs(Math.max(an,al)/Math.min(an,al)-RQ)<0.01; })(),
+     num((cajaR.x1-cajaR.x0)/(cajaR.y1-cajaR.y0)));
+
+  /* --- las cinco medidas de lado ------------------------------------------- */
+  ok('entre los nueve lados hay cinco medidas distintas', largosClave().length===5,
+     largosClave().map(function(v){ return num(v); }).join(' · '));
+  ok('el cateto mayor de la grande mide igual que la hipotenusa de la mediana, y comparten color',
+     colorLado(TIPOS[0].L)===colorLado(hip(1)) && colorLado(TIPOS[0].L)!==null);
+  ok('el cateto menor de la grande, el mayor de la mediana y la hipotenusa de la pequeña, también',
+     colorLado(TIPOS[0].S)===colorLado(TIPOS[1].L) && colorLado(TIPOS[1].L)===colorLado(hip(2)));
+  ok('lados de medidas distintas llevan colores distintos',
+     colorLado(TIPOS[0].L)!==colorLado(TIPOS[0].S));
+  ok('una medida que no existe no tiene color', colorLado(TIPOS[0].L*1.5)===null);
+
+  /* --- el ajuste del giro --------------------------------------------------- */
+  var antesP2=piezas, antesR2=reto, antesPaso=opt.paso;
+  opt.paso=1; reto=-1;
+  piezas=[{t:0,id:801,x:0,y:0,a:0,f:false},{t:1,id:802,x:600,y:0,a:0,f:false}];
+  var pm=piezas[1];
+  ok('con un paso fijo de 15° no se alcanzarían los ángulos del triángulo',
+     Math.abs(ANG*180/Math.PI-Math.round(ANG*180/Math.PI/15)*15)>3,
+     num(ANG*180/Math.PI)+'° no es múltiplo de 15');
+  var cands=candidatosGiro(pm);
+  ok('hay orientaciones candidatas para casar lados', cands.length>0, cands.length);
+  ok('el ajuste deja algún lado paralelo a otro de la otra pieza', (function(){
+      pm.a=ajustaGiro(pm, ANG+0.03);             // cerca de una orientación buena
+      var mios=ladosDe(pm), otros=ladosDe(piezas[0]);
+      return mios.some(function(m){ return otros.some(function(o){
+        return Math.min(Math.abs(m-o), Math.PI-Math.abs(m-o))<1e-6; }); }); })(),
+     num(pm.a*180/Math.PI)+'°');
+  ok('un giro lejos de cualquier candidato no se fuerza', (function(){
+      var libre=0.17;                            // ~9,7°, lejos de todo
+      var r=ajustaGiro(pm, libre);
+      return difAng(r,libre)<8*Math.PI/180; })());
+  ok('el botón de girar salta a otra orientación', (function(){
+      var a0=pm.a, a1=siguienteOrientacion(pm,1);
+      return difAng(a1,a0)>0.008; })());
+  ok('y girando en un sentido y en el otro se vuelve cerca del punto de partida', (function(){
+      var a0=pm.a;
+      pm.a=siguienteOrientacion(pm,1);
+      pm.a=siguienteOrientacion(pm,-1);
+      var d=difAng(pm.a,a0); pm.a=a0; return d<1e-6; })());
+  opt.paso=antesPaso; piezas=antesP2; reto=antesR2;
+
+  /* --- los retos guardados en el navegador ---------------------------------- */
+  var crudoLS=null, hayLS=true;
+  try{ crudoLS=localStorage.getItem(CLAVE); }catch(e){ hayLS=false; }
+  function restauraLS(){
+    if(!hayLS) return;
+    try{ if(crudoLS===null) localStorage.removeItem(CLAVE); else localStorage.setItem(CLAVE,crudoLS); }
+    catch(e){}
+  }
+  (function(){
+    var crudo=crudoLS, hay=hayLS;
+    if(!hay){ ok('el navegador deja guardar retos', false, 'localStorage no disponible'); return; }
+    var antes=retos;
+    retos=[{nombre:'Prueba', piezas:retoBase()}];
+    guardaLocal();
+    var leido=cargaLocal();
+    ok('lo guardado en el navegador se vuelve a leer igual',
+       !!leido && leido.length===1 && leido[0].nombre==='Prueba' && leido[0].piezas.length===3);
+    ok('y las piezas conservan posición, giro y cara', (function(){
+        if(!leido) return false;
+        var a=retos[0].piezas, b=leido[0].piezas;
+        return a.every(function(p,i){
+          return b[i].t===p.t && Math.abs(b[i].x-p.x)<0.02 && Math.abs(b[i].y-p.y)<0.02
+              && difAng(b[i].a,p.a)<1e-5 && !!b[i].f===!!p.f; }); })());
+    olvidaLocal();
+    ok('y «empezar de cero» borra lo guardado', cargaLocal()===null);
+    retos=antes;
+    restauraLS();
+    ok('el test no se lleva por delante los retos de quien lo ejecuta',
+       (function(){ try{ return localStorage.getItem(CLAVE)===crudo; }catch(e){ return false; } })());
+  })();
+
+  /* --- el contorno de un grupo de piezas ------------------------------------ */
+  function ladosDePoli(poli){
+    return poli.map(function(P,i){
+      var Q=poli[(i+1)%poli.length]; return Math.hypot(Q.x-P.x,Q.y-P.y); });
+  }
+  var cRect=contorno(retoBase());
+  ok('el contorno del rectángulo tiene cuatro vértices, no nueve',
+     !!cRect && cRect.length===4, cRect? cRect.length+' vértices' : 'no ha salido');
+  ok('y mide √φ·U por U', (function(){
+      if(!cRect) return false;
+      var l=ladosDePoli(cRect).map(function(v){ return v/U; }).sort(function(a,b){return a-b;});
+      return Math.abs(l[0]-1)<0.01 && Math.abs(l[1]-1)<0.01
+          && Math.abs(l[2]-RQ)<0.01 && Math.abs(l[3]-RQ)<0.01; })(),
+     cRect? ladosDePoli(cRect).map(function(v){ return num(v/U); }).join(' · ') : '');
+  var triCat=catalogo().filter(function(f){ return f.n===3; })[0] || null;
+  var cTri=triCat? contorno(triCat.piezas) : null;
+  ok('el de un triángulo del catálogo tiene tres', !!cTri && cTri.length===3,
+     cTri? cTri.length : 'no ha salido');
+  ok('dos piezas que solo se tocan en un vértice se descartan', (function(){
+      var a={t:0,x:0,y:0,a:0,f:false}, b={t:1,x:TIPOS[0].L,y:0,a:0,f:false};
+      return contorno([a,b])===null; })());
+  ok('el detector de solapes ve cuándo dos piezas se pisan',
+     solapan({t:0,x:0,y:0,a:0,f:false},{t:1,x:5,y:5,a:0,f:false}));
+  ok('y no salta cuando solo se tocan por un lado',
+     !solapan({t:0,x:0,y:0,a:0,f:false},{t:1,x:0,y:0,a:-Math.PI/2,f:false}));
+
+  /* --- el catálogo de figuras ----------------------------------------------- */
+  var cat=catalogo();
+  var porLados={};
+  cat.forEach(function(f){ porLados[f.n]=(porLados[f.n]||0)+1; });
+  var reparto=Object.keys(porLados).sort().map(function(k){
+    return porLados[k]+' de '+k+' lados'; }).join(', ');
+  ok('el catálogo trae las 16 figuras convexas', cat.length===16, cat.length+' figuras: '+reparto);
+  ok('todas son convexas', cat.every(function(f){ return esConvexo(f.poli); }));
+  ok('el detector de convexidad distingue una figura cóncava', (function(){
+      var cuadrado=[{x:0,y:0},{x:10,y:0},{x:10,y:10},{x:0,y:10}];
+      var flecha  =[{x:0,y:0},{x:10,y:0},{x:5,y:4},{x:10,y:10},{x:0,y:10}];
+      return esConvexo(cuadrado) && !esConvexo(flecha); })());
+  ok('cada figura usa las tres piezas, una de cada', cat.every(function(f){
+      return f.piezas.length===3 && [0,1,2].every(function(t){
+        return f.piezas.filter(function(p){ return p.t===t; }).length===1; }); }));
+  ok('ninguna figura tiene piezas solapadas ni huecos', cat.every(function(f){
+      var A=areaUnion(f.piezas), S=areaSuma(); return Math.abs(A-S)/S<0.02; }));
+  ok('no hay dos figuras iguales, ni siquiera volteadas', (function(){
+      var v={}; return cat.every(function(f){
+        if(v[f.clave]) return false; v[f.clave]=1; return true; }); })());
+  function claveSegura(ps){ var c=contorno(ps); return c? claveFig(c) : null; }
+  function estaEnCatalogo(ps){
+    var k=claveSegura(ps);
+    return k!==null && cat.some(function(f){ return f.clave===k; });
+  }
+  ok('el rectángulo de partida está en el catálogo', estaEnCatalogo(retoBase()),
+     claveSegura(retoBase())===null? 'no he sabido sacarle el contorno' : '');
+  ok('hay al menos un pentágono, que es lo que se escapa si solo se buscan '+
+     'triángulos y cuadriláteros', cat.some(function(f){ return f.n===5; }));
+  ok('y todas las figuras del catálogo tienen contorno', cat.every(function(f){
+      return contorno(f.piezas)!==null; }));
+  ok('las figuras vienen apoyadas sobre su lado más largo', cat.every(function(f){
+      var l=ladosDePoli(f.poli), m=Math.max.apply(null,l);
+      return l.some(function(v,i){
+        return Math.abs(v-m)<1e-6 &&
+               Math.abs(f.poli[i].y-f.poli[(i+1)%f.poli.length].y)<0.5; }); }));
+  ok('la misma figura girada no cuenta dos veces', (function(){
+      var a=contorno(retoBase());
+      var b=contorno(giraLista(retoBase(), 0.7));
+      return a && b && claveFig(a)===claveFig(b); })());
+  ok('ni reflejada', (function(){
+      if(!triCat) return false;
+      var esp=triCat.piezas.map(function(p){
+        return {t:p.t, x:-p.x, y:p.y, a:Math.PI-p.a, f:!p.f}; });
+      var a=contorno(triCat.piezas), b=contorno(esp);
+      return !!a && !!b && claveFig(a)===claveFig(b); })());
+  ok('pero dos figuras distintas sí tienen claves distintas', (function(){
+      var a=claveSegura(retoBase());
+      return a!==null && !!triCat && a!==triCat.clave; })());
+  ok('poner un vértice u otro del lado sobre el punto de apoyo son colocaciones distintas',
+     (function(){
+      var Z={x:0,y:0}, W={x:TIPOS[0].L,y:0};
+      var a=apoya(1,false,0,false,Z,W), b=apoya(1,false,0,true,Z,W);
+      return a && b && (Math.abs(a.x-b.x)>1 || Math.abs(a.y-b.y)>1 || difAng(a.a,b.a)>0.01); })());
+  ok('y de entrada solo hay un reto, el rectángulo de partida', (function(){
+      var r=retosIniciales();
+      return r.length===1 && /ect.ngulo/.test(r[0].nombre); })());
+
+  /* --- la comprobación de los retos ---------------------------------------- */
+  var antes=piezas, antesReto=reto;
+  var figRect={nombre:'Rectángulo', piezas:retoBase()};
+  var figTri ={nombre:'Triángulo',  piezas:clona(triCat? triCat.piezas : retoBase())};
+  piezas=clona(retoBase()).map(function(p,i){ p.id=900+i; return p; });
+  retos=[figRect,figTri]; reto=0;
+  var r1=comparaRegiones(figRect.piezas, piezas);
+  ok('colocando las piezas como el reto, se da por resuelto', r1.j>0.97 && r1.solape<0.04,
+     'coincidencia '+num(r1.j*100)+'%');
+  piezas[0].x+=60;
+  var r2=comparaRegiones(figRect.piezas, piezas);
+  ok('moviendo una pieza, ya no', r2.j<0.97, 'coincidencia '+num(r2.j*100)+'%');
+  piezas=clona(figTri.piezas).map(function(p,i){ p.id=910+i; return p; });
+  var r3=comparaRegiones(figRect.piezas, piezas);
+  ok('y una figura distinta tampoco cuela', r3.j<0.9, 'coincidencia '+num(r3.j*100)+'%');
+  var r4=comparaRegiones(figTri.piezas, piezas);
+  ok('pero el reto que le corresponde sí', r4.j>0.97);
+
+  /* --- guardar y volver a abrir -------------------------------------------- */
+  piezas=clona(retoBase()).map(function(p,i){ p.id=920+i; return p; });
+  retos=[figRect,figTri];
+  var antesP=piezas.map(function(p){ return p.t+':'+p.x.toFixed(2)+','+p.y.toFixed(2)+','+p.a.toFixed(4)+','+p.f; }).join(' | ');
+  var data={formato:'tangram-brugner',version:1,
+    piezas:piezas.map(function(p){ return {t:p.t,x:p.x,y:p.y,a:p.a,f:p.f}; }),
+    retos:retos.map(function(r){ return {nombre:r.nombre,
+      piezas:r.piezas.map(function(p){ return {t:p.t,x:p.x,y:p.y,a:p.a,f:p.f}; })}; })};
+  importMode='replace'; loadData(JSON.parse(JSON.stringify(data)));
+  ok('guardar y volver a abrir conserva la colocación',
+     piezas.map(function(p){ return p.t+':'+p.x.toFixed(2)+','+p.y.toFixed(2)+','+p.a.toFixed(4)+','+p.f; }).join(' | ')===antesP);
+  ok('y los retos, con su nombre', retos.length===2 && retos[0].nombre==='Rectángulo');
+  var nAntes=retos.length;
+  importMode='add'; loadData(JSON.parse(JSON.stringify(data)));
+  ok('el botón ＋ añade retos sin borrar los que había', retos.length===nAntes*2, retos.length);
+  ok('un archivo con una pieza inexistente se rechaza',
+     limpiaPiezas([{t:5,x:0,y:0,a:0}])===null);
+  ok('y uno que no trae las tres piezas, también',
+     limpiaPiezas([{t:0,x:0,y:0,a:0}])===null);
+  importMode='replace';
+
+  /* el test toca los retos y el guardado del navegador: hay que dejarlo todo
+     como estaba, que quien lo ejecuta no tiene por qué perder sus figuras */
+  restauraLS();
+  piezas=antes; retos=cargaLocal()||retosIniciales(); reto=-1;
+  sel=null; estado=''; undoStack=[]; draw();
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+    try{ draw(); }catch(e2){}
+  }
+
+  /* --- informe ------------------------------------------------------------- */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación del Tangram de Brügner</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__brugner={
+  test:runSelfTest, TIPOS:TIPOS, PHI:PHI, RQ:RQ, ANG:ANG,
+  piezas:function(){return piezas;}, retos:function(){return retos;},
+  verts:verts, dentroPieza:dentroPieza, cajaDe:cajaDe, areaTri:areaTri,
+  retoBase:retoBase,
+  largosClave:largosClave, colorLado:colorLado, ladosDe:ladosDe,
+  ajustaGiro:ajustaGiro, siguienteOrientacion:siguienteOrientacion, candidatosGiro:candidatosGiro,
+  guardaLocal:guardaLocal, cargaLocal:cargaLocal, olvidaLocal:olvidaLocal, opt:opt,
+  contorno:contorno, catalogo:catalogo, claveFig:claveFig, solapan:solapan, orienta:orienta,
+  esConvexo:esConvexo, apoya:apoya, apoyos:apoyos,
+  compara:comparaRegiones, load:loadData, setMode:function(m){importMode=m;},
+  redraw:draw, reparte:reparte
+};
+
+})();
+</script>
+</body>
+</html>

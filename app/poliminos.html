@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Poliminós · manipulativo virtual</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       font-size:14px;color:#2b2f36;background:#fff;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;height:100%;width:100%}
+
+  #side{width:168px;flex:0 0 168px;background:#f4f5f7;border-right:1px solid #dfe2e7;
+        overflow-y:auto;padding:10px 10px 24px}
+  #side h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:14px 0 7px;font-weight:600}
+  #side h2:first-child{margin-top:2px}
+  #swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:5px}
+  .sw{width:100%;aspect-ratio:1;min-height:21px;border-radius:5px;border:1px solid rgba(0,0,0,.16);cursor:pointer;padding:0}
+  .sw.on{outline:2px solid #2f62a8;outline-offset:1px}
+  #custom{margin-top:7px;display:flex;align-items:center;gap:6px;font-size:11px;color:#6b7280}
+  #custom input{width:26px;height:24px;padding:0;border:1px solid #d5d9e0;border-radius:5px;background:none;cursor:pointer}
+  .act{display:block;width:100%;text-align:left;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+       padding:6px 9px;margin-bottom:4px;font-size:12.5px;color:#3d4450;cursor:pointer}
+  .act:hover:not(:disabled){background:#f0f2f5;border-color:#c8cdd6}
+  .act:disabled{opacity:.42;cursor:default}
+  .act kbd{float:right;font:inherit;font-size:10.5px;color:#9aa1ab}
+  #axisinfo{margin:0 0 8px}
+  .ejebox{border:1px solid #f0d3c0;background:#fdf6f1;border-radius:8px;padding:8px}
+  .ejebox .dato{font-size:11px;line-height:1.4;color:#9a3412;margin-bottom:6px;text-align:center}
+  .ejebox .dato b{color:#7c2d12}
+  .ejebox .fila{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+  .ejebox button{border:1px solid #e6c9b6;background:#fff;border-radius:6px;padding:6px 0;
+                 font-size:12px;color:#9a3412;cursor:pointer;width:100%}
+  .ejebox button:hover{background:#fbeee6}
+  #stats{font-size:11.5px;color:#6b7280;line-height:1.6;margin-top:12px;border-top:1px solid #e3e6eb;padding-top:9px}
+  #stats b{color:#2b2f36}
+  .note{font-size:10.5px;line-height:1.45;color:#8a919c;margin-top:12px}
+
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #dfe2e7;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn.on:hover{background:#2a589a}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  #avanzado{display:none;align-items:center;gap:5px}
+  #avanzado.show{display:inline-flex}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  #stage{position:relative;flex:1;min-height:0;background:#fff}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:266px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:120px;flex:0 0 120px;padding:8px 6px}
+    #swatches{grid-template-columns:repeat(4,1fr)}
+    .btn{padding:5px 7px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <h2>Color</h2>
+    <div id="swatches"></div>
+    <div id="custom"><input type="color" id="cpick" value="#4f9ad1">otro</div>
+
+    <h2>Pieza seleccionada</h2>
+    <button class="act" id="aRotR" disabled>Girar 90° ↻<kbd>R</kbd></button>
+    <button class="act" id="aRotL" disabled>Girar 90° ↺<kbd>L</kbd></button>
+    <button class="act" id="aFlip" disabled>Simetría<kbd>S</kbd></button>
+    <div id="axisinfo"></div>
+    <button class="act" id="aDup" disabled>Duplicar<kbd>D</kbd></button>
+    <button class="act" id="aPaint" disabled>Pintar entera<kbd>P</kbd></button>
+    <button class="act" id="aDel" disabled>Borrar<kbd>Supr</kbd></button>
+
+    <div id="stats"></div>
+    <div class="note">Pinta cuadrados que se toquen por un lado y formarán una sola pieza.</div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn on" data-tool="paint" title="Pintar cuadrados (1)">▦ Pintar</button>
+      <button class="btn" data-tool="move" title="Mover piezas (2)">✥ Mover</button>
+      <button class="btn" data-tool="fill" title="Colorear (3)">◍ Color</button>
+      <button class="btn" data-tool="del" title="Borrar cuadrados (4)">✕ Borrar</button>
+      <button class="btn" data-tool="axis" title="Trazar el eje de simetría (5)">⟋ Eje</button>
+      <button class="btn" id="noaxis" title="Quitar el eje">⌫ eje</button>
+      <span class="sep"></span>
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <label class="chk" title="Muestra las herramientas para comprobar si hay piezas repetidas"><input type="checkbox" id="avz">Comprobaciones</label>
+      <span id="avanzado">
+        <button class="btn" id="check" title="Marca las piezas congruentes">⚖ Repetidas</button>
+        <label class="chk" title="Al comprobar repetidas: si está activado, una pieza y su imagen especular cuentan como la misma (poliminós libres); si no, se consideran distintas (poliminós de una cara)."><input type="checkbox" id="freeflip" checked>reflejadas = iguales</label>
+      </span>
+      <span class="sep"></span>
+      <label class="chk"><input type="checkbox" id="showgrid" checked>Rejilla</label>
+      <label class="chk"><input type="checkbox" id="shownum">Nº</label>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar los poliminós en un archivo">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir el contenido de un archivo a lo que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="clear">Limpiar</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo de poliminós</div>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. ESTADO
+   Una pieza es un poliminó: un conjunto de celdas de la rejilla unidas por
+   aristas. Las coordenadas de celda son enteras.
+   ========================================================================= */
+var CELL=38;                 // px por celda a zoom 1
+var pieces=[], nid=1;
+var idx={};                  // 'x,y' -> id de pieza
+var sel=null;                // id de la pieza seleccionada
+var tool='paint', color='#4f9ad1';
+var view={x:0,y:0,z:1};
+var drag=null, undoStack=[], dups=null, importMode='replace';
+var opt={grid:1,num:0,flip:1};
+var axis=null;   // {ax,ay,bx,by,dir}  puntos de la retícula y dirección h|v|d|a
+var avisoEje=false;
+
+var COLORS=['#e05a4d','#ef8b3c','#f2c94c','#7cc36a','#4f9ad1','#3a5ea8',
+            '#9b6bd0','#e07fb0','#8d6e5a','#8b93a1','#ffffff','#3a4048'];
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop'), statsEl=document.getElementById('stats');
+var flashMsg=null, flashT=0;
+
+function K(x,y){return x+','+y;}
+function byId(id){for(var i=0;i<pieces.length;i++) if(pieces[i].id===id) return pieces[i]; return null;}
+function reindex(){ idx={}; pieces.forEach(function(p){ p.cells.forEach(function(c){ idx[K(c.x,c.y)]=p.id; }); }); }
+function snapshot(){ return JSON.stringify({p:pieces,n:nid}); }
+function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length>80) undoStack.shift(); dups=null; }
+function doUndo(){ if(!undoStack.length){flash('No hay nada que deshacer'); return;}
+  var st=JSON.parse(undoStack.pop()); pieces=st.p; nid=st.n; sel=null; dups=null; reindex(); draw(); }
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2100); }
+
+/* =========================================================================
+   2. OPERACIONES SOBRE LAS PIEZAS
+   ========================================================================= */
+var NB=[[1,0],[-1,0],[0,1],[0,-1]];
+
+function addCell(x,y,c){
+  if(idx[K(x,y)]) return false;
+  var near=[];
+  NB.forEach(function(d){ var id=idx[K(x+d[0],y+d[1])]; if(id && near.indexOf(id)<0) near.push(id); });
+  if(!near.length){ pieces.push(setPivot({id:nid++, cells:[{x:x,y:y,c:c}]})); }
+  else {
+    var host=byId(near[0]); host.cells.push({x:x,y:y,c:c});
+    for(var i=1;i<near.length;i++){                 // el cuadrado nuevo fusiona piezas
+      var o=byId(near[i]); host.cells=host.cells.concat(o.cells);
+      pieces=pieces.filter(function(q){return q!==o;});
+    }
+    setPivot(host);
+  }
+  reindex(); return true;
+}
+
+function splitCells(cells){                          // componentes conexas por aristas
+  var map={}, out=[];
+  cells.forEach(function(c){ map[K(c.x,c.y)]=c; });
+  var seen={};
+  cells.forEach(function(c){
+    var k=K(c.x,c.y); if(seen[k]) return;
+    var comp=[], q=[c]; seen[k]=1;
+    while(q.length){ var cur=q.pop(); comp.push(cur);
+      NB.forEach(function(d){ var nk=K(cur.x+d[0],cur.y+d[1]);
+        if(map[nk] && !seen[nk]){ seen[nk]=1; q.push(map[nk]); } });
+    }
+    out.push(comp);
+  });
+  return out;
+}
+
+function removeCell(x,y){
+  var id=idx[K(x,y)]; if(!id) return false;
+  var p=byId(id);
+  p.cells=p.cells.filter(function(c){return !(c.x===x&&c.y===y);});
+  if(!p.cells.length){ pieces=pieces.filter(function(q){return q!==p;}); if(sel===id) sel=null; }
+  else {
+    var comps=splitCells(p.cells);
+    if(comps.length>1){
+      pieces=pieces.filter(function(q){return q!==p;});
+      if(sel===id) sel=null;
+      comps.forEach(function(cs){ pieces.push(setPivot({id:nid++, cells:cs})); });
+    } else setPivot(p);
+  }
+  reindex(); return true;
+}
+
+function bb(cells){
+  var b={minx:1e9,miny:1e9,maxx:-1e9,maxy:-1e9};
+  cells.forEach(function(c){ b.minx=Math.min(b.minx,c.x); b.miny=Math.min(b.miny,c.y);
+                             b.maxx=Math.max(b.maxx,c.x); b.maxy=Math.max(b.maxy,c.y); });
+  return b;
+}
+/* Centro de giro: un vértice de la retícula, fijo mientras no se edite la pieza.
+   Girar alrededor de un vértice lleva casillas a casillas sin redondeos, así que
+   cuatro giros seguidos devuelven la pieza exactamente a su sitio.               */
+function setPivot(p){
+  var b=bb(p.cells);
+  p.px=Math.round((b.minx+b.maxx+1)/2);
+  p.py=Math.round((b.miny+b.maxy+1)/2);
+  return p;
+}
+function free(cells,ignoreId){
+  for(var i=0;i<cells.length;i++){ var id=idx[K(cells[i].x,cells[i].y)];
+    if(id && id!==ignoreId) return false; }
+  return true;
+}
+function applyCells(p,cells){ p.cells=cells; reindex(); }
+
+/* giro de 90° alrededor del vértice (px,py): exacto, sin redondeos */
+function rotCellsAbout(cells,px,py,cw){
+  return cells.map(function(c){
+    return cw ? {x:px-(c.y-py)-1, y:py+(c.x-px),   c:c.c}
+              : {x:px+(c.y-py),   y:py-(c.x-px)-1, c:c.c};
+  });
+}
+function moveCells(cells,dx,dy){
+  return cells.map(function(c){ return {x:c.x+dx, y:c.y+dy, c:c.c}; });
+}
+
+/* --- simetría respecto del eje trazado por el usuario ---------------------
+   Solo los ejes horizontal, vertical y las dos diagonales llevan la retícula
+   sobre sí misma; por eso el segundo punto del eje se ajusta a esas cuatro
+   direcciones. Las fórmulas son exactas y aplicarlas dos veces devuelve la
+   figura a su sitio.                                                        */
+function reflectCell(c,A){
+  var ax=A.ax, ay=A.ay;
+  switch(A.dir){
+    case 'h': return {x:c.x,                 y:2*ay-c.y-1,          c:c.c};
+    case 'v': return {x:2*ax-c.x-1,          y:c.y,                 c:c.c};
+    case 'd': return {x:ax+(c.y-ay),         y:ay+(c.x-ax),         c:c.c};
+    default : return {x:ax-(c.y-ay)-1,       y:ay-(c.x-ax)-1,       c:c.c};
+  }
+}
+function reflectPoint(x,y,A){
+  var ax=A.ax, ay=A.ay;
+  switch(A.dir){
+    case 'h': return {x:x,             y:2*ay-y};
+    case 'v': return {x:2*ax-x,        y:y};
+    case 'd': return {x:ax+(y-ay),     y:ay+(x-ax)};
+    default : return {x:ax-(y-ay),     y:ay-(x-ax)};
+  }
+}
+
+/* --- operaciones sobre la pieza seleccionada ------------------------------ */
+function opRot(p,cw){ return {cells:rotCellsAbout(p.cells,p.px,p.py,cw), px:p.px, py:p.py}; }
+function opMove(p,dx,dy){ return {cells:moveCells(p.cells,dx,dy), px:p.px+dx, py:p.py+dy}; }
+function opFlip(p){
+  if(!axis) return null;
+  var q=reflectPoint(p.px,p.py,axis);
+  return {cells:p.cells.map(function(c){return reflectCell(c,axis);}), px:q.x, py:q.y};
+}
+
+function transform(fn,msg){
+  if(sel==null){ flash('Selecciona antes una pieza'); return; }
+  var p=byId(sel); if(!p) return;
+  var r=fn(p); if(!r) return;
+  var old=p.cells, opx=p.px, opy=p.py;
+  p.cells=[]; reindex();                           // se aparta para no chocar consigo misma
+  if(!free(r.cells,p.id)){ p.cells=old; reindex(); flash(msg||'No cabe: hay otra pieza en medio'); draw(); return; }
+  pushUndoSilent(old,opx,opy,p);
+  p.cells=r.cells; p.px=r.px; p.py=r.py; reindex(); draw();
+}
+/* guarda en el historial el estado previo a una transformación ya empezada */
+function pushUndoSilent(oldCells,opx,opy,p){
+  var before=pieces.map(function(q){
+    var esta=(q===p);
+    return {id:q.id, px:(esta?opx:q.px), py:(esta?opy:q.py),
+            cells:(esta?oldCells:q.cells).map(function(c){return {x:c.x,y:c.y,c:c.c};})};
+  });
+  undoStack.push(JSON.stringify({p:before,n:nid})); if(undoStack.length>80) undoStack.shift();
+  dups=null;
+}
+
+function duplicate(){
+  if(sel==null){ flash('Selecciona antes una pieza'); return; }
+  var p=byId(sel); if(!p) return;
+  var b=bb(p.cells), H=b.maxy-b.miny+1;
+  for(var d=1;d<60;d++){
+    var cand=moveCells(p.cells,0,d*(H+1));
+    if(free(cand,null)){ pushUndo();
+      var np=setPivot({id:nid++, cells:cand}); pieces.push(np); reindex(); sel=np.id; draw(); return; }
+  }
+  flash('No hay hueco para el duplicado');
+}
+
+function paintPiece(id,col){
+  var p=byId(id); if(!p) return;
+  pushUndo(); p.cells.forEach(function(c){ c.c=col; }); draw();
+}
+
+/* =========================================================================
+   3. CONGRUENCIA: ¿qué piezas son la misma?
+   ========================================================================= */
+function normal(cells){
+  var mx=1e9,my=1e9;
+  cells.forEach(function(c){ mx=Math.min(mx,c.x); my=Math.min(my,c.y); });
+  return cells.map(function(c){ return (c.x-mx)+','+(c.y-my); }).sort().join(' ');
+}
+function canon(cells,withFlip){
+  var forms=[], base=cells.map(function(c){return {x:c.x,y:c.y};});
+  var variants=[base];
+  if(withFlip) variants.push(base.map(function(c){return {x:-c.x,y:c.y};}));
+  variants.forEach(function(v){
+    var w=v;
+    for(var r=0;r<4;r++){
+      w=w.map(function(c){ return {x:-c.y, y:c.x}; });
+      forms.push(normal(w));
+    }
+  });
+  forms.sort();
+  return forms[0];
+}
+function checkDups(){
+  if(pieces.length<2){ flash('Haz al menos dos piezas'); return; }
+  var groups={};
+  pieces.forEach(function(p){
+    var k=p.cells.length+'|'+canon(p.cells,!!opt.flip);
+    (groups[k]=groups[k]||[]).push(p.id);
+  });
+  var n=0, marked={};
+  Object.keys(groups).forEach(function(k){
+    if(groups[k].length>1){ n++; groups[k].forEach(function(id){ marked[id]=n; }); }
+  });
+  dups=marked;
+  var distintas=Object.keys(groups).length;
+  if(!n) flash('Todas distintas: hay '+pieces.length+' piezas y ninguna se repite');
+  else flash(n+(n===1?' grupo repetido':' grupos repetidos')+' · '+distintas+' piezas distintas de '+pieces.length);
+  draw();
+}
+
+/* =========================================================================
+   4. DIBUJO
+   ========================================================================= */
+function w2s(p){return {x:p.x*view.z+view.x, y:p.y*view.z+view.y};}
+function s2w(p){return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z};}
+function cellAt(wp){ return {x:Math.floor(wp.x/CELL), y:Math.floor(wp.y/CELL)}; }
+function vertexAt(wp){ return {x:Math.round(wp.x/CELL), y:Math.round(wp.y/CELL)}; }
+
+/* el segundo punto se ajusta a las cuatro direcciones que respetan la retícula */
+function makeAxis(a,q){
+  var dx=q.x-a.x, dy=q.y-a.y;
+  if(!dx && !dy) return null;
+  var k=Math.round(Math.atan2(dy,dx)/(Math.PI/4));
+  var sx=Math.round(Math.cos(k*Math.PI/4)), sy=Math.round(Math.sin(k*Math.PI/4));
+  var len=Math.max(1, Math.round(Math.hypot(dx,dy)/Math.hypot(sx,sy)));
+  var dir = (sy===0) ? 'h' : (sx===0) ? 'v' : (sx===sy ? 'd' : 'a');
+  return {ax:a.x, ay:a.y, bx:a.x+sx*len, by:a.y+sy*len, dir:dir,
+          ajustado:(Math.abs(dx*sy-dy*sx)>0.001)};
+}
+function nombreEje(d){ return d==='h'?'horizontal':d==='v'?'vertical':d==='d'?'diagonal ↘':'diagonal ↗'; }
+
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0); draw();
+}
+function shade(hex,f){
+  var h=hex.replace('#',''); if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
+  r=Math.round(r+(f>0?(255-r)*f:r*f)); g=Math.round(g+(f>0?(255-g)*f:g*f)); b=Math.round(b+(f>0?(255-b)*f:b*f));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function drawGrid(c,W,H){
+  var s=CELL*view.z; if(s<9) return;
+  var x0=((view.x%s)+s)%s, y0=((view.y%s)+s)%s;
+  c.save(); c.strokeStyle='#e6e9ee'; c.lineWidth=1; c.beginPath();
+  for(var x=x0;x<W;x+=s){ c.moveTo(Math.round(x)+.5,0); c.lineTo(Math.round(x)+.5,H); }
+  for(var y=y0;y<H;y+=s){ c.moveTo(0,Math.round(y)+.5); c.lineTo(W,Math.round(y)+.5); }
+  c.stroke(); c.restore();
+}
+function drawPiece(c,p,selected){
+  var set={};
+  p.cells.forEach(function(cl){ set[K(cl.x,cl.y)]=1; });
+  // relleno
+  p.cells.forEach(function(cl){
+    var x=cl.x*CELL, y=cl.y*CELL;
+    c.fillStyle=cl.c||'#4f9ad1'; c.fillRect(x,y,CELL,CELL);
+    c.strokeStyle=shade(cl.c||'#4f9ad1',-0.14); c.lineWidth=1;
+    c.strokeRect(x+.5,y+.5,CELL-1,CELL-1);
+  });
+  // contorno exterior de la pieza
+  c.beginPath();
+  p.cells.forEach(function(cl){
+    var x=cl.x*CELL, y=cl.y*CELL;
+    if(!set[K(cl.x,cl.y-1)]){ c.moveTo(x,y); c.lineTo(x+CELL,y); }
+    if(!set[K(cl.x,cl.y+1)]){ c.moveTo(x,y+CELL); c.lineTo(x+CELL,y+CELL); }
+    if(!set[K(cl.x-1,cl.y)]){ c.moveTo(x,y); c.lineTo(x,y+CELL); }
+    if(!set[K(cl.x+1,cl.y)]){ c.moveTo(x+CELL,y); c.lineTo(x+CELL,y+CELL); }
+  });
+  c.strokeStyle='#2b2f36'; c.lineWidth=2.1; c.lineCap='square'; c.stroke();
+
+  var b=bb(p.cells);
+  if(selected){
+    c.save(); c.setLineDash([6/view.z,4/view.z]); c.lineWidth=2/view.z; c.strokeStyle='#2f62a8';
+    c.strokeRect(b.minx*CELL-4, b.miny*CELL-4, (b.maxx-b.minx+1)*CELL+8, (b.maxy-b.miny+1)*CELL+8);
+    c.restore();
+  }
+  if(dups && dups[p.id]){
+    c.save(); c.lineWidth=3/view.z; c.strokeStyle='#e8890c';
+    c.strokeRect(b.minx*CELL-2, b.miny*CELL-2, (b.maxx-b.minx+1)*CELL+4, (b.maxy-b.miny+1)*CELL+4);
+    var bx=b.minx*CELL-2, by=b.miny*CELL-2;
+    c.fillStyle='#e8890c'; c.beginPath(); c.arc(bx,by,9,0,6.2832); c.fill();
+    c.fillStyle='#fff'; c.font='700 11px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.textAlign='center'; c.textBaseline='middle'; c.fillText(dups[p.id],bx,by);
+    c.restore();
+  }
+  if(opt.num){
+    var first=p.cells.slice().sort(function(a,z){ return (a.y-z.y)||(a.x-z.x); })[0];
+    c.save();
+    c.font='700 12px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.textAlign='center'; c.textBaseline='middle';
+    var tx=first.x*CELL+CELL/2, ty=first.y*CELL+CELL/2;
+    c.fillStyle='rgba(255,255,255,.85)'; c.beginPath(); c.arc(tx,ty,10,0,6.2832); c.fill();
+    c.fillStyle='#3a4048'; c.fillText(p.cells.length,tx,ty);
+    c.restore();
+  }
+}
+function drawAxis(c,A,W,H,provisional){
+  var ax=A.ax*CELL, ay=A.ay*CELL, bx=A.bx*CELL, by=A.by*CELL;
+  var dx=bx-ax, dy=by-ay, L=Math.hypot(dx,dy)||1;
+  var ext=(W+H)*2/view.z;                      // prolonga el eje por todo el tablero
+  var ux=dx/L, uy=dy/L;
+  c.save();
+  c.setLineDash([9/view.z,6/view.z]); c.lineWidth=1.7/view.z;
+  c.strokeStyle=provisional?'rgba(194,65,12,.55)':'rgba(194,65,12,.9)';
+  c.beginPath(); c.moveTo(ax-ux*ext, ay-uy*ext); c.lineTo(ax+ux*ext, ay+uy*ext); c.stroke();
+  c.setLineDash([]);
+  [[ax,ay],[bx,by]].forEach(function(q){
+    c.beginPath(); c.arc(q[0],q[1],5.5/view.z,0,6.2832);
+    c.fillStyle='#fff'; c.fill();
+    c.lineWidth=2/view.z; c.strokeStyle='#c2410c'; c.stroke();
+  });
+  c.restore();
+}
+
+function scene(c,W,H,forExport){
+  c.save();
+  if(opt.grid && !forExport) drawGrid(c,W,H);
+  c.translate(view.x,view.y); c.scale(view.z,view.z);
+  if(axis && !forExport) drawAxis(c,axis,W,H,false);
+  if(drag && drag.mode==='axis' && drag.prev) drawAxis(c,drag.prev,W,H,true);
+  pieces.forEach(function(p){ drawPiece(c,p,!forExport && p.id===sel); });
+  if(!forExport && drag && drag.mode==='move' && drag.bad){
+    c.save(); c.fillStyle='rgba(220,60,50,.13)';
+    drag.ghost.forEach(function(cl){ c.fillRect(cl.x*CELL,cl.y*CELL,CELL,CELL); });
+    c.restore();
+  }
+  c.restore();
+}
+/* --- tiradores de giro junto a la pieza seleccionada ---------------------
+   Se dibujan en coordenadas de pantalla, así que no cambian de tamaño con el
+   zoom, y se colocan al lado de la pieza sin taparla. */
+function cajaPantalla(p){
+  var b=bb(p.cells);                       // ojo: bb() devuelve minx/miny/maxx/maxy
+  var a=w2s({x:b.minx*CELL, y:b.miny*CELL});
+  var c=w2s({x:(b.maxx+1)*CELL, y:(b.maxy+1)*CELL});
+  return {x0:a.x, y0:a.y, x1:c.x, y1:c.y};
+}
+function tiradores(){
+  if(sel==null || tool!=='move') return [];
+  var p=byId(sel); if(!p) return [];
+  var W=cv.width/(window.devicePixelRatio||1);
+  var c=cajaPantalla(p), R=14, g=5;
+  var x=c.x1+R+12;
+  if(x+R>W-6) x=c.x0-R-12;
+  var y=(c.y0+c.y1)/2;
+  return [{x:x, y:y-R-g/2, r:R, s:'↺', giro:false},
+          {x:x, y:y+R+g/2, r:R, s:'↻', giro:true}];
+}
+function dibujaTiradores(c){
+  tiradores().forEach(function(t){
+    c.save();
+    c.beginPath(); c.arc(t.x,t.y,t.r,0,6.2832);
+    c.fillStyle='#fff'; c.fill();
+    c.lineWidth=1.8; c.strokeStyle='#2f62a8'; c.stroke();
+    c.fillStyle='#2f62a8'; c.font='700 17px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.textAlign='center'; c.textBaseline='middle';
+    c.fillText(t.s, t.x, t.y+1);
+    c.restore();
+  });
+}
+function tiradorEn(sp){
+  var ts=tiradores();
+  for(var i=0;i<ts.length;i++)
+    if(Math.hypot(sp.x-ts[i].x, sp.y-ts[i].y)<=ts[i].r+3) return ts[i];
+  return null;
+}
+function draw(){
+  var W=cv.width/(window.devicePixelRatio||1), H=cv.height/(window.devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  scene(ctx,W,H,false);
+  dibujaTiradores(ctx);
+  updateUI();
+}
+
+/* =========================================================================
+   5. INTERACCIÓN
+   ========================================================================= */
+function evPos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+
+function onDown(e){
+  cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);
+  var sp=evPos(e), wp=s2w(sp), g=cellAt(wp), id=idx[K(g.x,g.y)];
+
+  var tir=tiradorEn(sp);                       // giro desde el propio tablero
+  if(tir){ transform(function(p){ return opRot(p,tir.giro); }); return; }
+
+  if(tool==='paint'){
+    pushUndo();
+    if(!id) addCell(g.x,g.y,color);
+    sel=idx[K(g.x,g.y)]||null;
+    drag={mode:'paint', last:K(g.x,g.y)}; draw(); return;
+  }
+  if(tool==='del'){
+    pushUndo();
+    if(id) removeCell(g.x,g.y);
+    drag={mode:'del', last:K(g.x,g.y)}; draw(); return;
+  }
+  if(tool==='axis'){
+    var v=vertexAt(wp);
+    drag={mode:'axis', a:v, prev:null}; draw(); return;
+  }
+  if(tool==='fill'){
+    if(id){ sel=id;
+            if(e.altKey){ pushUndo(); var p=byId(id);
+              p.cells.forEach(function(c){ if(c.x===g.x&&c.y===g.y) c.c=color; }); draw(); }
+            else paintPiece(id,color); }
+    return;
+  }
+  // mover
+  if(id){
+    sel=id;
+    drag={mode:'move', id:id, from:g, moved:false, bad:false, ghost:[],
+          base:byId(id).cells.map(function(c){return {x:c.x,y:c.y,c:c.c};}),
+          bpx:byId(id).px, bpy:byId(id).py};
+    draw(); return;
+  }
+  sel=null;
+  drag={mode:'pan', sp:sp, v0:{x:view.x,y:view.y}};
+  draw();
+}
+
+function onMove(e){
+  if(!drag) return;
+  var sp=evPos(e), wp=s2w(sp), g=cellAt(wp);
+  if(drag.mode==='pan'){ view.x=drag.v0.x+(sp.x-drag.sp.x); view.y=drag.v0.y+(sp.y-drag.sp.y); draw(); return; }
+  if(drag.mode==='axis'){ drag.prev=makeAxis(drag.a, vertexAt(wp)); draw(); return; }
+  if(drag.mode==='paint'){
+    var k=K(g.x,g.y); if(k===drag.last) return; drag.last=k;
+    if(!idx[k]) addCell(g.x,g.y,color);
+    draw(); return;
+  }
+  if(drag.mode==='del'){
+    var k2=K(g.x,g.y); if(k2===drag.last) return; drag.last=k2;
+    if(idx[k2]) removeCell(g.x,g.y);
+    draw(); return;
+  }
+  if(drag.mode==='move'){
+    var p=byId(drag.id); if(!p) return;
+    var dx=g.x-drag.from.x, dy=g.y-drag.from.y;
+    var cand=moveCells(drag.base,dx,dy);
+    var old=p.cells; p.cells=[]; reindex();
+    if(free(cand,p.id)){
+      if(!drag.moved){ pushUndoSilent(drag.base,drag.bpx,drag.bpy,p); drag.moved=true; }
+      p.cells=cand; p.px=drag.bpx+dx; p.py=drag.bpy+dy; drag.bad=false; drag.ghost=[];
+    } else { p.cells=old; drag.bad=true; drag.ghost=cand; }
+    reindex(); draw(); return;
+  }
+}
+function onUp(){
+  if(drag&&drag.mode==='move') drag.bad=false;
+  if(drag&&drag.mode==='axis'){
+    if(drag.prev){
+      axis=drag.prev;
+      if(axis.ajustado && !avisoEje){ avisoEje=true;
+        flash('El eje se ajusta a horizontal, vertical o diagonal: son las únicas direcciones que dejan la figura sobre la cuadrícula'); }
+      else flash('Eje '+nombreEje(axis.dir)+' fijado · selecciona una pieza y pulsa S');
+      setTool('move');
+    } else flash('Arrastra de un vértice a otro para trazar el eje');
+  }
+  drag=null; draw();
+}
+
+stage.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var sp=evPos(e), before=s2w(sp);
+  view.z=Math.max(0.25,Math.min(3.5,view.z*Math.exp(-e.deltaY*0.0015)));
+  var after=s2w(sp);
+  view.x+=(after.x-before.x)*view.z; view.y+=(after.y-before.y)*view.z;
+  draw();
+},{passive:false});
+
+cv.addEventListener('pointerdown',onDown);
+window.addEventListener('pointermove',onMove);
+window.addEventListener('pointerup',onUp);
+window.addEventListener('pointercancel',onUp);
+
+window.addEventListener('keydown',function(e){
+  var t=(e.target&&e.target.tagName)||''; if(t==='INPUT') return;
+  var k=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey)&&k==='z'){ doUndo(); e.preventDefault(); return; }
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(k==='escape'){ sel=null; draw(); }
+  else if(e.key==='Delete'||e.key==='Backspace'){ if(sel!=null){ pushUndo();
+      pieces=pieces.filter(function(p){return p.id!==sel;}); sel=null; reindex(); draw(); e.preventDefault(); } }
+  else if(k==='r'){ transform(function(p){return opRot(p,true);}); }
+  else if(k==='l'){ transform(function(p){return opRot(p,false);}); }
+  else if(k==='s'){ doFlip(); }
+  else if(k==='d'){ duplicate(); }
+  else if(k==='p'){ if(sel!=null) paintPiece(sel,color); }
+  else if(k==='1') setTool('paint');
+  else if(k==='2') setTool('move');
+  else if(k==='3') setTool('fill');
+  else if(k==='4') setTool('del');
+  else if(k==='5') setTool('axis');
+  else if(k==='arrowleft'||k==='arrowright'||k==='arrowup'||k==='arrowdown'){
+    if(sel==null) return;
+    var d={arrowleft:[-1,0],arrowright:[1,0],arrowup:[0,-1],arrowdown:[0,1]}[k];
+    transform(function(p){return opMove(p,d[0],d[1]);}); e.preventDefault();
+  }
+});
+
+/* =========================================================================
+   6. INTERFAZ
+   ========================================================================= */
+(function buildSwatches(){
+  var w=document.getElementById('swatches');
+  COLORS.forEach(function(col){
+    var b=document.createElement('button');
+    b.className='sw'+(col===color?' on':''); b.style.background=col; b.dataset.c=col;
+    b.title=col;
+    b.addEventListener('click',function(){ setColor(col); });
+    w.appendChild(b);
+  });
+})();
+function setColor(col){
+  color=col;
+  document.querySelectorAll('.sw').forEach(function(b){ b.classList.toggle('on', b.dataset.c===col); });
+  document.getElementById('cpick').value=/^#[0-9a-f]{6}$/i.test(col)?col:'#4f9ad1';
+  if(sel!=null && tool==='fill') paintPiece(sel,col);
+}
+document.getElementById('cpick').addEventListener('input',function(e){ setColor(e.target.value); });
+
+/* recuadro del eje de simetría, justo debajo del botón de Simetría */
+var ejeCache=null;                 // null y no '': '' es el estado «sin eje»
+function ejeUI(){
+  var estado = axis ? [axis.ax,axis.ay,axis.bx,axis.by,axis.dir].join(',') : '';
+  if(estado===ejeCache) return;
+  ejeCache=estado;
+  var el=document.getElementById('axisinfo');
+  el.innerHTML = axis
+    ? '<div class="ejebox"><div class="dato">eje <b>'+nombreEje(axis.dir)+'</b><br>'+
+      'por ('+axis.ax+', '+axis.ay+') y ('+axis.bx+', '+axis.by+')</div>'+
+      '<div class="fila"><button data-ej="nuevo">cambiar</button>'+
+      '<button data-ej="quitar">quitar</button></div></div>'
+    : '<button class="act" data-ej="nuevo">Definir el eje de simetría…</button>';
+  el.querySelectorAll('button').forEach(function(b){
+    b.addEventListener('click',function(){
+      if(b.dataset.ej==='quitar'){ axis=null; ejeCache=null; draw(); }
+      else { setTool('axis'); flash('Arrastra de un vértice de la cuadrícula a otro para trazar el eje'); }
+    });
+  });
+}
+
+/* la simetría necesita un eje trazado antes */
+function doFlip(){
+  if(!axis){ flash('Traza antes el eje: herramienta ⟋ Eje, arrastrando de un vértice a otro'); setTool('axis'); return; }
+  transform(opFlip,'La imagen reflejada cae encima de otra pieza');
+}
+function setTool(t){
+  tool=t;
+  document.querySelectorAll('[data-tool]').forEach(function(b){ b.classList.toggle('on', b.dataset.tool===t); });
+  cv.style.cursor = (t==='move') ? 'default' : 'crosshair';
+  draw();
+}
+document.querySelectorAll('[data-tool]').forEach(function(b){
+  b.addEventListener('click',function(){ setTool(b.dataset.tool); });
+});
+
+document.getElementById('aRotR').addEventListener('click',function(){ transform(function(p){return opRot(p,true);}); });
+document.getElementById('aRotL').addEventListener('click',function(){ transform(function(p){return opRot(p,false);}); });
+document.getElementById('aFlip').addEventListener('click',doFlip);
+document.getElementById('noaxis').addEventListener('click',function(){
+  if(!axis){ flash('No hay ningún eje trazado'); return; }
+  axis=null; draw(); });
+document.getElementById('aDup').addEventListener('click',duplicate);
+document.getElementById('aPaint').addEventListener('click',function(){ if(sel!=null) paintPiece(sel,color); });
+document.getElementById('aDel').addEventListener('click',function(){
+  if(sel==null) return; pushUndo();
+  pieces=pieces.filter(function(p){return p.id!==sel;}); sel=null; reindex(); draw();
+});
+document.getElementById('undo').addEventListener('click',doUndo);
+document.getElementById('check').addEventListener('click',checkDups);
+document.getElementById('avz').addEventListener('change',function(e){
+  document.getElementById('avanzado').classList.toggle('show', e.target.checked);
+  if(!e.target.checked) dups=null;               // al ocultarlas, se quitan las marcas
+  draw();
+});
+document.getElementById('freeflip').addEventListener('change',function(e){ opt.flip=e.target.checked?1:0; dups=null; draw(); });
+document.getElementById('showgrid').addEventListener('change',function(e){ opt.grid=e.target.checked?1:0; draw(); });
+document.getElementById('shownum').addEventListener('change',function(e){ opt.num=e.target.checked?1:0; draw(); });
+document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.2); });
+document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.2); });
+function zoomAt(f){ var r=stage.getBoundingClientRect(), c={x:r.width/2,y:r.height/2};
+  var b=s2w(c); view.z=Math.max(0.25,Math.min(3.5,view.z*f)); var a=s2w(c);
+  view.x+=(a.x-b.x)*view.z; view.y+=(a.y-b.y)*view.z; draw(); }
+document.getElementById('fit').addEventListener('click',fitView);
+function worldBox(){
+  if(!pieces.length) return null;
+  var all=[]; pieces.forEach(function(p){ all=all.concat(p.cells); });
+  var b=bb(all);
+  return {x0:b.minx*CELL, y0:b.miny*CELL, x1:(b.maxx+1)*CELL, y1:(b.maxy+1)*CELL};
+}
+function fitView(){
+  var r=stage.getBoundingClientRect(), b=worldBox();
+  if(!b){ view={x:r.width/2-CELL*4, y:r.height/2-CELL*3, z:1}; draw(); return; }
+  var m=48, z=Math.min((r.width-2*m)/(b.x1-b.x0), (r.height-2*m)/(b.y1-b.y0));
+  view.z=Math.max(0.25,Math.min(2.4,z));
+  view.x=r.width/2-((b.x0+b.x1)/2)*view.z; view.y=r.height/2-((b.y0+b.y1)/2)*view.z;
+  draw();
+}
+document.getElementById('clear').addEventListener('click',function(){
+  if(!pieces.length) return;
+  pushUndo(); pieces=[]; sel=null; dups=null; reindex(); draw();
+});
+document.getElementById('png').addEventListener('click',function(){
+  var b=worldBox(); if(!b){ flash('No hay nada que exportar'); return; }
+  var m=24, sc=2, W=b.x1-b.x0+2*m, H=b.y1-b.y0+2*m;
+  var oc=document.createElement('canvas'); oc.width=W*sc; oc.height=H*sc;
+  var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
+  var save={x:view.x,y:view.y,z:view.z};
+  view.x=-b.x0+m; view.y=-b.y0+m; view.z=1;
+  scene(o,W,H,true);
+  view=save; draw();
+  dl('poliminos.png', oc.toDataURL('image/png'));
+});
+function dl(name,href){ var a=document.createElement('a'); a.download=name; a.href=href; a.click(); }
+
+/* ---- guardar / abrir ---------------------------------------------------- */
+document.getElementById('save').addEventListener('click',function(){
+  if(!pieces.length){ flash('No hay poliminós que guardar'); return; }
+  var data={formato:'poliminos', version:1, celda:1,
+            piezas:pieces.map(function(p){ return {cuadrados:p.cells.map(function(c){return [c.x,c.y,c.c];})}; })};
+  var blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  dl('poliminos.json',url); setTimeout(function(){URL.revokeObjectURL(url);},5000);
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+document.getElementById('add').addEventListener('click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) readFile(f); });
+
+function readFile(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }
+                       catch(err){ flash('Ese archivo no tiene el formato esperado'); } };
+  r.readAsText(f);
+}
+function loadData(d){
+  var lista = d && (d.piezas || d.pieces);
+  if(!lista || !lista.length){ flash('El archivo no contiene poliminós'); return; }
+  var nuevas=lista.map(function(p){
+    var cs=(p.cuadrados||p.cells||[]).map(function(c){
+      return Array.isArray(c) ? {x:c[0]|0, y:c[1]|0, c:c[2]||'#4f9ad1'} : {x:c.x|0, y:c.y|0, c:c.c||'#4f9ad1'};
+    });
+    return setPivot({id:nid++, cells:cs});
+  }).filter(function(p){ return p.cells.length; });
+  if(!nuevas.length){ flash('El archivo no contiene poliminós'); return; }
+  pushUndo();
+  if(importMode==='replace'){ pieces=nuevas; }
+  else {
+    var b=worldBox(), off=0;
+    if(b){ var all=[]; pieces.forEach(function(p){ all=all.concat(p.cells); }); off=bb(all).maxy+2; }
+    var nb=bb([].concat.apply([],nuevas.map(function(p){return p.cells;})));
+    nuevas.forEach(function(p){ p.cells=moveCells(p.cells,0,off-nb.miny); });
+    pieces=pieces.concat(nuevas);
+  }
+  sel=null; dups=null; reindex(); fitView();
+  flash(nuevas.length+(nuevas.length===1?' pieza cargada':' piezas cargadas'));
+}
+/* arrastrar y soltar el archivo sobre el tablero */
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); });
+});
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='add'; readFile(f); }
+});
+
+document.getElementById('help').addEventListener('click',function(){ infoEl.classList.toggle('show'); });
+infoEl.innerHTML=
+ '<b>Poliminós</b><br>Un poliminó es una figura formada por cuadrados iguales unidos por sus lados. '+
+ 'Con 4 cuadrados salen los tetraminós, con 5 los pentaminós, con 6 los hexaminós.'+
+ '<div style="margin-top:7px"><b>Herramientas</b><br>'+
+ '▦ Pintar: añade cuadrados; los que se tocan por un lado forman una sola pieza.<br>'+
+ '✥ Mover: arrastra la pieza; no puede solaparse con otra.<br>'+
+ '◍ Color: pinta la pieza entera (con Alt, solo un cuadrado).<br>'+
+ '✕ Borrar: quita cuadrados. Si una pieza se parte en dos, quedan dos piezas.<br>'+
+ '⟋ Eje: arrastra de un vértice a otro para trazar el eje de simetría. Los vértices pueden estar '+
+ 'en la figura o fuera de ella. El eje se ajusta a horizontal, vertical o diagonal, que son las cuatro '+
+ 'direcciones que dejan la figura reflejada sobre la cuadrícula.</div>'+
+ '<div style="margin-top:7px">Las piezas giran alrededor de un vértice fijo de la retícula, así que '+
+ 'cuatro giros seguidos la devuelven exactamente a su sitio.</div>'+
+ '<div style="margin-top:7px">La casilla <b>Comprobaciones</b> saca u oculta las herramientas de análisis, '+
+ 'para poder explorar sin tenerlas a la vista y sacarlas solo al final.<br>'+
+ '<b>⚖ Repetidas</b> marca en naranja las piezas que son la misma. '+
+ 'Si «con simetrías» está activado, una pieza y su imagen especular cuentan como la misma (poliminós libres); '+
+ 'si lo desactivas, se consideran distintas (poliminós de una cara).</div>'+
+ '<div style="margin-top:7px"><b>Guardar y abrir</b> descarga y recupera un archivo con todas las piezas y sus colores, '+
+ 'para seguir otro día o para repartir un puzle ya montado. También puedes soltar el archivo sobre el tablero.</div>'+
+ '<div style="margin-top:7px;color:#8a919c">Atajos: 1-5 herramientas · R girar a la derecha · L girar a la izquierda · '+
+ 'S simetría · D duplicar · P pintar entera · flechas mover · Supr borrar · Ctrl+Z deshacer.</div>'+
+ '<div class="lic">Poliminós · Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · @pbeltranp<br>'+
+ 'Se puede usar, copiar y adaptar citando la autoría: licencia '+
+ '<a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>.</div>';
+
+function updateUI(){
+  var hay = sel!=null && byId(sel);
+  ['aRotR','aRotL','aDup','aPaint','aDel'].forEach(function(id){ document.getElementById(id).disabled=!hay; });
+  document.getElementById('aFlip').disabled = !hay || !axis;
+  ejeUI();
+  var tot=0; pieces.forEach(function(p){ tot+=p.cells.length; });
+  var tam={}; pieces.forEach(function(p){ tam[p.cells.length]=(tam[p.cells.length]||0)+1; });
+  var det=Object.keys(tam).sort(function(a,b){return a-b;}).map(function(k){
+    return '<br>' + k + (k==='1'?' cuadrado: ':' cuadrados: ') + tam[k] + (tam[k]===1?' pieza':' piezas');
+  }).join('');
+  statsEl.innerHTML='<b>'+pieces.length+'</b> pieza'+(pieces.length===1?'':'s')+
+    ' · <b>'+tot+'</b> cuadrado'+(tot===1?'':'s')+ det +
+    (hay ? '<br><br>Seleccionada: '+byId(sel).cells.length+' cuadrados' : '');
+
+  var t;
+  if(flashMsg && Date.now()-flashT<2000) t=flashMsg;
+  else if(tool==='paint') t='Haz clic o arrastra para ir poniendo cuadrados · los que se tocan por un lado forman una sola pieza';
+  else if(tool==='move') t='Arrastra una pieza para moverla · R gira a la derecha, L a la izquierda, S refleja en el eje, D duplica';
+  else if(tool==='fill') t='Haz clic en una pieza para pintarla entera del color elegido · con Alt pintas solo un cuadrado';
+  else if(tool==='axis') t='Arrastra de un vértice de la cuadrícula a otro para trazar el eje de simetría · después selecciona una pieza y pulsa S';
+  else t='Haz clic o arrastra para quitar cuadrados';
+  hintEl.textContent=t;
+}
+
+/* =========================================================================
+   7. ARRANQUE
+   ========================================================================= */
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+(function init(){
+  var r=stage.getBoundingClientRect();
+  view.x=r.width/2-4*CELL; view.y=r.height/2-3*CELL;
+  setTool('paint');
+  resize();
+})();
+
+/* =========================================================================
+   8. AUTOCOMPROBACIÓN  ·  abre el archivo añadiendo #test al final de la URL
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){ out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':'')); if(!c) fails++; }
+  function CL(a){ return a.map(function(q){return {x:q[0],y:q[1],c:'#4f9ad1'};}); }
+  function key(cs){ return cs.map(function(c){return c.x+','+c.y;}).sort().join(' '); }
+
+  /* --- giros ------------------------------------------------------------- */
+  var formas=[['dominó',[[0,0],[1,0]]],
+              ['tetraminó I',[[0,0],[1,0],[2,0],[3,0]]],
+              ['tetraminó O',[[0,0],[1,0],[0,1],[1,1]]],
+              ['tetraminó T',[[0,0],[1,0],[2,0],[1,1]]],
+              ['tetraminó S',[[0,0],[1,0],[1,1],[2,1]]],
+              ['pentaminó V',[[0,0],[0,1],[0,2],[1,2],[2,2]]]];
+  formas.forEach(function(f){
+    var p=setPivot({id:0,cells:CL(f[1])}), k0=key(p.cells), c, r;
+    c=p.cells; for(r=0;r<4;r++) c=rotCellsAbout(c,p.px,p.py,true);
+    ok('4 giros a la derecha dejan el '+f[0]+' en su sitio', key(c)===k0);
+    c=p.cells; for(r=0;r<4;r++) c=rotCellsAbout(c,p.px,p.py,false);
+    ok('4 giros a la izquierda dejan el '+f[0]+' en su sitio', key(c)===k0);
+    var rl=rotCellsAbout(rotCellsAbout(p.cells,p.px,p.py,true),p.px,p.py,false);
+    ok('R y luego L dejan el '+f[0]+' en su sitio', key(rl)===k0);
+    var g=rotCellsAbout(p.cells,p.px,p.py,true);
+    ok('el giro del '+f[0]+' conserva los cuadrados y la forma',
+       g.length===p.cells.length && canon(g,false)===canon(p.cells,false));
+    ok('el giro del '+f[0]+' cae en casillas enteras',
+       g.every(function(c2){return c2.x===Math.round(c2.x)&&c2.y===Math.round(c2.y);}));
+  });
+
+  /* --- simetrías --------------------------------------------------------- */
+  var ejes=[['horizontal',{ax:0,ay:0,dir:'h'}],['vertical',{ax:0,ay:0,dir:'v'}],
+            ['diagonal ↘',{ax:2,ay:1,dir:'d'}],['diagonal ↗',{ax:-1,ay:3,dir:'a'}]];
+  ejes.forEach(function(E){
+    var base=CL([[0,0],[1,0],[1,1],[2,1]]);                 // tetraminó S (quiral)
+    var r1=base.map(function(c){return reflectCell(c,E[1]);});
+    var r2=r1.map(function(c){return reflectCell(c,E[1]);});
+    ok('reflejar dos veces en el eje '+E[0]+' devuelve la figura', key(r2)===key(base));
+    ok('la simetría en el eje '+E[0]+' conserva los cuadrados', r1.length===base.length);
+    ok('la simetría en el eje '+E[0]+' cae en casillas enteras',
+       r1.every(function(c){return c.x===Math.round(c.x)&&c.y===Math.round(c.y);}));
+    ok('la simetría en el eje '+E[0]+' da una figura congruente', canon(r1,true)===canon(base,true));
+    ok('la S reflejada en el eje '+E[0]+' es la Z (distinta sin simetrías)',
+       canon(r1,false)!==canon(base,false));
+    var q=reflectPoint(3,5,E[1]), q2=reflectPoint(q.x,q.y,E[1]);
+    ok('el centro de giro se refleja bien en el eje '+E[0], q2.x===3 && q2.y===5);
+  });
+
+  /* --- el eje se ajusta a las direcciones que respetan la retícula -------- */
+  var A1=makeAxis({x:0,y:0},{x:5,y:1});
+  ok('un trazo casi horizontal da un eje horizontal', A1 && A1.dir==='h', A1&&A1.dir);
+  ok('y avisa de que lo ha ajustado', A1 && A1.ajustado===true);
+  var A2=makeAxis({x:0,y:0},{x:3,y:3});
+  ok('un trazo diagonal exacto da eje diagonal sin ajustar', A2 && A2.dir==='d' && A2.ajustado===false);
+  var A3=makeAxis({x:2,y:2},{x:2,y:-3});
+  ok('un trazo vertical da eje vertical', A3 && A3.dir==='v', A3&&A3.dir);
+  ok('un trazo de longitud cero no define eje', makeAxis({x:1,y:1},{x:1,y:1})===null);
+
+  /* --- unión por aristas ------------------------------------------------- */
+  pieces=[]; sel=null; reindex();
+  addCell(0,0,'#e05a4d'); addCell(1,0,'#e05a4d');
+  ok('dos cuadrados con un lado común forman una sola pieza',
+     pieces.length===1 && pieces[0].cells.length===2, pieces.length);
+  pieces=[]; reindex();
+  addCell(0,0,'#e05a4d'); addCell(1,1,'#e05a4d');
+  ok('dos cuadrados que solo se tocan en un vértice son dos piezas', pieces.length===2, pieces.length);
+  pieces=[]; reindex();
+  addCell(0,0,'#e05a4d'); addCell(2,0,'#e05a4d');
+  ok('dos cuadrados separados son dos piezas', pieces.length===2);
+  addCell(1,0,'#e05a4d');
+  ok('el cuadrado de en medio las fusiona en una',
+     pieces.length===1 && pieces[0].cells.length===3, pieces.length);
+  ok('la pieza fusionada tiene centro de giro', pieces[0].px!==undefined);
+  removeCell(1,0);
+  ok('quitar el cuadrado de en medio parte la pieza en dos', pieces.length===2, pieces.length);
+  ok('las dos piezas resultantes tienen centro de giro',
+     pieces.every(function(p){return p.px!==undefined;}));
+  pieces=[]; reindex();
+  addCell(3,3,'#e05a4d');
+  ok('no se puede colocar encima de otra pieza', !free([{x:3,y:3}],null));
+  ok('sí se puede en una casilla libre', free([{x:9,y:9}],null));
+
+  /* --- recuento de poliminós: prueba fuerte de la congruencia ------------ */
+  function generar(n){
+    var act=[[[0,0]]];
+    for(var s=1;s<n;s++){
+      var vistos={}, sig=[];
+      act.forEach(function(poly){
+        var set={}; poly.forEach(function(c){ set[c[0]+','+c[1]]=1; });
+        poly.forEach(function(c){
+          NB.forEach(function(d){
+            var nx=c[0]+d[0], ny=c[1]+d[1];
+            if(set[nx+','+ny]) return;
+            var np=poly.concat([[nx,ny]]);
+            var k=normal(np.map(function(q){return {x:q[0],y:q[1]};}));
+            if(vistos[k]) return; vistos[k]=1; sig.push(np);
+          });
+        });
+      });
+      act=sig;
+    }
+    return act;
+  }
+  [[4,19,5,7],[5,63,12,18]].forEach(function(t){
+    var polis=generar(t[0]), libres={}, unaCara={};
+    polis.forEach(function(p){
+      var cs=p.map(function(q){return {x:q[0],y:q[1]};});
+      libres[canon(cs,true)]=1; unaCara[canon(cs,false)]=1;
+    });
+    var nl=Object.keys(libres).length, nu=Object.keys(unaCara).length;
+    ok('poliminós fijos de '+t[0]+' cuadrados = '+t[1], polis.length===t[1], polis.length);
+    ok('poliminós libres de '+t[0]+' cuadrados = '+t[2], nl===t[2], nl);
+    ok('poliminós de una cara de '+t[0]+' cuadrados = '+t[3], nu===t[3], nu);
+  });
+
+  /* --- los tiradores de giro del tablero ---------------------------------- */
+  pieces=[]; sel=null; reindex();
+  addCell(3,2,'#e05a4d'); addCell(4,2,'#e05a4d'); addCell(4,3,'#e05a4d');
+  var pz=pieces[0], toolAntes=tool;
+  tool='move'; sel=pz.id;
+  var ts=tiradores();
+  ok('con una pieza seleccionada y la herramienta de mover salen dos tiradores', ts.length===2, ts.length);
+  ok('sus coordenadas son números de verdad, no NaN',
+     ts.length===2 && ts.every(function(t){ return isFinite(t.x)&&isFinite(t.y)&&isFinite(t.r); }),
+     ts.map(function(t){ return Math.round(t.x)+','+Math.round(t.y); }).join(' '));
+  ok('la caja de la pieza en pantalla también es finita', (function(){
+      var c=cajaPantalla(pz);
+      return isFinite(c.x0)&&isFinite(c.y0)&&isFinite(c.x1)&&isFinite(c.y1) && c.x1>c.x0 && c.y1>c.y0; })());
+  ok('los tiradores quedan pegados a un lado de la pieza', (function(){
+      var c=cajaPantalla(pz), R=ts[0].r;
+      return ts.every(function(t){
+        return Math.abs(t.x-(c.x1+R+12))<1 || Math.abs(t.x-(c.x0-R-12))<1; }); })());
+  ok('uno gira a la izquierda y el otro a la derecha', ts[0].giro===false && ts[1].giro===true);
+  ok('pulsar el tirador de la derecha gira la pieza', (function(){
+      var k0=key(pz.cells);
+      transform(function(p){ return opRot(p,true); });
+      return key(pz.cells)!==k0 && pz.cells.length===3; })());
+  sel=null;
+  ok('sin pieza seleccionada no hay tiradores', tiradores().length===0);
+  sel=pz.id; tool='paint';
+  ok('y con la herramienta de pintar tampoco', tiradores().length===0);
+  tool=toolAntes; sel=null;
+
+  /* --- guardar y volver a abrir ------------------------------------------ */
+  pieces=[]; sel=null; reindex();
+  addCell(0,0,'#e05a4d'); addCell(1,0,'#e05a4d'); addCell(1,1,'#7cc36a'); addCell(4,4,'#3a5ea8');
+  var antes=pieces.map(function(p){return key(p.cells);}).sort().join(' | ');
+  var cols=pieces.map(function(p){return p.cells.map(function(c){return c.c;}).sort().join(',');}).sort().join('|');
+  var data={formato:'poliminos',version:1,
+            piezas:pieces.map(function(p){return {cuadrados:p.cells.map(function(c){return [c.x,c.y,c.c];})};})};
+  importMode='replace'; loadData(JSON.parse(JSON.stringify(data)));
+  ok('guardar y volver a abrir conserva las piezas',
+     pieces.map(function(p){return key(p.cells);}).sort().join(' | ')===antes);
+  ok('guardar y volver a abrir conserva los colores',
+     pieces.map(function(p){return p.cells.map(function(c){return c.c;}).sort().join(',');}).sort().join('|')===cols);
+  ok('las piezas cargadas tienen centro de giro', pieces.every(function(p){return p.px!==undefined;}));
+
+  pieces=[]; sel=null; axis=null; dups=null; undoStack=[]; reindex(); draw();
+
+  /* --- informe en pantalla ---------------------------------------------- */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación de Poliminós</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__poliminos={
+  test:runSelfTest,
+  pieces:function(){return pieces;}, add:addCell, remove:removeCell, byId:byId, free:free,
+  sel:function(id){sel=id;}, selected:function(){return sel;},
+  rotAbout:rotCellsAbout, move:moveCells, setPivot:setPivot,
+  reflectCell:reflectCell, reflectPoint:reflectPoint, makeAxis:makeAxis,
+  setAxis:function(a){axis=a;}, getAxis:function(){return axis;},
+  op:{rot:opRot, move:opMove, flip:opFlip}, transform:transform,
+  canon:canon, split:splitCells, bb:bb, dup:duplicate,
+  load:loadData, redraw:draw, reset:function(){pieces=[];sel=null;dups=null;axis=null;reindex();},
+  setMode:function(m){importMode=m;}, dups:function(){return dups;}, check:checkDups, opt:opt
+};
+
+})();
+</script>
+</body>
+</html>

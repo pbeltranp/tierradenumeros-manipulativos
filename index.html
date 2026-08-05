@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manipulativos virtuales · Pablo Beltrán-Pellicer</title>
+<meta name="description" content="Manipulativos virtuales para clase de matemáticas: geotiras, poliminós, geoplanos, tangram de Brügner, pattern blocks y más. Archivos HTML autocontenidos, licencia CC BY 4.0.">
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font:15px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:#2b2f36;background:#fbfbfa}
+  .envoltorio{max-width:1000px;margin:0 auto;padding:42px 20px 70px}
+  header h1{font-size:30px;line-height:1.2;margin:0 0 6px;letter-spacing:-.01em}
+  header .sub{color:#6b7280;font-size:15px;margin:0 0 22px}
+  header p{max-width:65ch;margin:0 0 12px}
+  a{color:#2f62a8}
+  .aviso{background:#fff;border:1px solid #e6e8ec;border-left:3px solid #f2c14e;border-radius:8px;
+         padding:12px 15px;margin:22px 0 6px;font-size:14px;line-height:1.55;color:#4a515c}
+  .aviso b{color:#2b2f36}
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;font-weight:600;
+     margin:40px 0 14px}
+  .rejilla{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
+  .tarjeta{background:#fff;border:1px solid #e6e8ec;border-radius:12px;overflow:hidden;
+           display:flex;flex-direction:column;transition:box-shadow .15s, transform .15s}
+  .tarjeta:hover{box-shadow:0 8px 26px rgba(20,25,35,.10);transform:translateY(-2px)}
+  .banda{height:5px}
+  .tarjeta img{display:block;width:100%;height:132px;object-fit:cover;background:#f4f5f7;
+               border-bottom:1px solid #eef0f3}
+  .cuerpo{padding:14px 16px 16px;display:flex;flex-direction:column;flex:1}
+  .cuerpo h3{margin:0 0 5px;font-size:16.5px;line-height:1.25}
+  .cuerpo h3 a{color:#2b2f36;text-decoration:none}
+  .cuerpo h3 a:hover{color:#2f62a8}
+  .cuerpo p{margin:0 0 13px;font-size:13.5px;line-height:1.5;color:#5a616b;flex:1}
+  .enlaces{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .abrir{display:inline-block;font-size:13px;padding:5px 11px;border:1px solid #d5d9e0;border-radius:7px;
+         background:#fff;color:#3d4450;text-decoration:none}
+  .abrir:hover{background:#f0f2f5}
+  .ficha{font-size:12.5px;color:#8a919c;text-decoration:none}
+  .ficha:hover{color:#2f62a8}
+  footer{margin-top:46px;padding-top:20px;border-top:1px solid #e6e8ec;font-size:13px;
+         line-height:1.6;color:#6b7280}
+  footer b{color:#2b2f36}
+  code{font:12.5px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:#f0f2f5;
+       padding:1px 5px;border-radius:4px;color:#3d4450}
+</style>
+</head>
+<body>
+<div class="envoltorio">
+
+  <header>
+    <h1>Manipulativos virtuales</h1>
+    <p class="sub">Pablo Beltrán-Pellicer · <a href="https://tierradenumeros.com">tierradenumeros.com</a></p>
+    <p>Materiales manipulativos de clase de matemáticas, hechos como páginas web. Cada uno es un
+      único archivo HTML que funciona abriéndolo tal cual: sin instalar nada, sin servidor y sin
+      conexión a internet.</p>
+    <p>En <a href="https://tierradenumeros.com/manipulativos/">tierradenumeros.com</a> está cada uno
+      con su explicación didáctica: para qué sirve, qué preguntas funcionan en clase y qué conviene
+      no contar antes de tiempo.</p>
+    <div class="aviso">
+      <b>Si vas a modificar alguno:</b> añade <code>#test</code> al final de la dirección y se
+      lanzarán solas las comprobaciones que lleva dentro, sobre todo las geométricas. Es la red de
+      seguridad para tocarlos sin romperlos.
+    </div>
+  </header>
+
+  <h2>Los manipulativos</h2>
+  <div class="rejilla" id="rejilla"></div>
+
+  <footer>
+    <p><b>Licencia CC BY 4.0.</b> Puedes usarlos, copiarlos, modificarlos y repartirlos, también en
+      clase y también modificados, citando la autoría. Cada archivo lleva dentro, en su panel
+      <code>?</code>, la autoría y la licencia, porque estos archivos acaban viajando solos.</p>
+    <p>Para citar: Beltrán-Pellicer, P. (2026). <i>Manipulativos virtuales</i>.
+      https://tierradenumeros.com/manipulativos/</p>
+    <p>Si encuentras un error, se te ocurre una mejora o has usado alguno en clase y quieres contar
+      qué tal fue, abre una <i>issue</i> en el repositorio. Se agradecen especialmente los avisos de
+      cosas que no funcionan en tabletas o en las pizarras digitales de los centros, que es donde
+      menos he podido probar.</p>
+  </footer>
+
+</div>
+
+<script>
+"use strict";
+/* Para añadir un manipulativo nuevo: deja su HTML en app/ y añade aquí una línea.
+   «id» es el nombre del archivo sin extensión, y «ficha» el de la carpeta en la web. */
+var MANIPS=[
+  {id:'geotiras', ficha:'geotiras', color:'#c8443a', nombre:'Geotiras',
+   texto:'Tiras perforadas que se unen con encuadernadores. El triángulo aguanta y el cuadrilátero se desmonta: ahí está la gracia.'},
+  {id:'poliminos', ficha:'poliminos', color:'#2f62a8', nombre:'Poliminós',
+   texto:'Figuras de cuadrados unidos por los lados, con giros exactos y simetría respecto de un eje que se marca a mano.'},
+  {id:'policubos', ficha:'policubos', color:'#1e7a44', nombre:'Policubos',
+   texto:'La versión en tres dimensiones, en perspectiva isométrica, con giros por cada eje y plano de simetría.'},
+  {id:'plaquetas', ficha:'plaquetas', color:'#b03a8a', nombre:'Plaquetas numéricas',
+   texto:'Las placas de Herbinière-Lebert: cantidades que se reconocen por su forma, y que se superponen para comprobar sumas.'},
+  {id:'geoplano', ficha:'geoplano-cuadrado', color:'#2f7fbf', nombre:'Geoplano cuadrado',
+   texto:'Trama cuadrada sin límites, con goma que se estira y cordel que no. Medir el perímetro deja de ser lo mismo que medir el área.'},
+  {id:'geoplano-isometrico', ficha:'geoplano-isometrico', color:'#4fa3a5', nombre:'Geoplano isométrico',
+   texto:'Trama triangular, con una opción de luz que sombrea las caras y convierte los dibujos planos en cuerpos.'},
+  {id:'corcho', ficha:'corcho', color:'#8d6e63', nombre:'Corcho geométrico',
+   texto:'Chinchetas donde se quiera, sin retícula, y un rotulador atado con cordel que traza circunferencias y elipses.'},
+  {id:'tangram-brugner', ficha:'tangram-brugner', color:'#e07a5f', nombre:'Tangram mínimo de Brügner',
+   texto:'Tres triángulos semejantes salidos de un rectángulo, con los lados en razón √φ. El catálogo de figuras se calcula, no se copia.'},
+  {id:'pattern-blocks', ficha:'pattern-blocks', color:'#f6c22d', nombre:'Pattern blocks',
+   texto:'Las seis piezas de siempre, tantas como quieras de cada una, con imán, grupos que se mueven juntos y simetría axial.'},
+  {id:'tiras-de-papel', ficha:'tiras-de-papel', color:'#f2c14e', nombre:'Tiras de papel',
+   texto:'Una tira unidad que se dobla en partes iguales y otras que hay que medir con ella. La fracción sale de medir, no de repartir.'},
+  {id:'manteles-y-servilletas', ficha:'manteles-y-servilletas', color:'#7fb069', nombre:'Manteles y servilletas',
+   texto:'Lo mismo, pero con áreas. Un cuarto de servilleta deja de ser una sola cosa, y no todas las formas encajan.'}
+];
+
+var html=MANIPS.map(function(m){
+  return '<article class="tarjeta">'+
+    '<div class="banda" style="background:'+m.color+'"></div>'+
+    '<img src="portadas/'+m.id+'.png" alt="" loading="lazy" '+
+      'onerror="this.remove()">'+
+    '<div class="cuerpo">'+
+      '<h3><a href="app/'+m.id+'.html">'+m.nombre+'</a></h3>'+
+      '<p>'+m.texto+'</p>'+
+      '<div class="enlaces">'+
+        '<a class="abrir" href="app/'+m.id+'.html">Abrir</a>'+
+        '<a class="ficha" href="https://tierradenumeros.com/manipulativos/'+m.ficha+'/" '+
+          'target="_blank" rel="noopener">Ficha didáctica ↗</a>'+
+      '</div>'+
+    '</div>'+
+  '</article>';
+}).join('');
+document.getElementById('rejilla').innerHTML=html;
+</script>
+</body>
+</html>
