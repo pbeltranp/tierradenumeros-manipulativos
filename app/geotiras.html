@@ -16,6 +16,11 @@
            overflow-y:auto;padding:10px 10px 24px;}
   #palette h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:14px 0 6px;font-weight:600}
   #palette h2:first-child{margin-top:2px}
+  /* rótulo del material: sobrio, peso ligero y una línea fina debajo */
+  #palette .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;
+                  padding:2px 2px 10px;border-bottom:1px solid #e3e6eb}
+  #palette .brand b{font-weight:400;color:#2b2f36}
+  #palette .brand + h2{margin-top:11px}
   .pitem{display:flex;align-items:center;gap:7px;padding:5px 6px;margin-bottom:3px;border-radius:7px;
          cursor:grab;background:#fff;border:1px solid #e3e6eb;touch-action:none}
   .pitem:hover{border-color:#b9c0ca;background:#fbfcfd}
@@ -72,14 +77,18 @@
     <div id="toolbar">
       <button class="btn on" data-tool="move" title="Mover y girar (V)">✥ Mover</button>
       <button class="btn" data-tool="pin" title="Encuadernador (E)">◉ Encuadernador</button>
+      <button class="btn" data-tool="nail" title="Clavo: fija un agujero al suelo (C)">⊕ Clavo</button>
+      <button class="btn" data-tool="pulley" title="Polea: eje fijo que arrastra la tira montada en él (P)">◎ Polea</button>
+      <button class="btn" data-tool="belt" title="Correa: hace que dos poleas giren a la vez (B)">⊃ Correa</button>
       <button class="btn" data-tool="cord" title="Goma (G)">～ Goma</button>
+      <button class="btn" data-tool="pen" title="Rotulador (R)">✎ Rotulador</button>
       <button class="btn" data-tool="del" title="Borrar (D)">✕ Borrar</button>
       <span class="sep"></span>
       <label class="chk" title="Las tiras se atraen cuando dos agujeros están cerca"><input type="checkbox" id="magnet" checked>Imán</label>
       <label class="chk"><input type="checkbox" id="showang" checked>Ángulos</label>
       <label class="chk"><input type="checkbox" id="showlab" checked>Nombres</label>
       <label class="chk"><input type="checkbox" id="showgrid" checked>Rejilla</label>
-      <input type="color" id="cordcol" value="#d0322f" title="Color de la goma">
+      <input type="color" id="cordcol" value="#d0322f" title="Color de la goma y del rotulador">
       <span class="sep"></span>
       <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
       <button class="btn" id="zoomout">−</button>
@@ -155,14 +164,32 @@ var U=56;               // px por unidad (longitud de R1)
 var HW=0.105*U;         // media anchura de la tira
 var HR=0.05*U;          // radio del agujero
 var PINR=0.078*U;       // radio del encuadernador
+var PR=0.42*U;          // radio de la polea (garganta de la correa)
 var SNAP=15;            // px de pantalla para el efecto imán
 
 /* =========================================================================
    2. ESTADO
    ========================================================================= */
-var strips=[], pins=[], cords=[], nid=1;
+/* pens: rotuladores enganchados a un agujero, {id, s, h, col}.
+   trace: los trazos ya dibujados, {id, col, p:[{x,y}…]}, en coordenadas de mundo y
+   con vida propia: si quitas el rotulador o la tira, la tinta se queda en el papel.
+   Por eso son dos listas y no una. */
+/* nails: clavos, {id, s, h, x, y}. Un clavo sujeta un agujero a un punto fijo del
+   suelo. Con uno, la tira todavía gira alrededor de él; con dos ya no se mueve. Así
+   es como se sujeta la barra fija de un mecanismo de cuatro barras, y también sirve
+   para clavar los dos extremos de una cuerda y dejarlos quietos. */
+/* pulleys: poleas, {id, x, y, a, m:[{s,h,off}]}. El eje está fijo al suelo; lo que
+   gira es la polea. Una tira montada en el eje es solidaria con ella: gira lo que
+   gire la polea, sin holgura. Por eso las tiras montadas no las mueve el solver,
+   se colocan a partir del ángulo de la polea y ya.
+   belts: correas, {id, a, b}. Poleas del mismo radio y correa abierta: las dos giran
+   el mismo ángulo y en el mismo sentido, que es la condición que hace falta para que
+   el ángulo entre las dos varillas del modelo de Puig Adam no cambie. Como el giro es
+   idéntico, la correa no necesita guardar ninguna razón ni desfase. */
+var strips=[], pins=[], cords=[], pens=[], trace=[], nails=[], pulleys=[], belts=[], nid=1;
 var sel=new Set(), primary=null;
 var tool='move', drag=null, cordDraft=null, snapMark=null, hoverHole=null, importMode='replace';
+var beltDraft=null, hoverCross=null;
 var view={x:0,y:0,z:1};
 var undoStack=[];
 
@@ -173,10 +200,13 @@ var opt={magnet:1,ang:1,lab:1,grid:1};
 var cordColor='#d0322f';
 
 function byId(id){for(var i=0;i<strips.length;i++) if(strips[i].id===id) return strips[i]; return null;}
-function snapshot(){return JSON.stringify({s:strips,p:pins,c:cords,n:nid});}
+function snapshot(){return JSON.stringify({s:strips,p:pins,c:cords,r:pens,tz:trace,k:nails,
+                                           pl:pulleys,bl:belts,n:nid});}
 function pushUndo(){undoStack.push(snapshot()); if(undoStack.length>60) undoStack.shift();}
 function doUndo(){ if(!undoStack.length) return; var st=JSON.parse(undoStack.pop());
-  strips=st.s; pins=st.p; cords=st.c; nid=st.n; sel.clear(); primary=null; cordDraft=null; draw(); }
+  strips=st.s; pins=st.p; cords=st.c; pens=st.r||[]; trace=st.tz||[]; nails=st.k||[];
+  pulleys=st.pl||[]; belts=st.bl||[]; nid=st.n;
+  sel.clear(); primary=null; cordDraft=null; draw(); }
 
 /* =========================================================================
    3. GEOMETRÍA AUXILIAR
@@ -189,6 +219,8 @@ function holeW(s,i){ var p=TYPES[s.t].pts[i], co=Math.cos(s.a), si=Math.sin(s.a)
 function toLocal(s,p){ var co=Math.cos(-s.a), si=Math.sin(-s.a);
   var dx=(p.x-s.x)/U, dy=(p.y-s.y)/U;
   return {x:dx*co-dy*si, y:dx*si+dy*co}; }
+function toWorld(s,l){ var co=Math.cos(s.a), si=Math.sin(s.a);
+  return {x:s.x+(l.x*co-l.y*si)*U, y:s.y+(l.x*si+l.y*co)*U}; }
 function endA(s){return {x:s.x,y:s.y};}
 function endB(s){var d=lenOf(s)*U;return {x:s.x+d*Math.cos(s.a), y:s.y+d*Math.sin(s.a)};}
 function pinPos(p){ var s=byId(p.m[0].s); return s?holeW(s,p.m[0].h):{x:p.x||0,y:p.y||0}; }
@@ -225,6 +257,11 @@ function removeStrip(id){
   pins=pins.filter(function(p){return p.m.length>=2;});
   cords.forEach(function(c){ c.n=c.n.filter(function(n){return n.s!==id;}); });
   cords=cords.filter(function(c){return c.n.length>=2;});
+  // el trazo ya hecho no se borra, pero los rotuladores que colgaban de la tira sí
+  pens=pens.filter(function(r){
+    return r.q ? (r.q[0]!==id && r.q[1]!==id) : r.s!==id; });
+  nails=nails.filter(function(n){return n.s!==id;});
+  unmount(id);
   sel.delete(id); if(primary===id) primary=null;
 }
 
@@ -252,16 +289,258 @@ function joinAt(pt,tol){
 
 function translate(ids,dx,dy){ ids.forEach(function(id){ var s=byId(id); if(s){s.x+=dx; s.y+=dy;} }); }
 
+/* ---- poleas y correas -----------------------------------------------------
+   El modelo de Puig Adam para el arco capaz: dos varillas que giran alrededor de
+   dos puntos fijos, con un hilo arrollado a dos poleas iguales que obliga a las
+   dos a girar el mismo ángulo. Si las dos varillas giran lo mismo, el ángulo que
+   forman no cambia, y su intersección describe el arco.
+
+   Una tira montada en una polea queda determinada por el ángulo de la polea: no
+   hay nada que resolver, se coloca directamente. Por eso el solver la trata como
+   suelo y nunca la empuja.                                                      */
+function polById(id){ for(var i=0;i<pulleys.length;i++) if(pulleys[i].id===id) return pulleys[i]; return null; }
+function pulleyAdd(x,y){ var p={id:nid++, x:x, y:y, a:0, m:[]}; pulleys.push(p); return p; }
+function pulleyAt(p,extra){
+  var tol=PR+(extra||0)/view.z;
+  for(var i=pulleys.length-1;i>=0;i--)
+    if(dist(p,{x:pulleys[i].x,y:pulleys[i].y})<=tol) return pulleys[i];
+  return null;
+}
+function pulleyRemove(pl){
+  pulleys=pulleys.filter(function(x){return x!==pl;});
+  belts=belts.filter(function(b){return b.a!==pl.id && b.b!==pl.id;});
+}
+/* ¿en qué polea está montada esta tira? */
+function mountOf(sid){
+  for(var i=0;i<pulleys.length;i++){
+    var mm=pulleys[i].m;
+    for(var j=0;j<mm.length;j++) if(mm[j].s===sid) return {pol:pulleys[i], m:mm[j]};
+  }
+  return null;
+}
+function mountedSet(){
+  var g=new Set();
+  pulleys.forEach(function(p){ p.m.forEach(function(m){ g.add(m.s); }); });
+  return g;
+}
+/* monta en la polea todas las tiras que tengan un agujero sobre su eje */
+function mountAt(pt,tol){
+  var pl=null, dm=Infinity;
+  pulleys.forEach(function(p){ var d=dist(pt,{x:p.x,y:p.y}); if(d<=tol && d<dm){dm=d; pl=p;} });
+  if(!pl) return null;
+  var puestas=0;
+  strips.forEach(function(s){
+    if(isArc(s) || mountOf(s.id)) return;
+    var mejor=-1, dh=Infinity;                      // el agujero más cercano al eje
+    holesOf(s).forEach(function(_,i){
+      var d=dist(holeW(s,i),{x:pl.x,y:pl.y});
+      if(d<=tol && d<dh){ dh=d; mejor=i; }
+    });
+    if(mejor>=0){ pl.m.push({s:s.id, h:mejor, off:s.a-pl.a}); puestas++; }
+  });
+  if(!puestas) return null;
+  placeMounted(pl);
+  return pl;
+}
+function unmount(sid){
+  pulleys.forEach(function(p){ p.m=p.m.filter(function(m){return m.s!==sid;}); });
+}
+/* coloca las tiras montadas a partir del ángulo de la polea (cinemática directa) */
+function placeMounted(pl){
+  pl.m.forEach(function(m){
+    var s=byId(m.s); if(!s) return;
+    s.a=pl.a+m.off;
+    var p=TYPES[s.t].pts[m.h]; if(!p) return;
+    var co=Math.cos(s.a), si=Math.sin(s.a);
+    s.x=pl.x-(p.x*co-p.y*si)*U;
+    s.y=pl.y-(p.x*si+p.y*co)*U;
+  });
+}
+/* poleas unidas por correas: giran todas a la vez */
+function pulleyGroup(pl){
+  var seen=new Set([pl.id]), q=[pl.id];
+  while(q.length){ var id=q.pop();
+    belts.forEach(function(b){
+      if(b.a===id && !seen.has(b.b)){ seen.add(b.b); q.push(b.b); }
+      if(b.b===id && !seen.has(b.a)){ seen.add(b.a); q.push(b.a); }
+    });
+  }
+  return pulleys.filter(function(p){ return seen.has(p.id); });
+}
+function beltAdd(pa,pb){
+  if(!pa||!pb||pa===pb) return null;
+  for(var i=0;i<belts.length;i++){
+    var b=belts[i];
+    if((b.a===pa.id&&b.b===pb.id)||(b.a===pb.id&&b.b===pa.id)) return null;
+  }
+  var b2={id:nid++, a:pa.id, b:pb.id}; belts.push(b2); return b2;
+}
+function beltAt(p){
+  for(var i=belts.length-1;i>=0;i--){
+    var A=polById(belts[i].a), B=polById(belts[i].b); if(!A||!B) continue;
+    var dx=B.x-A.x, dy=B.y-A.y, L=Math.hypot(dx,dy); if(L<1e-6) continue;
+    var nx=-dy/L, ny=dx/L, tol=5/view.z;
+    var a1={x:A.x+nx*PR,y:A.y+ny*PR}, b1={x:B.x+nx*PR,y:B.y+ny*PR};
+    var a2={x:A.x-nx*PR,y:A.y-ny*PR}, b2={x:B.x-nx*PR,y:B.y-ny*PR};
+    if(distSeg(p,a1,b1)<=tol || distSeg(p,a2,b2)<=tol) return belts[i];
+  }
+  return null;
+}
+/* Gira el grupo de poleas y recoloca lo que arrastran. Devuelve false y lo deja
+   como estaba si el resto del montaje no puede acompañar el giro. */
+function turnPulleys(pl,dth){
+  var before={}; strips.forEach(function(s){before[s.id]={x:s.x,y:s.y,a:s.a};});
+  var angBefore=pulleys.map(function(p){return p.a;});
+  var g=pulleyGroup(pl);
+  g.forEach(function(p){ p.a+=dth; placeMounted(p); });
+  relaxUntil(null,null,2400,1e-7);
+  if(maxResidual()<=1.0) return true;
+  strips.forEach(function(s){ var b=before[s.id]; if(b){s.x=b.x;s.y=b.y;s.a=b.a;} });
+  pulleys.forEach(function(p,i){ p.a=angBefore[i]; });
+  return false;
+}
+/* Gira una sola tira sobre su polea, cambiando su calaje. Es la operación de
+   montaje: colocar cada varilla en el ángulo que se quiera antes de darle a la
+   manivela. La polea no se mueve, ni la correa, ni las demás tiras. */
+function turnMountedStrip(sid,dth){
+  var mo=mountOf(sid); if(!mo) return false;
+  var before={}; strips.forEach(function(s){before[s.id]={x:s.x,y:s.y,a:s.a};});
+  var off0=mo.m.off;
+  mo.m.off+=dth; placeMounted(mo.pol);
+  relaxUntil(null,null,2400,1e-7);
+  if(maxResidual()<=1.0) return true;
+  mo.m.off=off0;
+  strips.forEach(function(s){ var b=before[s.id]; if(b){s.x=b.x;s.y=b.y;s.a=b.a;} });
+  return false;
+}
+/* mover la polea de sitio se lleva las tiras montadas */
+function movePulley(pl,dx,dy){ pl.x+=dx; pl.y+=dy; placeMounted(pl); }
+
+/* ---- el clavo -------------------------------------------------------------
+   Fija un agujero a un punto del suelo. No conecta tiras entre sí: por eso no
+   entra en component(), que sigue siendo la componente conexa por
+   encuadernadores. Lo que sí hace es participar en el solver y en el residuo.  */
+function nailAdd(sid,hi){
+  var s=byId(sid); if(!s) return null;
+  for(var i=0;i<nails.length;i++) if(nails[i].s===sid && nails[i].h===hi) return null;
+  var q=holeW(s,hi);
+  var n={id:nid++, s:sid, h:hi, x:q.x, y:q.y}; nails.push(n); return n;
+}
+function nailRemove(n){ nails=nails.filter(function(x){return x!==n;}); }
+function nailAt(p){
+  for(var i=nails.length-1;i>=0;i--){
+    if(dist(p,{x:nails[i].x,y:nails[i].y})<=PINR*1.35+4/view.z) return nails[i]; }
+  return null;
+}
+/* ¿hay algo anclado al suelo en el grupo unido a estas tiras —un clavo o una polea—?
+   Si lo hay, arrastrar no puede ser una traslación en bloque: el grupo tiene que
+   articularse. */
+function compHasNail(ids){
+  var comp=component(ids);
+  if(nails.some(function(n){ return comp.has(n.s); })) return true;
+  var mt=mountedSet(), hay=false;
+  comp.forEach(function(id){ if(mt.has(id)) hay=true; });
+  return hay;
+}
+
+/* ---- el rotulador ---------------------------------------------------------
+   Va enganchado a un agujero y va dejando la posición de ese agujero mientras
+   la construcción se mueve. Girando una tira alrededor de un encuadernador sale
+   la circunferencia; con dos tiras unidas y una restricción sale otra cosa. Aquí
+   no se decide nada de eso: solo se muestrea el punto.
+
+   penDown() al empezar cualquier gesto que mueva tiras, penSample() después de
+   cada actualización y penUp() al soltar. El umbral evita llenar el trazo de
+   puntos repetidos cuando el ratón se mueve sin que la pieza llegue a girar.   */
+var PENSTEP=1.0;          // distancia mínima en mundo entre dos puntos del trazo
+var PENMAX=6000;          // tope de puntos por trazo, para no crecer sin fin
+/* Cruce de los ejes de dos tiras. Es el punto B del modelo de Puig Adam: no es
+   ningún agujero, es donde se cortan las dos varillas, y va deslizando por las dos
+   mientras giran. Solo cuenta si cae dentro de los dos segmentos; si las tiras se
+   quedan cortas, no hay punto y el trazo se interrumpe, que es la verdad. */
+function crossOf(idA,idB){
+  var s1=byId(idA), s2=byId(idB);
+  if(!s1||!s2||isArc(s1)||isArc(s2)) return null;
+  var a=endA(s1), b=endB(s1), c=endA(s2), d=endB(s2);
+  var rx=b.x-a.x, ry=b.y-a.y, sx=d.x-c.x, sy=d.y-c.y;
+  var den=rx*sy-ry*sx;
+  if(Math.abs(den)<1e-9) return null;                       // paralelas
+  var t=((c.x-a.x)*sy-(c.y-a.y)*sx)/den;
+  var u=((c.x-a.x)*ry-(c.y-a.y)*rx)/den;
+  if(t<0||t>1||u<0||u>1) return null;                       // se cortan fuera
+  return {x:a.x+t*rx, y:a.y+t*ry};
+}
+function crossAt(p,tolPx){
+  var tol=(tolPx||14)/view.z, best=null;
+  for(var i=0;i<strips.length;i++) for(var j=i+1;j<strips.length;j++){
+    var q=crossOf(strips[i].id,strips[j].id); if(!q) continue;
+    var d=dist(p,q);
+    if(d<tol && (!best||d<best.d)) best={a:strips[i].id, b:strips[j].id, p:q, d:d};
+  }
+  return best;
+}
+function penPos(r){
+  if(r.q) return crossOf(r.q[0],r.q[1]);
+  var s=byId(r.s); if(!s) return null;
+  var hs=holesOf(s); if(r.h<0||r.h>=hs.length) return null;
+  return holeW(s,r.h); }
+function penAdd(sid,hi,col){
+  for(var i=0;i<pens.length;i++) if(pens[i].s===sid && pens[i].h===hi) return null;
+  var r={id:nid++, s:sid, h:hi, col:col||cordColor}; pens.push(r); return r;
+}
+function penAddCross(idA,idB,col){
+  for(var i=0;i<pens.length;i++){ var q=pens[i].q;
+    if(q && ((q[0]===idA&&q[1]===idB)||(q[0]===idB&&q[1]===idA))) return null; }
+  if(!crossOf(idA,idB)) return null;
+  var r={id:nid++, q:[idA,idB], col:col||cordColor}; pens.push(r); return r;
+}
+function penRemove(r){ pens=pens.filter(function(x){return x!==r;}); }
+function penDown(){
+  pens.forEach(function(r){
+    var q=penPos(r); if(!q){ r.cur=null; return; }
+    r.cur={id:nid++, col:r.col, p:[{x:q.x,y:q.y}]};
+    trace.push(r.cur);
+  });
+}
+function penSample(){
+  pens.forEach(function(r){
+    if(!r.cur) return;
+    var q=penPos(r); if(!q||!isFinite(q.x)||!isFinite(q.y)) return;
+    var last=r.cur.p[r.cur.p.length-1];
+    if(dist(last,q)<PENSTEP) return;
+    if(r.cur.p.length>=PENMAX) return;
+    r.cur.p.push({x:q.x,y:q.y});
+  });
+}
+function penUp(){
+  // un trazo de un solo punto es un clic, no un dibujo: se tira
+  trace=trace.filter(function(t){ return t.p.length>=2; });
+  pens.forEach(function(r){ r.cur=null; });
+}
+function penAt(p){
+  for(var i=pens.length-1;i>=0;i--){ var q=penPos(pens[i]);
+    if(q && dist(p,q)<=PINR*1.25+4/view.z) return pens[i]; }
+  return null;
+}
+function traceAt(p){
+  var tol=6/view.z;
+  for(var i=trace.length-1;i>=0;i--){ var t=trace[i];
+    for(var j=0;j<t.p.length-1;j++) if(distSeg(p,t.p[j],t.p[j+1])<=tol) return t; }
+  return null;
+}
+
 /* ---- solver de barras articuladas (PBD) -----------------------------------
    Permite que un cuadrilátero se deforme (cuadrado -> rombo) mientras que un
    triángulo se comporta como estructura rígida.                              */
 function centerOf(s){ var g=TYPES[s.t].cen, co=Math.cos(s.a), si=Math.sin(s.a);
   return {x:s.x+(g.x*co-g.y*si)*U, y:s.y+(g.x*si+g.y*co)*U}; }
 function inertiaOf(s){ return TYPES[s.t].inr*U*U+1; }
-function applyCorr(s,hi,dx,dy){
+/* corrección sobre un punto cualquiera de la tira, no solo sobre un agujero:
+   hace falta para arrastrar un mecanismo clavado agarrándolo por donde sea */
+function applyCorrAt(s,hp,dx,dy){
   var mag=Math.hypot(dx,dy); if(mag<1e-9) return;
   var nx=dx/mag, ny=dy/mag;
-  var c=centerOf(s), hp=holeW(s,hi);
+  var c=centerOf(s);
   var rx=hp.x-c.x, ry=hp.y-c.y, I=inertiaOf(s);
   var rn=rx*ny-ry*nx;
   var lam=mag/(1+rn*rn/I);
@@ -269,36 +548,92 @@ function applyCorr(s,hi,dx,dy){
   var dth=lam*rn/I;
   if(dth){ var c2=centerOf(s), np=rotPt({x:s.x,y:s.y},c2,dth); s.x=np.x; s.y=np.y; s.a+=dth; }
 }
+function applyCorr(s,hi,dx,dy){ applyCorrAt(s,holeW(s,hi),dx,dy); }
+
+/* Una tira con dos clavos en agujeros distintos no puede moverse: es suelo. Hay
+   que decírselo al solver, porque si no el encuadernador la empuja, el clavo la
+   devuelve, y se pasa las iteraciones oscilando sin converger. */
+function fullyNailed(sid){
+  var h0=null;
+  for(var i=0;i<nails.length;i++) if(nails[i].s===sid){
+    if(h0===null) h0=nails[i].h; else if(nails[i].h!==h0) return true; }
+  return false;
+}
+/* Inmóviles para el solver: las que tienen dos clavos y las montadas en una polea.
+   Las montadas no es que estén quietas —giran con la polea— es que su posición no
+   la decide el solver, sino placeMounted(). Si el solver pudiera empujarlas, la
+   correa dejaría de significar nada. */
+function groundSet(){
+  var g=mountedSet();
+  nails.forEach(function(n){ if(!g.has(n.s) && fullyNailed(n.s)) g.add(n.s); });
+  return g;
+}
+
 function relax(pinned,anchor,iters){
   pinned=pinned||new Set();
+  var suelo=groundSet();                       // inmóviles: tienen dos clavos
+  var quieta=function(id){ return pinned.has(id) || suelo.has(id); };
+  var clavadas=new Set(); nails.forEach(function(n){ clavadas.add(n.s); });
   for(var it=0;it<iters;it++){
     for(var i=0;i<pins.length;i++){
       var p=pins[i], pts=[], fixedPt=null;
       for(var j=0;j<p.m.length;j++){ var s=byId(p.m[j].s); if(!s) continue;
-        var hp=holeW(s,p.m[j].h); pts.push(hp); if(pinned.has(p.m[j].s)) fixedPt=hp; }
+        var hp=holeW(s,p.m[j].h); pts.push(hp);
+        /* manda la que menos se puede mover: primero la clavada de un clavo,
+           y por encima de ella la que está inmóvil del todo */
+        if(clavadas.has(p.m[j].s) && !fixedPt) fixedPt=hp;
+        if(quieta(p.m[j].s)) fixedPt=hp; }
       if(pts.length<2 && !(anchor&&anchor.pin===p)) continue;
       var t;
       if(anchor && anchor.pin===p) t=anchor.t;
       else if(fixedPt) t=fixedPt;
       else { var sx=0,sy=0; pts.forEach(function(q){sx+=q.x;sy+=q.y;}); t={x:sx/pts.length,y:sy/pts.length}; }
       for(var k=0;k<p.m.length;k++){
-        var m=p.m[k]; if(pinned.has(m.s)) continue;
+        var m=p.m[k]; if(quieta(m.s)) continue;
         var st=byId(m.s); if(!st) continue;
         var q2=holeW(st,m.h); applyCorr(st,m.h,t.x-q2.x,t.y-q2.y);
       }
     }
+    /* Los clavos van al final de cada iteración, a propósito: así son ellos los
+       que tienen la última palabra sobre los encuadernadores. */
+    for(var w=0;w<nails.length;w++){
+      var n=nails[w]; if(quieta(n.s)) continue;
+      var sn=byId(n.s); if(!sn) continue;
+      var qn=holeW(sn,n.h); applyCorr(sn,n.h,n.x-qn.x,n.y-qn.y);
+    }
   }
+}
+/* Relaja hasta cerrar, no un número fijo de veces. Cerca de una posición límite
+   el mecanismo está mal condicionado y converge despacio: con 120 iteraciones se
+   quedaba a medio camino y el error se iba acumulando barrido a barrido. Sale en
+   cuanto cierra, así que en marcha normal cuesta un solo lote. */
+function relaxUntil(pinned,anchor,budget,tol){
+  var lote=40;
+  for(var hechas=0; hechas<budget; hechas+=lote){
+    relax(pinned,anchor,lote);
+    if(maxResidual()<=tol) return true;
+  }
+  return false;
 }
 function maxResidual(){
   var r=0;
   pins.forEach(function(p){ var q=pinPos(p);
     p.m.forEach(function(m){ var s=byId(m.s); if(s) r=Math.max(r,dist(holeW(s,m.h),q)); }); });
+  nails.forEach(function(n){ var s=byId(n.s);
+    if(s) r=Math.max(r,dist(holeW(s,n.h),{x:n.x,y:n.y})); });
   return r;
 }
 
 /* rota rotIds alrededor de pivot; el resto de la estructura conectada
    se arrastra por traslación. Si la estructura es rígida (bucle), se anula. */
 function rotateGroup(rotIds,pivot,dth){
+  /* Girar una tira montada la desliza sobre su polea: cambia su calaje y no
+     arrastra ni a la polea ni a la correa. Para mover el mecanismo entero hay
+     que girar la polea. */
+  var mo=null;
+  rotIds.forEach(function(id){ if(!mo) mo=mountOf(id); });
+  if(mo) return turnMountedStrip(mo.m.s,dth);
+
   var before={}; strips.forEach(function(s){before[s.id]={x:s.x,y:s.y,a:s.a};});
   var pinBefore=pins.map(function(p){return pinPos(p);});
 
@@ -334,7 +669,16 @@ function rotateGroup(rotIds,pivot,dth){
   strips.forEach(function(s){ var b=before[s.id]; if(b){s.x=b.x;s.y=b.y;s.a=b.a;} });
   rotIds.forEach(function(id){ var s=byId(id); if(!s) return;
     var np=rotPt({x:s.x,y:s.y},pivot,dth); s.x=np.x; s.y=np.y; s.a+=dth; });
-  relax(rotIds,null,120);
+  relaxUntil(rotIds,null,2400,1e-7);
+  if(maxResidual()<=1.0) return true;
+
+  /* Último intento antes de rendirse: soltar también las tiras giradas y dejar
+     que se acomode todo. Un mecanismo tiene posiciones límite y puntos donde el
+     camino se bifurca; ahí el giro pedido no cabe entero, pero un trozo sí. Sin
+     esto, al pasar por uno de esos puntos el mecanismo se quedaba tieso para
+     siempre: cualquier giro posterior lo comparaba con un estado ya roto y lo
+     rechazaba. Es preferible dar lo que se pueda a quedarse muerto. */
+  relaxUntil(null,null,2400,1e-7);
   if(maxResidual()<=1.0) return true;
 
   strips.forEach(function(s){ var b=before[s.id]; if(b){s.x=b.x;s.y=b.y;s.a=b.a;} });
@@ -354,6 +698,8 @@ function findSnap(movingIds){
     var arr = movingIds.has(s.id)? mov : fix;
     holesOf(s).forEach(function(_,i){ arr.push({s:s.id,h:i,p:holeW(s,i)}); });
   });
+  // el eje de una polea también atrae, para poder montar la tira en ella
+  pulleys.forEach(function(p){ fix.push({pol:p.id, p:{x:p.x,y:p.y}}); });
   mov.forEach(function(a){ fix.forEach(function(b){
     var d=dist(a.p,b.p);
     if(d<tol && (!best || d<best.d)) best={d:d,a:a,b:b,dx:b.p.x-a.p.x,dy:b.p.y-a.p.y};
@@ -391,14 +737,22 @@ function findSnapRot(movingIds,pivot){
 
 /* pivote y tirador de giro: el encuadernador con más brazo disponible */
 function pivotOf(s){
-  var ps=pinsOfStrip(s.id), pts=TYPES[s.t].pts;
-  if(!ps.length) return {p:centerOf(s), i:-1};
+  var pts=TYPES[s.t].pts;
+  /* Si está montada en una polea, solo puede girar alrededor del eje */
+  var mo=mountOf(s.id);
+  if(mo) return {p:{x:mo.pol.x, y:mo.pol.y}, i:mo.m.h};
+  /* Un clavo manda sobre un encuadernador: si la tira está clavada, solo puede
+     girar alrededor del clavo, así que el tirador ⟳ tiene que pivotar ahí. */
+  var cand=nails.filter(function(n){return n.s===s.id;}).map(function(n){return n.h;});
+  if(!cand.length) cand=pinsOfStrip(s.id).map(function(p){
+      var m=p.m.filter(function(x){return x.s===s.id;})[0]; return m?m.h:null; })
+    .filter(function(h){return h!==null;});
+  if(!cand.length) return {p:centerOf(s), i:-1};
   var bi=null, bestScore=-1;
-  ps.forEach(function(p){
-    var m=p.m.filter(function(x){return x.s===s.id;})[0]; if(!m) return;
-    var lp=pts[m.h], sc=0;
+  cand.forEach(function(h){
+    var lp=pts[h], sc=0;
     pts.forEach(function(q){ sc=Math.max(sc,Math.hypot(q.x-lp.x,q.y-lp.y)); });
-    if(sc>bestScore){bestScore=sc; bi=m.h;}
+    if(sc>bestScore){bestScore=sc; bi=h;}
   });
   if(bi===null) return {p:centerOf(s), i:-1};
   return {p:holeW(s,bi), i:bi};
@@ -529,18 +883,173 @@ function drawCord(c,cd,previewTo){
   c.restore();
 }
 
+/* La correa, vista como lo que es: el contorno de las dos poleas tensado, o sea
+   dos rectas paralelas al segmento de centros y dos semicírculos. Va debajo de las
+   poleas, que le tapan la parte que las abraza. */
+function drawBelt(c,bt){
+  var A=polById(bt.a), B=polById(bt.b); if(!A||!B) return;
+  var dx=B.x-A.x, dy=B.y-A.y, L=Math.hypot(dx,dy);
+  if(L<1e-6 || !isFinite(L)) return;
+  var ang=Math.atan2(dy,dx);
+  c.save();
+  c.beginPath();
+  c.arc(A.x,A.y,PR, ang+Math.PI/2, ang-Math.PI/2, false);
+  c.arc(B.x,B.y,PR, ang-Math.PI/2, ang+Math.PI/2, false);
+  c.closePath();
+  c.lineWidth=3.4; c.strokeStyle='#4a515c'; c.lineJoin='round'; c.stroke();
+  c.lineWidth=1.4; c.strokeStyle='rgba(255,255,255,.35)'; c.stroke();
+  c.restore();
+}
+
+/* La polea. Lo importante es que se vea girar: por eso lleva radios marcados y un
+   punto índice. Sin eso, un disco que gira parece un disco quieto. */
+function drawPulley(c,pl){
+  c.save();
+  // rayado de suelo bajo el eje: el eje está fijo, la que gira es la polea
+  c.lineWidth=1; c.strokeStyle='rgba(91,99,111,.7)';
+  c.beginPath(); c.moveTo(pl.x-PR*0.5,pl.y+PR+3); c.lineTo(pl.x+PR*0.5,pl.y+PR+3); c.stroke();
+  for(var k=-1;k<=1;k++){
+    c.beginPath(); c.moveTo(pl.x+k*PR*0.42,pl.y+PR+3);
+    c.lineTo(pl.x+k*PR*0.42-PR*0.3,pl.y+PR+3+PR*0.4); c.stroke();
+  }
+  c.beginPath(); c.arc(pl.x,pl.y,PR,0,6.2832);
+  var g=c.createRadialGradient(pl.x-PR*0.3,pl.y-PR*0.3,PR*0.1,pl.x,pl.y,PR);
+  g.addColorStop(0,'#fdfdfe'); g.addColorStop(1,'#dfe3e9');
+  c.fillStyle=g; c.fill();
+  c.lineWidth=1.3; c.strokeStyle='#8d96a3'; c.stroke();
+  c.beginPath(); c.arc(pl.x,pl.y,PR*0.78,0,6.2832);
+  c.lineWidth=1; c.strokeStyle='rgba(141,150,163,.55)'; c.stroke();
+  // radios e índice, que giran con la polea
+  c.save(); c.translate(pl.x,pl.y); c.rotate(pl.a);
+  c.lineWidth=1.2; c.strokeStyle='rgba(120,129,142,.75)';
+  for(var d=0; d<360; d+=60){
+    var t=d*Math.PI/180;
+    c.beginPath(); c.moveTo(Math.cos(t)*PR*0.22, Math.sin(t)*PR*0.22);
+    c.lineTo(Math.cos(t)*PR*0.74, Math.sin(t)*PR*0.74); c.stroke();
+  }
+  c.beginPath(); c.arc(PR*0.55,0,PR*0.13,0,6.2832);
+  c.fillStyle='#e8752f'; c.fill();
+  c.restore();
+  // eje
+  c.beginPath(); c.arc(pl.x,pl.y,PR*0.2,0,6.2832);
+  c.fillStyle='#39404a'; c.fill();
+  c.lineWidth=1; c.strokeStyle='#242a32'; c.stroke();
+  c.restore();
+}
+
+/* el clavo: cabeza de acero y, debajo, el rayado de «esto está sujeto al suelo»,
+   que es como se marca un apoyo fijo en un esquema de mecanismos */
+function drawNail(c,n){
+  var R=PINR*1.2;
+  c.save();
+  c.beginPath(); c.moveTo(n.x-R*1.5,n.y+R*1.15); c.lineTo(n.x+R*1.5,n.y+R*1.15);
+  c.lineWidth=1.3; c.strokeStyle='#5b636f'; c.stroke();
+  c.lineWidth=1; c.strokeStyle='rgba(91,99,111,.75)';
+  for(var k=-2;k<=2;k++){
+    var x0=n.x+k*R*0.6;
+    c.beginPath(); c.moveTo(x0,n.y+R*1.15); c.lineTo(x0-R*0.55,n.y+R*1.9); c.stroke();
+  }
+  c.beginPath(); c.arc(n.x,n.y,R,0,6.2832);
+  var g=c.createRadialGradient(n.x-2,n.y-2,1,n.x,n.y,R);
+  g.addColorStop(0,'#9aa3b0'); g.addColorStop(1,'#39404a');
+  c.fillStyle=g; c.fill();
+  c.lineWidth=1.1; c.strokeStyle='#242a32'; c.stroke();
+  c.beginPath(); c.arc(n.x-R*0.28,n.y-R*0.28,R*0.22,0,6.2832);
+  c.fillStyle='rgba(255,255,255,.75)'; c.fill();
+  c.restore();
+}
+
+/* el trazo, debajo de todo: es tinta sobre el papel, no una pieza */
+function drawTrace(c){
+  c.save(); c.lineJoin='round'; c.lineCap='round'; c.lineWidth=2.1;
+  trace.forEach(function(t){
+    if(t.p.length<2) return;
+    c.strokeStyle=t.col||cordColor;
+    c.beginPath(); c.moveTo(t.p[0].x,t.p[0].y);
+    for(var i=1;i<t.p.length;i++) c.lineTo(t.p[i].x,t.p[i].y);
+    c.stroke();
+  });
+  c.restore();
+}
+/* el rotulador: un casquillo del color de la tinta con la punta en el agujero.
+   El que va en un cruce se dibuja hueco, para que se vea que no está sujeto a
+   ninguna tira sino al punto donde se cortan las dos. */
+function drawPen(c,r){
+  var q=penPos(r); if(!q) return;
+  var R=PINR*1.15;
+  c.save();
+  if(r.q){
+    c.beginPath(); c.arc(q.x,q.y,R*1.1,0,6.2832);
+    c.fillStyle='#fff'; c.fill();
+    c.lineWidth=2.4; c.strokeStyle=r.col||cordColor; c.stroke();
+    c.beginPath(); c.arc(q.x,q.y,R*0.3,0,6.2832);
+    c.fillStyle=r.col||cordColor; c.fill();
+  } else {
+    c.beginPath(); c.arc(q.x,q.y,R,0,6.2832);
+    c.fillStyle=r.col||cordColor; c.fill();
+    c.lineWidth=1.2; c.strokeStyle='rgba(255,255,255,.85)'; c.stroke();
+    c.beginPath(); c.arc(q.x,q.y,R*0.34,0,6.2832);
+    c.fillStyle='rgba(255,255,255,.9)'; c.fill();
+  }
+  c.restore();
+}
+
 function armOf(s,hi){
   if(isArc(s)) return null;
   var L=lenOf(s)*U, t=TYPES[s.t].pts[hi].x*U;
   var dir = (t < L/2) ? 1 : -1;
   return {dir:dir, len:Math.max(t,L-t), ang: s.a + (dir>0?0:Math.PI)};
 }
+/* Rayo de una tira a partir de un punto cualquiera de su eje. Cuál de los dos
+   lados se toma no es indiferente: en el modelo del arco capaz el ángulo que
+   interesa es el que forman las varillas mirando hacia sus ejes, no el opuesto.
+   Por eso, si la tira está sujeta por algún sitio —una polea o un clavo— el rayo
+   apunta hacia ahí; y si no lo está, hacia el lado más largo, que es el mismo
+   criterio que se usa en los encuadernadores. */
+function rayFrom(s,q){
+  if(isArc(s)) return null;
+  var L=lenOf(s)*U, A=endA(s);
+  var t=(q.x-A.x)*Math.cos(s.a)+(q.y-A.y)*Math.sin(s.a);   // parámetro sobre el eje
+  var anc=null;
+  var mo=mountOf(s.id);
+  if(mo) anc=TYPES[s.t].pts[mo.m.h].x*U;
+  else { for(var i=0;i<nails.length;i++) if(nails[i].s===s.id){ anc=TYPES[s.t].pts[nails[i].h].x*U; break; } }
+  var dir;
+  if(anc!==null && Math.abs(anc-t)>1e-6) dir = (anc>t) ? 1 : -1;
+  else dir = (t < L/2) ? 1 : -1;
+  var len = dir>0 ? Math.max(1,L-t) : Math.max(1,t);
+  return {dir:dir, len:len, ang: s.a + (dir>0?0:Math.PI)};
+}
+/* ¿hay un encuadernador que una precisamente estas dos tiras en este punto? Si lo
+   hay, el ángulo ya lo dibuja el encuadernador y no hay que repetirlo. */
+function pinnedHere(idA,idB,q){
+  for(var i=0;i<pins.length;i++){
+    var p=pins[i];
+    if(!p.m.some(function(m){return m.s===idA;})) continue;
+    if(!p.m.some(function(m){return m.s===idB;})) continue;
+    if(dist(pinPos(p),q)<=HR*2) return true;
+  }
+  return false;
+}
+/* Ángulos en los cruces: dos tiras superpuestas forman un ángulo aunque no haya
+   nada que las una. Es el caso del arco capaz, donde el vértice va deslizando. */
+function drawCrossAngles(c){
+  for(var i=0;i<strips.length;i++) for(var j=i+1;j<strips.length;j++){
+    var s1=strips[i], s2=strips[j];
+    var q=crossOf(s1.id,s2.id); if(!q) continue;
+    if(pinnedHere(s1.id,s2.id,q)) continue;
+    var a1=rayFrom(s1,q), a2=rayFrom(s2,q);
+    if(a1&&a2) drawAngleAt(c,q,a1,a2);
+  }
+}
 function drawAngle(c,p){
   if(p.m.length!==2) return;
   var s1=byId(p.m[0].s), s2=byId(p.m[1].s); if(!s1||!s2) return;
   var a1=armOf(s1,p.m[0].h), a2=armOf(s2,p.m[1].h);
   if(!a1||!a2) return;
-  var q=pinPos(p);
+  drawAngleAt(c,pinPos(p),a1,a2);
+}
+function drawAngleAt(c,q,a1,a2){
   var d=((a2.ang-a1.ang)*180/Math.PI)%360; if(d<0)d+=360;
   var show = d>180 ? 360-d : d;
   var r=Math.min(30, Math.min(a1.len,a2.len)*0.55); if(r<12) r=12;
@@ -587,6 +1096,9 @@ function scene(c,W,H,forExport){
   if(opt.grid && !forExport) drawGrid(c,W,H);
   c.translate(view.x,view.y); c.scale(view.z,view.z);
 
+  drawTrace(c);
+  belts.forEach(function(b){ drawBelt(c,b); });
+  pulleys.forEach(function(p){ drawPulley(c,p); });
   cords.forEach(function(cd){ drawCord(c,cd); });
   if(cordDraft) drawCord(c,cordDraft,cordDraft.preview);
 
@@ -594,7 +1106,9 @@ function scene(c,W,H,forExport){
   strips.forEach(function(s){ if(isArc(s)) drawStrip(c,s,sel.has(s.id)); });
   strips.forEach(function(s){ if(!isArc(s)) drawStrip(c,s,sel.has(s.id)); });
   pins.forEach(function(p){ drawPin(c,p); });
-  if(opt.ang) pins.forEach(function(p){ drawAngle(c,p); });
+  nails.forEach(function(n){ drawNail(c,n); });
+  pens.forEach(function(r){ drawPen(c,r); });
+  if(opt.ang){ pins.forEach(function(p){ drawAngle(c,p); }); drawCrossAngles(c); }
 
   if(!forExport){
     // tirador de giro
@@ -618,9 +1132,20 @@ function scene(c,W,H,forExport){
       c.lineWidth=2/view.z; c.strokeStyle='#19a06a'; c.stroke();
       c.restore();
     }
+    if(beltDraft){                     // primera polea elegida para la correa
+      c.save(); c.beginPath(); c.arc(beltDraft.x,beltDraft.y,PR+4/view.z,0,6.2832);
+      c.lineWidth=2.5/view.z; c.strokeStyle='#4a515c'; c.setLineDash([6/view.z,4/view.z]);
+      c.stroke(); c.setLineDash([]); c.restore();
+    }
+    if(hoverCross){
+      c.save(); c.beginPath(); c.arc(hoverCross.p.x,hoverCross.p.y,PINR*1.7,0,6.2832);
+      c.lineWidth=2/view.z; c.strokeStyle=cordColor; c.stroke(); c.restore();
+    }
     if(hoverHole){
       c.save(); c.beginPath(); c.arc(hoverHole.p.x,hoverHole.p.y,HR*1.9,0,6.2832);
-      c.lineWidth=2/view.z; c.strokeStyle= tool==='cord'? cordColor : '#b8891f'; c.stroke();
+      c.lineWidth=2/view.z;
+      c.strokeStyle= (tool==='cord'||tool==='pen')? cordColor : (tool==='nail'? '#39404a' : '#b8891f');
+      c.stroke();
       c.restore();
     }
   }
@@ -679,15 +1204,79 @@ function onDown(e){
   var sp=evPos(e), wp=s2w(sp);
 
   if(tool==='del'){
+    var rt=penAt(wp); if(rt){ pushUndo(); penRemove(rt); draw(); return; }
+    var nl=nailAt(wp); if(nl){ pushUndo(); nailRemove(nl); draw(); return; }
+    var bl=beltAt(wp); if(bl){ pushUndo(); belts=belts.filter(function(x){return x!==bl;}); draw(); return; }
     var pn=pinAt(wp); if(pn){ pushUndo(); pins=pins.filter(function(x){return x!==pn;}); draw(); return; }
     var cd=cordAt(wp); if(cd){ pushUndo(); cords=cords.filter(function(x){return x!==cd;}); draw(); return; }
+    var tz=traceAt(wp); if(tz){ pushUndo(); trace=trace.filter(function(x){return x!==tz;}); draw(); return; }
     var st=stripAt(wp); if(st){ pushUndo(); removeStrip(st.id); draw(); return; }
+    var pl0=pulleyAt(wp); if(pl0){ pushUndo(); pulleyRemove(pl0); draw(); return; }
+    return;
+  }
+
+  /* polea: clic en el tablero para ponerla, clic encima para quitarla. Con la
+     herramienta activa se puede arrastrar para colocarla en su sitio. */
+  if(tool==='pulley'){
+    var pv0=pulleyAt(wp);
+    if(pv0){ pushUndo();
+      drag={mode:'polmove', pol:pv0, off:{x:wp.x-pv0.x, y:wp.y-pv0.y}};
+      draw(); return; }
+    pushUndo();
+    var np=pulleyAdd(wp.x,wp.y);
+    mountAt({x:np.x,y:np.y}, 12/view.z);
+    draw(); return;
+  }
+
+  /* correa: clic en una polea y luego en otra */
+  if(tool==='belt'){
+    var pb=pulleyAt(wp,6);
+    if(!pb){ var bd=beltAt(wp);
+      if(bd){ pushUndo(); belts=belts.filter(function(x){return x!==bd;}); }
+      else { beltDraft=null; flash('Haz clic en una polea y luego en otra'); }
+      draw(); return; }
+    if(!beltDraft){ beltDraft=pb; draw(); return; }
+    if(beltDraft===pb){ beltDraft=null; draw(); return; }
+    pushUndo();
+    if(!beltAdd(beltDraft,pb)) flash('Esas dos poleas ya están unidas por una correa');
+    beltDraft=null; draw(); return;
+  }
+
+  /* clavo: clic en un agujero para clavarlo al suelo donde esté, clic encima
+     para arrancarlo. Con un clavo la tira todavía gira; con dos se queda quieta. */
+  if(tool==='nail'){
+    var n0=nailAt(wp);
+    if(n0){ pushUndo(); nailRemove(n0); draw(); return; }
+    var hn=holeAt(wp,15);
+    if(hn){ pushUndo(); nailAdd(hn.s,hn.h); draw(); }
+    else flash('Clava la tira por uno de sus agujeros');
+    return;
+  }
+
+  /* rotulador: clic en un agujero para ponerlo, clic encima para quitarlo.
+     El trazo que haya dejado se queda; se borra con la herramienta Borrar. */
+  if(tool==='pen'){
+    var r0=penAt(wp);
+    if(r0){ pushUndo(); penRemove(r0); draw(); return; }
+    var hp=holeAt(wp,15);
+    if(hp){ pushUndo(); penAdd(hp.s,hp.h,cordColor); draw(); return; }
+    /* si no hay agujero cerca pero sí un cruce de dos tiras, el rotulador se pone
+       ahí y va siguiendo el punto de corte mientras las tiras se mueven */
+    var cx=crossAt(wp,14);
+    if(cx){ pushUndo(); penAddCross(cx.a,cx.b,cordColor); draw(); return; }
+    flash('Pon el rotulador en un agujero, o donde se crucen dos tiras');
     return;
   }
 
   if(tool==='pin'){
     var h=holeAt(wp,15);
-    if(h){ pushUndo(); var made=joinAt(h.p, 10/view.z);
+    if(h){
+      pushUndo();
+      /* si hay una polea debajo, el encuadernador monta la tira en su eje: queda
+         solidaria con la polea, que es lo que hace falta para la correa */
+      var mo=mountAt(h.p, 12/view.z);
+      if(mo){ flash('Tira montada en la polea: ahora gira con ella'); draw(); return; }
+      var made=joinAt(h.p, 10/view.z);
       if(!made) flash('Necesitas dos agujeros superpuestos para poner un encuadernador');
       draw(); }
     return;
@@ -710,7 +1299,7 @@ function onDown(e){
     var ps=byId(primary);
     if(ps){ var hh=handleOf(ps);
       if(dist(wp,hh.p) < 13/view.z){
-        pushUndo();
+        pushUndo(); penDown();
         var rotIds = sel.size>1 ? new Set(sel) : new Set([primary]);
         drag={mode:'rot', ids:rotIds, pivot:hh.pivot,
               a0:Math.atan2(wp.y-hh.pivot.y, wp.x-hh.pivot.x), acc:0};
@@ -719,7 +1308,7 @@ function onDown(e){
   }
   // arrastrar un encuadernador deforma el mecanismo (cuadrado -> rombo)
   var pn0=pinAt(wp);
-  if(pn0){ pushUndo(); sel.clear(); primary=null; drag={mode:'joint',pin:pn0}; draw(); return; }
+  if(pn0){ pushUndo(); penDown(); sel.clear(); primary=null; drag={mode:'joint',pin:pn0}; draw(); return; }
 
   var st2=stripAt(wp);
   if(st2){
@@ -728,16 +1317,41 @@ function onDown(e){
     primary=st2.id; toFront(st2.id);
     // Alt = girar directamente
     if(e.altKey){
-      pushUndo(); var pv=pivotOf(st2);
+      pushUndo(); penDown(); var pv=pivotOf(st2);
       drag={mode:'rot', ids:new Set(sel.size>1?sel:[st2.id]), pivot:pv.p,
             a0:Math.atan2(wp.y-pv.p.y, wp.x-pv.p.x), acc:0};
       draw(); return;
     }
-    pushUndo();
+    /* Montada en una polea: arrastrarla la gira a ella sola, deslizándola sobre
+       la polea. Sirve para calar cada varilla en su ángulo. Para mover el
+       mecanismo entero se arrastra la polea. */
+    var mo2=mountOf(st2.id);
+    if(mo2){
+      pushUndo(); penDown();
+      drag={mode:'turn', pol:mo2.pol, sid:st2.id, base:mo2.m.off, want:0,
+            a0:Math.atan2(wp.y-mo2.pol.y, wp.x-mo2.pol.x)};
+      draw(); return;
+    }
+    pushUndo(); penDown();
     var comp=component(sel.size>1?sel:new Set([st2.id]));
-    drag={mode:'move', ids:comp, grab:wp, off:{x:0,y:0}};
+    /* Si hay un clavo en el grupo, arrastrar no puede trasladarlo en bloque: lo
+       que hay que hacer es tirar del punto agarrado y dejar que el mecanismo se
+       articule. Es lo que convierte un cuadrilátero clavado en un cuatro barras. */
+    if(compHasNail(comp)){
+      if(fullyNailed(st2.id)) flash('Esta tira tiene dos clavos: hace de suelo y no se mueve');
+      drag={mode:'drive', s:st2.id, l:toLocal(st2,wp)};
+    }
+    else drag={mode:'move', ids:comp, grab:wp, off:{x:0,y:0}};
     draw(); return;
   }
+  /* Arrastrar la polea la hace girar, y con ella la correa, las poleas
+     solidarias y todas las tiras montadas. Es la manivela del mecanismo.
+     Para cambiarla de sitio, la herramienta ◎ Polea. */
+  var plm=pulleyAt(wp);
+  if(plm){ pushUndo(); penDown(); sel.clear(); primary=null;
+    drag={mode:'turn', pol:plm, sid:null, base:plm.a, want:0,
+          a0:Math.atan2(wp.y-plm.y, wp.x-plm.x)};
+    draw(); return; }
   sel.clear(); primary=null;
   drag={mode:'pan', sp:sp, v0:{x:view.x,y:view.y}};
   draw();
@@ -746,9 +1360,11 @@ function onDown(e){
 function onMove(e){
   var sp=evPos(e), wp=s2w(sp);
   if(!drag){
-    hoverHole = (tool==='pin'||tool==='cord') ? holeAt(wp,15) : null;
+    hoverHole = (tool==='pin'||tool==='cord'||tool==='pen'||tool==='nail') ? holeAt(wp,15) : null;
+    hoverCross = (tool==='pen' && !hoverHole) ? crossAt(wp,14) : null;
     if(cordDraft){ cordDraft.preview=wp; }
-    cv.style.cursor = (tool==='move' && stripAt(wp)) ? 'move' : (tool==='move'?'default':'crosshair');
+    cv.style.cursor = (tool==='move' && (stripAt(wp)||pulleyAt(wp))) ? 'move'
+                    : (tool==='move'?'default':'crosshair');
     draw(); return;
   }
   if(drag.mode==='pan'){ view.x=drag.v0.x+(sp.x-drag.sp.x); view.y=drag.v0.y+(sp.y-drag.sp.y); draw(); return; }
@@ -765,10 +1381,61 @@ function onMove(e){
         snapMark=sn.b.p; drag.snap=sn; }
       else drag.snap=null;
     }
+    penSample();
     draw(); return;
   }
   if(drag.mode==='joint'){
-    relax(null,{pin:drag.pin,t:wp},70);
+    relaxUntil(null,{pin:drag.pin,t:wp},800,1e-7);
+    penSample();
+    draw(); return;
+  }
+  /* Giro alrededor del eje de una polea. Si drag.sid está puesto se gira solo esa
+     tira sobre la polea (calarla); si no, se gira la polea entera con su correa y
+     todo lo montado. Se lleva aparte el ángulo total pedido con el ratón (want)
+     para que Mayús pueda enganchar a múltiplos de 15° sin perder el resto del gesto. */
+  if(drag.mode==='turn'){
+    var aN=Math.atan2(wp.y-drag.pol.y, wp.x-drag.pol.x);
+    var dth=aN-drag.a0;
+    while(dth>Math.PI) dth-=2*Math.PI;
+    while(dth<-Math.PI) dth+=2*Math.PI;
+    drag.a0=aN; drag.want+=dth;
+    var objetivo=drag.base+drag.want;
+    if(e.shiftKey){ var pasoT=Math.PI/12; objetivo=Math.round(objetivo/pasoT)*pasoT; }
+    var actual, aplicar, hecho;
+    if(drag.sid!=null){
+      var mo3=mountOf(drag.sid);
+      if(!mo3){ draw(); return; }
+      actual=mo3.m.off; aplicar=objetivo-actual;
+      hecho = Math.abs(aplicar)<=1e-7 || turnMountedStrip(drag.sid,aplicar);
+    } else {
+      actual=drag.pol.a; aplicar=objetivo-actual;
+      hecho = Math.abs(aplicar)<=1e-7 || turnPulleys(drag.pol,aplicar);
+    }
+    if(!hecho) flash('El montaje no puede acompañar ese giro');
+    penSample();
+    draw(); return;
+  }
+  /* llevarse la polea de sitio, con lo que tenga montado */
+  if(drag.mode==='polmove'){
+    movePulley(drag.pol, wp.x-drag.off.x-drag.pol.x, wp.y-drag.off.y-drag.pol.y);
+    relaxUntil(null,null,600,1e-7);
+    penSample();
+    draw(); return;
+  }
+  /* arrastre de un mecanismo clavado: se tira del punto agarrado a medias y se
+     deja relajar, varias veces. A medias, porque tirar del todo de una vez hace
+     que el mecanismo se salte las restricciones y dé un tirón. */
+  if(drag.mode==='drive'){
+    var sd=byId(drag.s);
+    /* si la tira agarrada tiene dos clavos es suelo: el solver no la toca, así
+       que tirar de ella la despegaría de sus propios clavos. No se mueve y ya */
+    if(sd && fullyNailed(sd.id)) sd=null;
+    if(sd){ for(var it=0; it<8; it++){
+        var g=toWorld(sd,drag.l);
+        applyCorrAt(sd, g, (wp.x-g.x)*0.5, (wp.y-g.y)*0.5);
+        relaxUntil(null,null,600,1e-7);
+      } }
+    penSample();
     draw(); return;
   }
   if(drag.mode==='rot'){
@@ -778,7 +1445,9 @@ function onMove(e){
     var d=want-drag.acc;
     if(Math.abs(d)>1e-7){
       if(rotateGroup(drag.ids, drag.pivot, d)) drag.acc=want;
-      else flash('Esa estructura es rígida: no puede girar');
+      else flash(compHasNail(drag.ids)
+        ? 'El mecanismo no puede seguir por ahí: prueba en el otro sentido'
+        : 'Esa estructura es rígida: no puede girar');
     }
     snapMark=null; drag.snap=null;
     if(opt.magnet && !e.shiftKey){
@@ -789,14 +1458,21 @@ function onMove(e){
         }
       }
     }
+    penSample();
     draw(); return;
   }
 }
 
 function onUp(e){
   if(drag && (drag.mode==='move'||drag.mode==='rot')){
-    if(drag.snap && opt.magnet){ joinAt(drag.snap.b.p, 6/view.z); }
+    if(drag.snap && opt.magnet){
+      // si lo que ha atraído era el eje de una polea, la tira se monta en ella
+      if(drag.snap.b && drag.snap.b.pol) mountAt(drag.snap.b.p, 6/view.z);
+      else joinAt(drag.snap.b.p, 6/view.z);
+    }
   }
+  if(drag && drag.mode!=='pan') penSample();
+  penUp();
   drag=null; snapMark=null; draw();
 }
 
@@ -833,12 +1509,18 @@ window.addEventListener('keydown',function(e){
   else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){ doUndo(); e.preventDefault(); }
   else if(e.key==='v'||e.key==='V') setTool('move');
   else if(e.key==='e'||e.key==='E') setTool('pin');
-  else if(e.key==='g'||e.key==='G'||e.key==='c'||e.key==='C') setTool('cord');
+  else if(e.key==='g'||e.key==='G') setTool('cord');
+  else if(e.key==='c'||e.key==='C') setTool('nail');
+  else if(e.key==='p'||e.key==='P') setTool('pulley');
+  else if(e.key==='b'||e.key==='B') setTool('belt');
+  else if(e.key==='r'||e.key==='R') setTool('pen');
   else if(e.key==='d'||e.key==='D') setTool('del');
   else if((e.key==='ArrowLeft'||e.key==='ArrowRight') && primary!=null && sel.has(primary)){
     var s=byId(primary); if(!s) return;
     var st=(e.shiftKey?15:1)*Math.PI/180*(e.key==='ArrowRight'?1:-1);
-    pushUndo(); rotateGroup(new Set(sel.size>1?sel:[primary]), pivotOf(s).p, st); draw(); e.preventDefault();
+    pushUndo(); penDown();
+    rotateGroup(new Set(sel.size>1?sel:[primary]), pivotOf(s).p, st);
+    penSample(); penUp(); draw(); e.preventDefault();
   }
 });
 
@@ -863,6 +1545,7 @@ function miniSVG(t){
 }
 (function buildPalette(){
   var pal=document.getElementById('palette'), fam=null, html='';
+  html+='<div class="brand">Geo<b>Tiras</b></div>';
   ORDER.forEach(function(t){
     var T=TYPES[t];
     if(T.fam!==fam){ fam=T.fam; html+='<h2>'+fam+'</h2>'; }
@@ -892,7 +1575,8 @@ function miniSVG(t){
    ========================================================================= */
 function setTool(t){
   if(t!=='cord'){ finishCord(); }
-  tool=t; hoverHole=null;
+  if(t!=='belt') beltDraft=null;
+  tool=t; hoverHole=null; hoverCross=null;
   document.querySelectorAll('[data-tool]').forEach(function(b){ b.classList.toggle('on', b.dataset.tool===t); });
   if(t!=='move'){ sel.clear(); primary=null; }
   draw();
@@ -908,8 +1592,9 @@ document.querySelectorAll('[data-tool]').forEach(function(b){
 document.getElementById('cordcol').addEventListener('input',function(e){ cordColor=e.target.value; if(cordDraft)cordDraft.col=cordColor; draw(); });
 document.getElementById('undo').addEventListener('click',doUndo);
 document.getElementById('clear').addEventListener('click',function(){
-  if(!strips.length) return;
-  pushUndo(); strips=[]; pins=[]; cords=[]; sel.clear(); primary=null; cordDraft=null; draw(); });
+  if(!strips.length && !trace.length && !pulleys.length) return;
+  pushUndo(); strips=[]; pins=[]; cords=[]; pens=[]; trace=[]; nails=[]; pulleys=[]; belts=[];
+  sel.clear(); primary=null; cordDraft=null; beltDraft=null; draw(); });
 document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.2); });
 document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.2); });
 function zoomAt(f){ var r=stage.getBoundingClientRect(), c={x:r.width/2,y:r.height/2};
@@ -926,7 +1611,26 @@ function bboxOf(arr){
       x1=Math.max(x1,p.x+m); y1=Math.max(y1,p.y+m); }); });
   return {x0:x0,y0:y0,x1:x1,y1:y1};
 }
-function bbox(){ return bboxOf(strips); }
+function unionBB(a,b){ if(!a) return b; if(!b) return a;
+  return {x0:Math.min(a.x0,b.x0), y0:Math.min(a.y0,b.y0),
+          x1:Math.max(a.x1,b.x1), y1:Math.max(a.y1,b.y1)}; }
+function traceBBoxOf(arr){
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9, hay=false;
+  (arr||[]).forEach(function(t){ t.p.forEach(function(q){ hay=true;
+    x0=Math.min(x0,q.x-3); y0=Math.min(y0,q.y-3);
+    x1=Math.max(x1,q.x+3); y1=Math.max(y1,q.y+3); }); });
+  return hay ? {x0:x0,y0:y0,x1:x1,y1:y1} : null;
+}
+function pulleyBBox(){
+  if(!pulleys.length) return null;
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  pulleys.forEach(function(p){
+    x0=Math.min(x0,p.x-PR-4); y0=Math.min(y0,p.y-PR-4);
+    x1=Math.max(x1,p.x+PR+4); y1=Math.max(y1,p.y+PR+8); });
+  return {x0:x0,y0:y0,x1:x1,y1:y1};
+}
+/* el trazo cuenta para ajustar y para el PNG: puede quedar dibujo sin tiras */
+function bbox(){ return unionBB(unionBB(bboxOf(strips), traceBBoxOf(trace)), pulleyBBox()); }
 function fitView(){
   var b=bbox(); var r=stage.getBoundingClientRect();
   if(!b){ view={x:r.width/2,y:r.height/2,z:1}; draw(); return; }
@@ -957,6 +1661,8 @@ document.getElementById('png').addEventListener('click',function(){
    ========================================================================= */
 function serializar(){
   var pos={}; strips.forEach(function(s,i){ pos[s.id]=i; });
+  var ppos={}; pulleys.forEach(function(p,i){ ppos[p.id]=i; });
+  function polIndex(id){ return ppos[id]; }
   return {
     formato:'geotiras', version:1,
     piezas: strips.map(function(s){
@@ -964,7 +1670,19 @@ function serializar(){
     encuadernadores: pins.map(function(p){
       return {m:p.m.map(function(m){ return [pos[m.s], m.h]; })}; }),
     gomas: cords.map(function(c){
-      return {color:c.col, cerrado:!!c.closed, n:c.n.map(function(n){ return [pos[n.s], n.h]; })}; })
+      return {color:c.col, cerrado:!!c.closed, n:c.n.map(function(n){ return [pos[n.s], n.h]; })}; }),
+    rotuladores: pens.map(function(r){
+      return r.q ? {color:r.col, cruce:[pos[r.q[0]], pos[r.q[1]]]}
+                 : {color:r.col, n:[pos[r.s], r.h]}; }),
+    poleas: pulleys.map(function(p){
+      return {x:+(p.x/U).toFixed(6), y:+(p.y/U).toFixed(6), a:+p.a.toFixed(8),
+              m:p.m.map(function(m){ return [pos[m.s], m.h, +m.off.toFixed(8)]; })}; }),
+    correas: belts.map(function(b){
+      return [polIndex(b.a), polIndex(b.b)]; }),
+    clavos: nails.map(function(k){
+      return {n:[pos[k.s], k.h], x:+(k.x/U).toFixed(6), y:+(k.y/U).toFixed(6)}; }),
+    trazos: trace.map(function(t){
+      return {color:t.col, p:t.p.map(function(q){ return [+(q.x/U).toFixed(5), +(q.y/U).toFixed(5)]; })}; })
   };
 }
 function deserializar(d){
@@ -996,26 +1714,97 @@ function deserializar(d){
     var nn=(c.n||[]).map(ref).filter(Boolean);
     if(nn.length>=2) nc.push({id:nid++, n:nn, closed:!!c.cerrado||!!c.closed, col:c.color||c.col||cordColor});
   });
-  return {strips:ns, pins:np, cords:nc};
+  var nr=[];
+  (d.rotuladores||[]).forEach(function(r){
+    if(r.cruce){                                          // rotulador en un cruce
+      var s1=ns[r.cruce[0]|0], s2=ns[r.cruce[1]|0];
+      if(!s1||!s2||s1===s2) return;
+      if(nr.some(function(x){ return x.q &&
+          ((x.q[0]===s1.id&&x.q[1]===s2.id)||(x.q[0]===s2.id&&x.q[1]===s1.id)); })) return;
+      nr.push({id:nid++, q:[s1.id,s2.id], col:r.color||cordColor});
+      return;
+    }
+    var m=ref(r.n); if(!m) return;
+    if(nr.some(function(x){return !x.q && x.s===m.s && x.h===m.h;})) return;
+    nr.push({id:nid++, s:m.s, h:m.h, col:r.color||cordColor});
+  });
+  var npl=[], nbl=[];
+  (d.poleas||[]).forEach(function(p){
+    var x=Number(p.x), y=Number(p.y), a=Number(p.a);
+    if(!isFinite(x)||!isFinite(y)) return;
+    var pl={id:nid++, x:x*U, y:y*U, a:isFinite(a)?a:0, m:[]};
+    (p.m||[]).forEach(function(mm){
+      if(!mm||mm.length<2) return;
+      var s=ns[mm[0]|0]; if(!s) return;
+      var h=mm[1]|0; if(h<0||h>=TYPES[s.t].pts.length) return;
+      if(npl.some(function(q){ return q.m.some(function(z){return z.s===s.id;}); })) return;
+      if(pl.m.some(function(z){return z.s===s.id;})) return;
+      var off=Number(mm[2]); if(!isFinite(off)) off=s.a-pl.a;
+      pl.m.push({s:s.id, h:h, off:off});
+    });
+    npl.push(pl);
+  });
+  (d.correas||[]).forEach(function(b){
+    if(!b||b.length<2) return;
+    var A=npl[b[0]|0], B=npl[b[1]|0];
+    if(!A||!B||A===B) return;
+    if(nbl.some(function(x){ return (x.a===A.id&&x.b===B.id)||(x.a===B.id&&x.b===A.id); })) return;
+    nbl.push({id:nid++, a:A.id, b:B.id});
+  });
+  var nk=[];
+  (d.clavos||[]).forEach(function(k){
+    var m=ref(k.n); if(!m) return;
+    if(nk.some(function(x){return x.s===m.s && x.h===m.h;})) return;
+    var s=ns[k.n[0]|0];
+    /* si el archivo no trae coordenadas o vienen ilegibles, se clava donde esté
+       el agujero, que es lo que había cuando se guardó */
+    var x=Number(k.x), y=Number(k.y);
+    var q = (isFinite(x)&&isFinite(y)) ? {x:x*U, y:y*U} : holeW(s,m.h);
+    nk.push({id:nid++, s:m.s, h:m.h, x:q.x, y:q.y});
+  });
+  var nt=[];
+  (d.trazos||[]).forEach(function(t){
+    var pp=[];
+    (t.p||[]).forEach(function(q){
+      if(!q || q.length<2) return;
+      var x=Number(q[0]), y=Number(q[1]);
+      if(isFinite(x)&&isFinite(y)) pp.push({x:x*U, y:y*U});
+    });
+    if(pp.length>=2) nt.push({id:nid++, col:t.color||cordColor, p:pp});
+  });
+  return {strips:ns, pins:np, cords:nc, pens:nr, trace:nt, nails:nk, pulleys:npl, belts:nbl};
 }
 function loadData(d){
   var r=deserializar(d);
   if(!r){ flash('Ese archivo no tiene el formato de geotiras esperado'); return; }
   pushUndo();
-  if(importMode==='replace'){ strips=r.strips; pins=r.pins; cords=r.cords; }
+  if(importMode==='replace'){
+    strips=r.strips; pins=r.pins; cords=r.cords; pens=r.pens; trace=r.trace; nails=r.nails;
+    pulleys=r.pulleys; belts=r.belts; }
   else {
-    var b0=bboxOf(strips), b1=bboxOf(r.strips);
+    var b0=unionBB(bboxOf(strips),traceBBoxOf(trace));
+    var b1=unionBB(bboxOf(r.strips),traceBBoxOf(r.trace));
     if(b0 && b1){ var dy=b0.y1-b1.y0+1.5*U;
-      r.strips.forEach(function(s){ s.y+=dy; }); }
+      r.strips.forEach(function(s){ s.y+=dy; });
+      r.trace.forEach(function(t){ t.p.forEach(function(q){ q.y+=dy; }); });
+      r.nails.forEach(function(k){ k.y+=dy; });
+      r.pulleys.forEach(function(p){ p.y+=dy; }); }
     strips=strips.concat(r.strips); pins=pins.concat(r.pins); cords=cords.concat(r.cords);
+    pens=pens.concat(r.pens); trace=trace.concat(r.trace); nails=nails.concat(r.nails);
+    pulleys=pulleys.concat(r.pulleys); belts=belts.concat(r.belts);
   }
   sel.clear(); primary=null; cordDraft=null; drag=null; fitView();
   flash(r.strips.length+(r.strips.length===1?' pieza cargada':' piezas cargadas')+
         (r.pins.length?' · '+r.pins.length+' encuadernadores':'')+
-        (r.cords.length?' · '+r.cords.length+' gomas':''));
+        (r.cords.length?' · '+r.cords.length+' gomas':'')+
+        (r.nails.length?' · '+r.nails.length+' clavos':'')+
+        (r.pulleys.length?' · '+r.pulleys.length+' poleas':'')+
+        (r.belts.length?' · '+r.belts.length+' correas':'')+
+        (r.pens.length?' · '+r.pens.length+' rotuladores':'')+
+        (r.trace.length?' · '+r.trace.length+' trazos':''));
 }
 document.getElementById('save').addEventListener('click',function(){
-  if(!strips.length){ flash('No hay nada que guardar'); return; }
+  if(!strips.length && !trace.length && !pulleys.length){ flash('No hay nada que guardar'); return; }
   var blob=new Blob([JSON.stringify(serializar(),null,1)],{type:'application/json'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a'); a.download='geotiras.json'; a.href=url; a.click();
@@ -1049,14 +1838,38 @@ infoEl.innerHTML='<b>Medidas de las geotiras</b><br>u = longitud de R1. Las roja
  'W2 es la diagonal mayor del octógono de lado R1.<br>'+
  'En las amarillas, los dos agujeros contiguos al central dividen la tira en tres partes iguales. '+
  'En B2, Y2 y W2 los agujeros que siguen a los extremos están a u/2, como en las rojas.</div>'+
+ '<div style="margin-top:7px"><b>Ángulos</b>: se marcan en los encuadernadores que unen dos tiras y también '+
+ 'allí donde dos tiras se cruzan sin estar unidas. En ese caso el ángulo que se mide es el que forman '+
+ 'mirando hacia el punto por el que están sujetas —el eje de su polea o su clavo—, que es el que interesa '+
+ 'en el arco capaz; si no están sujetas por ningún sitio, se toma el lado más largo de cada una.</div>'+
  '<div style="margin-top:7px"><b>Fijador de ángulos</b>: agujeros cada 15° a u/2 del centro, más el del centro. '+
  'Sujeta la tira con un encuadernador en el centro y otro en la marca del ángulo; al girarla, el imán '+
  'la lleva sola a cada múltiplo de 15°.</div>'+
+ '<div style="margin-top:7px"><b>Clavo</b>: sujeta un agujero a un punto fijo del suelo. Con un clavo la tira '+
+ 'sigue girando alrededor de él; con dos clavos ya no se mueve. Al arrastrar una construcción que tiene '+
+ 'algún clavo, en vez de moverse entera se articula: tiras del punto que has agarrado y el mecanismo '+
+ 'se acomoda. Clavando una tira y uniéndole otras tres en cuadrilátero tienes un mecanismo de cuatro barras.</div>'+
+ '<div style="margin-top:7px"><b>Polea y correa</b>: la polea tiene el eje fijo al suelo, pero gira. '+
+ 'Pon una tira con un agujero sobre el eje y móntala con el encuadernador. '+
+ 'La correa une dos poleas y las obliga a girar el mismo ángulo y en el mismo sentido.<br>'+
+ 'Hay dos giros distintos, y conviene no confundirlos: <b>arrastrando la polea</b> gira el mecanismo entero '+
+ '—esa polea, las que tenga por correa y todas las tiras montadas—, que es darle a la manivela; '+
+ '<b>arrastrando una tira montada</b> gira solo ella, deslizándose sobre su polea, que es calarla en el ángulo '+
+ 'que quieras antes de empezar. Para cambiar la polea de sitio, con la herramienta ◎ Polea. '+
+ 'Con dos poleas, una tira en cada una y una correa entre ellas, tienes el modelo con el que '+
+ 'Puig Adam explicaba el arco capaz: las dos varillas giran lo mismo, así que el ángulo que forman '+
+ 'no cambia, y basta poner un rotulador en el punto donde se cruzan.</div>'+
+ '<div style="margin-top:7px"><b>Rotulador</b>: se engancha en un agujero y va marcando por dónde pasa ese '+
+ 'agujero mientras mueves la construcción. Puedes poner varios a la vez, cada uno de un color. '+
+ 'Si en vez de en un agujero haces clic donde se cruzan dos tiras, se queda en el cruce y lo va '+
+ 'siguiendo mientras giran, aunque el punto de corte deslice por ellas; se dibuja hueco para distinguirlo. '+
+ 'Para quitarlo, vuelve a hacer clic encima con el rotulador; el trazo se queda. Con la herramienta '+
+ 'Borrar se quita el trazo, uno a uno.</div>'+
  '<div style="margin-top:7px"><b>Guardar y abrir</b> descarga y recupera un archivo con las tiras, '+
- 'los encuadernadores y las gomas, para seguir otro día o repartir una construcción ya montada. '+
+ 'los encuadernadores, los clavos, las poleas y correas, las gomas, los rotuladores y el trazo, para seguir otro día o repartir una construcción ya montada. '+
  'El botón ＋ añade el archivo debajo de lo que ya tengas, en vez de sustituirlo; también puedes '+
  'soltar el archivo sobre el tablero.</div>'+
- '<div style="margin-top:7px;color:#8a919c">Atajos: V mover · E encuadernador · G goma · D borrar · Alt+arrastrar gira · Mayús limita el giro a 15° · Supr borra · Ctrl+Z deshace.</div>'+
+ '<div style="margin-top:7px;color:#8a919c">Atajos: V mover · E encuadernador · C clavo · P polea · B correa · G goma · R rotulador · D borrar · Alt+arrastrar gira · Mayús limita el giro a 15° · Supr borra · Ctrl+Z deshace.</div>'+
  '<div class="lic">Geotiras · Pablo Beltrán-Pellicer · '+
  '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · @pbeltranp<br>'+
  'Se puede usar, copiar y adaptar citando la autoría: licencia '+
@@ -1067,10 +1880,16 @@ function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,1900);
 function updateHint(){
   var t;
   if(flashMsg && Date.now()-flashT<1800) t=flashMsg;
-  else if(tool==='move') t='Arrastra una tira para mover todo el grupo · el tirador ⟳ gira solo esa tira · arrastra un encuadernador para deformar la figura · Mayús+clic selecciona varias';
+  else if(tool==='move') t=(pulleys.length
+    ? 'Arrastra la polea para mover el mecanismo · arrastra una tira montada para calarla ella sola · arrastra un encuadernador para deformar la figura'
+    : 'Arrastra una tira para mover todo el grupo · el tirador ⟳ gira solo esa tira · arrastra un encuadernador para deformar la figura · Mayús+clic selecciona varias');
   else if(tool==='pin') t='Haz clic en un agujero donde se superpongan dos tiras para poner el encuadernador';
+  else if(tool==='nail') t='Haz clic en un agujero para clavarlo al suelo · con un clavo la tira todavía gira, con dos se queda quieta · clic encima para arrancarlo';
   else if(tool==='cord') t='Haz clic en agujeros sucesivos para pasar la goma · vuelve al primero para cerrarla · doble clic o Esc para terminar';
-  else t='Haz clic sobre una tira, un encuadernador o una goma para borrarlo';
+  else if(tool==='pen') t='Haz clic en un agujero, o donde se crucen dos tiras, para poner el rotulador · clic encima para quitarlo · luego mueve la construcción y va dejando el trazo';
+  else if(tool==='pulley') t='Haz clic en el tablero para poner una polea · arrástrala para cambiarla de sitio · con el encuadernador montas encima una tira';
+  else if(tool==='belt') t=(beltDraft? 'Ahora haz clic en la otra polea' : 'Haz clic en una polea y luego en otra: la correa las obliga a girar el mismo ángulo');
+  else t='Haz clic sobre una tira, un encuadernador, un clavo, una polea, una correa, una goma, un rotulador o un trazo para borrarlo';
   hintEl.textContent=t;
 }
 
@@ -1091,7 +1910,8 @@ if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
 function runSelfTest(){
   var out=[], fails=0;
   function ok(n,c,extra){ out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':'')); if(!c) fails++; }
-  function reset(){ strips=[]; pins=[]; cords=[]; sel.clear(); primary=null; }
+  function reset(){ strips=[]; pins=[]; cords=[]; pens=[]; trace=[]; nails=[];
+                    pulleys=[]; belts=[]; beltDraft=null; sel.clear(); primary=null; }
   function D(a,b){ return dist(a,b); }
   function gr(r){ return r*180/Math.PI; }
   var L=function(t){ return TYPES[t].len; };
@@ -1250,17 +2070,426 @@ function runSelfTest(){
   ok('sin unión previa, el imán de giro no actúa (se puede girar libremente)',
      findSnapRot(new Set([suelta.id]),holeW(suelta,0))===null);
 
+  /* --- el clavo ----------------------------------------------------------
+     Un clavo sujeta un agujero a un punto del suelo. Lo que hay que comprobar
+     es que manda sobre los encuadernadores y que deja exactamente un grado de
+     libertad: giro alrededor de él.                                          */
+  reset();
+  var cl=addStrip('R2',0,0,0);
+  var k1=nailAdd(cl.id,0);
+  ok('el clavo se pone donde está el agujero', !!k1 && D({x:k1.x,y:k1.y},holeW(cl,0))<1e-12);
+  ok('no se pueden poner dos clavos en el mismo agujero',
+     nailAdd(cl.id,0)===null && nails.length===1);
+  ok('el pivote de una tira clavada es el clavo, no su centro', pivotOf(cl).i===0);
+  ok('con un clavo la tira gira alrededor de él',
+     rotateGroup(new Set([cl.id]),{x:k1.x,y:k1.y},0.7)===true);
+  ok('y el clavo sigue en su sitio', maxResidual()<1e-9, maxResidual().toExponential(1));
+  ok('la tira ha girado de verdad', Math.abs(gr(cl.a)-gr(0.7))<1e-9, gr(cl.a).toFixed(3)+'°');
+  // por más que se tire de ella por otro punto, el clavo no se suelta
+  rotateGroup(new Set([cl.id]),holeW(cl,2),0.4);
+  ok('tirando de la tira por otro punto, el clavo no se suelta',
+     maxResidual()<1e-6, maxResidual().toExponential(1));
+  ok('y el agujero clavado sigue en el mismo punto del suelo',
+     D(holeW(cl,0),{x:k1.x,y:k1.y})<1e-6);
+  nailAdd(cl.id,2);
+  var clA={x:cl.x,y:cl.y,a:cl.a};
+  ok('con dos clavos la tira ya no puede girar',
+     rotateGroup(new Set([cl.id]),holeW(cl,0),0.3)===false, nails.length+' clavos');
+  ok('y se ha quedado exactamente donde estaba',
+     cl.x===clA.x && cl.y===clA.y && cl.a===clA.a);
+
+  // el clavo tira de la tira hasta devolverla a su sitio
+  reset();
+  var vu=addStrip('R2',0,0,0); nailAdd(vu.id,0);
+  translate([vu.id],40,-25);
+  ok('mover a la fuerza una tira clavada deja residuo', maxResidual()>40, maxResidual().toFixed(1));
+  relax(null,null,80);
+  ok('y el solver la devuelve al clavo', maxResidual()<1e-6, maxResidual().toExponential(1));
+
+  // un clavo manda sobre el encuadernador
+  reset();
+  var fj=addStrip('R2',0,0,0), lb=addStrip('R2',2*U,0,0);
+  var libre=addStrip('R1',600,600,0);
+  joinAt(holeW(fj,2),1); nailAdd(fj.id,0); nailAdd(fj.id,2);
+  var fjA={x:fj.x,y:fj.y,a:fj.a};
+  ok('el grupo con clavo se reconoce como articulado, no trasladable',
+     compHasNail(new Set([lb.id]))===true && compHasNail(new Set([libre.id]))===false);
+  // se tira de la barra libre por su extremo: debe girar, no arrastrar a la clavada
+  for(var dv=0; dv<8; dv++){
+    var gp=holeW(lb,2);
+    applyCorrAt(lb, gp, (2*U-gp.x)*0.5, (2.4*U-gp.y)*0.5);
+    relax(null,null,14);
+  }
+  ok('al tirar de la barra libre, la clavada no se mueve',
+     D({x:fj.x,y:fj.y},fjA)<1e-6 && Math.abs(fj.a-fjA.a)<1e-9,
+     D({x:fj.x,y:fj.y},fjA).toExponential(1));
+  ok('la barra libre gira alrededor del encuadernador sin estirarse',
+     Math.abs(D(holeW(lb,0),holeW(lb,2))-2*U)<1e-6 && maxResidual()<1e-3,
+     maxResidual().toExponential(1));
+  ok('y se ha movido de verdad hacia donde se tiraba', holeW(lb,2).y>0.5*U, (holeW(lb,2).y/U).toFixed(2));
+  ok('la tira de dos clavos se reconoce como suelo, y la de uno no',
+     fullyNailed(fj.id)===true && fullyNailed(lb.id)===false && fullyNailed(libre.id)===false);
+
+  /* --- mecanismo de cuatro barras ----------------------------------------
+     Paralelogramo articulado: barra fija de 4 u clavada por los dos extremos,
+     manivela y balancín de 2 u, y acoplador de 4 u. Mientras la manivela no se
+     alinee con el suelo, el acoplador se traslada sin girar y sus agujeros
+     describen circunferencias del radio de la manivela. Ese es el caso con
+     respuesta exacta, y por eso sirve de prueba. El barrido va de -170° a -10°
+     justamente para no tocar las dos posiciones alineadas, 0° y 180°, que son
+     puntos muertos y se prueban aparte.                                       */
+  reset();
+  var th0=-170*Math.PI/180;
+  var sue=addStrip('R3',0,0,0);                    // barra fija (suelo)
+  var man=addStrip('R2',0,0,th0);                  // manivela
+  var bal=addStrip('R2',4*U,0,th0);                // balancín
+  var Pm={x:2*U*Math.cos(th0), y:2*U*Math.sin(th0)};
+  var aco=addStrip('R3',Pm.x,Pm.y,0);              // acoplador
+  ok('el paralelogramo arranca con los cuatro vértices cerrados',
+     D(holeW(sue,0),holeW(man,0))<1e-9 && D(holeW(sue,8),holeW(bal,0))<1e-9 &&
+     D(holeW(man,2),holeW(aco,0))<1e-9 && D(holeW(bal,2),holeW(aco,8))<1e-9);
+  joinAt(holeW(sue,0),1); joinAt(holeW(sue,8),1);
+  joinAt(holeW(man,2),1); joinAt(holeW(bal,2),1);
+  ok('cuatro encuadernadores en el mecanismo', pins.length===4, pins.length);
+  nailAdd(sue.id,0); nailAdd(sue.id,8);
+  ok('la barra fija está clavada por los dos extremos', nails.length===2);
+  ok('el solver la trata como suelo y no la mueve nadie', groundSet().has(sue.id));
+  var sueA={x:sue.x,y:sue.y,a:sue.a};
+  penAdd(aco.id,4,'#d0322f');                      // rotulador en el centro del acoplador
+  var centroTeo={x:2*U, y:0};                      // centro de la circunferencia que debe salir
+  penDown();
+  for(var gg=0; gg<32; gg++){
+    rotateGroup(new Set([man.id]), holeW(sue,0), 5*Math.PI/180);
+    penSample();
+  }
+  penUp();
+  ok('la barra clavada no se ha movido en todo el barrido',
+     D({x:sue.x,y:sue.y},sueA)<1e-6 && Math.abs(sue.a-sueA.a)<1e-9,
+     D({x:sue.x,y:sue.y},sueA).toExponential(1));
+  ok('las cuatro uniones siguen cerradas', maxResidual()<1e-3, maxResidual().toExponential(1));
+  ok('la manivela ha girado los 160° pedidos', Math.abs(gr(man.a-th0)-160)<1e-6,
+     gr(man.a-th0).toFixed(4)+'°');
+  [[man,2],[bal,2],[aco,8],[sue,8]].forEach(function(par,i){
+    ok('la barra '+(i+1)+' conserva su longitud',
+       Math.abs(D(holeW(par[0],0),holeW(par[0],par[1]))-lenOf(par[0])*U)<1e-6); });
+  ok('el acoplador se traslada sin girar (es un paralelogramo)',
+     Math.abs(Math.sin(aco.a))<1e-3, gr(aco.a).toExponential(1)+'°');
+  ok('el balancín copia el giro de la manivela',
+     Math.abs(Math.sin(bal.a-man.a))<1e-3, gr(bal.a-man.a).toExponential(1)+'°');
+  var CU=trace.length?trace[0].p:[];
+  ok('el rotulador del acoplador ha dejado un trazo', trace.length===1 && CU.length===33,
+     trace.length+' / '+CU.length);
+  ok('y ese trazo es una circunferencia de radio la manivela, 2 u',
+     CU.length>0 && CU.every(function(q){ return Math.abs(D(q,centroTeo)/U-2)<1e-4; }),
+     CU.length? Math.max.apply(null,CU.map(function(q){return Math.abs(D(q,centroTeo)/U-2);})).toExponential(1):'-');
+  ok('y no es un trozo de circunferencia, sino los 160° del barrido',
+     CU.length>2 && Math.abs(D(CU[0],CU[CU.length-1])/U-2*2*Math.sin(80*Math.PI/180))<1e-3,
+     CU.length>2? (D(CU[0],CU[CU.length-1])/U).toFixed(4):'-');
+
+  /* Punto muerto: con la manivela alineada con el suelo, el paralelogramo puede
+     seguir como paralelogramo o cruzarse. Lo que no puede es quedarse tieso, que
+     es lo que pasaba antes: una vez rebasado el punto muerto con residuo alto,
+     cualquier giro posterior se comparaba con un estado ya roto y se rechazaba,
+     y el mecanismo se moría. */
+  var antesM=gr(man.a);
+  var pasaron=0;
+  for(var pm=0; pm<40; pm++) if(rotateGroup(new Set([man.id]), holeW(sue,0), 6*Math.PI/180)) pasaron++;
+  ok('el mecanismo atraviesa el punto muerto y sigue girando', pasaron===40, pasaron+' de 40');
+  ok('y después del punto muerto sigue vivo, no se queda tieso',
+     Math.abs(gr(man.a)-antesM)>200, (gr(man.a)-antesM).toFixed(1)+'°');
+  ok('las barras siguen midiendo lo mismo después del punto muerto',
+     [[man,2],[bal,2],[aco,8]].every(function(par){
+       return Math.abs(D(holeW(par[0],0),holeW(par[0],par[1]))-lenOf(par[0])*U)<1e-6; }));
+  ok('y la barra clavada tampoco se ha movido ahí',
+     D({x:sue.x,y:sue.y},sueA)<1e-6 && Math.abs(sue.a-sueA.a)<1e-9);
+
+  /* --- poleas y correas --------------------------------------------------- */
+  reset();
+  var pA=pulleyAdd(0,0), pB=pulleyAdd(4*U,0);
+  ok('la polea se pone donde se pide', pulleys.length===2 && pA.x===0 && pB.x===4*U);
+  var vv=addStrip('R3',0,0,0.3);
+  ok('la tira se monta en el eje de la polea', !!mountAt({x:0,y:0},1) && pA.m.length===1);
+  ok('se monta por el agujero que está sobre el eje', pA.m[0].h===0 && pA.m[0].s===vv.id);
+  ok('montar no la ha movido', Math.abs(vv.a-0.3)<1e-12 && D(holeW(vv,0),{x:0,y:0})<1e-9);
+  ok('una tira montada la reconoce el solver como suelo suyo',
+     mountedSet().has(vv.id) && groundSet().has(vv.id));
+  ok('y su pivote es el eje de la polea', pivotOf(vv).i===0 &&
+     D(pivotOf(vv).p,{x:0,y:0})<1e-9);
+  ok('no se monta dos veces la misma tira', mountAt({x:0,y:0},1)===null && pA.m.length===1);
+  turnPulleys(pA,0.5);
+  ok('al girar la polea, la tira gira lo mismo', Math.abs(vv.a-0.8)<1e-9, gr(vv.a).toFixed(4)+'°');
+  ok('y su agujero no se despega del eje', D(holeW(vv,0),{x:0,y:0})<1e-9);
+  ok('la tira no se estira al girar', Math.abs(D(holeW(vv,0),holeW(vv,8))-4*U)<1e-9);
+  var aB0=pB.a;
+  ok('sin correa, la otra polea no se entera', Math.abs(pB.a-aB0)<1e-12 && pB.a===0);
+  var corr=beltAdd(pA,pB);
+  ok('la correa une las dos poleas', !!corr && belts.length===1);
+  ok('no se pone dos veces la misma correa', beltAdd(pB,pA)===null && belts.length===1);
+  ok('con correa, las dos poleas son un solo grupo', pulleyGroup(pA).length===2);
+  var a1=pA.a, a2=pB.a;
+  turnPulleys(pA,0.4);
+  ok('la correa hace girar a las dos el mismo ángulo y en el mismo sentido',
+     Math.abs((pA.a-a1)-0.4)<1e-12 && Math.abs((pB.a-a2)-0.4)<1e-12);
+
+  /* girar la tira y girar la polea son dos cosas distintas */
+  var aPol=pA.a, aTira=vv.a, aOtra=pB.a, offAntes=pA.m[0].off;
+  ok('girar la tira montada no mueve su polea ni la solidaria',
+     turnMountedStrip(vv.id,0.25)===true &&
+     pA.a===aPol && pB.a===aOtra, gr(pA.a-aPol).toFixed(6)+'°');
+  ok('pero la tira sí ha girado, y su calaje ha cambiado',
+     Math.abs(vv.a-(aTira+0.25))<1e-12 && Math.abs(pA.m[0].off-(offAntes+0.25))<1e-12);
+  ok('y sigue enganchada al eje', D(holeW(vv,0),{x:pA.x,y:pA.y})<1e-9);
+  var vv2=addStrip('R2',pB.x,pB.y,0);
+  mountAt({x:pB.x,y:pB.y},1);
+  ok('hay una tira montada en cada polea', pA.m.length===1 && pB.m.length===1);
+  var c1=vv.a, c2=vv2.a;
+  turnPulleys(pA,0.3);
+  ok('girar la polea sí arrastra las dos tiras, cada una en su polea',
+     Math.abs((vv.a-c1)-0.3)<1e-12 && Math.abs((vv2.a-c2)-0.3)<1e-12);
+  var d1=vv.a, d2=vv2.a;
+  turnMountedStrip(vv.id,0.2);
+  ok('y girar una de las tiras deja a la otra donde estaba',
+     Math.abs((vv.a-d1)-0.2)<1e-12 && vv2.a===d2);
+  ok('el ángulo entre las dos varillas solo lo cambia girar una de ellas',
+     Math.abs(((vv.a-vv2.a)-(d1-d2))-0.2)<1e-12);
+  removeStrip(vv2.id);
+  var ejeAntes={x:pA.x,y:pA.y}, calaje=pA.m[0].off, angAntes=vv.a;
+  movePulley(pA,30,-20);
+  ok('mover la polea se lleva la tira montada, sin girarla',
+     D(holeW(vv,0),{x:ejeAntes.x+30, y:ejeAntes.y-20})<1e-9 &&
+     Math.abs(vv.a-angAntes)<1e-12 && Math.abs(vv.a-(pA.a+calaje))<1e-9);
+  ok('quitar la polea se lleva sus correas y suelta la tira',
+     (pulleyRemove(pA), pulleys.length===1 && belts.length===0 && mountOf(vv.id)===null));
+
+  /* --- el cruce de dos tiras ---------------------------------------------- */
+  reset();
+  var x1=addStrip('R3',0,0,0), x2=addStrip('R3',2*U,-2*U,Math.PI/2);
+  ok('el cruce de dos tiras perpendiculares sale donde debe',
+     D(crossOf(x1.id,x2.id),{x:2*U,y:0})<1e-9);
+  var x3=addStrip('R3',0,2*U,0);
+  ok('dos tiras paralelas no tienen cruce', crossOf(x1.id,x3.id)===null);
+  var x4=addStrip('R1',3.5*U,-3*U,Math.PI/2);
+  ok('si se cortan fuera de las tiras, no hay cruce', crossOf(x1.id,x4.id)===null);
+  ok('se localiza el cruce para poner ahí el rotulador',
+     (view.z=1, !!crossAt({x:2*U+3,y:2},14)));
+  ok('y no se coge un cruce que queda lejos', crossAt({x:2*U+120,y:90},14)===null);
+
+  /* --- el ángulo en un cruce sin encuadernador ---------------------------- */
+  reset();
+  var g1a=addStrip('R3',0,0,0), g1b=addStrip('R3',2*U,-2*U,Math.PI/3);
+  var qc=crossOf(g1a.id,g1b.id);
+  ok('dos tiras cruzadas sin nada que las una tienen su punto de cruce', !!qc);
+  function angCruce(sA,sB){
+    var q2=crossOf(sA.id,sB.id); if(!q2) return null;
+    var r1=rayFrom(sA,q2), r2=rayFrom(sB,q2);
+    var dd=((r2.ang-r1.ang)*180/Math.PI)%360; if(dd<0)dd+=360;
+    return dd>180?360-dd:dd;
+  }
+  ok('sueltas, el ángulo del cruce se mide por el lado largo de cada una',
+     Math.abs(angCruce(g1a,g1b)-60)<1e-9, angCruce(g1a,g1b).toFixed(4)+'°');
+  // con las tiras sujetas, el rayo mira hacia donde están sujetas
+  reset();
+  var hP=pulleyAdd(0,0), hQ=pulleyAdd(4*U,0);
+  var hA=addStrip('R3',0,0,30*Math.PI/180), hB=addStrip('R3',4*U,0,120*Math.PI/180);
+  mountAt({x:0,y:0},1); mountAt({x:4*U,y:0},1);
+  ok('montadas en las poleas, el ángulo del cruce es el que se ve desde los ejes',
+     Math.abs(angCruce(hA,hB)-90)<1e-9, angCruce(hA,hB).toFixed(6)+'°');
+  /* El cruce pasa por el punto medio de una varilla; sin la regla del anclaje se
+     saltaría al ángulo suplementario justo ahí, y el número daría un tumbo. */
+  var vistos=[];
+  beltAdd(hP,hQ);
+  for(var ac=0; ac<40; ac++){ turnPulleys(hP,1*Math.PI/180); vistos.push(angCruce(hA,hB)); }
+  ok('y no se cambia por el suplementario mientras el cruce recorre las tiras',
+     vistos.every(function(g4){ return g4!==null && Math.abs(g4-90)<1e-6; }),
+     Math.min.apply(null,vistos).toFixed(3)+'° … '+Math.max.apply(null,vistos).toFixed(3)+'°');
+  ok('el cruce ha pasado de un lado al otro del centro de una varilla',
+     (function(){
+       var q3=crossOf(hA.id,hB.id);
+       var t=(q3.x-hA.x)*Math.cos(hA.a)+(q3.y-hA.y)*Math.sin(hA.a);
+       return t<2*U;                       // ha cruzado el punto medio de la R3
+     })());
+  // si están unidas por un encuadernador, el ángulo lo pone el encuadernador
+  reset();
+  var j1=addStrip('R2',0,0,0), j2=addStrip('R2',0,0,Math.PI/4);
+  joinAt(holeW(j1,0),1);
+  ok('donde hay encuadernador no se dibuja además el ángulo del cruce',
+     pins.length===1 && pinnedHere(j1.id,j2.id,pinPos(pins[0]))===true);
+  ok('y donde no lo hay, sí', pinnedHere(j1.id,j2.id,{x:5*U,y:5*U})===false);
+
+  /* --- el modelo de Puig Adam para el arco capaz ---------------------------
+     Dos varillas que giran alrededor de P y Q, con la correa obligando a las dos
+     a girar lo mismo. El ángulo que forman no cambia, y su cruce describe el arco
+     capaz de ese ángulo sobre PQ. Se monta con 90° porque entonces la respuesta
+     es exacta y de las que se reconocen: el arco capaz de 90° sobre PQ es la
+     circunferencia de diámetro PQ, que es el teorema de Tales.                */
+  reset();
+  var dPQ=4*U, f1=30*Math.PI/180, f2=120*Math.PI/180;   // f2-f1 = 90°
+  var polP=pulleyAdd(0,0), polQ=pulleyAdd(dPQ,0);
+  var vP=addStrip('R3',0,0,f1), vQ=addStrip('R3',dPQ,0,f2);
+  mountAt({x:0,y:0},1); mountAt({x:dPQ,y:0},1);
+  ok('cada varilla está montada en su polea',
+     polP.m.length===1 && polP.m[0].s===vP.id && polQ.m.length===1 && polQ.m[0].s===vQ.id);
+  beltAdd(polP,polQ);
+  var Bini=crossOf(vP.id,vQ.id);
+  ok('las dos varillas se cruzan dentro de las tiras', !!Bini);
+  function angEnB(){
+    var B=crossOf(vP.id,vQ.id); if(!B) return null;
+    var u1=Math.atan2(-B.y, -B.x);                       // de B hacia P
+    var u2=Math.atan2(-B.y, dPQ-B.x);                    // de B hacia Q
+    var g2=Math.abs(gr(u2-u1))%360; if(g2>180) g2=360-g2;
+    return g2;
+  }
+  ok('el ángulo en el cruce arranca valiendo 90°', Math.abs(angEnB()-90)<1e-9, angEnB().toFixed(6)+'°');
+  penAddCross(vP.id,vQ.id,'#0a7d55');
+  ok('el rotulador se pone en el cruce, no en un agujero',
+     pens.length===1 && !!pens[0].q && pens[0].s===undefined);
+  var centroT={x:dPQ/2, y:0}, radioT=dPQ/2;              // circunferencia de diámetro PQ
+  var angulos=[];
+  penDown();
+  for(var pa=0; pa<40; pa++){ turnPulleys(polP, 1*Math.PI/180); penSample(); angulos.push(angEnB()); }
+  penUp();
+  ok('las dos poleas han girado lo mismo', Math.abs(polP.a-polQ.a)<1e-12,
+     gr(polP.a).toFixed(3)+'° / '+gr(polQ.a).toFixed(3)+'°');
+  ok('las dos varillas han girado lo mismo', Math.abs((vP.a-f1)-(vQ.a-f2))<1e-12);
+  ok('y por eso el ángulo del cruce no ha cambiado en todo el recorrido',
+     angulos.every(function(g2){ return g2!==null && Math.abs(g2-90)<1e-6; }),
+     Math.max.apply(null,angulos.map(function(g2){return Math.abs(g2-90);})).toExponential(1)+'°');
+  var AR=trace.length?trace[0].p:[];
+  ok('el rotulador del cruce ha dejado un trazo', trace.length===1 && AR.length===41,
+     trace.length+' / '+AR.length);
+  ok('y el trazo es el arco capaz de 90°: la circunferencia de diámetro PQ',
+     AR.length>0 && AR.every(function(q){ return Math.abs(D(q,centroT)-radioT)<1e-6; }),
+     AR.length? Math.max.apply(null,AR.map(function(q){return Math.abs(D(q,centroT)-radioT);})).toExponential(1):'-');
+  ok('el cruce ha recorrido de verdad un arco, no se ha quedado quieto',
+     AR.length>2 && D(AR[0],AR[AR.length-1])>0.5*U, AR.length>2? (D(AR[0],AR[AR.length-1])/U).toFixed(3)+' u':'-');
+  ok('el arco recorrido mide el doble que el giro, por el ángulo central',
+     AR.length>2 && Math.abs(gr(2*Math.asin(D(AR[0],AR[AR.length-1])/(2*radioT)))-80)<1e-3,
+     AR.length>2? gr(2*Math.asin(D(AR[0],AR[AR.length-1])/(2*radioT))).toFixed(4)+'°':'-');
+
+  /* Sin correa se rompe el invariante: es la correa, y no las varillas, la que
+     hace el arco capaz. Se monta otra vez desde el principio para partir de una
+     posición cómoda, con el cruce bien dentro de las dos tiras. */
+  reset();
+  var qP=pulleyAdd(0,0), qQ=pulleyAdd(dPQ,0);
+  var wP=addStrip('R3',0,0,f1), wQ=addStrip('R3',dPQ,0,f2);
+  mountAt({x:0,y:0},1); mountAt({x:dPQ,y:0},1);
+  function angSuelto(){
+    var B=crossOf(wP.id,wQ.id); if(!B) return null;
+    var u1=Math.atan2(-B.y,-B.x), u2=Math.atan2(-B.y,dPQ-B.x);
+    var g3=Math.abs(gr(u2-u1))%360; if(g3>180) g3=360-g3;
+    return g3;
+  }
+  ok('sin correa también se arranca con 90°', Math.abs(angSuelto()-90)<1e-9);
+  ok('sin correa, girar una polea no mueve la otra',
+     (turnPulleys(qP,15*Math.PI/180), Math.abs(qQ.a)<1e-12 && Math.abs(wQ.a-f2)<1e-12));
+  ok('y entonces el ángulo del cruce ya no se conserva: la correa es lo que lo sujeta',
+     angSuelto()!==null && Math.abs(angSuelto()-90)>10,
+     angSuelto()===null? 'el cruce se ha salido de las tiras' : angSuelto().toFixed(3)+'°');
+
+  /* --- el rotulador ------------------------------------------------------
+     Lo que hay que comprobar es que la punta sigue exactamente al agujero:
+     si eso se cumple, la curva que salga será la que tenga que salir.        */
+  reset();
+  var t1=addStrip('R3',0,0,0);
+  ok('el rotulador se engancha a un agujero', !!penAdd(t1.id,8,'#0a7d55') && pens.length===1);
+  ok('no se pueden poner dos rotuladores en el mismo agujero',
+     penAdd(t1.id,8,'#0a7d55')===null && pens.length===1);
+  ok('sí se puede poner otro en un agujero distinto',
+     !!penAdd(t1.id,0,'#d0322f') && pens.length===2, pens.length);
+  penRemove(pens[1]);
+  ok('quitar un rotulador no toca a los demás', pens.length===1 && pens[0].h===8);
+
+  // sin mover nada, no debe quedar trazo: un clic no es un dibujo
+  penDown(); penSample(); penUp();
+  ok('si no se mueve la construcción, el rotulador no deja trazo', trace.length===0, trace.length);
+
+  // giro completo alrededor del extremo opuesto: la punta va a radio constante
+  var pivR=holeW(t1,0), radio=4*U;
+  penDown();
+  for(var kk=0; kk<72; kk++){ rotateGroup(new Set([t1.id]), pivR, 5*Math.PI/180); penSample(); }
+  penUp();
+  ok('el giro deja un único trazo', trace.length===1, trace.length);
+  var TR=trace[0]?trace[0].p:[];
+  ok('el trazo tiene un punto por cada paso del giro', TR.length===73, TR.length);
+  ok('todos los puntos del trazo están a la misma distancia del pivote',
+     TR.every(function(q){ return Math.abs(D(q,pivR)-radio)<1e-6; }),
+     TR.length? (Math.max.apply(null,TR.map(function(q){return Math.abs(D(q,pivR)-radio);}))).toExponential(1):'-');
+  ok('y esa distancia es la longitud de la tira, 4 u',
+     TR.length? Math.abs(D(TR[0],pivR)/U-4)<1e-9 : false, TR.length? (D(TR[0],pivR)/U).toFixed(6):'-');
+  ok('tras la vuelta entera el trazo se cierra sobre sí mismo',
+     TR.length>2 && D(TR[0],TR[TR.length-1])<1e-6, TR.length>2? D(TR[0],TR[TR.length-1]).toExponential(1):'-');
+  ok('el trazo guarda el color del rotulador que lo hizo', trace[0].col==='#0a7d55', trace[0].col);
+  ok('quitar el rotulador no borra lo ya trazado',
+     (penRemove(pens[0]), pens.length===0 && trace.length===1));
+  ok('quitar la tira tampoco borra el trazo',
+     (removeStrip(t1.id), strips.length===0 && trace.length===1));
+  reset();
+  var qt=addStrip('R2',0,0,0); nailAdd(qt.id,0); penAdd(qt.id,2,'#d0322f');
+  removeStrip(qt.id);
+  ok('quitar una tira se lleva sus clavos y sus rotuladores',
+     nails.length===0 && pens.length===0, nails.length+' / '+pens.length);
+
+  // dos tiras unidas por el centro: la de fuera gira y la otra se queda quieta
+  reset();
+  var ej=addStrip('R3',0,0,0), gi=addStrip('R2',2*U,-U,Math.PI/2);
+  var pc=joinAt(holeW(ej,4),1);
+  ok('las dos tiras quedan unidas por sus centros', !!pc && pc.m.length===2);
+  penAdd(gi.id,0,'#2f62a8');
+  var pivC=pinPos(pc), ejA={x:ej.x,y:ej.y,a:ej.a};
+  penDown();
+  for(var mm=0; mm<36; mm++){ rotateGroup(new Set([gi.id]), pivC, 10*Math.PI/180); penSample(); }
+  penUp();
+  ok('la tira del eje no se ha movido',
+     D({x:ej.x,y:ej.y},ejA)<1e-9 && Math.abs(ej.a-ejA.a)<1e-12,
+     D({x:ej.x,y:ej.y},ejA).toExponential(1));
+  ok('la punta del rotulador se mantiene a 1 u del encuadernador',
+     trace.length===1 && trace[0].p.every(function(q){ return Math.abs(D(q,pivC)/U-1)<1e-6; }),
+     trace.length? (D(trace[0].p[0],pivC)/U).toFixed(6):'-');
+  ok('la unión sigue cerrada después de la vuelta', maxResidual()<1e-6, maxResidual().toExponential(1));
+
+  // un rotulador en una tira que solo se traslada deja un segmento recto
+  reset();
+  var rec=addStrip('R2',0,0,0.7); penAdd(rec.id,1,'#d0322f');
+  penDown();
+  for(var nn=0; nn<20; nn++){ translate([rec.id],5,3); penSample(); }
+  penUp();
+  var SG=trace[0].p;
+  ok('trasladar la tira deja un trazo recto',
+     SG.every(function(q,i){ return i<2 || Math.abs(distSeg(q,SG[0],SG[SG.length-1]))<1e-9; }));
+  ok('el trazo mide lo que se ha trasladado la tira',
+     Math.abs(D(SG[0],SG[SG.length-1])-20*Math.hypot(5,3))<1e-9,
+     D(SG[0],SG[SG.length-1]).toFixed(4));
+
+  // localizar rotulador y trazo para poder borrarlos
+  reset();
+  var loc=addStrip('R2',0,0,0); penAdd(loc.id,0,'#d0322f');
+  view.z=1;
+  ok('se localiza el rotulador para quitarlo', penAt(holeW(loc,0))===pens[0]);
+  ok('y no se coge por error uno que está lejos', penAt({x:400,y:400})===null);
+  trace.push({id:nid++, col:'#d0322f', p:[{x:0,y:200},{x:200,y:200}]});
+  ok('se localiza un trazo para borrarlo', traceAt({x:100,y:201})===trace[0]);
+  ok('y no se coge un trazo que pasa lejos', traceAt({x:100,y:260})===null);
+
   /* --- guardar y volver a abrir ------------------------------------------ */
   reset();
   var g1=addStrip('R3',0,0,0), g2=addStrip('R2',2*U,-U,Math.PI/2), g3=addStrip('P',5*U,0,0.3);
   joinAt(holeW(g1,4),1);
   cords.push({id:nid++, closed:true, col:'#d0322f',
               n:[{s:g1.id,h:0},{s:g2.id,h:0},{s:g1.id,h:8},{s:g2.id,h:2}]});
+  penAdd(g2.id,0,'#0a7d55');
+  nailAdd(g1.id,0);
+  var antesK=nails[0].x.toFixed(3)+','+nails[0].y.toFixed(3);
+  trace.push({id:nid++, col:'#0a7d55',
+              p:[{x:-U,y:-U},{x:0,y:-1.5*U},{x:U,y:-U}]});
+  var antesT=trace[0].p.map(function(q){return q.x.toFixed(3)+','+q.y.toFixed(3);}).join(' ');
   var antesP=strips.map(function(s){ return s.t+'@'+s.x.toFixed(4)+','+s.y.toFixed(4)+','+s.a.toFixed(6); }).join(' | ');
   var antesV=[holeW(g1,0),holeW(g2,0),holeW(g1,8),holeW(g2,2)].map(function(p){return p.x.toFixed(3)+','+p.y.toFixed(3);}).join(' ');
   var json=JSON.parse(JSON.stringify(serializar()));
   ok('el archivo guarda las tres piezas, el encuadernador y la goma',
      json.piezas.length===3 && json.encuadernadores.length===1 && json.gomas.length===1);
+  ok('el archivo guarda también el rotulador, el clavo y el trazo',
+     json.rotuladores.length===1 && json.clavos.length===1 && json.trazos.length===1 &&
+     json.trazos[0].p.length===3);
   ok('las coordenadas se guardan en unidades, no en píxeles', Math.abs(json.piezas[1].x-2)<1e-6, json.piezas[1].x);
   importMode='replace'; loadData(json);
   ok('abrir devuelve las mismas piezas en la misma posición',
@@ -1271,6 +2500,14 @@ function runSelfTest(){
      [holeW(strips[0],0),holeW(strips[1],0),holeW(strips[0],8),holeW(strips[1],2)]
        .map(function(p){return p.x.toFixed(3)+','+p.y.toFixed(3);}).join(' ')===antesV);
   ok('el fijador también se recupera', strips.some(function(s){return s.t==='P';}));
+  ok('el rotulador vuelve al mismo agujero de la misma tira',
+     pens.length===1 && pens[0].s===strips[1].id && pens[0].h===0 && pens[0].col==='#0a7d55');
+  ok('el clavo vuelve al mismo agujero y al mismo punto del suelo',
+     nails.length===1 && nails[0].s===strips[0].id && nails[0].h===0 &&
+     nails[0].x.toFixed(3)+','+nails[0].y.toFixed(3)===antesK);
+  ok('el trazo vuelve con los mismos puntos y el mismo color',
+     trace.length===1 && trace[0].col==='#0a7d55' &&
+     trace[0].p.map(function(q){return q.x.toFixed(3)+','+q.y.toFixed(3);}).join(' ')===antesT);
   ok('la unión cargada está cerrada', maxResidual()<1e-6, maxResidual().toFixed(7));
   var nAntes=strips.length;
   importMode='add'; loadData(json);
@@ -1278,9 +2515,30 @@ function runSelfTest(){
   ok('lo añadido no se solapa con lo que ya había',
      bboxOf(strips.slice(nAntes)).y0 > bboxOf(strips.slice(0,nAntes)).y1 - 1);
   ok('los encuadernadores añadidos apuntan a las piezas nuevas', pins.length===2 && maxResidual()<1e-6);
+  ok('el ＋ también duplica rotulador, clavo y trazo',
+     pens.length===2 && nails.length===2 && trace.length===2,
+     pens.length+' / '+nails.length+' / '+trace.length);
+  ok('el clavo añadido baja con su tira y sigue sujetándola',
+     nails[1].y>nails[0].y && D(holeW(byId(nails[1].s),nails[1].h),{x:nails[1].x,y:nails[1].y})<1e-6);
+  ok('el trazo añadido baja con sus piezas, no se queda encima del anterior',
+     traceBBoxOf([trace[1]]).y0 > traceBBoxOf([trace[0]]).y1 - 1);
   importMode='replace';
   ok('un archivo con una tira inexistente se rechaza', deserializar({piezas:[{t:'ZZ',x:0,y:0,a:0}]})===null);
   ok('un archivo vacío se rechaza', deserializar({piezas:[]})===null);
+  var sucio=deserializar({piezas:[{t:'R2',x:0,y:0,a:0}],
+    rotuladores:[{n:[0,99]},{n:[5,0]},{color:'#123456',n:[0,1]}],
+    clavos:[{n:[0,7]}, {n:[9,0]}, {n:[0,2],x:'?',y:0}, {n:[0,0],x:1,y:1}],
+    trazos:[{p:[[0,0]]}, {p:[['x',2],[3,4],[5,6]]}, {p:[[1,1],[2,2]]}]});
+  ok('un rotulador que apunta a un agujero o una tira que no existen se descarta',
+     sucio.pens.length===1 && sucio.pens[0].h===1, sucio.pens.length);
+  ok('un clavo con agujero o tira inexistentes se descarta',
+     sucio.nails.length===2, sucio.nails.length);
+  ok('y si sus coordenadas vienen ilegibles se clava donde está el agujero',
+     Math.abs(sucio.nails[0].x-2*U)<1e-9 && Math.abs(sucio.nails[0].y)<1e-9,
+     (sucio.nails[0].x/U).toFixed(3)+','+(sucio.nails[0].y/U).toFixed(3));
+  ok('un trazo de un solo punto se descarta, y de los demás se tiran los puntos ilegibles',
+     sucio.trace.length===2 && sucio.trace[0].p.length===2 &&
+     Math.abs(sucio.trace[0].p[0].x-3*U)<1e-9, sucio.trace.length);
 
   reset(); view.z=1; draw();
 
@@ -1318,10 +2576,20 @@ window.addEventListener('hashchange',function(){
 window.__geotiras={
   test:runSelfTest,
   strips:function(){return strips;}, pins:function(){return pins;}, cords:function(){return cords;},
+  pens:function(){return pens;}, trace:function(){return trace;}, nails:function(){return nails;},
   add:addStrip, join:joinAt, rotate:rotateGroup, translate:translate,
+  penAdd:penAdd, penRemove:penRemove, penDown:penDown, penSample:penSample, penUp:penUp,
+  nailAdd:nailAdd, nailRemove:nailRemove, applyCorrAt:applyCorrAt, toWorld:toWorld, toLocal:toLocal,
+  pulleys:function(){return pulleys;}, belts:function(){return belts;},
+  pulleyAdd:pulleyAdd, pulleyRemove:pulleyRemove, mountAt:mountAt, unmount:unmount,
+  beltAdd:beltAdd, turnPulleys:turnPulleys, movePulley:movePulley, mountOf:mountOf,
+  penAddCross:penAddCross, crossOf:crossOf, crossAt:crossAt,
+  turnMountedStrip:turnMountedStrip, rayFrom:rayFrom,
   holeW:holeW, holesOf:holesOf, lenOf:lenOf, dist:dist, pivotOf:pivotOf, byId:byId,
   relax:relax, residual:maxResidual,
-  U:function(){return U;}, redraw:draw, reset:function(){strips=[];pins=[];cords=[];sel.clear();primary=null;}
+  U:function(){return U;}, redraw:draw,
+  reset:function(){strips=[];pins=[];cords=[];pens=[];trace=[];nails=[];
+                   pulleys=[];belts=[];beltDraft=null;sel.clear();primary=null;}
 };
 
 })();
