@@ -1,0 +1,2466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Figuras equivalentes</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:#2b2f36;background:#fff;display:flex;height:100%;overflow:hidden}
+  #side{width:206px;flex:0 0 206px;border-right:1px solid #e6e8ec;padding:10px 10px;overflow:auto;
+        background:#fafbfc}
+  #side h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a919c;
+           margin:0 0 6px;font-weight:600;line-height:1.35}
+  #side h2.sep{margin-top:16px}
+  /* rótulo del material: sobrio, peso ligero y una línea fina debajo */
+  #side .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:2px 2px 10px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #e6e8ec;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn:disabled{opacity:.4;cursor:default}
+  /* acotado a la barra: la clase «sep» sirve también para separar los h2 del panel
+     lateral, y sin acotarla se los come y los deja en una raya gris de 1px */
+  #toolbar .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;
+       padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  .chk2{display:flex;align-items:center;gap:6px;font-size:12px;color:#4a515c;cursor:pointer;
+        padding:4px 3px}
+  .chk2 input{margin:0;cursor:pointer}
+  .act{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:5px;
+       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:6px 8px;font-size:12px;
+       color:#3d4450;cursor:pointer;text-align:left;line-height:1.3}
+  .act:hover{background:#f0f2f5}
+  .act:disabled{opacity:.4;cursor:default}
+  .act kbd{font:11px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
+  select{font:12px inherit;border:1px solid #d5d9e0;border-radius:6px;padding:5px 6px;
+         color:#2b2f36;background:#fff;width:100%}
+  .fila{display:flex;gap:5px;align-items:stretch;margin-top:5px}
+  .fila > *{min-width:0}
+  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:4px 0;font-size:13px;
+        color:#3d4450;cursor:pointer;flex:1;text-align:center}
+  .mini:hover{background:#f0f2f5}
+  .mini:disabled{opacity:.35;cursor:default}
+  .cuenta{flex:1.6;display:flex;align-items:center;justify-content:center;
+          font-weight:600;font-size:12.5px;color:#2b2f36}
+  .lab{font-size:11px;color:#8a919c;margin-top:9px;margin-bottom:3px}
+  .caja{margin-top:8px;font-size:11.5px;color:#4a515c;line-height:1.55;
+        background:#fff;border:1px solid #e6e8ec;border-radius:8px;padding:7px 8px}
+  .caja b{color:#2b2f36}
+  .caja .ele{color:#6b7280}
+  .nota{font-size:11px;color:#8a919c;line-height:1.5;margin-top:8px}
+  #stage{position:relative;flex:1;min-height:0;background:#fff}
+  canvas#cv{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:340px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #cuentas{position:absolute;left:10px;top:10px;background:rgba(255,255,255,.96);border:1px solid #dfe2e7;
+           border-radius:10px;padding:8px 11px;font-size:11.5px;line-height:1.6;color:#4a515c;
+           box-shadow:0 6px 22px rgba(20,25,35,.10);display:none}
+  #cuentas.show{display:block}
+  #cuentas b{color:#2b2f36}
+  #cuentas .tot{margin-top:5px;padding-top:5px;border-top:1px solid #eef0f3}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:158px;flex:0 0 158px;padding:8px 7px}
+    .btn{padding:5px 7px;font-size:12px}
+    #info{width:calc(100% - 20px)}
+  }
+</style>
+</head>
+<body>
+
+  <aside id="side">
+    <div class="brand">Figuras <b>equivalentes</b></div>
+
+    <h2>La figura de partida</h2>
+    <select id="tipo">
+      <option value="paralelogramo">Paralelogramo</option>
+      <option value="rombo">Rombo</option>
+      <option value="deltoide">Deltoide</option>
+      <option value="triAcu">Triángulo acutángulo</option>
+      <option value="triRec">Triángulo rectángulo</option>
+      <option value="triObt">Triángulo obtusángulo</option>
+      <option value="trapecio">Trapecio cualquiera</option>
+      <option value="trapIso">Trapecio isósceles</option>
+      <option value="trapRec">Trapecio rectángulo</option>
+      <option value="regular">Polígono regular</option>
+      <option value="libre">Dibujarla yo</option>
+    </select>
+    <div class="fila" id="filaN" style="display:none">
+      <button class="mini" id="nMenos" title="Un lado menos">−</button>
+      <div class="cuenta" id="nVal">6 lados</div>
+      <button class="mini" id="nMas" title="Un lado más">+</button>
+    </div>
+    <button class="act" id="otra">Otra al azar<kbd>N</kbd></button>
+    <button class="act" id="reinicia">Volver a empezar<kbd>0</kbd></button>
+    <div class="caja" id="cajaFig"></div>
+
+    <h2 class="sep">Selección</h2>
+    <button class="act" id="gIzq" disabled>↺ Girar<kbd>Q</kbd></button>
+    <button class="act" id="gDer" disabled>↻ Girar<kbd>E</kbd></button>
+    <button class="act" id="voltea" disabled>⇄ Dar la vuelta<kbd>V</kbd></button>
+    <button class="act" id="duplica" disabled>⧉ Duplicar<kbd>D</kbd></button>
+    <button class="act" id="quitaCopia" disabled>✕ Quitar la copia<kbd>Supr</kbd></button>
+    <div class="nota">Las piezas de la figura no se pueden tirar: el rectángulo
+      hay que hacerlo con todas. Las copias sí, y van con el borde a rayas.</div>
+
+    <h2 class="sep">Ver</h2>
+    <label class="chk2"><input type="checkbox" id="rejilla" checked> Cuadrícula</label>
+    <label class="chk2"><input type="checkbox" id="fantasma" checked> Figura de partida</label>
+    <label class="chk2" id="labCirc" style="display:none"><input type="checkbox" id="circ"> Circunferencia</label>
+    <div class="lab">Las medidas, con…</div>
+    <select id="rot">
+      <option value="ln" selected>letra y número: b = 6</option>
+      <option value="l">solo la letra: b</option>
+      <option value="n">solo el número: 6</option>
+    </select>
+    <button class="act" id="borraMed">Quitar las medidas</button>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <button class="btn" id="limpiar" title="Dejar el tablero como al empezar: la figura entera, sin copias y sin medidas">Limpiar</button>
+      <span class="sep"></span>
+      <button class="btn tool on" id="tMover" title="Arrastrar, girar y encajar las piezas">✥ Mover</button>
+      <button class="btn tool" id="tCortar" title="Cortar una pieza de borde a borde">✂ Cortar</button>
+      <button class="btn tool" id="tAbanico" title="Partir una pieza en triángulos desde un punto">✳ Abanico</button>
+      <button class="btn tool" id="tMedir" title="Dejar una medida sobre el tablero">↔ Medir</button>
+      <span class="sep"></span>
+      <label class="chk" title="Al soltar una pieza, sus lados casan con los de las demás"><input type="checkbox" id="iman" checked>Imán</label>
+      <label class="chk" title="Los giros van de 15 en 15 grados"><input type="checkbox" id="paso" checked>Giro de 15°</label>
+      <label class="chk" title="Recuento de piezas y medidas de la figura de partida"><input type="checkbox" id="comp">Comprobaciones</label>
+      <span class="sep"></span>
+      <button class="btn" id="mano" title="Mover el tablero en vez de seleccionar">✋</button>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar el trabajo">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="cuentas"></div>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo</div>
+    </div>
+  </main>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LA IDEA  ·  EL CORTE Y LAS FIGURAS
+
+   Dos polígonos son equivalentes si al descomponer el primero se puede armar
+   el segundo con todas las piezas. Aquí se descompone una figura y se recompone
+   un rectángulo, que es la única área que se supone conocida.
+
+   La restricción que lo condiciona todo es cómo se corta. Un corte es una
+   POLILÍNEA QUE VA DE BORDE A BORDE de una pieza, con los puntos intermedios
+   estrictamente dentro. Es lo que hacen unas tijeras de verdad, y es la única
+   operación que parte un polígono simple exactamente en DOS polígonos simples,
+   sin casos raros: se recorre el borde de un extremo del corte al otro y se
+   cierra por la polilínea, y luego se hace lo mismo por el otro lado. Con
+   cortes de recta infinita no bastaría: un polígono regular no se puede repartir
+   en sus n triángulos sin cortes que doblan la esquina en el centro.
+
+   La segunda decisión importante es el imán. Aquí no basta con enganchar
+   vértices por traslación, porque los triángulos de un heptágono tienen que
+   girar 360/7 grados, que no es múltiplo de ningún paso razonable. El imán casa
+   LADOS DE IGUAL LONGITUD y aplica el movimiento rígido entero, giro incluido.
+   El alumno coloca la pieza a ojo y el imán remata; se limita el giro que puede
+   corregir para que nunca dé un salto que no se haya pedido.
+
+   Las figuras van sobre cuadrícula de lado 1 siempre que se puede (todas menos
+   los polígonos regulares), para que las medidas se puedan contar. El polígono
+   regular se da inscrito en una circunferencia de radio R = 4.
+
+   No hay botón de comprobar. Hay cuadrícula, cinta de medir y el recuento de
+   área, que es contabilidad de lo que ha hecho el alumno; mirar si las piezas
+   cubren un rectángulo sin huecos ni solapes es cosa suya. Las piezas se pintan
+   con transparencia justamente para que un solape se vea solo.
+   ========================================================================= */
+
+var R_REG=4;                         /* radio de la circunferencia circunscrita */
+var COLS=['#e6b84f','#7fb069','#5b8bd0','#e0805f','#9b83c8','#4fb0a6','#d98cb3','#b0a45e'];
+
+function ri(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+function P(x,y){ return {x:x,y:y}; }
+function copiaV(v){ return v.map(function(q){ return {x:q.x,y:q.y}; }); }
+
+/* --- los generadores de figuras -------------------------------------------
+   «sortea» da parámetros al azar y «construye» arma la figura a partir de
+   ellos, siempre igual. Separarlos es lo que permite volver a empezar con la
+   misma figura y lo que hace que la autocomprobación pueda fijar los datos.
+   «acot» son las acotaciones: est 'dim' se dibuja fuera con topes, 'eje' es una
+   línea a trazos por dentro (las diagonales) y 'alt' añade el ángulo recto de
+   la altura. 'ext' es la prolongación de la base y 'ang' un ángulo recto suelto,
+   los dos sin rótulo. Cada acotación lleva la letra en «t» y su valor en «n»,
+   porque el rótulo se puede pedir de tres maneras: «b = 6», «b» o «6». Sin el
+   número no habría manera de usar esto en primaria, donde ni hay letras ni
+   hacen falta: se lee la medida, se cuenta y se multiplica.                 */
+var FIG={
+  paralelogramo:{
+    nombre:'Paralelogramo', rejilla:1,
+    sortea:function(){ var b=ri(5,8); return {b:b, h:ri(3,5), d:ri(1,b-2)}; },
+    construye:function(p){
+      var b=p.b, h=p.h, d=p.d;
+      return {v:[P(0,0),P(b,0),P(b+d,h),P(d,h)],
+        acot:[{a:P(0,0),b:P(b,0),t:'b',n:b,off:-0.8,est:'dim'},
+              {a:P(d,h),b:P(d,0),t:'h',n:h,est:'alt'}],
+        datos:'base <b>b = '+p.b+'</b>, altura <b>h = '+p.h+'</b>'};
+    }},
+  rombo:{
+    nombre:'Rombo', rejilla:1,
+    sortea:function(){ var D=2*ri(3,5), d=2*ri(2,4); if(d===D) d=D-2; return {D:D,d:d}; },
+    construye:function(p){
+      var D=p.D, d=p.d;
+      return {v:[P(D/2,0),P(0,d/2),P(-D/2,0),P(0,-d/2)],
+        acot:[{a:P(-D/2,0),b:P(D/2,0),t:'D',n:D,est:'eje'},
+              {a:P(0,-d/2),b:P(0,d/2),t:'d',n:d,est:'eje'}],
+        datos:'diagonales <b>D = '+p.D+'</b> y <b>d = '+p.d+'</b>'};
+    }},
+  deltoide:{
+    nombre:'Deltoide', rejilla:1,
+    sortea:function(){ var pp=ri(4,6); return {q:ri(2,4), p:pp, r:ri(1,pp-2)}; },
+    construye:function(p){
+      var q=p.q, a=p.p, r=p.r;
+      return {v:[P(0,a),P(-q,0),P(0,-r),P(q,0)],
+        acot:[{a:P(0,-r),b:P(0,a),t:'D',n:a+r,est:'eje'},
+              {a:P(-q,0),b:P(q,0),t:'d',n:2*q,est:'eje'}],
+        datos:'diagonales <b>D = '+(p.p+p.r)+'</b> y <b>d = '+(2*p.q)+'</b>'};
+    }},
+  triAcu:{
+    nombre:'Triángulo acutángulo', rejilla:1,
+    sortea:function(){
+      /* acutángulo en el vértice de arriba pide h² > x(b−x); los otros dos
+         ángulos ya son agudos por caer el pie de la altura dentro de la base */
+      for(var k=0;k<400;k++){
+        var b=ri(5,8), h=ri(3,6), x=ri(1,b-1);
+        if(h*h>x*(b-x)+0.5) return {b:b,h:h,x:x};
+      }
+      return {b:6,h:5,x:3};
+    },
+    construye:function(p){
+      return {v:[P(0,0),P(p.b,0),P(p.x,p.h)],
+        acot:[{a:P(0,0),b:P(p.b,0),t:'b',n:p.b,off:-0.8,est:'dim'},
+              {a:P(p.x,p.h),b:P(p.x,0),t:'h',n:p.h,est:'alt'}],
+        datos:'base <b>b = '+p.b+'</b>, altura <b>h = '+p.h+'</b>'};
+    }},
+  triRec:{
+    nombre:'Triángulo rectángulo', rejilla:1,
+    /* «lado» pone el ángulo recto a la izquierda o a la derecha: si no, sale
+       siempre el mismo triángulo mirando al mismo sitio */
+    sortea:function(){ return {b:ri(4,7), h:ri(3,6), lado:(Math.random()<0.5?-1:1)}; },
+    construye:function(p){
+      var b=p.b, h=p.h, dch=(p.lado===-1);
+      var esq = dch? P(b,0) : P(0,0);
+      var ap  = dch? P(b,h) : P(0,h);
+      var otro= dch? P(0,0) : P(b,0);
+      return {v:[P(0,0),P(b,0),ap],
+        acot:[{a:P(0,0),b:P(b,0),t:'b',n:b,off:-0.8,est:'dim'},
+              {a:esq,b:ap,t:'h',n:h,off:(dch?-0.8:0.8),est:'dim'},
+              {a:esq,b:otro,c:ap,est:'ang'}],
+        datos:'base <b>b = '+b+'</b>, altura <b>h = '+h+'</b>'};
+    }},
+  triObt:{
+    nombre:'Triángulo obtusángulo', rejilla:1,
+    /* el vértice de arriba se sale de la base: el pie de la altura cae fuera,
+       que es justo lo que hace distinto el apartado b) del ejercicio 4 */
+    /* el vértice se sale «dx» a la derecha de la base: atándolo a la base en vez
+       de sortearlo suelto, el triángulo queda claramente obtusángulo sin salir
+       tan estirado que no quepa en la pantalla */
+    sortea:function(){ return {b:ri(4,6), h:ri(3,5), dx:ri(2,3)}; },
+    construye:function(p){
+      var x=p.b+(p.dx===undefined? 2 : p.dx);
+      return {v:[P(0,0),P(p.b,0),P(x,p.h)],
+        acot:[{a:P(0,0),b:P(p.b,0),t:'b',n:p.b,off:-0.8,est:'dim'},
+              {a:P(x,p.h),b:P(x,0),t:'h',n:p.h,est:'alt'},
+              {a:P(p.b,0),b:P(x,0),est:'ext'}],
+        datos:'base <b>b = '+p.b+'</b>, altura <b>h = '+p.h+'</b>'};
+    }},
+  trapecio:{
+    nombre:'Trapecio cualquiera', rejilla:1,
+    /* se descartan el desplazamiento 0 y el de la mitad: con ellos saldría por
+       casualidad el rectángulo o el isósceles, que ya tienen su propia entrada
+       en la lista y conviene poder pedirlos a propósito */
+    sortea:function(){
+      var B=ri(6,9), b=ri(2,B-3), h=ri(3,5), o=ri(1,B-b-1);
+      if(2*o===B-b) o = (o+1<=B-b-1)? o+1 : o-1;
+      return {B:B, b:b, h:h, o:o};
+    },
+    construye:function(p){
+      var B=p.B, b=p.b, h=p.h, o=p.o;
+      return {v:[P(0,0),P(B,0),P(o+b,h),P(o,h)],
+        acot:[{a:P(0,0),b:P(B,0),t:'B',n:B,off:-0.8,est:'dim'},
+              {a:P(o,h),b:P(o+b,h),t:'b',n:b,off:0.8,est:'dim'},
+              {a:P(o,h),b:P(o,0),t:'h',n:h,est:'alt'}],
+        datos:'bases <b>B = '+B+'</b> y <b>b = '+b+'</b>, altura <b>h = '+h+'</b>'};
+    }},
+  trapIso:{
+    nombre:'Trapecio isósceles', rejilla:1,
+    /* se sortea el saliente k y B sale de él: sorteando B y b sueltos, B−b
+       podría ser impar y los vértices de arriba caerían fuera de la cuadrícula */
+    sortea:function(){ return {b:ri(2,5), k:ri(1,3), h:ri(3,5)}; },
+    construye:function(p){
+      var b=p.b, o=p.k, B=b+2*p.k, h=p.h;
+      return {v:[P(0,0),P(B,0),P(o+b,h),P(o,h)],
+        acot:[{a:P(0,0),b:P(B,0),t:'B',n:B,off:-0.8,est:'dim'},
+              {a:P(o,h),b:P(o+b,h),t:'b',n:b,off:0.8,est:'dim'},
+              {a:P(o,h),b:P(o,0),t:'h',n:h,est:'alt'}],
+        datos:'bases <b>B = '+B+'</b> y <b>b = '+b+'</b>, altura <b>h = '+h+'</b>'};
+    }},
+  trapRec:{
+    nombre:'Trapecio rectángulo', rejilla:1,
+    sortea:function(){ var B=ri(6,9); return {B:B, b:ri(2,B-2), h:ri(3,5), lado:(Math.random()<0.5?-1:1)}; },
+    construye:function(p){
+      var B=p.B, b=p.b, h=p.h, dch=(p.lado===-1);
+      var v = dch? [P(0,0),P(B,0),P(B,h),P(B-b,h)]
+                 : [P(0,0),P(B,0),P(b,h),P(0,h)];
+      var xa = dch? B : 0;
+      var arr= dch? P(B,h) : P(0,h);
+      return {v:v,
+        acot:[{a:P(0,0),b:P(B,0),t:'B',n:B,off:-0.8,est:'dim'},
+              (dch? {a:P(B-b,h),b:P(B,h),t:'b',n:b,off:0.8,est:'dim'}
+                  : {a:P(0,h),b:P(b,h),t:'b',n:b,off:0.8,est:'dim'}),
+              {a:P(xa,0),b:P(xa,h),t:'h',n:h,off:(dch?-0.8:0.8),est:'dim'},
+              {a:P(xa,0),b:(dch?P(0,0):P(B,0)),c:arr,est:'ang'}],
+        datos:'bases <b>B = '+B+'</b> y <b>b = '+b+'</b>, altura <b>h = '+h+'</b>'};
+    }},
+  regular:{
+    nombre:'Polígono regular', rejilla:0,
+    sortea:function(){ return {n:6}; },
+    construye:function(p){
+      /* el desfase de 180/n deja un lado horizontal abajo, que es donde se
+         acota el lado y adonde llega la apotema */
+      var n=p.n, v=[], i;
+      for(i=0;i<n;i++){
+        var t=-Math.PI/2+(2*i+1)*Math.PI/n;
+        v.push(P(R_REG*Math.cos(t), R_REG*Math.sin(t)));
+      }
+      var ap=R_REG*Math.cos(Math.PI/n), lado=2*R_REG*Math.sin(Math.PI/n);
+      var k=Math.floor(n/4);
+      return {v:v, circ:{c:P(0,0), r:R_REG},
+        acot:[{a:v[n-1],b:v[0],t:'l',n:lado,off:-0.8,est:'dim'},
+              {a:P(0,0),b:P(0,-ap),t:'a',n:ap,est:'alt'},
+              {a:P(0,0),b:v[k],t:'R',n:R_REG,est:'eje',soloCirc:1}],
+        datos:'<b>'+nombreN(n)+'</b> inscrito en una circunferencia de radio <b>R = '+R_REG+'</b>'};
+    }},
+  libre:{
+    nombre:'Figura dibujada', rejilla:1,
+    sortea:function(){ return {pts:[[0,0],[6,0],[7,3],[3,5],[-1,3]]}; },
+    construye:function(p){
+      return {v:p.pts.map(function(q){ return P(q[0],q[1]); }), acot:[],
+        datos:'polígono de <b>'+p.pts.length+' lados</b>, dibujado a mano'};
+    }}
+};
+function nombreN(n){
+  var s={3:'Triángulo equilátero',4:'Cuadrado',5:'Pentágono',6:'Hexágono',7:'Heptágono',
+         8:'Octógono',9:'Eneágono',10:'Decágono',11:'Endecágono',12:'Dodecágono'};
+  return s[n] || ('Polígono de '+n+' lados');
+}
+
+/* =========================================================================
+   2. ESTADO
+   ========================================================================= */
+var fig=null;                 /* {def:{tipo,par}, v, acot, circ, datos} */
+var piezas=[], medidas=[], sel=[], nid=1, ncol=0;
+var view={x:0,y:0,z:52};
+var opt={iman:1, paso:1, comp:0, mano:0, rejilla:1, fantasma:1, circ:0, rot:'ln'};
+var modo='mover';
+var drag=null, corte=null, dibujo=null, undoStack=[];
+var raton=null, snapAviso=null;
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop'), cuentasEl=document.getElementById('cuentas');
+var flashMsg=null, flashT=0;
+
+/* el mundo tiene la y hacia arriba y la pantalla hacia abajo: así las alturas
+   son positivas y los giros positivos se ven a izquierdas, como en clase */
+function w2s(p){ return {x:p.x*view.z+view.x, y:-p.y*view.z+view.y}; }
+function s2w(p){ return {x:(p.x-view.x)/view.z, y:-(p.y-view.y)/view.z}; }
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2300); }
+
+function estado(){
+  return JSON.stringify({p:piezas, m:medidas, s:sel, n:nid, c:ncol,
+                         f:fig?fig.def:null});
+}
+function pushUndo(){ undoStack.push(estado()); if(undoStack.length>90) undoStack.shift(); }
+function doUndo(){
+  if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var d=JSON.parse(undoStack.pop());
+  if(d.f && (!fig || JSON.stringify(d.f)!==JSON.stringify(fig.def))) montaFigura(d.f,true);
+  piezas=d.p; medidas=d.m||[]; sel=d.s||[]; nid=d.n||1; ncol=d.c||0;
+  corte=null; dibujo=null;
+  draw();
+}
+function num(v,d){
+  if(d===undefined) d=2;
+  var s=(Math.round(v*Math.pow(10,d))/Math.pow(10,d)).toFixed(d);
+  if(s.indexOf('.')>=0) s=s.replace(/0+$/,'').replace(/\.$/,'');
+  return s.replace('.',',');
+}
+
+/* =========================================================================
+   3. GEOMETRÍA
+   Todo en coordenadas de mundo. Las piezas guardan sus vértices absolutos, no
+   una posición más un ángulo: al cortar hacen falta los vértices de verdad, y
+   los movimientos rígidos se aplican recalculando desde una copia guardada al
+   empezar el arrastre, así que no se acumula error.
+   ========================================================================= */
+function areaFirmada(v){
+  var s=0, n=v.length;
+  for(var i=0;i<n;i++){ var A=v[i], B=v[(i+1)%n]; s+=A.x*B.y-B.x*A.y; }
+  return s/2;
+}
+function area(v){ return Math.abs(areaFirmada(v)); }
+function orienta(v){ return areaFirmada(v)<0 ? v.slice().reverse() : v; }
+function perimetro(v){
+  var s=0, n=v.length;
+  for(var i=0;i<n;i++) s+=dist(v[i], v[(i+1)%n]);
+  return s;
+}
+function dist(a,b){ return Math.hypot(b.x-a.x, b.y-a.y); }
+function med(a,b){ return P((a.x+b.x)/2, (a.y+b.y)/2); }
+function centroide(v){
+  var a=areaFirmada(v), n=v.length, x=0, y=0, i;
+  if(Math.abs(a)<1e-12){
+    for(i=0;i<n;i++){ x+=v[i].x; y+=v[i].y; }
+    return P(x/n, y/n);
+  }
+  for(i=0;i<n;i++){
+    var A=v[i], B=v[(i+1)%n], c=A.x*B.y-B.x*A.y;
+    x+=(A.x+B.x)*c; y+=(A.y+B.y)*c;
+  }
+  return P(x/(6*a), y/(6*a));
+}
+function dentroPoli(Q,v){
+  var d=false;
+  for(var i=0,j=v.length-1;i<v.length;j=i++){
+    if((v[i].y>Q.y)!==(v[j].y>Q.y) &&
+       Q.x < (v[j].x-v[i].x)*(Q.y-v[i].y)/(v[j].y-v[i].y)+v[i].x) d=!d;
+  }
+  return d;
+}
+function distSeg(Q,A,B){
+  var dx=B.x-A.x, dy=B.y-A.y, L=dx*dx+dy*dy;
+  var t = L<1e-18 ? 0 : ((Q.x-A.x)*dx+(Q.y-A.y)*dy)/L;
+  t=Math.max(0,Math.min(1,t));
+  var q=P(A.x+t*dx, A.y+t*dy);
+  return {d:dist(Q,q), t:t, q:q};
+}
+/* el punto del borde más cercano, con la arista y el parámetro en que cae */
+function distBorde(Q,v){
+  var n=v.length, mejor=null;
+  for(var i=0;i<n;i++){
+    var r=distSeg(Q, v[i], v[(i+1)%n]);
+    if(!mejor || r.d<mejor.d) mejor={d:r.d, t:r.t, q:r.q, i:i};
+  }
+  return mejor;
+}
+function cruz3(A,B,C){ return (B.x-A.x)*(C.y-B.y)-(B.y-A.y)*(C.x-B.x); }
+function enCaja(A,B,Q){
+  var e=1e-9;
+  return Q.x>=Math.min(A.x,B.x)-e && Q.x<=Math.max(A.x,B.x)+e &&
+         Q.y>=Math.min(A.y,B.y)-e && Q.y<=Math.max(A.y,B.y)+e;
+}
+/* «se tocan» incluye tocarse en un extremo: en un polígono simple dos lados no
+   consecutivos no pueden compartir ni un punto */
+function segTocan(A,B,C,D){
+  var e=1e-9;
+  var d1=(D.x-C.x)*(A.y-C.y)-(D.y-C.y)*(A.x-C.x);
+  var d2=(D.x-C.x)*(B.y-C.y)-(D.y-C.y)*(B.x-C.x);
+  var d3=(B.x-A.x)*(C.y-A.y)-(B.y-A.y)*(C.x-A.x);
+  var d4=(B.x-A.x)*(D.y-A.y)-(B.y-A.y)*(D.x-A.x);
+  if(((d1>e&&d2<-e)||(d1<-e&&d2>e)) && ((d3>e&&d4<-e)||(d3<-e&&d4>e))) return true;
+  if(Math.abs(d1)<=e && enCaja(C,D,A)) return true;
+  if(Math.abs(d2)<=e && enCaja(C,D,B)) return true;
+  if(Math.abs(d3)<=e && enCaja(A,B,C)) return true;
+  if(Math.abs(d4)<=e && enCaja(A,B,D)) return true;
+  return false;
+}
+function esSimple(v){
+  var n=v.length, i, j;
+  if(n<3) return false;
+  for(i=0;i<n;i++) if(dist(v[i], v[(i+1)%n])<1e-9) return false;
+  for(i=0;i<n;i++){
+    for(j=i+1;j<n;j++){
+      if(j===i+1 || (i===0 && j===n-1)) continue;      /* lados consecutivos */
+      if(segTocan(v[i], v[(i+1)%n], v[j], v[(j+1)%n])) return false;
+    }
+  }
+  return true;
+}
+function esConvexo(v){
+  var n=v.length, s=0;
+  for(var i=0;i<n;i++){
+    var c=cruz3(v[i], v[(i+1)%n], v[(i+2)%n]);
+    if(Math.abs(c)<1e-9) continue;
+    var g=c>0?1:-1;
+    if(s===0) s=g; else if(g!==s) return false;
+  }
+  return true;
+}
+function limpiaSeguidos(v){
+  var out=[], n=v.length;
+  for(var i=0;i<n;i++){
+    var q=v[i];
+    if(out.length && dist(out[out.length-1], q)<1e-9) continue;
+    out.push({x:q.x, y:q.y});
+  }
+  while(out.length>1 && dist(out[0], out[out.length-1])<1e-9) out.pop();
+  return out;
+}
+/* dónde sale del polígono el rayo que parte de A en la dirección u */
+function rayoBorde(A,u,v){
+  var n=v.length, mejor=null;
+  for(var i=0;i<n;i++){
+    var C=v[i], D=v[(i+1)%n];
+    var ex=D.x-C.x, ey=D.y-C.y;
+    var den=u.x*ey-u.y*ex;
+    if(Math.abs(den)<1e-12) continue;
+    var t=((C.x-A.x)*ey-(C.y-A.y)*ex)/den;
+    var s=((C.x-A.x)*u.y-(C.y-A.y)*u.x)/den;
+    if(t>1e-7 && s>=-1e-9 && s<=1+1e-9){
+      if(!mejor || t<mejor.t) mejor={t:t, q:P(A.x+t*u.x, A.y+t*u.y)};
+    }
+  }
+  return mejor && mejor.q;
+}
+function normaliza(u){ var d=Math.hypot(u.x,u.y); return d<1e-12?P(1,0):P(u.x/d,u.y/d); }
+function cajaDe(lista){
+  if(!lista || !lista.length) return null;
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  lista.forEach(function(v){
+    v.forEach(function(q){
+      if(q.x<x0)x0=q.x; if(q.x>x1)x1=q.x; if(q.y<y0)y0=q.y; if(q.y>y1)y1=q.y; });
+  });
+  return {x0:x0,y0:y0,x1:x1,y1:y1};
+}
+function cajaPiezas(){ return cajaDe(piezas.map(function(p){ return p.v; })); }
+function porId(id){
+  for(var i=0;i<piezas.length;i++) if(piezas[i].id===id) return piezas[i];
+  return null;
+}
+function seleccionadas(){ return sel.map(porId).filter(Boolean); }
+function piezaEn(Q){
+  for(var i=piezas.length-1;i>=0;i--) if(dentroPoli(Q, piezas[i].v)) return piezas[i];
+  return null;
+}
+/* la pieza sobre la que se va a trabajar: la que contiene el punto o, si no
+   hay ninguna, la que tiene el borde más cerca */
+function piezaCerca(Q,lim){
+  var p=piezaEn(Q);
+  if(p) return p;
+  var mejor=null, dm=lim===undefined?20/view.z:lim;
+  piezas.forEach(function(q){
+    var d=distBorde(Q,q.v).d;
+    if(d<dm){ dm=d; mejor=q; }
+  });
+  return mejor;
+}
+/* «dup» marca las copias. Es lo único que se puede tirar del tablero: las piezas
+   que salen de la figura, no, porque el rectángulo se arma con todas. Cortar o
+   abanicar una copia da copias, así que la marca se hereda. */
+function nuevaPieza(v,c,dup){
+  return {id:nid++, c:(c===undefined? (ncol++%COLS.length) : c), dup:dup?1:0,
+          v:orienta(limpiaSeguidos(v))};
+}
+
+/* =========================================================================
+   4. ACCIONES
+   ========================================================================= */
+
+/* --- cortar ---------------------------------------------------------------
+   «linea» es la polilínea del corte: el primer punto y el último están sobre el
+   borde y los de en medio, estrictamente dentro. Piezas resultantes:
+     pieza 1 = A, borde de A hacia delante hasta B, B, polilínea al revés
+     pieza 2 = B, borde de B hacia delante hasta A, A, polilínea de ida
+   Si los dos extremos caen en el mismo lado hay que decidir si el recorrido del
+   borde es vacío o da la vuelta entera, y eso lo dice el orden de los
+   parámetros dentro del lado.                                             */
+function cortaPoli(v, linea){
+  var n=v.length;
+  if(linea.length<2) return null;
+  var A=linea[0], B=linea[linea.length-1];
+  var iA=distBorde(A,v), iB=distBorde(B,v);
+  if(iA.d>1e-6 || iB.d>1e-6) return null;
+  var ia=iA.i, ta=iA.t, ib=iB.i, tb=iB.t;
+  if(ta>1-1e-9){ ia=(ia+1)%n; ta=0; }
+  if(tb>1-1e-9){ ib=(ib+1)%n; tb=0; }
+  var medios=linea.slice(1, linea.length-1);
+  for(var k=0;k<medios.length;k++){
+    if(!dentroPoli(medios[k], v) || distBorde(medios[k], v).d<1e-7) return null;
+  }
+  function tramo(i0,i1,todo){
+    var out=[], i;
+    if(i0===i1 && !todo) return out;
+    i=(i0+1)%n;
+    for(var c=0;c<=n;c++){ out.push({x:v[i].x, y:v[i].y}); if(i===i1) break; i=(i+1)%n; }
+    return out;
+  }
+  var p1=[A].concat(tramo(ia, ib, ia===ib && tb<ta)).concat([B])
+            .concat(medios.slice().reverse());
+  var p2=[B].concat(tramo(ib, ia, ia===ib && ta<tb)).concat([A])
+            .concat(medios.slice());
+  p1=limpiaSeguidos(p1); p2=limpiaSeguidos(p2);
+  if(p1.length<3 || p2.length<3) return null;
+  var a0=area(v), a1=area(p1), a2=area(p2);
+  if(a1<1e-7 || a2<1e-7) return null;
+  if(Math.abs(a1+a2-a0)>1e-6) return null;
+  if(!esSimple(p1) || !esSimple(p2)) return null;
+  return [p1, p2];
+}
+function aplicaCorte(){
+  if(!corte || !corte.pieza || corte.linea.length<2) return false;
+  var p=corte.pieza;
+  var r=cortaPoli(p.v, corte.linea);
+  if(!r){ flash('Ese corte no parte la pieza en dos; prueba otro'); return false; }
+  pushUndo();
+  var i=piezas.indexOf(p);
+  var a=nuevaPieza(r[0], p.c, p.dup), b=nuevaPieza(r[1], undefined, p.dup);
+  piezas.splice(i, 1, a, b);
+  sel=[]; corte=null;
+  flash('Cortada en dos: ahora hay '+piezas.length+(piezas.length===1?' pieza':' piezas'));
+  return true;
+}
+/* --- abanico --------------------------------------------------------------
+   Triangular en abanico desde un punto: si es un vértice salen n−2 triángulos
+   y si es interior salen n. Solo vale si el punto «ve» todos los vértices, y
+   eso se comprueba pidiendo que las áreas sumen y que cada triángulo caiga
+   dentro; con figuras cóncavas puede no pasar.                            */
+function abanicoPoli(v,Q){
+  var n=v.length, out=[], i, k=-1;
+  for(i=0;i<n;i++) if(dist(Q,v[i])<1e-7) k=i;
+  if(k>=0){
+    for(i=1;i<n-1;i++) out.push([v[k], v[(k+i)%n], v[(k+i+1)%n]]);
+  }else{
+    if(!dentroPoli(Q,v)) return null;
+    for(i=0;i<n;i++) out.push([{x:Q.x,y:Q.y}, v[i], v[(i+1)%n]]);
+  }
+  out=out.filter(function(t){ return area(t)>1e-9; });
+  if(out.length<2) return null;
+  var s=0;
+  for(i=0;i<out.length;i++){
+    s+=area(out[i]);
+    if(!dentroPoli(centroide(out[i]), v)) return null;
+  }
+  if(Math.abs(s-area(v))>1e-6) return null;
+  return out;
+}
+function aplicaAbanico(p,Q){
+  var r=abanicoPoli(p.v,Q);
+  if(!r){ flash('Desde ahí no se puede: el abanico pide ver todos los vértices'); return false; }
+  pushUndo();
+  var i=piezas.indexOf(p);
+  var nuevas=r.map(function(t,k){ return nuevaPieza(t, k===0? p.c : undefined, p.dup); });
+  piezas.splice.apply(piezas, [i,1].concat(nuevas));
+  sel=[];
+  flash('Partida en '+nuevas.length+' triángulos');
+  return true;
+}
+
+/* --- mover, girar, dar la vuelta ----------------------------------------- */
+function transforma(lista, C, ang, dx, dy){
+  var co=Math.cos(ang), si=Math.sin(ang);
+  lista.forEach(function(p){
+    p.v=p.v.map(function(q){
+      var x=q.x-C.x, y=q.y-C.y;
+      return P(C.x+x*co-y*si+dx, C.y+x*si+y*co+dy);
+    });
+  });
+}
+function mueveL(lista,dx,dy){ transforma(lista, P(0,0), 0, dx, dy); }
+function centroLista(lista){
+  var b=cajaDe(lista.map(function(p){ return p.v; }));
+  return b? P((b.x0+b.x1)/2, (b.y0+b.y1)/2) : P(0,0);
+}
+var PASO=Math.PI/12;                                    /* 15° */
+function gira(sentido){
+  var s=seleccionadas();
+  if(!s.length) return;
+  pushUndo();
+  transforma(s, centroLista(s), sentido*(opt.paso? PASO : Math.PI/60), 0, 0);
+  aplicaIman(s);
+  draw();
+}
+/* dar la vuelta es reflejar en la vertical que pasa por el centro del conjunto;
+   al reflejar cambia el sentido del recorrido, así que hay que reorientar o el
+   imán y el área firmada dejan de cuadrar */
+function voltea(){
+  var s=seleccionadas();
+  if(!s.length) return;
+  pushUndo();
+  var C=centroLista(s);
+  s.forEach(function(p){
+    p.v=orienta(p.v.map(function(q){ return P(2*C.x-q.x, q.y); }));
+  });
+  aplicaIman(s);
+  draw();
+}
+
+/* --- duplicar y tirar la copia -------------------------------------------
+   Duplicar abre un camino que en papel se hace con la fotocopiadora: juntar dos
+   figuras iguales para armar una más manejable, resolverla, y quedarse con la
+   mitad de lo que salga. Como eso deja sobre el tablero el doble de superficie
+   de la que se buscaba, hace falta poder tirar lo que sobra; pero solo las
+   copias, que por eso van marcadas. Las piezas de la figura no se tiran nunca.
+                                                                             */
+function duplica(){
+  var s=seleccionadas();
+  if(!s.length) return;
+  pushUndo();
+  var nuevas=s.map(function(p){
+    return nuevaPieza(p.v.map(function(q){ return P(q.x+0.7, q.y-0.7); }), undefined, 1);
+  });
+  piezas=piezas.concat(nuevas);
+  sel=nuevas.map(function(p){ return p.id; });
+  flash(nuevas.length===1? 'Copia hecha: va con el borde a rayas, y esa sí se puede tirar'
+                         : nuevas.length+' copias hechas');
+  draw();
+}
+function quitaCopia(){
+  var s=seleccionadas();
+  if(!s.length) return;
+  if(!s.every(function(p){ return p.dup; })){
+    flash('Solo se tiran las copias; las piezas de la figura hacen falta todas');
+    return;
+  }
+  pushUndo();
+  piezas=piezas.filter(function(p){ return sel.indexOf(p.id)<0; });
+  sel=[];
+  draw();
+}
+
+/* --- el imán --------------------------------------------------------------
+   Casa un lado de lo que se mueve con un lado igual de lo que está quieto y
+   aplica el movimiento rígido entero. La pareja «al revés» (a1 con b2 y a2 con
+   b1) es la que deja las piezas una al lado de otra sin montarse, así que se
+   premia; la pareja «del derecho» sirve para superponer y comparar.
+   Dos cuidados: el giro que se permite corregir se limita, para que la pieza
+   nunca pegue un salto que no se ha pedido, y la mejor distancia se lleva en su
+   propia variable, porque un enganche perfecto vale 0 y en JavaScript 0 es
+   falso: guardarlo en la misma variable haría que cualquier candidato peor lo
+   pisara.                                                                  */
+function ladosDe(v){
+  var out=[], n=v.length;
+  for(var i=0;i<n;i++){
+    var A=v[i], B=v[(i+1)%n], L=dist(A,B);
+    if(L>1e-7) out.push({a:A, b:B, L:L});
+  }
+  return out;
+}
+function enganche(lista){
+  var idm={}; lista.forEach(function(p){ idm[p.id]=1; });
+  var quietas=piezas.filter(function(p){ return !idm[p.id]; });
+  if(!lista.length) return null;
+  var limGiro=21*Math.PI/180;
+  var limUno=20/view.z, limTot=42/view.z;
+  var mejor=null, coste=Infinity;
+
+  var moviles=[];
+  lista.forEach(function(p){ ladosDe(p.v).forEach(function(e){ moviles.push(e); }); });
+  var fijos=[];
+  quietas.forEach(function(p){ ladosDe(p.v).forEach(function(e){ fijos.push(e); }); });
+
+  moviles.forEach(function(e){
+    fijos.forEach(function(f){
+      if(Math.abs(e.L-f.L)>0.05) return;
+      if(Math.min(e.L,f.L)<0.25) return;
+      [[f.b,f.a,0.7],[f.a,f.b,1.0]].forEach(function(par){
+        var t1=par[0], t2=par[1], premio=par[2];
+        var d1=dist(e.a,t1), d2=dist(e.b,t2);
+        if(Math.min(d1,d2)>limUno) return;
+        var c=(d1+d2)*premio;
+        if(d1+d2>limTot || c>=coste) return;
+        var ang=Math.atan2(t2.y-t1.y, t2.x-t1.x)-Math.atan2(e.b.y-e.a.y, e.b.x-e.a.x);
+        while(ang>Math.PI) ang-=2*Math.PI;
+        while(ang<-Math.PI) ang+=2*Math.PI;
+        if(Math.abs(ang)>limGiro) return;
+        var co=Math.cos(ang), si=Math.sin(ang);
+        /* dónde va a parar e.a si giramos alrededor de e.a: se queda; el
+           desplazamiento es el que lleva e.a hasta t1 */
+        coste=c;
+        mejor={tipo:'lado', C:{x:e.a.x, y:e.a.y}, ang:ang,
+               dx:t1.x-e.a.x, dy:t1.y-e.a.y, co:co, si:si};
+      });
+    });
+  });
+  if(mejor) return mejor;
+
+  /* sin lado que case, engancha vértice con vértice, solo trasladando */
+  var lim=13/view.z, dm=Infinity, tras=null;
+  lista.forEach(function(p){
+    p.v.forEach(function(a){
+      quietas.forEach(function(q){
+        q.v.forEach(function(b){
+          var d=dist(a,b);
+          if(d<lim && d<dm){ dm=d; tras={tipo:'vertice', C:P(0,0), ang:0, dx:b.x-a.x, dy:b.y-a.y}; }
+        });
+      });
+    });
+  });
+  if(tras) return tras;
+
+  /* y si no, a la cuadrícula */
+  if(opt.rejilla){
+    var limR=9/view.z, dr=Infinity, rej=null;
+    lista.forEach(function(p){
+      p.v.forEach(function(a){
+        var g=P(Math.round(a.x), Math.round(a.y)), d=dist(a,g);
+        if(d<limR && d<dr){ dr=d; rej={tipo:'rejilla', C:P(0,0), ang:0, dx:g.x-a.x, dy:g.y-a.y}; }
+      });
+    });
+    if(rej) return rej;
+  }
+  return null;
+}
+function aplicaIman(lista){
+  if(!opt.iman || !lista.length) return null;
+  var e=enganche(lista);
+  if(!e) return null;
+  transforma(lista, e.C, e.ang, e.dx, e.dy);
+  snapAviso={tipo:e.tipo, t:Date.now()};
+  return e;
+}
+
+/* --- los puntos a los que se pega el cursor ------------------------------
+   Al cortar, los extremos van al borde y se prefieren los puntos notables:
+   vértices, puntos medios de los lados y los sitios adonde llega un rayo que
+   sale del punto anterior en dirección paralela o perpendicular a un lado. Ese
+   último es el que hace exacto el corte por la altura sin tener que apuntar.  */
+function candidatosBorde(p, w, desde){
+  var v=p.v, n=v.length, c=[], i;
+  for(i=0;i<n;i++){
+    c.push({q:v[i], k:0.75});
+    c.push({q:med(v[i], v[(i+1)%n]), k:0.9});
+  }
+  if(desde){
+    var dirs=[P(1,0),P(0,1)];
+    for(i=0;i<n;i++){
+      var u=normaliza(P(v[(i+1)%n].x-v[i].x, v[(i+1)%n].y-v[i].y));
+      dirs.push(u); dirs.push(P(-u.y, u.x));
+    }
+    dirs.forEach(function(u){
+      [1,-1].forEach(function(s){
+        var q=rayoBorde(desde, P(u.x*s, u.y*s), v);
+        if(q) c.push({q:q, k:1});
+      });
+    });
+  }
+  if(opt.rejilla){
+    var g=P(Math.round(w.x), Math.round(w.y)), r=distBorde(g, v);
+    if(r.d<0.05) c.push({q:r.q, k:0.95});
+  }
+  /* los puntos notables mandan sobre la proyección libre siempre que estén a
+     tiro: si se comparasen los dos con la misma vara, el punto del borde justo
+     debajo del cursor ganaría siempre por estar más cerca, y entonces el pie de
+     la altura habría que acertarlo a pulso, que es justo lo que se quería
+     evitar. Solo si no hay ningún notable cerca se corta por donde se ha dicho */
+  var rad=12/view.z, mejor=null, dm=Infinity;
+  c.forEach(function(o){
+    var d=dist(w, o.q);
+    if(d<rad && d*o.k<dm){ dm=d*o.k; mejor=o.q; }
+  });
+  if(!mejor) mejor=distBorde(w, v).q;
+  return {x:mejor.x, y:mejor.y};
+}
+function candidatosDentro(p, w, desde){
+  var v=p.v, c=[], g;
+  c.push({q:centroide(v), k:0.5});
+  if(opt.rejilla){
+    g=P(Math.round(w.x), Math.round(w.y));
+    if(dentroPoli(g,v) && distBorde(g,v).d>1e-7) c.push({q:g, k:0.7});
+  }
+  var mejor=null, dm=Infinity;
+  c.forEach(function(o){
+    var d=dist(w, o.q)*o.k;
+    if(d<12/view.z && d<dm){ dm=d; mejor=o.q; }
+  });
+  if(mejor) return {x:mejor.x, y:mejor.y};
+  /* punto libre, pero con la dirección desde el punto anterior pegada a las
+     horizontales, verticales y direcciones de los lados si está a menos de 3° */
+  if(desde){
+    var dirs=[P(1,0),P(0,1)], i, n=v.length;
+    for(i=0;i<n;i++){
+      var u=normaliza(P(v[(i+1)%n].x-v[i].x, v[(i+1)%n].y-v[i].y));
+      dirs.push(u); dirs.push(P(-u.y,u.x));
+    }
+    var d0=dist(desde,w);
+    if(d0>1e-6){
+      var w0=normaliza(P(w.x-desde.x, w.y-desde.y)), best=null, ang=1e9;
+      dirs.forEach(function(u){
+        [1,-1].forEach(function(s){
+          var a=Math.abs(Math.atan2(u.x*s*w0.y-u.y*s*w0.x, u.x*s*w0.x+u.y*s*w0.y));
+          if(a<ang){ ang=a; best=P(u.x*s, u.y*s); }
+        });
+      });
+      if(ang<3*Math.PI/180) return P(desde.x+best.x*d0, desde.y+best.y*d0);
+    }
+  }
+  return {x:w.x, y:w.y};
+}
+function snapMedida(w){
+  var c=[], i;
+  piezas.forEach(function(p){
+    var n=p.v.length;
+    for(i=0;i<n;i++){
+      c.push({q:p.v[i], k:0.5});
+      c.push({q:med(p.v[i], p.v[(i+1)%n]), k:0.75});
+    }
+  });
+  if(fig) fig.v.forEach(function(q){ c.push({q:q, k:0.6}); });
+  if(opt.rejilla) c.push({q:P(Math.round(w.x), Math.round(w.y)), k:0.8});
+  var mejor=null, dm=13/view.z;
+  c.forEach(function(o){
+    var d=dist(w,o.q)*o.k;
+    if(d<dm){ dm=d; mejor=o.q; }
+  });
+  return mejor? P(mejor.x, mejor.y) : {x:w.x, y:w.y};
+}
+
+/* =========================================================================
+   5. DIBUJO
+   draw() repinta todo entero; nada de dibujado incremental. Las piezas van
+   traslúcidas a propósito: así un solape se ve más oscuro y lo juzga quien
+   mira, que es lo que aquí hay que aprender a mirar.
+   ========================================================================= */
+function tinta(hex,f,al){
+  var h=hex.replace('#','');
+  var r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
+  r=Math.round(r+(f>0?(255-r)*f:r*f)); g=Math.round(g+(f>0?(255-g)*f:g*f)); b=Math.round(b+(f>0?(255-b)*f:b*f));
+  return 'rgba('+r+','+g+','+b+','+(al===undefined?1:al)+')';
+}
+function camino(c,v){
+  var a=w2s(v[0]);
+  if(!isFinite(a.x)||!isFinite(a.y)) return false;
+  c.beginPath(); c.moveTo(a.x,a.y);
+  for(var i=1;i<v.length;i++){
+    var q=w2s(v[i]);
+    if(!isFinite(q.x)||!isFinite(q.y)) return false;
+    c.lineTo(q.x,q.y);
+  }
+  c.closePath();
+  return true;
+}
+function rotulo(c,Q,txt,dx,dy,col,fondo){
+  var s=w2s(Q);
+  c.font='600 12px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.textAlign='center'; c.textBaseline='middle';
+  var an=c.measureText(txt).width;
+  var x=s.x+(dx||0), y=s.y+(dy||0);
+  if(fondo!==0){
+    c.fillStyle='rgba(255,255,255,.9)';
+    c.fillRect(x-an/2-3, y-8, an+6, 16);
+  }
+  c.fillStyle=col||'#5a6270';
+  c.fillText(txt, x, y);
+}
+function flecha(c,A,B){
+  var a=w2s(A), b=w2s(B), th=Math.atan2(b.y-a.y, b.x-a.x), L=7;
+  c.beginPath();
+  c.moveTo(b.x, b.y);
+  c.lineTo(b.x-L*Math.cos(th-0.42), b.y-L*Math.sin(th-0.42));
+  c.moveTo(b.x, b.y);
+  c.lineTo(b.x-L*Math.cos(th+0.42), b.y-L*Math.sin(th+0.42));
+  c.stroke();
+}
+function drawRejilla(c,W,H){
+  if(!opt.rejilla || view.z<7) return;
+  var a=s2w(P(0,H)), b=s2w(P(W,0));
+  var x0=Math.floor(a.x)-1, x1=Math.ceil(b.x)+1;
+  var y0=Math.floor(a.y)-1, y1=Math.ceil(b.y)+1;
+  if((x1-x0)>400 || (y1-y0)>400) return;
+  var i;
+  c.lineWidth=1;
+  for(i=x0;i<=x1;i++){
+    var s0=w2s(P(i,y0)), s1=w2s(P(i,y1));
+    c.strokeStyle=(i%5===0)?'#dfe3e9':'#eef0f3';
+    c.beginPath(); c.moveTo(Math.round(s0.x)+0.5, s0.y); c.lineTo(Math.round(s1.x)+0.5, s1.y); c.stroke();
+  }
+  for(i=y0;i<=y1;i++){
+    var t0=w2s(P(x0,i)), t1=w2s(P(x1,i));
+    c.strokeStyle=(i%5===0)?'#dfe3e9':'#eef0f3';
+    c.beginPath(); c.moveTo(t0.x, Math.round(t0.y)+0.5); c.lineTo(t1.x, Math.round(t1.y)+0.5); c.stroke();
+  }
+}
+/* la letra, el número o las dos cosas: es lo que permite que el mismo material
+   sirva sin álgebra ninguna, leyendo «6» donde otro lee «b» */
+function textoAcot(A){
+  var l=A.t, n=(A.n!==undefined && isFinite(A.n))? num(A.n) : null;
+  if(!l && n===null) return '';
+  if(n===null || opt.rot==='l') return l||'';
+  if(!l || opt.rot==='n') return n;
+  return l+' = '+n;
+}
+function drawAcot(c,A){
+  var u, per, a2, b2, s, tx=textoAcot(A);
+  c.save();
+  c.lineWidth=1.2;
+  if(A.est==='dim'){
+    u=normaliza(P(A.b.x-A.a.x, A.b.y-A.a.y));
+    per=P(-u.y, u.x);
+    var o=A.off||0.8;
+    a2=P(A.a.x+per.x*o, A.a.y+per.y*o);
+    b2=P(A.b.x+per.x*o, A.b.y+per.y*o);
+    c.strokeStyle='#a8aeb8';
+    c.setLineDash([3,3]);
+    c.beginPath(); s=w2s(A.a); c.moveTo(s.x,s.y); s=w2s(a2); c.lineTo(s.x,s.y); c.stroke();
+    c.beginPath(); s=w2s(A.b); c.moveTo(s.x,s.y); s=w2s(b2); c.lineTo(s.x,s.y); c.stroke();
+    c.setLineDash([]);
+    c.strokeStyle='#8a919c';
+    c.beginPath(); s=w2s(a2); c.moveTo(s.x,s.y); s=w2s(b2); c.lineTo(s.x,s.y); c.stroke();
+    flecha(c, med(a2,b2), a2); flecha(c, med(a2,b2), b2);
+    if(tx) rotulo(c, med(a2,b2), tx, 0, 0);
+  }else if(A.est==='ext'){
+    c.strokeStyle='#c3c8d0'; c.setLineDash([2,4]);
+    c.beginPath(); s=w2s(A.a); c.moveTo(s.x,s.y); s=w2s(A.b); c.lineTo(s.x,s.y); c.stroke();
+    c.setLineDash([]);
+  }else if(A.est==='ang'){
+    /* el ángulo recto que ya tiene la figura, en el vértice A.a y entre las
+       direcciones que van a A.b y a A.c; se dibuja en el mundo para que siga
+       pegado al vértice cuando cambia el zoom */
+    var u1=normaliza(P(A.b.x-A.a.x, A.b.y-A.a.y));
+    var u2=normaliza(P(A.c.x-A.a.x, A.c.y-A.a.y));
+    var L1=Math.min(0.42, dist(A.a,A.b)*0.3, dist(A.a,A.c)*0.3);
+    c.strokeStyle='#8a919c';
+    c.beginPath();
+    s=w2s(P(A.a.x+u1.x*L1, A.a.y+u1.y*L1)); c.moveTo(s.x,s.y);
+    s=w2s(P(A.a.x+(u1.x+u2.x)*L1, A.a.y+(u1.y+u2.y)*L1)); c.lineTo(s.x,s.y);
+    s=w2s(P(A.a.x+u2.x*L1, A.a.y+u2.y*L1)); c.lineTo(s.x,s.y);
+    c.stroke();
+  }else{
+    c.strokeStyle='#8a919c'; c.setLineDash([5,4]);
+    c.beginPath(); s=w2s(A.a); c.moveTo(s.x,s.y); s=w2s(A.b); c.lineTo(s.x,s.y); c.stroke();
+    c.setLineDash([]);
+    if(A.est==='alt'){
+      /* el ángulo recto en el pie de la altura, dibujado en el mundo para que
+         siga pegado al vértice cuando cambia el zoom */
+      u=normaliza(P(A.a.x-A.b.x, A.a.y-A.b.y));
+      per=P(-u.y, u.x);
+      var L=Math.min(0.42, dist(A.a,A.b)*0.3);
+      var q1=P(A.b.x+u.x*L, A.b.y+u.y*L);
+      var q2=P(q1.x+per.x*L, q1.y+per.y*L);
+      var q3=P(A.b.x+per.x*L, A.b.y+per.y*L);
+      c.beginPath();
+      s=w2s(q1); c.moveTo(s.x,s.y);
+      s=w2s(q2); c.lineTo(s.x,s.y);
+      s=w2s(q3); c.lineTo(s.x,s.y);
+      c.stroke();
+    }
+    if(tx) rotulo(c, med(A.a,A.b), tx, 0, 0);
+  }
+  c.restore();
+}
+/* El contorno de la figura de partida va DEBAJO de las piezas, para que se vea
+   por transparencia de dónde salió cada una, pero sus letras van ENCIMA: si no,
+   en cuanto una pieza cae sobre la altura desaparece la «h», que es justo la
+   medida que hay que ir siguiendo mientras se recompone. */
+function drawFantasma(c){
+  if(!fig || !opt.fantasma) return;
+  c.save();
+  if(fig.circ && opt.circ){
+    var C=w2s(fig.circ.c), r=fig.circ.r*view.z;
+    c.beginPath(); c.arc(C.x, C.y, r, 0, 6.2832);
+    c.setLineDash([6,5]); c.lineWidth=1.3; c.strokeStyle='#b9c0ca'; c.stroke();
+    c.setLineDash([]);
+  }
+  if(camino(c, fig.v)){
+    c.setLineDash([6,4]); c.lineWidth=1.4; c.strokeStyle='#b0b6c0'; c.stroke();
+    c.setLineDash([]);
+  }
+  c.restore();
+}
+function drawAcotaciones(c){
+  if(!fig || !opt.fantasma) return;
+  fig.acot.forEach(function(A){
+    if(A.soloCirc && !opt.circ) return;
+    drawAcot(c,A);
+  });
+}
+function drawPieza(c,p,marcada){
+  var col=COLS[p.c%COLS.length];
+  if(!camino(c,p.v)) return;
+  c.fillStyle=tinta(col, 0.18, 0.62); c.fill();
+  c.lineJoin='round';
+  c.lineWidth=marcada?2.6:1.3;
+  c.strokeStyle=marcada? '#1f4e8c' : tinta(col,-0.4);
+  if(p.dup) c.setLineDash([6,4]);        /* las copias, con el borde a rayas */
+  c.stroke();
+  c.setLineDash([]);
+}
+/* las medidas de los lados de la pieza que esté seleccionada, detrás de la
+   casilla de comprobaciones: es contabilidad de lo que hay, no una corrección */
+function drawLados(c){
+  if(!opt.comp || sel.length!==1) return;
+  var p=porId(sel[0]);
+  if(!p) return;
+  var v=p.v, n=v.length, C=centroide(v), T=tirador();
+  for(var i=0;i<n;i++){
+    var A=v[i], B=v[(i+1)%n], M=med(A,B), L=dist(A,B);
+    if(L*view.z<26) continue;
+    var u=normaliza(P(B.x-A.x, B.y-A.y)), per=P(-u.y, u.x);
+    var fuera=((M.x-C.x)*per.x+(M.y-C.y)*per.y)>=0 ? 0.3 : -0.3;
+    var Q=P(M.x+per.x*fuera, M.y+per.y*fuera), s=w2s(Q);
+    if(T && Math.hypot(s.x-T.x, s.y-T.y)<T.r+13) continue;   /* no debajo del ⟳ */
+    rotulo(c, Q, num(L), 0, 0, '#31527d');
+  }
+}
+function drawMedida(c,m,i){
+  var A=w2s(m.a), B=w2s(m.b), d=dist(m.a,m.b);
+  c.save();
+  c.strokeStyle='#2f62a8'; c.lineWidth=1.5;
+  c.beginPath(); c.moveTo(A.x,A.y); c.lineTo(B.x,B.y); c.stroke();
+  flecha(c, med(m.a,m.b), m.a); flecha(c, med(m.a,m.b), m.b);
+  [m.a,m.b].forEach(function(Q){
+    var s=w2s(Q);
+    c.beginPath(); c.arc(s.x,s.y,2.6,0,6.2832); c.fillStyle='#2f62a8'; c.fill();
+  });
+  rotulo(c, med(m.a,m.b), num(d)+' u', 0, -11, '#2f62a8');
+  c.restore();
+}
+function drawCorte(c){
+  if(!corte) return;
+  var L=corte.linea.slice();
+  var prev=L[L.length-1];
+  c.save();
+  if(corte.pieza && camino(c, corte.pieza.v)){
+    c.fillStyle='rgba(47,98,168,.07)'; c.fill();
+  }
+  c.strokeStyle='#c2410c'; c.lineWidth=2; c.lineJoin='round';
+  c.beginPath();
+  L.forEach(function(Q,i){ var s=w2s(Q); if(i===0) c.moveTo(s.x,s.y); else c.lineTo(s.x,s.y); });
+  if(corte.vista && prev){ var s2=w2s(corte.vista); c.lineTo(s2.x,s2.y); }
+  c.stroke();
+  L.forEach(function(Q){
+    var s=w2s(Q);
+    c.beginPath(); c.arc(s.x,s.y,3.4,0,6.2832);
+    c.fillStyle='#fff'; c.fill(); c.strokeStyle='#c2410c'; c.lineWidth=1.6; c.stroke();
+  });
+  if(corte.vista){
+    var s=w2s(corte.vista), fin=corte.enBorde;
+    c.beginPath(); c.arc(s.x,s.y,fin?5.5:4,0,6.2832);
+    c.fillStyle=fin? '#15803d' : '#fff'; c.fill();
+    c.strokeStyle=fin? '#15803d' : '#c2410c'; c.lineWidth=1.8; c.stroke();
+  }
+  c.restore();
+}
+function drawDibujo(c){
+  if(!dibujo) return;
+  c.save();
+  c.strokeStyle='#2f62a8'; c.lineWidth=2; c.lineJoin='round';
+  c.beginPath();
+  dibujo.pts.forEach(function(Q,i){ var s=w2s(Q); if(i===0) c.moveTo(s.x,s.y); else c.lineTo(s.x,s.y); });
+  if(dibujo.vista){ var s=w2s(dibujo.vista); c.lineTo(s.x,s.y); }
+  c.stroke();
+  dibujo.pts.forEach(function(Q,i){
+    var s=w2s(Q);
+    c.beginPath(); c.arc(s.x,s.y,i===0?5:3.4,0,6.2832);
+    c.fillStyle=i===0?'#2f62a8':'#fff'; c.fill();
+    c.strokeStyle='#2f62a8'; c.lineWidth=1.6; c.stroke();
+  });
+  c.restore();
+}
+/* El tirador va a la esquina de arriba a la derecha y pegado a la pieza, no
+   centrado sobre el borde superior: ahí es donde cae el rótulo con la longitud
+   de ese lado, y como el tirador se mide en píxeles y el rótulo en unidades del
+   mundo, al acercar uno se tapaba el otro sin que se viera por qué. */
+function tirador(){
+  if(modo!=='mover') return null;
+  var s=seleccionadas(); if(!s.length) return null;
+  var b=cajaDe(s.map(function(p){ return p.v; }));
+  var m=w2s(P(b.x1, b.y1));
+  return {x:m.x+13, y:m.y-13, r:11};
+}
+function draw(){
+  var dpr=window.devicePixelRatio||1;
+  var W=cv.width/dpr, H=cv.height/dpr;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  drawRejilla(ctx,W,H);
+  drawFantasma(ctx);
+  var marcadas={}; sel.forEach(function(id){ marcadas[id]=1; });
+  piezas.forEach(function(p){ drawPieza(ctx,p,!!marcadas[p.id]); });
+  drawAcotaciones(ctx);
+  drawLados(ctx);
+  medidas.forEach(function(m,i){ drawMedida(ctx,m,i); });
+  drawCorte(ctx);
+  drawDibujo(ctx);
+
+  if(drag && drag.modo==='marco'){
+    var a=drag.p0s, b=drag.p1s;
+    ctx.save();
+    ctx.fillStyle='rgba(47,98,168,.10)';
+    ctx.strokeStyle='rgba(47,98,168,.7)'; ctx.lineWidth=1;
+    ctx.fillRect(Math.min(a.x,b.x), Math.min(a.y,b.y), Math.abs(b.x-a.x), Math.abs(b.y-a.y));
+    ctx.strokeRect(Math.min(a.x,b.x), Math.min(a.y,b.y), Math.abs(b.x-a.x), Math.abs(b.y-a.y));
+    ctx.restore();
+  }
+  if(drag && drag.modo==='medir' && drag.a && drag.b){
+    drawMedida(ctx, {a:drag.a, b:drag.b});
+  }
+  var t=tirador();
+  if(t && !(drag && drag.modo==='marco')){
+    ctx.beginPath(); ctx.arc(t.x,t.y,t.r,0,6.2832);
+    ctx.fillStyle='#fff'; ctx.fill();
+    ctx.lineWidth=1.6; ctx.strokeStyle='#2f62a8'; ctx.stroke();
+    ctx.fillStyle='#2f62a8'; ctx.font='13px -apple-system,Segoe UI,Roboto,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('⟳', t.x, t.y+1);
+  }
+  updateUI();
+}
+
+/* =========================================================================
+   6. INTERACCIÓN
+   ========================================================================= */
+function pos(e){
+  var r=stage.getBoundingClientRect();
+  return {x:e.clientX-r.left, y:e.clientY-r.top};
+}
+function selecciona(ids, anadir){
+  var base = anadir? sel.slice() : [];
+  ids.forEach(function(id){
+    var i=base.indexOf(id);
+    if(anadir && i>=0) base.splice(i,1); else if(i<0) base.push(id);
+  });
+  sel=base;
+  updateUI();
+}
+
+/* --- la punta del corte: adónde iría el siguiente punto ------------------ */
+function puntaCorte(w){
+  if(!corte) return null;
+  var p=corte.pieza;
+  var desde=corte.linea[corte.linea.length-1];
+  var dentro=candidatosDentro(p, w, desde);
+  var borde=candidatosBorde(p, w, desde);
+  var dB=distBorde(w, p.v).d;
+  /* si el cursor anda cerca del borde, el corte termina ahí */
+  if(dB<14/view.z || !dentroPoli(w, p.v)) return {q:borde, fin:true};
+  return {q:dentro, fin:false};
+}
+function empiezaCorte(w){
+  var p=piezaCerca(w);
+  if(!p){ flash('Toca una pieza para empezar a cortarla'); return; }
+  var q=candidatosBorde(p, w, null);
+  corte={pieza:p, linea:[q], vista:null, enBorde:false};
+  draw();
+}
+function siguienteCorte(w){
+  var r=puntaCorte(w);
+  if(!r) return;
+  var ult=corte.linea[corte.linea.length-1];
+  if(dist(r.q, ult)<1e-6) return;
+  corte.linea.push(r.q);
+  if(r.fin) aplicaCorte();
+  draw();
+}
+
+cv.addEventListener('pointerdown',function(e){
+  cv.setPointerCapture(e.pointerId);
+  var s=pos(e), w=s2w(s);
+  raton=w;
+  /* el botón central o el derecho mueven el tablero en cualquier herramienta */
+  if(opt.mano || e.button===1 || e.button===2){
+    drag={modo:'pan', s0:s, v0:{x:view.x,y:view.y}};
+    return;
+  }
+  if(modo==='medir'){
+    var a=snapMedida(w);
+    drag={modo:'medir', a:a, b:a, s0:s, movido:false};
+    return;
+  }
+  if(modo==='mover'){
+    var t=tirador();
+    if(t && Math.hypot(s.x-t.x, s.y-t.y)<=t.r+4){
+      var lista=seleccionadas(), C=centroLista(lista);
+      pushUndo();
+      drag={modo:'girar', C:C, a0:Math.atan2(w.y-C.y, w.x-C.x),
+            orig:lista.map(function(p){ return {p:p, v:copiaV(p.v)}; }), lista:lista};
+      return;
+    }
+    var p=piezaEn(w);
+    if(p){
+      if(sel.indexOf(p.id)<0 || e.shiftKey) selecciona([p.id], e.shiftKey);
+      if(sel.indexOf(p.id)<0){ draw(); return; }
+      pushUndo();
+      var li=seleccionadas();
+      drag={modo:'mover', w0:w, lista:li,
+            orig:li.map(function(q){ return {p:q, v:copiaV(q.v)}; }), movido:false};
+      return;
+    }
+    drag={modo:'marco', p0s:s, p1s:s, shift:e.shiftKey};
+    if(!e.shiftKey) sel=[];
+    draw();
+    return;
+  }
+  /* cortar, abanico y dibujar van por clics: se arranca un posible arrastre
+     del tablero y, si no se mueve, al soltar cuenta como clic */
+  drag={modo:'clic', s0:s, v0:{x:view.x,y:view.y}, movido:false};
+});
+cv.addEventListener('pointermove',function(e){
+  var s=pos(e), w=s2w(s);
+  raton=w;
+  if(!drag){
+    if(modo==='cortar' && corte){
+      var r=puntaCorte(w);
+      corte.vista=r.q; corte.enBorde=r.fin;
+      draw();
+    }else if(modo==='dibujar' && dibujo){
+      dibujo.vista=opt.rejilla? P(Math.round(w.x), Math.round(w.y)) : w;
+      draw();
+    }
+    return;
+  }
+  if(drag.modo==='pan'){
+    view.x=drag.v0.x+(s.x-drag.s0.x); view.y=drag.v0.y+(s.y-drag.s0.y);
+    draw(); return;
+  }
+  if(drag.modo==='clic'){
+    if(Math.hypot(s.x-drag.s0.x, s.y-drag.s0.y)>4){
+      drag.movido=true;
+      view.x=drag.v0.x+(s.x-drag.s0.x); view.y=drag.v0.y+(s.y-drag.s0.y);
+      draw();
+    }
+    return;
+  }
+  if(drag.modo==='marco'){ drag.p1s=s; draw(); return; }
+  if(drag.modo==='medir'){
+    drag.b=snapMedida(w);
+    if(Math.hypot(s.x-drag.s0.x, s.y-drag.s0.y)>4) drag.movido=true;
+    draw(); return;
+  }
+  if(drag.modo==='mover'){
+    var dx=w.x-drag.w0.x, dy=w.y-drag.w0.y;
+    drag.orig.forEach(function(o){
+      o.p.v=o.v.map(function(q){ return P(q.x+dx, q.y+dy); });
+    });
+    drag.movido=true;
+    draw(); return;
+  }
+  if(drag.modo==='girar'){
+    var a=Math.atan2(w.y-drag.C.y, w.x-drag.C.x), d=a-drag.a0;
+    if(opt.paso) d=Math.round(d/PASO)*PASO;
+    var co=Math.cos(d), si=Math.sin(d);
+    drag.orig.forEach(function(o){
+      o.p.v=o.v.map(function(q){
+        var x=q.x-drag.C.x, y=q.y-drag.C.y;
+        return P(drag.C.x+x*co-y*si, drag.C.y+x*si+y*co);
+      });
+    });
+    draw(); return;
+  }
+});
+function suelta(e){
+  if(!drag) return;
+  var d=drag; drag=null;
+  if(d.modo==='marco'){
+    var a=s2w(P(Math.min(d.p0s.x,d.p1s.x), Math.max(d.p0s.y,d.p1s.y)));
+    var b=s2w(P(Math.max(d.p0s.x,d.p1s.x), Math.min(d.p0s.y,d.p1s.y)));
+    var ids=[];
+    piezas.forEach(function(p){
+      var c=centroide(p.v);
+      if(c.x>=a.x && c.x<=b.x && c.y>=a.y && c.y<=b.y) ids.push(p.id);
+    });
+    if(ids.length) selecciona(ids, d.shift);
+  }
+  if(d.modo==='mover' && d.movido) aplicaIman(d.lista);
+  if(d.modo==='girar') aplicaIman(d.lista);
+  if(d.modo==='medir'){
+    if(d.movido && dist(d.a,d.b)>1e-6){
+      pushUndo();
+      medidas.push({a:d.a, b:d.b});
+    }else{
+      /* un clic sin arrastrar quita la medida que haya debajo */
+      var w=d.a, k=-1, dm=12/view.z;
+      medidas.forEach(function(m,i){
+        var r=distSeg(w, m.a, m.b);
+        if(r.d<dm){ dm=r.d; k=i; }
+      });
+      if(k>=0){ pushUndo(); medidas.splice(k,1); flash('Medida quitada'); }
+    }
+  }
+  if(d.modo==='clic' && !d.movido){
+    var w2=d.s0? s2w(d.s0) : raton;
+    if(modo==='cortar'){
+      if(!corte) empiezaCorte(w2); else siguienteCorte(w2);
+    }else if(modo==='abanico'){
+      var p=piezaCerca(w2);
+      if(!p) flash('Toca la pieza que quieres partir');
+      else{
+        /* cerca del borde, el vértice; por dentro, el centro o la cuadrícula */
+        var Q = distBorde(w2, p.v).d<10/view.z
+              ? candidatosBorde(p, w2, null)
+              : candidatosDentro(p, w2, null);
+        aplicaAbanico(p, Q);
+      }
+    }else if(modo==='dibujar'){
+      var q=opt.rejilla? P(Math.round(w2.x), Math.round(w2.y)) : w2;
+      if(!dibujo) dibujo={pts:[], vista:null};
+      /* el primer clic no tiene punto anterior con el que compararse: sin este
+         caso aparte, el primer vértice de cada figura dibujada revienta */
+      var nd=dibujo.pts.length;
+      if(nd>2 && dist(q, dibujo.pts[0])<1e-9) cierraDibujo();
+      else if(nd===0 || dist(q, dibujo.pts[nd-1])>1e-9) dibujo.pts.push(q);
+    }
+  }
+  draw();
+}
+cv.addEventListener('pointerup',suelta);
+cv.addEventListener('pointercancel',suelta);
+cv.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var s=pos(e), w=s2w(s);
+  view.z=Math.max(8, Math.min(260, view.z*(e.deltaY<0?1.12:1/1.12)));
+  view.x=s.x-w.x*view.z; view.y=s.y+w.y*view.z;
+  draw();
+},{passive:false});
+
+function cierraDibujo(){
+  if(!dibujo || dibujo.pts.length<3){ flash('Hacen falta al menos tres vértices'); return; }
+  var v=limpiaSeguidos(dibujo.pts);
+  if(v.length<3 || !esSimple(v) || area(v)<0.2){
+    flash('Ese contorno se cruza o no encierra nada; sigue marcando vértices');
+    return;
+  }
+  var pts=orienta(v).map(function(q){ return [q.x, q.y]; });
+  dibujo=null;
+  montaFigura({tipo:'libre', par:{pts:pts}});
+  document.getElementById('tipo').value='libre';
+  setModo('mover');
+  flash('Ya está: ahora córtala');
+}
+
+/* =========================================================================
+   7. INTERFAZ
+   ========================================================================= */
+function montaFigura(def, sinVista){
+  var G=FIG[def.tipo];
+  if(!G) return;
+  var f=G.construye(def.par);
+  fig={def:{tipo:def.tipo, par:JSON.parse(JSON.stringify(def.par))},
+       v:orienta(f.v), acot:f.acot||[], circ:f.circ||null, datos:f.datos||''};
+  piezas=[nuevaPieza(copiaV(fig.v), 0)];
+  medidas=[]; sel=[]; corte=null; dibujo=null; ncol=1;
+  if(!sinVista) fitView();
+  actualizaPanel();
+}
+function nuevaFigura(tipo, conservaN){
+  var G=FIG[tipo];
+  var par=G.sortea();
+  if(tipo==='regular') par.n = conservaN || (fig && fig.def.tipo==='regular'? fig.def.par.n : 6);
+  pushUndo();
+  montaFigura({tipo:tipo, par:par});
+  draw();
+}
+function setModo(m){
+  modo=m; corte=null;
+  if(m!=='dibujar') dibujo=null;
+  ['tMover','tCortar','tAbanico','tMedir'].forEach(function(id,i){
+    document.getElementById(id).classList.toggle('on', ['mover','cortar','abanico','medir'][i]===m);
+  });
+  if(m!=='mover') sel=[];
+  draw();
+}
+function actualizaPanel(){
+  var esReg = fig && fig.def.tipo==='regular';
+  /* deshacer y abrir un archivo pueden cambiar la figura sin pasar por la lista;
+     si no se sincroniza aquí, la lista dice una cosa y el tablero enseña otra */
+  if(fig && selTipo && selTipo.value!==fig.def.tipo) selTipo.value=fig.def.tipo;
+  document.getElementById('filaN').style.display = esReg? 'flex':'none';
+  document.getElementById('labCirc').style.display = esReg? 'flex':'none';
+  if(esReg) document.getElementById('nVal').textContent=fig.def.par.n+' lados';
+  document.getElementById('cajaFig').innerHTML =
+    fig? '<b>'+FIG[fig.def.tipo].nombre+'</b><br><span class="ele">'+fig.datos+'</span>'
+       : '<span class="ele">Marca los vértices sobre la cuadrícula. Se cierra tocando '+
+         'otra vez el primero, o con Intro.</span>';
+}
+
+/* --- botones del panel ---------------------------------------------------- */
+var selTipo=document.getElementById('tipo');
+selTipo.addEventListener('change',function(){
+  if(this.value==='libre'){
+    pushUndo();
+    fig=null; piezas=[]; medidas=[]; sel=[];
+    dibujo={pts:[], vista:null};
+    setModo('dibujar');
+    actualizaPanel();
+    flash('Marca los vértices; cierra tocando el primero o con Intro');
+    return;
+  }
+  nuevaFigura(this.value);
+});
+document.getElementById('otra').addEventListener('click',function(){
+  var t=selTipo.value;
+  if(t==='libre'){ selTipo.value='paralelogramo'; t='paralelogramo'; }
+  nuevaFigura(t);
+});
+/* «Volver a empezar» recompone la figura pero respeta lo que se haya medido;
+   «Limpiar» de la barra deja el tablero como recién abierto, medidas incluidas */
+document.getElementById('reinicia').addEventListener('click',function(){
+  if(!fig) return;
+  pushUndo();
+  var m=medidas;
+  montaFigura(fig.def, true);
+  medidas=m;
+  draw();
+});
+document.getElementById('limpiar').addEventListener('click',function(){
+  if(!fig){ flash('No hay figura que recomponer'); return; }
+  pushUndo(); montaFigura(fig.def, true); draw();
+  flash('Tablero limpio: la figura entera, sin copias y sin medidas');
+});
+function cambiaN(d){
+  if(!fig || fig.def.tipo!=='regular') return;
+  var n=Math.max(3, Math.min(30, fig.def.par.n+d));
+  if(n===fig.def.par.n) return;
+  pushUndo();
+  montaFigura({tipo:'regular', par:{n:n}}, true);
+  draw();
+}
+document.getElementById('nMenos').addEventListener('click',function(){ cambiaN(-1); });
+document.getElementById('nMas').addEventListener('click',function(){ cambiaN(1); });
+document.getElementById('gIzq').addEventListener('click',function(){ gira(1); });
+document.getElementById('gDer').addEventListener('click',function(){ gira(-1); });
+document.getElementById('voltea').addEventListener('click',voltea);
+document.getElementById('duplica').addEventListener('click',duplica);
+document.getElementById('quitaCopia').addEventListener('click',quitaCopia);
+document.getElementById('rot').addEventListener('change',function(e){
+  opt.rot=e.target.value; draw();
+});
+document.getElementById('borraMed').addEventListener('click',function(){
+  if(!medidas.length){ flash('No hay medidas puestas'); return; }
+  pushUndo(); medidas=[]; draw();
+});
+[['rejilla','rejilla'],['fantasma','fantasma'],['circ','circ']].forEach(function(par){
+  document.getElementById(par[0]).addEventListener('change',function(e){
+    opt[par[1]]=e.target.checked?1:0; draw();
+  });
+});
+[['iman','iman'],['paso','paso'],['comp','comp']].forEach(function(par){
+  document.getElementById(par[0]).addEventListener('change',function(e){
+    opt[par[1]]=e.target.checked?1:0; draw();
+  });
+});
+document.getElementById('tMover').addEventListener('click',function(){ setModo('mover'); });
+document.getElementById('tCortar').addEventListener('click',function(){ setModo('cortar'); });
+document.getElementById('tAbanico').addEventListener('click',function(){ setModo('abanico'); });
+document.getElementById('tMedir').addEventListener('click',function(){ setModo('medir'); });
+document.getElementById('undo').addEventListener('click',doUndo);
+document.getElementById('mano').addEventListener('click',function(){
+  opt.mano=opt.mano?0:1; this.classList.toggle('on', !!opt.mano);
+});
+function zoomAt(k){
+  var r=stage.getBoundingClientRect(), c=P(r.width/2, r.height/2), w=s2w(c);
+  view.z=Math.max(8, Math.min(260, view.z*k));
+  view.x=c.x-w.x*view.z; view.y=c.y+w.y*view.z;
+  draw();
+}
+document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.2); });
+document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.2); });
+document.getElementById('fit').addEventListener('click',function(){ fitView(); draw(); });
+function fitView(){
+  var r=stage.getBoundingClientRect(), m=54;
+  var W=r.width||760, H=r.height||520;
+  var lista=piezas.map(function(p){ return p.v; });
+  if(fig) lista.push(fig.v);
+  /* las acotaciones se dibujan por fuera de la figura, así que hay que meterlas
+     en la cuenta: si no, la de la altura de un trapecio rectángulo se queda
+     justo debajo del panel de la izquierda y no se ve el número */
+  if(fig) fig.acot.forEach(function(A){
+    if(A.est!=='dim' || !A.off) return;
+    var u=normaliza(P(A.b.x-A.a.x, A.b.y-A.a.y)), per=P(-u.y, u.x), o=A.off;
+    lista.push([P(A.a.x+per.x*o, A.a.y+per.y*o), P(A.b.x+per.x*o, A.b.y+per.y*o)]);
+  });
+  if(fig && fig.circ && opt.circ) lista.push([P(fig.circ.c.x-fig.circ.r, fig.circ.c.y-fig.circ.r),
+                                              P(fig.circ.c.x+fig.circ.r, fig.circ.c.y+fig.circ.r)]);
+  var b=cajaDe(lista);
+  if(!b){ view={x:W/2, y:H/2, z:52}; return; }
+  var z=Math.min((W-2*m)/((b.x1-b.x0)||1), (H-2*m)/((b.y1-b.y0)||1));
+  view.z=Math.max(8, Math.min(120, z));
+  view.x=W/2-((b.x0+b.x1)/2)*view.z;
+  view.y=H/2+((b.y0+b.y1)/2)*view.z;
+}
+document.addEventListener('keydown',function(e){
+  if(e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+  var k=(e.key||'').toLowerCase();
+  if((e.ctrlKey||e.metaKey) && k==='z'){ e.preventDefault(); doUndo(); return; }
+  if(k==='q'){ gira(1); e.preventDefault(); }
+  else if(k==='e'){ gira(-1); e.preventDefault(); }
+  else if(k==='v'){ voltea(); }
+  else if(k==='d'){ duplica(); }
+  else if(k==='m'){ setModo('mover'); }
+  else if(k==='c'){ setModo('cortar'); }
+  else if(k==='a'){ setModo('abanico'); }
+  else if(k==='r'){ setModo('medir'); }
+  else if(k==='n'){ document.getElementById('otra').click(); }
+  else if(k==='0'){ document.getElementById('reinicia').click(); }
+  else if(e.key==='Delete'){ quitaCopia(); e.preventDefault(); }
+  else if(e.key==='Enter' && dibujo){ cierraDibujo(); draw(); }
+  else if(e.key==='Backspace'){
+    if(corte && corte.linea.length){ corte.linea.pop(); if(!corte.linea.length) corte=null; draw(); e.preventDefault(); }
+    else if(dibujo && dibujo.pts.length){ dibujo.pts.pop(); draw(); e.preventDefault(); }
+  }
+  else if(e.key==='Escape'){
+    if(corte){ corte=null; }
+    else if(dibujo && dibujo.pts.length){ dibujo.pts=[]; }
+    else sel=[];
+    draw();
+  }
+});
+
+/* --- guardar y abrir ------------------------------------------------------
+   No hay botón de añadir piezas de otro archivo, y es a propósito: un polígono
+   equivalente se arma con las piezas de UNA descomposición, y meter piezas de
+   otra sería justo lo que no vale.                                          */
+document.getElementById('save').addEventListener('click',function(){
+  var d={formato:'figuras-equivalentes', version:1,
+    figura: fig? fig.def : null,
+    piezas: piezas.map(function(p){
+      return {c:p.c, d:p.dup?1:0,
+              v:p.v.map(function(q){ return [+q.x.toFixed(6), +q.y.toFixed(6)]; })}; }),
+    medidas: medidas.map(function(m){
+      return [+m.a.x.toFixed(6), +m.a.y.toFixed(6), +m.b.x.toFixed(6), +m.b.y.toFixed(6)]; })};
+  var blob=new Blob([JSON.stringify(d,null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download='figuras-equivalentes.json'; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leer(f); });
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){
+    var d=null;
+    try{ d=JSON.parse(r.result); }catch(err){ flash('No he podido leer ese archivo'); return; }
+    loadData(d);
+  };
+  r.readAsText(f);
+}
+function limpiaPiezas(lista){
+  if(!Array.isArray(lista) || !lista.length) return null;
+  var out=[];
+  for(var i=0;i<lista.length;i++){
+    var q=lista[i];
+    if(!q || !Array.isArray(q.v) || q.v.length<3) return null;
+    var v=[];
+    for(var j=0;j<q.v.length;j++){
+      var x=Number(q.v[j][0]), y=Number(q.v[j][1]);
+      if(!isFinite(x) || !isFinite(y)) return null;
+      v.push(P(x,y));
+    }
+    v=limpiaSeguidos(v);
+    if(v.length<3 || area(v)<1e-9 || !esSimple(v)) return null;
+    var c=q.c|0;
+    out.push({id:0, c:(c<0?0:c), dup:q.d?1:0, v:orienta(v)});
+  }
+  return out;
+}
+function limpiaMedidas(lista){
+  if(!Array.isArray(lista)) return [];
+  var out=[];
+  for(var i=0;i<lista.length;i++){
+    var m=lista[i];
+    if(!Array.isArray(m) || m.length<4) continue;
+    var n=m.map(Number);
+    if(n.some(function(z){ return !isFinite(z); })) continue;
+    out.push({a:P(n[0],n[1]), b:P(n[2],n[3])});
+  }
+  return out;
+}
+function loadData(d){
+  var nuevas = d && limpiaPiezas(d.piezas);
+  if(!nuevas){ flash('Ese archivo no trae piezas que yo entienda'); return false; }
+  if(d.figura && FIG[d.figura.tipo]){
+    pushUndo();
+    montaFigura(d.figura, true);
+    selTipo.value=d.figura.tipo;
+  }else{
+    pushUndo();
+    fig=null;
+  }
+  nuevas.forEach(function(p){ p.id=nid++; });
+  piezas=nuevas;
+  ncol=piezas.length;
+  medidas=limpiaMedidas(d.medidas);
+  sel=[]; corte=null; dibujo=null;
+  fitView(); actualizaPanel(); draw();
+  flash(piezas.length+(piezas.length===1?' pieza cargada':' piezas cargadas'));
+  return true;
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); });
+});
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f) leer(f);
+});
+document.getElementById('png').addEventListener('click',function(){
+  var lista=piezas.map(function(p){ return p.v; });
+  if(fig && opt.fantasma) lista.push(fig.v);
+  medidas.forEach(function(m){ lista.push([m.a, m.b]); });
+  var b=cajaDe(lista);
+  if(!b){ flash('No hay nada que exportar'); return; }
+  var m0=1.1, sc=2, z=64;
+  var W=((b.x1-b.x0)+2*m0)*z, H=((b.y1-b.y0)+2*m0)*z;
+  var oc=document.createElement('canvas'); oc.width=W*sc; oc.height=H*sc;
+  var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
+  var g={x:view.x,y:view.y,z:view.z}, ctx0=ctx, sel0=sel;
+  view={x:m0*z-b.x0*z, y:H-m0*z+b.y0*z, z:z}; ctx=o; sel=[];
+  drawRejilla(o, W, H);
+  drawFantasma(o);
+  piezas.forEach(function(p){ drawPieza(o,p,false); });
+  drawAcotaciones(o);
+  medidas.forEach(function(mm){ drawMedida(o,mm); });
+  ctx=ctx0; view=g; sel=sel0;
+  oc.toBlob(function(blob){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.download='figuras-equivalentes.png'; a.href=url; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+  });
+  draw();
+});
+
+/* --- el panel ? ----------------------------------------------------------- */
+document.getElementById('help').addEventListener('click',function(){
+  infoEl.classList.toggle('show');
+  if(!infoEl.innerHTML) infoEl.innerHTML=ayuda();
+});
+function ayuda(){
+  return '<div><b>Figuras equivalentes</b><br>'+
+ 'Dos polígonos son equivalentes si al descomponer el primero se puede armar el segundo con '+
+ '<i>todas</i> las piezas. Aquí se parte de una figura y hay un tablero para descomponerla y '+
+ 'recomponerla. Lo único que se supone conocido es el área del rectángulo.</div>'+
+ '<div style="margin-top:7px"><b>La figura de partida</b><br>'+
+ 'Se elige en la lista de la izquierda, y <b>Otra al azar</b> da otra distinta del mismo tipo, '+
+ 'con otras medidas: paralelogramo, rombo, deltoide, los tres tipos de triángulo, el trapecio '+
+ 'cualquiera y también el isósceles y el rectángulo, y el polígono regular. En el polígono regular, '+
+ 'los botones − y + cambian el número de lados, de 3 a '+
+ '30, y se puede sacar la circunferencia en la que está inscrito. <b>Dibujarla yo</b> deja marcar '+
+ 'los vértices sobre la cuadrícula; se cierra tocando el primero otra vez o con Intro. '+
+ 'La figura de partida se queda dibujada a trazos debajo, con sus letras, para no perder de vista '+
+ 'qué era cada medida cuando ya está todo cortado. <b>Volver a empezar</b> la recompone.</div>'+
+ '<div style="margin-top:7px"><b>✂ Cortar</b><br>'+
+ 'Un corte va de borde a borde y puede doblar la esquina: se toca un punto del borde de una pieza, '+
+ 'luego los puntos por los que pasa el corte, y termina al volver a tocar el borde (el punto se '+
+ 'pone verde cuando estás en él). La punta se pega sola a los vértices, a los puntos medios de los '+
+ 'lados, al centro, a la cuadrícula y a las direcciones paralelas y perpendiculares a cada lado, '+
+ 'así que un corte por la altura sale exacto sin tener que apuntar. Retroceso quita el último '+
+ 'punto y Escape anula el corte. Un corte que no parte la pieza en dos no se hace.</div>'+
+ '<div style="margin-top:7px"><b>✳ Abanico</b><br>'+
+ 'Parte una pieza en triángulos de una vez, desde el punto que toques: si tocas un vértice salen '+
+ 'los triángulos que salen desde un vértice, y si tocas por dentro, uno por cada lado. Es lo mismo '+
+ 'que dar varios cortes seguidos, y evita tener que darlos uno a uno cuando la figura tiene muchos '+
+ 'lados.</div>'+
+ '<div style="margin-top:7px"><b>✥ Mover</b><br>'+
+ 'Arrastra las piezas. Con Mayúsculas se añaden a la selección, y arrastrando sobre el tablero '+
+ 'vacío se dibuja un marco que coge varias. El tirador ⟳ gira lo seleccionado (Q y E también); '+
+ 'con la casilla <b>Giro de 15°</b> puesta, de 15 en 15. <b>⇄ Dar la vuelta</b> refleja la '+
+ 'selección, que es lo que se hace al girar un recorte de papel por el otro lado.<br>'+
+ 'El <b>imán</b> es lo que remata: al soltar, si un lado de lo que mueves mide lo mismo que un '+
+ 'lado de lo que está quieto y lo has dejado cerca, las dos piezas casan exactamente, girando lo '+
+ 'poco que falte. Por eso no hace falta acertar el ángulo a mano ni siquiera cuando no es un número '+
+ 'redondo de grados. Si no hay lado que case, engancha por los vértices, y si tampoco, a la '+
+ 'cuadrícula.</div>'+
+ '<div style="margin-top:7px"><b>⧉ Duplicar, y lo que se puede tirar</b><br>'+
+ 'Duplica lo que tengas seleccionado. La copia sale con el <b>borde a rayas</b>, y lo que se corte '+
+ 'de una copia sigue siendo copia. La diferencia importa: las piezas que salen de la figura no se '+
+ 'pueden quitar del tablero —el rectángulo hay que hacerlo con todas—, pero <b>las copias sí</b>, '+
+ 'con <b>✕ Quitar la copia</b> o con la tecla Supr. Así se puede juntar una figura con su gemela '+
+ 'para armar otra más '+
+ 'fácil de manejar y luego deshacerse de lo que sobra. Con la casilla <b>Comprobaciones</b> puesta, '+
+ 'el recuento dice cuántas piezas son copias y cuánto suma el área sin ellas.</div>'+
+ '<div style="margin-top:7px"><b>↔ Medir y los números</b><br>'+
+ 'Arrastra de un punto a otro y queda puesta la medida, con su longitud. Los extremos se pegan a '+
+ 'los vértices, a los puntos medios y a la cuadrícula. Tocando una medida sin arrastrar, se quita. '+
+ 'En <b>Ver</b>, «Las medidas, con…» cambia lo que ponen las acotaciones de la figura de partida: '+
+ '<b>b = 6</b>, solo <b>b</b> o solo <b>6</b>. Con el número basta para trabajar sin una sola letra; '+
+ 'con la letra sola, para no dar la medida hecha.<br>'+
+ 'La casilla <b>Comprobaciones</b> saca el recuento de piezas, el área total que suman, las medidas '+
+ 'de la figura de partida y, si hay una sola pieza seleccionada, lo que mide cada uno de sus lados. '+
+ 'Viene apagada porque casi siempre es mejor llevar tú la cuenta.</div>'+
+ '<div style="margin-top:7px"><b>Volver atrás</b><br>'+
+ 'Ctrl+Z deshace el último paso. <b>Volver a empezar</b> recompone la figura dejando puestas las '+
+ 'medidas, y <b>Limpiar</b>, en la barra de arriba, deja el tablero como recién abierto.</div>'+
+ '<div style="margin-top:7px"><b>Sin fórmulas y sin letras</b><br>'+
+ 'Con la cuadrícula puesta y las medidas en números, esto se puede usar sin álgebra ninguna: se '+
+ 'corta, se arma el rectángulo, se cuentan los cuadros de un lado y los del otro, y se multiplica. '+
+ 'Cada figura que sale es distinta, así que la cuenta hay que rehacerla; lo que no cambia es cómo se '+
+ 'llega al rectángulo. Ahí es donde puede aparecer, después de unas cuantas, que el rectángulo tiene '+
+ 'siempre algo que ver con la figura de la que salió.</div>'+
+ '<div style="margin-top:7px"><b>Para investigar</b><br>'+
+ '¿Cuántos cortes hacen falta para pasar de un paralelogramo a un rectángulo? ¿Y si lo tumbas mucho, '+
+ 'sigue bastando con uno? ¿Cuánto miden la base y la altura del rectángulo que sale, comparadas con '+
+ 'las del paralelogramo de partida? Con el rombo y con el deltoide, ¿qué tienen que ver los lados del '+
+ 'rectángulo con las diagonales? En el triángulo, ¿por dónde hay que cortar para que la pieza de '+
+ 'arriba encaje debajo, y por qué el obtusángulo se resiste? ¿Y si en vez de cortarlo lo duplicas? '+
+ 'En los tres trapecios, ¿vale el mismo camino para los tres? En el polígono regular, ¿de qué depende '+
+ 'la base del rectángulo y de qué la altura? Y al ir subiendo el número de lados con la '+
+ 'circunferencia puesta, ¿hacia qué se van acercando el perímetro y la apotema?</div>'+
+ '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+}
+
+function updateUI(){
+  var hay=sel.length>0;
+  /* «Quitar la copia» se queda activo con cualquier selección, no solo con
+     copias. Apagado era invisible —que es lo que pasó: parecía que no existía y
+     que Supr era la única forma— y además, al pulsarlo con una pieza de la
+     figura, lo que sale es la explicación de por qué esa no se tira. */
+  ['gIzq','gDer','voltea','duplica','quitaCopia'].forEach(function(id){
+    document.getElementById(id).disabled=!hay; });
+
+  cuentasEl.classList.toggle('show', !!opt.comp);
+  if(opt.comp){
+    var at=0, sinCopias=0, ncop=0;
+    piezas.forEach(function(p){
+      var a=area(p.v); at+=a;
+      if(p.dup) ncop++; else sinCopias+=a;
+    });
+    var h='<div>'+piezas.length+(piezas.length===1?' pieza':' piezas')+
+          (ncop? ' <span style="color:#8a919c">('+ncop+(ncop===1?' es copia)':' son copias)')+'</span>':'')+
+          '</div>'+
+          '<div>Área total: <b>'+num(at,3)+' u²</b></div>'+
+          (ncop? '<div>Sin las copias: <b>'+num(sinCopias,3)+' u²</b></div>' : '');
+    if(fig){
+      h+='<div class="tot">Figura de partida<br>Perímetro: <b>'+num(perimetro(fig.v),3)+' u</b>';
+      if(fig.circ){
+        var n=fig.v.length;
+        h+='<br>Apotema: <b>'+num(fig.circ.r*Math.cos(Math.PI/n),3)+' u</b>'+
+           '<br>Radio: <b>'+num(fig.circ.r,3)+' u</b>'+
+           '<br>Longitud de la circunferencia: <b>'+num(2*Math.PI*fig.circ.r,3)+' u</b>';
+      }
+      h+='</div>';
+    }
+    cuentasEl.innerHTML=h;
+  }
+
+  var t;
+  if(flashMsg && Date.now()-flashT<2200) t=flashMsg;
+  else if(modo==='dibujar') t='Marca los vértices sobre la cuadrícula · cierra tocando el primero o con Intro · Retroceso quita el último';
+  else if(modo==='cortar' && corte) t='Sigue marcando por dónde pasa el corte · termina tocando el borde · Retroceso quita el último punto';
+  else if(modo==='cortar') t='Toca el borde de una pieza para empezar el corte';
+  else if(modo==='abanico') t='Toca un punto de una pieza: se parte en triángulos desde ahí';
+  else if(modo==='medir') t='Arrastra de un punto a otro para dejar puesta una medida · tócala para quitarla';
+  else if(sel.length>1) t=sel.length+' piezas seleccionadas · el tirador ⟳ las gira juntas · V les da la vuelta · D las duplica';
+  else if(sel.length===1) t='Q y E giran · V da la vuelta · D duplica · al soltar, el imán casa los lados iguales';
+  else t='Arrastra las piezas · marco en el hueco para coger varias · ✂ para cortar';
+  hintEl.textContent=t;
+}
+
+/* =========================================================================
+   8. ARRANQUE
+   ========================================================================= */
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr));
+  cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+(function init(){
+  montaFigura({tipo:'paralelogramo', par:FIG.paralelogramo.sortea()});
+  undoStack=[];
+  resize();
+})();
+
+/* =========================================================================
+   9. AUTOCOMPROBACIÓN  ·  añade #test al final de la dirección
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){
+    out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':''));
+    if(!c) fails++;
+  }
+  function grados(r){ return Math.round(r*180/Math.PI*1000)/1000; }
+
+  var antesFig = fig? JSON.parse(JSON.stringify(fig.def)) : null;
+  var antesP=piezas, antesM=medidas, antesS=sel, antesZ=view.z;
+  var antesRej=opt.rejilla, antesIman=opt.iman, antesRot=opt.rot;
+
+  try{
+
+  view.z=52;
+  /* cada pieza de prueba con su id: si comparten id, el imán toma por «móvil»
+     también la que debería estar quieta y no encuentra nada con que casar */
+  function mk(v){ return {id:nid++, c:0, v:orienta(copiaV(v))}; }
+  function iguales(a,b,e){ return dist(a,b)<(e===undefined?1e-9:e); }
+  function tieneVertice(p,Q,e){
+    return p.v.some(function(q){ return iguales(q,Q,e); });
+  }
+
+  /* --- las figuras de partida ------------------------------------------------ */
+  var pl=FIG.paralelogramo.construye({b:6,h:4,d:2});
+  ok('el paralelogramo de base 6 y altura 4 tiene área 24', Math.abs(area(pl.v)-24)<1e-12, num(area(pl.v)));
+  ok('y es un polígono simple y convexo de cuatro lados',
+     pl.v.length===4 && esSimple(pl.v) && esConvexo(pl.v));
+  ok('sus lados opuestos son paralelos e iguales', (function(){
+      var v=pl.v;
+      return Math.abs(dist(v[0],v[1])-dist(v[2],v[3]))<1e-12 &&
+             Math.abs(dist(v[1],v[2])-dist(v[3],v[0]))<1e-12 &&
+             Math.abs((v[1].x-v[0].x)-(v[2].x-v[3].x))<1e-12 &&
+             Math.abs((v[1].y-v[0].y)-(v[2].y-v[3].y))<1e-12;
+    })());
+  ok('el pie de la altura del paralelogramo cae dentro de la base', (function(){
+      var mal=0;
+      for(var k=0;k<200;k++){
+        var p=FIG.paralelogramo.sortea();
+        if(!(p.d>0 && p.d<p.b)) mal++;
+      }
+      return mal===0;
+    })());
+
+  var ro=FIG.rombo.construye({D:8,d:6});
+  ok('el rombo de diagonales 8 y 6 tiene área D·d/2 = 24', Math.abs(area(ro.v)-24)<1e-12, num(area(ro.v)));
+  ok('sus cuatro lados miden lo mismo', (function(){
+      var L=dist(ro.v[0],ro.v[1]);
+      return ro.v.every(function(A,i){ return Math.abs(dist(A, ro.v[(i+1)%4])-L)<1e-12; });
+    })(), num(dist(ro.v[0],ro.v[1]),4));
+  ok('y sus diagonales son perpendiculares',
+     Math.abs((ro.v[2].x-ro.v[0].x)*(ro.v[3].x-ro.v[1].x)+
+              (ro.v[2].y-ro.v[0].y)*(ro.v[3].y-ro.v[1].y))<1e-12);
+
+  var de=FIG.deltoide.construye({q:3,p:5,r:2});
+  ok('el deltoide de diagonales 7 y 6 tiene área D·d/2 = 21', Math.abs(area(de.v)-21)<1e-12, num(area(de.v)));
+  ok('tiene dos pares de lados iguales contiguos, y no es un rombo', (function(){
+      var L=[0,1,2,3].map(function(i){ return dist(de.v[i], de.v[(i+1)%4]); });
+      return Math.abs(L[0]-L[3])<1e-12 && Math.abs(L[1]-L[2])<1e-12 && Math.abs(L[0]-L[1])>0.1;
+    })());
+  ok('y es convexo', esConvexo(de.v) && esSimple(de.v));
+
+  function angulos(v){
+    var n=v.length, o=[];
+    for(var i=0;i<n;i++){
+      var A=v[(i-1+n)%n], B=v[i], C=v[(i+1)%n];
+      var a1=Math.atan2(A.y-B.y,A.x-B.x), a2=Math.atan2(C.y-B.y,C.x-B.x);
+      var g=Math.abs(a1-a2); if(g>Math.PI) g=2*Math.PI-g;
+      o.push(grados(g));
+    }
+    return o;
+  }
+  ok('el triángulo acutángulo lo es de verdad, siempre', (function(){
+      var mal=[];
+      for(var k=0;k<300;k++){
+        var p=FIG.triAcu.sortea(), f=FIG.triAcu.construye(p);
+        var g=angulos(f.v);
+        if(Math.max.apply(null,g)>=90) mal.push(JSON.stringify(p)+'→'+Math.max.apply(null,g)+'°');
+      }
+      return mal.length===0? true : mal.slice(0,3).join(' ');
+    })()===true);
+  ok('el triángulo obtusángulo tiene un ángulo mayor de 90° y el pie de la altura fuera de la base',
+     (function(){
+      var mal=[];
+      for(var k=0;k<300;k++){
+        var p=FIG.triObt.sortea(), f=FIG.triObt.construye(p);
+        var g=angulos(f.v), x=f.v[2].x;
+        if(Math.max.apply(null,g)<=90.0001 || x<=p.b) mal.push(JSON.stringify(p));
+      }
+      return mal.length===0;
+    })());
+  var ta=FIG.triAcu.construye({b:6,h:5,x:3});
+  ok('el triángulo de base 6 y altura 5 tiene área 15', Math.abs(area(ta.v)-15)<1e-12, num(area(ta.v)));
+
+  var trec=FIG.triRec.construye({b:6,h:4,lado:1});
+  ok('el triángulo rectángulo de catetos 6 y 4 tiene área 12',
+     Math.abs(area(trec.v)-12)<1e-12, num(area(trec.v)));
+  ok('y tiene un ángulo de 90° exacto, mire hacia donde mire', (function(){
+      for(var s=-1;s<=1;s+=2){
+        var f=FIG.triRec.construye({b:6,h:4,lado:s});
+        var g=angulos(f.v).map(function(x){ return Math.round(x*1e9)/1e9; });
+        if(g.indexOf(90)<0) return false;
+        if(!esSimple(f.v)) return false;
+      }
+      return true;
+    })());
+  ok('los dos triángulos rectángulos que sortea son distintos pero de la misma área', (function(){
+      var a=FIG.triRec.construye({b:5,h:3,lado:1}), b=FIG.triRec.construye({b:5,h:3,lado:-1});
+      return Math.abs(area(a.v)-area(b.v))<1e-12 &&
+             JSON.stringify(a.v)!==JSON.stringify(b.v);
+    })());
+
+  var tr=FIG.trapecio.construye({B:8,b:4,h:4,o:2});
+  ok('el trapecio de bases 8 y 4 y altura 4 tiene área (B+b)·h/2 = 24',
+     Math.abs(area(tr.v)-24)<1e-12, num(area(tr.v)));
+  ok('los tres trapecios salen siempre convexos', (function(){
+      var t=['trapecio','trapIso','trapRec'];
+      for(var j=0;j<t.length;j++){
+        for(var k=0;k<200;k++){
+          var f=FIG[t[j]].construye(FIG[t[j]].sortea());
+          if(!esConvexo(f.v) || !esSimple(f.v)) return t[j];
+        }
+      }
+      return true;
+    })()===true);
+  ok('el trapecio isósceles tiene los lados no paralelos iguales', (function(){
+      for(var k=0;k<200;k++){
+        var f=FIG.trapIso.construye(FIG.trapIso.sortea()).v;
+        if(Math.abs(dist(f[1],f[2])-dist(f[3],f[0]))>1e-12) return false;
+      }
+      return true;
+    })());
+  ok('el trapecio rectángulo tiene dos ángulos de 90° juntos', (function(){
+      for(var s=-1;s<=1;s+=2){
+        var f=FIG.trapRec.construye({B:8,b:3,h:4,lado:s});
+        var g=angulos(f.v).map(function(x){ return Math.round(x*1e9)/1e9; });
+        var rectos=g.filter(function(x){ return x===90; });
+        if(rectos.length!==2) return false;
+      }
+      return true;
+    })());
+  ok('y el trapecio «cualquiera» no es ni isósceles ni rectángulo por casualidad', (function(){
+      for(var k=0;k<400;k++){
+        var f=FIG.trapecio.construye(FIG.trapecio.sortea()).v;
+        if(Math.abs(dist(f[1],f[2])-dist(f[3],f[0]))<1e-9) return 'salió isósceles';
+        var g=angulos(f).map(function(x){ return Math.round(x*1e6)/1e6; });
+        if(g.indexOf(90)>=0) return 'salió rectángulo';
+      }
+      return true;
+    })()===true);
+
+  /* --- el polígono regular y la circunferencia -------------------------------- */
+  var he=FIG.regular.construye({n:6});
+  ok('el hexágono regular tiene los seis lados iguales', (function(){
+      var L=dist(he.v[0],he.v[1]);
+      return he.v.every(function(A,i){ return Math.abs(dist(A,he.v[(i+1)%6])-L)<1e-12; });
+    })(), num(dist(he.v[0],he.v[1]),4));
+  ok('y los seis ángulos iguales, de 120°',
+     angulos(he.v).every(function(g){ return Math.abs(g-120)<1e-6; }));
+  ok('en el hexágono regular el lado mide lo mismo que el radio',
+     Math.abs(dist(he.v[0],he.v[1])-R_REG)<1e-9, num(dist(he.v[0],he.v[1]),5));
+  ok('el lado de abajo es horizontal, que es donde se acota',
+     Math.abs(he.v[5].y-he.v[0].y)<1e-12 && he.v[0].x>he.v[5].x);
+  ok('la apotema del polígono regular de n lados vale R·cos(π/n)', (function(){
+      for(var n=3;n<=30;n++){
+        var f=FIG.regular.construye({n:n});
+        var apo=distSeg(P(0,0), f.v[n-1], f.v[0]).d;
+        if(Math.abs(apo-R_REG*Math.cos(Math.PI/n))>1e-9) return false;
+      }
+      return true;
+    })());
+  ok('el área del polígono regular coincide con perímetro·apotema/2', (function(){
+      for(var n=3;n<=30;n++){
+        var f=FIG.regular.construye({n:n});
+        var apo=R_REG*Math.cos(Math.PI/n);
+        if(Math.abs(area(f.v)-perimetro(f.v)*apo/2)>1e-9) return false;
+      }
+      return true;
+    })());
+  ok('todos los vértices están sobre la circunferencia de radio 4', (function(){
+      var f=FIG.regular.construye({n:11});
+      return f.v.every(function(q){ return Math.abs(Math.hypot(q.x,q.y)-R_REG)<1e-12; });
+    })());
+  /* lo del ejercicio del círculo: al subir n, perímetro y apotema crecen sin
+     pasarse de la circunferencia y del radio */
+  ok('al crecer n, el perímetro crece y nunca llega a 2πR', (function(){
+      var ant=0, L=2*Math.PI*R_REG;
+      for(var n=3;n<=60;n++){
+        var pp=perimetro(FIG.regular.construye({n:n}).v);
+        if(pp<=ant || pp>=L-1e-12) return false;
+        ant=pp;
+      }
+      return Math.abs(ant-L)<0.05;
+    })(), 'n=60 → '+num(perimetro(FIG.regular.construye({n:60}).v),4)+' frente a '+num(2*Math.PI*R_REG,4));
+  ok('y la apotema crece y nunca llega a R', (function(){
+      var ant=0;
+      for(var n=3;n<=60;n++){
+        var a=R_REG*Math.cos(Math.PI/n);
+        if(a<=ant || a>=R_REG) return false;
+        ant=a;
+      }
+      return R_REG-ant<0.02;
+    })(), 'n=60 → apotema '+num(R_REG*Math.cos(Math.PI/60),5));
+
+  /* --- que «Ajustar» deje ver también las acotaciones ------------------------- */
+  ok('al ajustar la vista, ninguna acotación se queda fuera del tablero', (function(){
+      var r=stage.getBoundingClientRect();
+      if(!r.width || !r.height) return 'sin tablero medido';
+      var tipos=Object.keys(FIG).filter(function(t){ return t!=='libre'; });
+      for(var j=0;j<tipos.length;j++){
+        for(var it=0;it<12;it++){
+          var par = tipos[j]==='regular'? {n:3+it*2} : FIG[tipos[j]].sortea();
+          montaFigura({tipo:tipos[j], par:par}, true);
+          fitView();
+          var lim={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
+          var mete=function(p){
+            var s=w2s(p);
+            lim.x0=Math.min(lim.x0,s.x); lim.x1=Math.max(lim.x1,s.x);
+            lim.y0=Math.min(lim.y0,s.y); lim.y1=Math.max(lim.y1,s.y);
+          };
+          fig.v.forEach(mete);
+          fig.acot.forEach(function(A){
+            mete(A.a); mete(A.b); if(A.c) mete(A.c);
+            if(A.est==='dim' && A.off){
+              var u=normaliza(P(A.b.x-A.a.x, A.b.y-A.a.y)), per=P(-u.y,u.x);
+              mete(P(A.a.x+per.x*A.off, A.a.y+per.y*A.off));
+              mete(P(A.b.x+per.x*A.off, A.b.y+per.y*A.off));
+            }
+          });
+          if(lim.x0<2 || lim.y0<2 || lim.x1>r.width-2 || lim.y1>r.height-2)
+            return tipos[j]+' '+JSON.stringify(par);
+        }
+      }
+      return true;
+    })()===true);
+
+  /* --- el corte -------------------------------------------------------------- */
+  var pz=mk(pl.v);
+  var r1=cortaPoli(pz.v, [P(2,4), P(2,0)]);
+  ok('el corte por la altura parte el paralelogramo en dos piezas', !!r1 && r1.length===2);
+  ok('y las dos áreas suman la de partida',
+     !!r1 && Math.abs(area(r1[0])+area(r1[1])-24)<1e-12,
+     r1? num(area(r1[0]))+' + '+num(area(r1[1])) : '—');
+  ok('el trozo que se separa es el triángulo de área d·h/2 = 4',
+     !!r1 && Math.abs(Math.min(area(r1[0]),area(r1[1]))-4)<1e-12);
+  ok('llevando ese triángulo al otro lado, lo que sale es el rectángulo de 6 por 4', (function(){
+      if(!r1) return false;
+      var chico = area(r1[0])<area(r1[1]) ? r1[0] : r1[1];
+      var grande= area(r1[0])<area(r1[1]) ? r1[1] : r1[0];
+      var movido= chico.map(function(q){ return P(q.x+6, q.y); });
+      var caja=cajaDe([movido, grande]);
+      var an=caja.x1-caja.x0, al=caja.y1-caja.y0;
+      return Math.abs(an-6)<1e-12 && Math.abs(al-4)<1e-12 &&
+             Math.abs(area(movido)+area(grande)-an*al)<1e-12;
+    })());
+
+  /* la polilínea que dobla en el centro: sin ella no se puede sacar un
+     triángulo de un polígono regular de un número impar de lados */
+  var h7=FIG.regular.construye({n:7});
+  var r7=cortaPoli(h7.v, [h7.v[0], P(0,0), h7.v[1]]);
+  ok('en el heptágono, el corte que dobla en el centro separa un triángulo', (function(){
+      if(!r7) return false;
+      var chico = area(r7[0])<area(r7[1]) ? r7[0] : r7[1];
+      return chico.length===3 && Math.abs(area(chico)-area(h7.v)/7)<1e-12;
+    })(), r7? r7[0].length+' y '+r7[1].length+' vértices' : '—');
+  ok('y lo que queda es el polígono de 8 vértices con las otras seis séptimas partes',
+     (function(){
+      if(!r7) return false;
+      var grande = area(r7[0])<area(r7[1]) ? r7[1] : r7[0];
+      return grande.length===8 && Math.abs(area(grande)-area(h7.v)*6/7)<1e-12;
+    })());
+
+  ok('cortar por los puntos medios de dos lados de un triángulo da otro triángulo semejante de razón 1/2',
+     (function(){
+      var t=FIG.triAcu.construye({b:6,h:5,x:3}).v;
+      var c=cortaPoli(t, [med(t[1],t[2]), med(t[2],t[0])]);
+      if(!c) return false;
+      var chico = area(c[0])<area(c[1]) ? c[0] : c[1];
+      var L0=[0,1,2].map(function(i){ return dist(t[i], t[(i+1)%3]); }).sort(function(a,b){return a-b;});
+      var L1=[0,1,2].map(function(i){ return dist(chico[i], chico[(i+1)%3]); }).sort(function(a,b){return a-b;});
+      return chico.length===3 && Math.abs(area(chico)-area(t)/4)<1e-12 &&
+             L0.every(function(L,i){ return Math.abs(L/2-L1[i])<1e-12; });
+    })());
+
+  ok('un corte conserva el área en todas las figuras', (function(){
+      var tipos=['paralelogramo','rombo','deltoide','triAcu','triObt','trapecio'];
+      for(var k=0;k<tipos.length;k++){
+        for(var it=0;it<40;it++){
+          var f=FIG[tipos[k]].construye(FIG[tipos[k]].sortea());
+          var n=f.v.length;
+          var A=med(f.v[0], f.v[1]), B=med(f.v[n>3?2:1], f.v[n>3?3:2]);
+          var c=cortaPoli(f.v, [A,B]);
+          if(!c) return 'no corta '+tipos[k];
+          if(Math.abs(area(c[0])+area(c[1])-area(f.v))>1e-9) return 'área '+tipos[k];
+        }
+      }
+      return true;
+    })()===true);
+
+  /* --- lo que el corte NO debe aceptar --------------------------------------- */
+  ok('un corte con un punto de en medio fuera de la pieza se rechaza',
+     cortaPoli(pl.v, [P(2,4), P(-3,2), P(2,0)])===null);
+  ok('un corte que empieza fuera del borde se rechaza',
+     cortaPoli(pl.v, [P(3,2), P(2,0)])===null);
+  ok('un corte que empieza y acaba en el mismo punto se rechaza',
+     cortaPoli(pl.v, [P(2,0), P(2,0)])===null);
+  ok('un corte que se sale y vuelve a entrar se rechaza',
+     cortaPoli(pl.v, [P(1,0), P(3,-2), P(5,0)])===null);
+  ok('esSimple detecta un cuadrilátero cruzado',
+     esSimple([P(0,0),P(2,0),P(0,2),P(2,2)])===false && esSimple([P(0,0),P(2,0),P(2,2),P(0,2)])===true);
+
+  /* --- el abanico ------------------------------------------------------------ */
+  var ab=abanicoPoli(he.v, P(0,0));
+  ok('el abanico desde el centro del hexágono da seis triángulos', !!ab && ab.length===6, ab&&ab.length);
+  ok('y los seis tienen la misma área',
+     !!ab && ab.every(function(t){ return Math.abs(area(t)-area(he.v)/6)<1e-12; }));
+  var ab7=abanicoPoli(h7.v, P(0,0));
+  ok('en el heptágono da siete triángulos iguales',
+     !!ab7 && ab7.length===7 && ab7.every(function(t){ return Math.abs(area(t)-area(h7.v)/7)<1e-12; }));
+  var p5=FIG.regular.construye({n:5}).v;
+  var ab5=abanicoPoli(p5, p5[0]);
+  ok('el abanico desde un vértice del pentágono da n−2 = 3 triángulos',
+     !!ab5 && ab5.length===3, ab5&&ab5.length);
+  ok('y sus áreas suman la del pentágono',
+     !!ab5 && Math.abs(ab5.reduce(function(s,t){ return s+area(t); },0)-area(p5))<1e-12);
+  ok('el abanico desde un punto de fuera no se hace', abanicoPoli(he.v, P(20,20))===null);
+
+  /* --- el imán --------------------------------------------------------------- */
+  opt.rejilla=0; opt.iman=1;
+  var T1=mk([P(0,0),P(4,0),P(1,3)]);
+  function giraCopia(v,C,ang,dx,dy){
+    var co=Math.cos(ang), si=Math.sin(ang);
+    return v.map(function(q){
+      var x=q.x-C.x, y=q.y-C.y;
+      return P(C.x+x*co-y*si+(dx||0), C.y+x*si+y*co+(dy||0));
+    });
+  }
+  var casado=[P(4,0),P(0,0),P(3,-3)];
+  var T2=mk(giraCopia(casado, P(2,0), 6*Math.PI/180, 0.08, -0.05));
+  piezas=[T1,T2]; sel=[];
+  var eng=enganche([T2]);
+  ok('el imán encuentra el lado que casa', !!eng && eng.tipo==='lado',
+     eng? eng.tipo+', giro '+num(grados(eng.ang),2)+'°' : 'ninguno');
+  aplicaIman([T2]);
+  ok('y deja los dos triángulos pegados exactamente por ese lado',
+     tieneVertice(T2,P(0,0)) && tieneVertice(T2,P(4,0)),
+     T2.v.map(function(q){ return '('+num(q.x,3)+','+num(q.y,3)+')'; }).join(' '));
+  ok('el paralelogramo que forman tiene el área de los dos triángulos',
+     Math.abs(area(T1.v)+area(T2.v)-12)<1e-9, num(area(T1.v)+area(T2.v)));
+  var T3=mk(giraCopia(casado, P(2,0), 0, 100, 0));
+  piezas=[T1,T3];
+  ok('el imán no engancha una pieza que está lejos', enganche([T3])===null);
+  var T4=mk(giraCopia(casado, P(2,0), 40*Math.PI/180, 0, 0));
+  piezas=[T1,T4];
+  ok('ni corrige un giro de 40°, que sería un salto que nadie ha pedido',
+     enganche([T4])===null);
+  var T5=mk(giraCopia(casado, P(2,0), 6*Math.PI/180, 0.08, -0.05));
+  piezas=[T1,T5]; opt.iman=0;
+  ok('con el imán apagado, no toca nada', aplicaIman([T5])===null);
+  opt.iman=1;
+
+  /* --- girar y dar la vuelta -------------------------------------------------- */
+  var G=mk([P(0,0),P(3,0),P(3,2),P(0,2)]);
+  piezas=[G]; sel=[G.id];
+  var firmaG=G.v.map(function(q){ return num(q.x,6)+','+num(q.y,6); }).join(' ');
+  opt.iman=0;
+  for(var kg=0;kg<24;kg++) gira(1);
+  ok('veinticuatro giros de 15° dejan la pieza como estaba',
+     G.v.every(function(q,i){ return dist(q, orienta([P(0,0),P(3,0),P(3,2),P(0,2)])[i])<1e-9; }),
+     G.v.map(function(q){ return num(q.x,4)+','+num(q.y,4); }).join(' '));
+  var areaG=area(G.v);
+  voltea();
+  ok('dar la vuelta conserva el área', Math.abs(area(G.v)-areaG)<1e-12);
+  ok('y deja la pieza recorrida en el mismo sentido', areaFirmada(G.v)>0);
+  voltea();
+  ok('darle la vuelta dos veces la devuelve',
+     G.v.map(function(q){ return num(q.x,6)+','+num(q.y,6); }).join(' ')===firmaG);
+  opt.iman=antesIman;
+
+  /* --- los puntos a los que se pega el cursor --------------------------------- */
+  opt.rejilla=0;
+  var pp=mk(pl.v);
+  var pie=candidatosBorde(pp, P(2.09,0.07), P(2,4));
+  ok('la punta del corte cae exacta en el pie de la altura sin tener que apuntar',
+     iguales(pie, P(2,0)), '('+num(pie.x,4)+', '+num(pie.y,4)+')');
+  var vtx=candidatosBorde(pp, P(5.9,0.08), null);
+  ok('y se pega a los vértices', iguales(vtx, P(6,0)), '('+num(vtx.x,4)+', '+num(vtx.y,4)+')');
+  var cen=candidatosDentro(mk(he.v), P(0.05,-0.04), null);
+  ok('por dentro se pega al centro de la figura', iguales(cen, P(0,0)),
+     '('+num(cen.x,4)+', '+num(cen.y,4)+')');
+  opt.rejilla=antesRej;
+
+  /* --- duplicar y tirar la copia ---------------------------------------------- */
+  /* el camino de los dos trapecios: juntar la figura con su gemela, armar el
+     doble y quedarse con la mitad */
+  montaFigura({tipo:'trapIso', par:{b:3,k:2,h:4}}, true);
+  var aTrap=area(piezas[0].v);
+  sel=[piezas[0].id];
+  duplica();
+  ok('duplicar deja dos piezas y la nueva viene marcada como copia',
+     piezas.length===2 && !piezas[0].dup && piezas[1].dup===1);
+  ok('y la copia mide exactamente lo mismo que el original',
+     Math.abs(area(piezas[1].v)-aTrap)<1e-12, num(aTrap,4));
+  ok('la selección pasa a la copia, que es la que se acaba de sacar',
+     sel.length===1 && sel[0]===piezas[1].id);
+  ok('el área del tablero es ahora el doble de la de la figura',
+     Math.abs(piezas.reduce(function(s,p){ return s+area(p.v); },0)-2*aTrap)<1e-12);
+  var cop=cortaPoli(piezas[1].v, [med(piezas[1].v[0],piezas[1].v[1]),
+                                  med(piezas[1].v[2],piezas[1].v[3])]);
+  corte={pieza:piezas[1], linea:[med(piezas[1].v[0],piezas[1].v[1]),
+                                 med(piezas[1].v[2],piezas[1].v[3])], vista:null, enBorde:false};
+  aplicaCorte();
+  ok('lo que se corta de una copia sigue siendo copia', !!cop &&
+     piezas.length===3 && piezas[1].dup===1 && piezas[2].dup===1 && !piezas[0].dup,
+     piezas.map(function(p){ return p.dup?'copia':'figura'; }).join(', '));
+  sel=[piezas[1].id, piezas[2].id];
+  quitaCopia();
+  ok('tirar las copias las quita y deja intacta la figura',
+     piezas.length===1 && !piezas[0].dup && Math.abs(area(piezas[0].v)-aTrap)<1e-12);
+  sel=[piezas[0].id];
+  quitaCopia();
+  ok('pero una pieza de la figura no se puede tirar', piezas.length===1);
+  duplica(); sel=[piezas[0].id, piezas[1].id];
+  quitaCopia();
+  ok('ni aunque vaya en la misma selección que una copia',
+     piezas.length===2, piezas.length+' piezas');
+
+  /* --- las acotaciones con letra, con número o con las dos -------------------- */
+  var acB={t:'b', n:6}, acL={t:'l', n:3.4641016};
+  opt.rot='ln'; ok('la acotación puede llevar la letra y el número', textoAcot(acB)==='b = 6', textoAcot(acB));
+  opt.rot='l';  ok('solo la letra, para no dar la medida hecha', textoAcot(acB)==='b', textoAcot(acB));
+  opt.rot='n';  ok('o solo el número, que es lo que hace falta sin álgebra', textoAcot(acB)==='6', textoAcot(acB));
+  ok('y los números que no son enteros salen con coma y dos decimales',
+     textoAcot(acL)==='3,46', textoAcot(acL));
+  opt.rot='ln';
+  ok('la acotación sin número enseña solo la letra', textoAcot({t:'B'})==='B');
+
+  /* --- la figura dibujada a mano ---------------------------------------------- */
+  dibujo={pts:[P(0,0),P(5,0),P(7,3),P(3,2),P(0,4)], vista:null};
+  cierraDibujo();
+  ok('la figura dibujada a mano se convierte en la pieza de partida',
+     !!fig && fig.def.tipo==='libre' && fig.v.length===5 && piezas.length===1,
+     fig? fig.v.length+' vértices, '+piezas.length+' pieza(s)' : '—');
+  ok('y vale aunque sea cóncava', !!fig && !esConvexo(fig.v) && esSimple(fig.v));
+  dibujo={pts:[P(0,0),P(4,0),P(0,4),P(4,4)], vista:null};
+  cierraDibujo();
+  ok('un contorno que se cruza no se acepta y sigue esperando vértices',
+     !!dibujo && dibujo.pts.length===4 && fig.def.tipo==='libre' && fig.v.length===5);
+  dibujo={pts:[P(0,0),P(3,0)], vista:null};
+  cierraDibujo();
+  ok('y con dos vértices, tampoco', !!dibujo && dibujo.pts.length===2);
+  dibujo=null;
+
+  /* --- guardar, abrir y deshacer ---------------------------------------------- */
+  montaFigura({tipo:'trapecio', par:{B:8,b:4,h:4,o:2}}, true);
+  var cc=cortaPoli(piezas[0].v, [P(2,4), P(2,0)]);
+  piezas=[nuevaPieza(cc[0]), nuevaPieza(cc[1], undefined, 1)];
+  medidas=[{a:P(0,0), b:P(8,0)}];
+  var firma=piezas.map(function(p){
+    return p.v.map(function(q){ return num(q.x,6)+','+num(q.y,6); }).join(' '); }).join(' | ');
+  var datos={formato:'figuras-equivalentes', version:1, figura:fig.def,
+    piezas:piezas.map(function(p){
+      return {c:p.c, d:p.dup?1:0, v:p.v.map(function(q){ return [q.x,q.y]; })}; }),
+    medidas:medidas.map(function(m){ return [m.a.x,m.a.y,m.b.x,m.b.y]; })};
+  loadData(JSON.parse(JSON.stringify(datos)));
+  ok('guardar y volver a abrir conserva las piezas',
+     piezas.map(function(p){
+       return p.v.map(function(q){ return num(q.x,6)+','+num(q.y,6); }).join(' '); }).join(' | ')===firma);
+  ok('y conserva las medidas puestas',
+     medidas.length===1 && Math.abs(dist(medidas[0].a, medidas[0].b)-8)<1e-12);
+  ok('y se acuerda de cuál era copia y cuál no',
+     !piezas[0].dup && piezas[1].dup===1,
+     piezas.map(function(p){ return p.dup?'copia':'figura'; }).join(', '));
+  ok('y la figura de partida, con sus letras',
+     !!fig && fig.def.tipo==='trapecio' && fig.acot.length===3);
+  ok('un archivo sin piezas se rechaza', limpiaPiezas([])===null && limpiaPiezas('nada')===null);
+  ok('y uno con coordenadas que no son números, también',
+     limpiaPiezas([{c:0, v:[[0,0],['ahí',1],[2,2]]}])===null);
+  ok('y uno con un contorno cruzado, también',
+     limpiaPiezas([{c:0, v:[[0,0],[2,0],[0,2],[2,2]]}])===null);
+
+  undoStack=[];
+  montaFigura({tipo:'paralelogramo', par:{b:6,h:4,d:2}}, true);
+  var n0=piezas.length;
+  corte={pieza:piezas[0], linea:[P(2,4), P(2,0)], vista:null, enBorde:false};
+  aplicaCorte();
+  ok('cortar deja dos piezas', piezas.length===n0+1, piezas.length);
+  doUndo();
+  ok('y deshacer devuelve la figura entera',
+     piezas.length===n0 && Math.abs(area(piezas[0].v)-24)<1e-9, piezas.length);
+
+  /* --- devolver el tablero como estaba --------------------------------------- */
+  if(antesFig) montaFigura(antesFig, true);
+  piezas=antesP; medidas=antesM; sel=antesS; view.z=antesZ;
+  opt.rejilla=antesRej; opt.iman=antesIman; opt.rot=antesRot;
+  corte=null; dibujo=null; undoStack=[];
+  actualizaPanel(); draw();
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+    try{ draw(); }catch(e2){}
+  }
+
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length
+                                         : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación de Figuras equivalentes</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var t=document.createElement('textarea'); t.value=texto; document.body.appendChild(t);
+    t.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(t); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__equiv={
+  test:runSelfTest, FIG:FIG, R:R_REG,
+  piezas:function(){ return piezas; }, fig:function(){ return fig; },
+  medidas:function(){ return medidas; }, sel:function(){ return sel; },
+  opt:opt, view:view, modo:function(){ return modo; },
+  area:area, areaFirmada:areaFirmada, perimetro:perimetro, centroide:centroide,
+  esSimple:esSimple, esConvexo:esConvexo, dentroPoli:dentroPoli, distBorde:distBorde,
+  cortaPoli:cortaPoli, abanicoPoli:abanicoPoli, enganche:enganche, aplicaIman:aplicaIman,
+  candidatosBorde:candidatosBorde, candidatosDentro:candidatosDentro,
+  montaFigura:montaFigura, nuevaFigura:nuevaFigura, nuevaPieza:nuevaPieza,
+  setModo:setModo, gira:gira, voltea:voltea, selecciona:selecciona,
+  duplica:duplica, quitaCopia:quitaCopia, textoAcot:textoAcot,
+  cierraDibujo:cierraDibujo, dibujo:function(v){ if(v!==undefined) dibujo=v; return dibujo; },
+  transforma:transforma, load:loadData, limpiaPiezas:limpiaPiezas,
+  redraw:draw, fit:function(){ fitView(); draw(); }, undo:doUndo,
+  corte:function(v){ if(v!==undefined) corte=v; return corte; }
+};
+
+})();
+</script>
+</body>
+</html>

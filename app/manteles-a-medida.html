@@ -1,0 +1,2198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Manteles a medida</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:#2b2f36;background:#fff;display:flex;height:100%;overflow:hidden}
+  #side{width:216px;flex:0 0 216px;border-right:1px solid #e6e8ec;padding:10px 10px;overflow:auto;
+        background:#fafbfc}
+  #side h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a919c;
+           margin:0 0 6px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;
+           text-overflow:ellipsis;clear:both}
+  #side h2.sep{margin-top:16px}
+  /* rótulo del material: sobrio, peso ligero y una línea fina debajo */
+  #side .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:2px 2px 10px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #e6e8ec;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  /* acotado a la barra: si no, se lo come también a los h2 del panel lateral,
+     que llevan la misma clase para separarse, y los deja en una raya de 1px */
+  #toolbar .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;
+       padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  .act{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:5px;
+       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:6px 8px;font-size:12px;
+       color:#3d4450;cursor:pointer;text-align:left;line-height:1.3}
+  .act:hover{background:#f0f2f5}
+  .act:disabled{opacity:.4;cursor:default}
+  .act kbd{font:11px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
+  select,input[type=text],input[type=number]{font:12px inherit;border:1px solid #d5d9e0;border-radius:6px;
+       padding:5px 6px;color:#2b2f36;background:#fff;width:100%}
+  select+select{margin-top:5px}
+  .fila{display:flex;gap:5px;align-items:stretch;margin-top:4px}
+  .fila > *{min-width:0}
+  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:4px 0;font-size:12.5px;
+        color:#3d4450;cursor:pointer;flex:1;text-align:center}
+  .mini:hover{background:#f0f2f5}
+  .mini:disabled{opacity:.35;cursor:default}
+  .cuenta{flex:1.4;display:flex;align-items:center;justify-content:center;gap:5px;
+          font-weight:600;font-size:12.5px;color:#2b2f36}
+  .cuenta svg{display:block;flex:0 0 auto}
+  .lab{font-size:11px;color:#8a919c;margin-top:7px}
+  .caja{margin-top:7px;font-size:11.5px;color:#4a515c;line-height:1.5;
+        background:#fff;border:1px solid #e6e8ec;border-radius:8px;padding:7px 8px}
+  .caja b{color:#2b2f36}
+  .caja .gr{font-size:15px;font-weight:700;color:#31527d}
+  .caja .mant{margin-top:6px;padding-top:6px;border-top:1px solid #eef0f3}
+  .caja .mant:first-child{margin-top:0;padding-top:0;border-top:0}
+  .nota{font-size:11px;color:#8a919c;line-height:1.5;margin-top:7px}
+  #stage{position:relative;flex:1;min-height:0;background:#fbfbfa}
+  canvas#cv{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:334px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:160px;flex:0 0 160px;padding:8px 7px}
+    .btn{padding:5px 7px;font-size:12px}
+    #info{width:calc(100% - 20px)}
+  }
+</style>
+</head>
+<body>
+
+  <aside id="side">
+    <div class="brand">Manteles a <b>medida</b></div>
+    <h2>El encargo</h2>
+    <div class="caja" id="panelEncargo"></div>
+    <select id="modo" style="margin-top:7px">
+      <option value="1" selected>Desde la unidad</option>
+      <option value="2">Desde otro mantel</option>
+    </select>
+    <select id="nivel">
+      <option value="0">Fácil</option>
+      <option value="1" selected>Normal</option>
+      <option value="2">Difícil</option>
+    </select>
+    <button class="act" id="nuevo">Nuevo encargo al azar</button>
+    <input type="text" id="aMano" placeholder="5/6" style="margin-top:5px"
+           title="Escribe cuánto tiene que medir el mantel encargado">
+    <button class="act" id="crear">Ese encargo</button>
+
+    <h2 class="sep">Partir la pieza</h2>
+    <div class="lab">En vertical, columnas</div>
+    <div class="fila">
+      <button class="mini" id="colMenos" disabled>−</button>
+      <div class="cuenta" id="ncol">—</div>
+      <button class="mini" id="colMas" disabled>+</button>
+    </div>
+    <div class="lab">En horizontal, filas</div>
+    <div class="fila">
+      <button class="mini" id="filMenos" disabled>−</button>
+      <div class="cuenta" id="nfil">—</div>
+      <button class="mini" id="filMas" disabled>+</button>
+    </div>
+    <div class="fila">
+      <button class="mini" id="entera" disabled>sin partir</button>
+    </div>
+
+    <h2 class="sep">Trozos</h2>
+    <button class="act" id="sacar" disabled>✂ Sacar un trozo<kbd>S</kbd></button>
+    <button class="act" id="separar" disabled>⁙ Separar en trozos<kbd>E</kbd></button>
+    <button class="act" id="unir" disabled>⬒ Unir en una pieza<kbd>J</kbd></button>
+    <button class="act" id="dupD" disabled>⧉ Duplicar a la derecha<kbd>D</kbd></button>
+    <button class="act" id="dupB" disabled>⧉ Duplicar debajo<kbd>B</kbd></button>
+    <button class="act" id="borrar" disabled>Quitar<kbd>Supr</kbd></button>
+
+    <h2 class="sep">Probar</h2>
+    <button class="act" id="probar" disabled>▶ Llevar al banco<kbd>P</kbd></button>
+    <div class="caja" id="panelBanco"></div>
+
+    <h2 class="sep" id="h2Medir">Comprobaciones</h2>
+    <div class="caja" id="panelMedir"></div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <button class="btn" id="vaciar" title="Volver a empezar este mismo encargo">Reiniciar</button>
+      <span class="sep"></span>
+      <label class="chk" title="Al soltar, los bordes y las marcas se enganchan a los de las demás piezas"><input type="checkbox" id="iman" checked>Imán</label>
+      <label class="chk" title="Escribe en cada trozo cuánto vale con la unidad"><input type="checkbox" id="etiq">Etiquetas</label>
+      <label class="chk" title="El programa lleva la cuenta de lo que pongas encima de tu mantel"><input type="checkbox" id="comp">Comprobaciones</label>
+      <button class="btn" id="transp" title="Los trozos se vuelven translúcidos y se ve lo que hay debajo">◑ Transparencia</button>
+      <span class="sep"></span>
+      <button class="btn" id="mano" title="Mover el tablero en vez de las piezas">✋</button>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar el tablero">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir lo de un archivo a lo que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo</div>
+    </div>
+  </main>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LA IDEA
+   Medir es comparar con una unidad. En «Manteles y servilletas» se daba la
+   unidad y se buscaba la medida; en «En busca de la unidad perdida» se daba
+   la medida y se buscaba la unidad. Aquí se dan las dos cosas y lo que falta
+   es el mantel: hay que FABRICARLO para que mida lo que dice el encargo.
+
+   Dos modos, que son dos problemas distintos:
+
+     · Desde la unidad. Está la unidad en el tablero. Un mantel de p/q u sale
+       de doblar la unidad en q partes y juntar p de ellas.
+
+     · Desde otro mantel. La unidad no aparece por ningún lado: lo que hay es
+       un mantel A del que se sabe la medida, r/s u. Ahora la unidad es un
+       intermediario que hay que rehacer, o que se puede saltar yendo directo:
+       si el encargo es p/q u, el mantel pedido mide (p·s)/(q·r) de A.
+
+   La restricción que lo gobierna todo: todas las piezas salen de partir la
+   referencia y de repetir trozos, así que las áreas se llevan con fracciones
+   exactas de enteros, nunca con decimales. Dos áreas son iguales o no lo son,
+   sin márgenes de tolerancia.
+
+   Y lo que hace que esto funcione con superficies: el mantel encargado queda
+   determinado por su ÁREA, no por su forma. Por eso el entorno no puede
+   juzgar lo que construye el alumno; y por eso no juzga nada. Se limita a
+   medir con la referencia y a decir qué sale.
+   ========================================================================= */
+var L=150;                 // el lado base, en píxeles
+var MAXD=12;               // partes máximas en cada dirección
+
+var CTROZO ={f:'#f4ead6', b:'#c2ab7d', t:'#7a6634'};   // trozo suelto
+var CUNI   ={f:'#dbe7f3', b:'#5b87bd', t:'#31527d'};   // la unidad
+var CREF   ={f:'#dfeadb', b:'#6f9a5f', t:'#3f5c35'};   // el mantel de referencia
+var CMANTEL={f:'#efdfea', b:'#a2649a', t:'#6b3d64'};   // tu mantel, en el banco
+
+/* =========================================================================
+   2. ESTADO
+   ========================================================================= */
+var piezas=[], sel=null, nid=1;
+var encargo=null;          // {modo, p,q, rp,rq, wp,wq,hp,hq}
+var banco=null;            // el rectángulo del panel de pruebas, en mundo
+var view={x:0,y:0,z:1};
+var drag=null, undoStack=[], importMode='replace';
+var opt={iman:1, etiq:0, mano:0, alfa:0, comp:0};
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop');
+var flashMsg=null, flashT=0;
+
+function w2s(p){ return {x:p.x*view.z+view.x, y:p.y*view.z+view.y}; }
+function s2w(p){ return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z}; }
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2400); }
+function pushUndo(){
+  undoStack.push(JSON.stringify({p:piezas, s:sel, n:nid, b:banco, e:encargo}));
+  if(undoStack.length>90) undoStack.shift();
+}
+function doUndo(){
+  if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var d=JSON.parse(undoStack.pop());
+  piezas=d.p; sel=d.s; nid=d.n||1; banco=d.b||null; encargo=d.e||null;
+  cacheEnc='';
+  draw();
+}
+
+/* =========================================================================
+   3. FRACCIONES
+   Aritmética exacta de enteros. Un área es siempre un par p/q reducido;
+   comparar dos áreas es multiplicar en cruz.
+   ========================================================================= */
+function mcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=a%b; a=b; b=t; } return a; }
+function reduce(p,q){ var d=mcd(p,q)||1; return {p:p/d, q:q/d}; }
+function igualFrac(a,b){ return a.p*b.q===b.p*a.q; }
+function sumaFrac(a,b){ return reduce(a.p*b.q+b.p*a.q, a.q*b.q); }
+function divFrac(a,b){ return reduce(a.p*b.q, a.q*b.p); }
+function multFrac(a,b){ return reduce(a.p*b.p, a.q*b.q); }
+function textoFrac(f){ return f.q===1 ? (f.p+'') : (f.p+'/'+f.q); }
+function leeFraccion(txt){
+  if(txt===null || txt===undefined) return null;
+  var s=String(txt).toLowerCase().replace(/\s+y\s+/g,' ').trim();
+  if(!s) return null;
+  var m;
+  if((m=s.match(/^(\d+)\s+(\d+)\s*\/\s*(\d+)$/))){
+    var e=+m[1], n=+m[2], d=+m[3];
+    if(!d) return null;
+    return reduce(e*d+n, d);
+  }
+  if((m=s.match(/^(\d+)\s*\/\s*(\d+)$/))){
+    if(!+m[2] || !+m[1]) return null;
+    return reduce(+m[1], +m[2]);
+  }
+  if((m=s.match(/^(\d+)$/))){ if(!+m[1]) return null; return {p:+m[1], q:1}; }
+  return null;
+}
+/* «5/6» o «5/6 desde 3/4»: la segunda fracción es la medida del mantel de
+   referencia, para poder preparar una sesión con un caso concreto */
+function leeEncargoTexto(txt){
+  if(txt===null || txt===undefined) return null;
+  var s=String(txt).toLowerCase().trim();
+  if(!s) return null;
+  var partes=s.split(/\s+(?:desde|con|a\s+partir\s+de|de\s+un\s+mantel\s+de)\s+/);
+  var obj=leeFraccion(partes[0]);
+  if(!obj) return null;
+  if(partes.length===1) return {obj:obj, ref:null};
+  if(partes.length>2) return null;
+  var ref=leeFraccion(partes[1]);
+  if(!ref) return null;
+  return {obj:obj, ref:ref};
+}
+
+/* =========================================================================
+   4. LOS ENCARGOS QUE PROPONE EL ENTORNO
+   Un encargo son dos fracciones: lo que tiene que medir el mantel (p/q de la
+   unidad) y lo que mide la referencia que se da (r/s de la unidad; en el modo
+   «desde la unidad» eso es 1/1, la propia unidad).
+
+   Se busca que el mantel pedido, la referencia y la unidad —que el alumno
+   puede querer rehacer por el camino— quepan todos en la pantalla, y que al
+   material le quede alguna manera de llegar.
+
+   Hay dos maneras, y de cuál esté disponible depende buena parte de lo que
+   cuesta el encargo:
+
+     · la RUTA DIRECTA, doblar la referencia de una vez en las n partes que
+       pide (p·s)/(q·r) reducido, y juntar m. Solo existe si n no pasa de las
+       partes en que se puede doblar una pieza.
+
+     · la RUTA POR LA UNIDAD, doblar la referencia en r partes —cada una es
+       entonces 1/s de unidad—, juntar s para rehacer la unidad y volver a
+       empezar desde ella. Existe siempre que r y q quepan en un doblez y la
+       unidad no pida demasiadas copias.
+
+   CÓMO SE REGULA LA DIFICULTAD. No con topes, sino con suelos: un nivel no
+   es «hasta cuánto puede llegar» sino «de qué denominadores se sortea». Si
+   solo se ponen máximos, el nivel difícil sigue sacando 3/2 tan a menudo como
+   el fácil, porque un tope no impide que salga un número pequeño.
+
+     · qs   los denominadores del encargo que ese nivel sortea. En difícil son
+            siete, nueve y once: primos o casi, que no se dejan doblar por
+            mitades y obligan a contar de verdad.
+     · rutaDirecta   si el nivel exige que la ruta directa exista (fácil y
+            normal, con n acotado) o que NO exista (difícil), que es lo que
+            obliga a construir por etapas en el modo desde otro mantel.
+   ========================================================================= */
+var MAXCOPIAS=9;           // copias como mucho para rehacer la unidad
+var NIVELES=[
+  {n:'Fácil',   qs:[2,3,4],     maxp:6,  maxm:8,  maxn:4,  rutaDirecta:1, maxs:4},
+  {n:'Normal',  qs:[3,4,5,6,8], maxp:9,  maxm:12, maxn:9,  rutaDirecta:1, maxs:6},
+  {n:'Difícil', qs:[7,9,11],    maxp:14, maxm:16, maxn:12, rutaDirecta:0, maxs:6}
+];
+/* formas de mantel agradables de mirar, en fracciones del lado base */
+var FORMAS=[
+  {wp:1,wq:1,hp:1,hq:1},
+  {wp:3,wq:2,hp:1,hq:1},
+  {wp:1,wq:1,hp:3,hq:2},
+  {wp:5,wq:4,hp:1,hq:1},
+  {wp:1,wq:1,hp:5,hq:4},
+  {wp:3,wq:2,hp:5,hq:4},
+  {wp:5,wq:4,hp:3,hq:2},
+  {wp:7,wq:4,hp:1,hq:1},
+  {wp:1,wq:1,hp:7,hq:4},
+  {wp:4,wq:3,hp:5,hq:4},
+  {wp:5,wq:4,hp:4,hq:3},
+  {wp:3,wq:2,hp:4,hq:3}
+];
+var CUADRADO={wp:1,wq:1,hp:1,hq:1};
+function areaForma(F){ return (F.wp/F.wq)*(F.hp/F.hq); }
+/* el paso directo: el mantel pedido mide (p·s)/(q·r) de la referencia */
+function pasoDirecto(p,q,r,s){ return reduce(p*s, q*r); }
+function hayRutaDirecta(p,q,r,s){
+  var m=pasoDirecto(p,q,r,s);
+  return m.q<=MAXD && m.p<=20;
+}
+function hayRutaPorLaUnidad(p,q,r,s){ return r<=MAXD && q<=MAXD && s<=MAXCOPIAS; }
+/* un encargo vale si al menos una de las dos rutas está al alcance, y si la
+   referencia y el mantel pedido no miden lo mismo */
+function alcanzable(p,q,r,s){
+  if(pasoDirecto(p,q,r,s).p===pasoDirecto(p,q,r,s).q) return false;
+  return hayRutaDirecta(p,q,r,s) || hayRutaPorLaUnidad(p,q,r,s);
+}
+function objetivoValido(p,q){
+  if(p===q) return false;                 // el encargo sería la propia unidad
+  if(mcd(p,q)!==1) return false;          // la fracción, ya irreducible
+  if(q>MAXD) return false;                // hay que poder doblar la unidad en q
+  var a=p/q;
+  return a>=0.3 && a<=2.6;
+}
+function referenciaValida(r,s){
+  if(r===s) return false;                 // entonces la referencia sería la unidad
+  if(mcd(r,s)!==1) return false;
+  if(r>MAXD) return false;                // doblarla en r partes da 1/s de unidad
+  if(s>MAXCOPIAS) return false;           // y hacen falta s de esas para la unidad
+  var a=r/s;
+  return a>=0.3 && a<=2.6;
+}
+/* que quepan en pantalla el mantel de referencia, la unidad y el pedido */
+function formaValida(F,p,q,r,s){
+  var ar=areaForma(F);
+  if(ar<0.85 || ar>2.05) return false;
+  var au=ar*s/r;                          // lo que ocuparía la unidad
+  if(au<0.45 || au>3.2) return false;
+  var ab=au*p/q;                          // lo que ocupa el mantel encargado
+  return ab>=0.3 && ab<=3.0;
+}
+function formasBuenas(p,q,r,s){
+  var out=[];
+  for(var k=0;k<FORMAS.length;k++) if(formaValida(FORMAS[k],p,q,r,s)) out.push(FORMAS[k]);
+  return out;
+}
+function referenciasPosibles(){
+  var out=[];
+  for(var r=1;r<=MAXD;r++) for(var s=1;s<=MAXCOPIAS;s++)
+    if(referenciaValida(r,s)) out.push({p:r,q:s});
+  return out;
+}
+function elige(lista){ return lista[Math.floor(Math.random()*lista.length)]; }
+/* la referencia cumple lo que pide el nivel: en fácil y normal, que la ruta
+   directa exista y quepa en n dobleces; en difícil, que NO exista, y que
+   quede sin embargo la de rehacer la unidad */
+function referenciaDelNivel(p,q,r,s,N){
+  if(!referenciaValida(r,s)) return false;
+  var m=pasoDirecto(p,q,r,s);
+  if(m.p===m.q) return false;                     // medirían lo mismo, no hay nada que hacer
+  if(N.rutaDirecta) return m.q<=Math.min(MAXD,N.maxn) && m.p<=N.maxm;
+  /* que el atajo no exista de verdad, no que salga largo: se exige que el
+     doblez que pediría no quepa en una pieza, no que pida muchos trozos */
+  return m.q>MAXD && hayRutaPorLaUnidad(p,q,r,s) && s<=N.maxs;
+}
+
+function encargoAlAzar(modo,nv){
+  var N=NIVELES[nv]||NIVELES[1];
+  for(var i=0;i<8000;i++){
+    /* el denominador se SORTEA de los del nivel, no se acota: es lo único que
+       impide que difícil siga sacando mitades y tercios */
+    var q=elige(N.qs), p=1+Math.floor(Math.random()*N.maxp);
+    if(!objetivoValido(p,q)) continue;
+    if(modo===1) return {modo:1, p:p,q:q, rp:1,rq:1,
+                         wp:CUADRADO.wp,wq:CUADRADO.wq,hp:CUADRADO.hp,hq:CUADRADO.hq};
+    var r=1+Math.floor(Math.random()*MAXD), s=1+Math.floor(Math.random()*MAXCOPIAS);
+    if(!referenciaDelNivel(p,q,r,s,N)) continue;
+    var buenas=formasBuenas(p,q,r,s);
+    if(!buenas.length) continue;
+    var F=elige(buenas);
+    return {modo:2, p:p,q:q, rp:r,rq:s, wp:F.wp,wq:F.wq,hp:F.hp,hq:F.hq};
+  }
+  return modo===2 ? {modo:2, p:5,q:6, rp:3,rq:4, wp:3,wq:2,hp:1,hq:1}
+                  : {modo:1, p:5,q:6, rp:1,rq:1, wp:1,wq:1,hp:1,hq:1};
+}
+/* el encargo que se pide a mano; devuelve null y el motivo si no se puede */
+function encargoConcreto(modo,obj,ref){
+  if(!obj) return null;
+  var f=reduce(obj.p,obj.q), p=f.p, q=f.q;
+  if(!objetivoValido(p,q)) return null;
+  if(modo===1) return {modo:1, p:p,q:q, rp:1,rq:1,
+                       wp:CUADRADO.wp,wq:CUADRADO.wq,hp:CUADRADO.hp,hq:CUADRADO.hq};
+  var lista = ref ? [reduce(ref.p,ref.q)] : referenciasPosibles();
+  var cands=[];
+  for(var i=0;i<lista.length;i++){
+    var R=lista[i];
+    if(!referenciaValida(R.p,R.q)) continue;
+    if(!alcanzable(p,q,R.p,R.q)) continue;
+    var buenas=formasBuenas(p,q,R.p,R.q);
+    for(var k=0;k<buenas.length;k++) cands.push({R:R, F:buenas[k]});
+  }
+  if(!cands.length) return null;
+  var c=elige(cands);
+  return {modo:2, p:p,q:q, rp:c.R.p,rq:c.R.q, wp:c.F.wp,wq:c.F.wq,hp:c.F.hp,hq:c.F.hq};
+}
+
+/* =========================================================================
+   5. LAS PIEZAS
+   Todas son rectángulos con ancho y alto guardados como fracciones del lado
+   base, para que partir y repetir sea exacto. a y b son las partes en que
+   está marcada la pieza; son solo marcas: no la rompen.
+
+   Tres clases de pieza:
+     'r'  la referencia, lo único que llega con la medida sabida. En el modo
+          desde la unidad es la propia unidad (1/1); en el otro, el mantel A.
+          Hay la de trabajo, a la izquierda, y la copia limpia del banco, que
+          es la que hace de patrón para medir.
+     'p'  un trozo suelto, de los que se corta y se repite.
+     't'  tu mantel, ya montado y llevado al banco. Es lo que se mide, y por
+          eso nunca lleva escrito cuánto vale.
+   ========================================================================= */
+function ancho(s){ return L*s.wp/s.wq; }
+function alto(s){ return L*s.hp/s.hq; }
+function areaDe(s){ return reduce(s.wp*s.hp, s.wq*s.hq); }
+function areaCelda(s){ return reduce(s.wp*s.hp, s.wq*s.hq*s.a*s.b); }
+function centro(s){ return {x:s.x+ancho(s)/2, y:s.y+alto(s)/2}; }
+
+function nuevaRef(E,P,esPatron){
+  return {id:nid++, tipo:'r', wp:E.wp, wq:E.wq, hp:E.hp, hq:E.hq, a:1, b:1,
+          pat:esPatron?1:0, fp:E.rp, fq:E.rq, x:P.x, y:P.y,
+          nombre: E.rp===E.rq ? 'u' : 'A'};
+}
+function nuevoTrozo(wf,hf,P){
+  return {id:nid++, tipo:'p', wp:wf.p, wq:wf.q, hp:hf.p, hq:hf.q, a:1, b:1,
+          pat:0, fp:0, fq:1, x:P.x, y:P.y, nombre:''};
+}
+function nuevoTuMantel(wf,hf,P){
+  return {id:nid++, tipo:'t', wp:wf.p, wq:wf.q, hp:hf.p, hq:hf.q, a:1, b:1,
+          pat:0, fp:0, fq:1, x:P.x, y:P.y, nombre:''};
+}
+function porId(id){
+  for(var i=0;i<piezas.length;i++) if(piezas[i].id===id) return piezas[i];
+  return null;
+}
+function seleccionada(){ return sel==null? null : porId(sel); }
+function marcasX(s){
+  var out=[];
+  if(s.a<2) return out;
+  for(var k=1;k<s.a;k++) out.push(s.x+ancho(s)*k/s.a);
+  return out;
+}
+function marcasY(s){
+  var out=[];
+  if(s.b<2) return out;
+  for(var k=1;k<s.b;k++) out.push(s.y+alto(s)*k/s.b);
+  return out;
+}
+function puntosX(s){ return [s.x, s.x+ancho(s)].concat(marcasX(s)); }
+function puntosY(s){ return [s.y, s.y+alto(s)].concat(marcasY(s)); }
+function dentro(P,s){
+  return P.x>=s.x && P.x<=s.x+ancho(s) && P.y>=s.y && P.y<=s.y+alto(s);
+}
+function caja(lista){
+  if(!lista.length) return null;
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  lista.forEach(function(s){
+    x0=Math.min(x0,s.x); x1=Math.max(x1,s.x+ancho(s));
+    y0=Math.min(y0,s.y); y1=Math.max(y1,s.y+alto(s));
+  });
+  return {x0:x0,y0:y0,x1:x1,y1:y1};
+}
+/* la caja de todo lo que se ve, panel del banco incluido, para ajustar y para
+   exportar la imagen */
+function cajaTodo(){
+  var b=caja(piezas);
+  if(!banco) return b;
+  if(!b) return {x0:banco.x, y0:banco.y, x1:banco.x+banco.w, y1:banco.y+banco.h};
+  return {x0:Math.min(b.x0,banco.x), y0:Math.min(b.y0,banco.y),
+          x1:Math.max(b.x1,banco.x+banco.w), y1:Math.max(b.y1,banco.y+banco.h)};
+}
+
+/* --- partir, sacar, separar, repetir ---------------------------------------
+   Las cuatro acciones con las que se construye todo. Ninguna inventa
+   medidas: parten de lo que ya hay en el tablero. */
+function parte(s,a,b){
+  if(!s) return false;
+  a=Math.max(1, Math.min(MAXD, Math.round(a)));
+  b=Math.max(1, Math.min(MAXD, Math.round(b)));
+  if(a===s.a && b===s.b) return false;
+  pushUndo();
+  s.a=a; s.b=b;
+  draw();
+  return true;
+}
+function sacarTrozo(s){
+  if(!s) return null;
+  pushUndo();
+  var wf=reduce(s.wp, s.wq*s.a), hf=reduce(s.hp, s.hq*s.b);
+  var t=nuevoTrozo(wf, hf, {x:s.x+ancho(s)+L*0.22, y:s.y});
+  piezas.push(t); sel=t.id;
+  draw();
+  return t;
+}
+function separar(s){
+  if(!s || s.tipo!=='p') return null;
+  if(s.a*s.b<2) return null;
+  pushUndo();
+  var wf=reduce(s.wp, s.wq*s.a), hf=reduce(s.hp, s.hq*s.b);
+  var an=L*wf.p/wf.q, al=L*hf.p/hf.q, hijos=[];
+  for(var j=0;j<s.b;j++) for(var i=0;i<s.a;i++){
+    var t=nuevoTrozo(wf, hf, {x:s.x+an*i, y:s.y+al*j});
+    hijos.push(t);
+  }
+  var k=piezas.indexOf(s);
+  if(k>=0) piezas.splice.apply(piezas, [k,1].concat(hijos));
+  else piezas=piezas.concat(hijos);
+  sel=hijos[0].id;
+  draw();
+  return hijos;
+}
+/* --- unir en una sola pieza -------------------------------------------------
+   Un mantel repartido en trozos se puede contar, pero no es todavía un
+   mantel. Unir solo es posible si los trozos embaldosan un rectángulo, que es
+   la forma que este material sabe partir en partes iguales; si no, hay que
+   recolocarlos. */
+function seSolapan(a,b){
+  var e=1e-6;
+  return a.x < b.x+ancho(b)-e && b.x < a.x+ancho(a)-e &&
+         a.y < b.y+alto(b)-e  && b.y < a.y+alto(a)-e;
+}
+/* el lado del rectángulo, en fracción exacta, sumando la fila de arriba (o la
+   columna de la izquierda) y exigiendo que vaya seguida y llegue al final */
+function ladoExacto(lista,ejeX){
+  var e=1e-6, b=caja(lista);
+  var borde=lista.filter(function(s){
+    return ejeX ? Math.abs(s.y-b.y0)<e : Math.abs(s.x-b.x0)<e; });
+  borde.sort(function(p,q){ return ejeX ? p.x-q.x : p.y-q.y; });
+  var cursor = ejeX ? b.x0 : b.y0, total={p:0,q:1};
+  for(var i=0;i<borde.length;i++){
+    var s=borde[i], ini = ejeX ? s.x : s.y;
+    if(Math.abs(ini-cursor)>e) return null;
+    cursor += ejeX ? ancho(s) : alto(s);
+    total = sumaFrac(total, ejeX ? reduce(s.wp,s.wq) : reduce(s.hp,s.hq));
+  }
+  return Math.abs(cursor-(ejeX? b.x1 : b.y1))<e ? total : null;
+}
+function rectanguloDe(lista){
+  if(!lista.length) return null;
+  var i,j;
+  for(i=0;i<lista.length;i++) for(j=i+1;j<lista.length;j++)
+    if(seSolapan(lista[i],lista[j])) return null;
+  var W=ladoExacto(lista,true), H=ladoExacto(lista,false);
+  if(!W || !H) return null;
+  /* que además lo llenen: sin esta comprobación, una ele o un rectángulo con
+     un hueco en medio colarían, porque su fila de arriba y su columna de la
+     izquierda pueden estar completas y el centro vacío */
+  var suma={p:0,q:1};
+  for(i=0;i<lista.length;i++) suma=sumaFrac(suma, areaDe(lista[i]));
+  if(!igualFrac(suma, reduce(W.p*H.p, W.q*H.q))) return null;
+  var b=caja(lista);
+  return {w:W, h:H, x:b.x0, y:b.y0};
+}
+function unir(s){
+  if(!s || s.tipo!=='p') return null;
+  var g=grupoDe(s);
+  if(g.length<2) return null;
+  var R=rectanguloDe(g);
+  if(!R) return null;
+  pushUndo();
+  var t=nuevoTrozo(R.w, R.h, {x:R.x, y:R.y});
+  piezas=piezas.filter(function(o){ return g.indexOf(o)<0; });
+  piezas.push(t); sel=t.id;
+  draw();
+  return t;
+}
+function duplicaEn(s,dir){
+  if(!s || s.tipo!=='p') return null;
+  pushUndo();
+  var dx = dir==='d' ? ancho(s) : 0;
+  var dy = dir==='b' ? alto(s) : 0;
+  var t={id:nid++, tipo:'p', wp:s.wp, wq:s.wq, hp:s.hp, hq:s.hq, a:s.a, b:s.b,
+         pat:0, fp:0, fq:1, x:s.x+dx, y:s.y+dy, nombre:''};
+  piezas.push(t); sel=t.id;
+  draw();
+  return t;
+}
+
+/* --- el imán --------------------------------------------------------------
+   Ojo con el cero: un enganche perfecto vale 0, que es falso en JavaScript.
+   La distancia se lleva aparte. */
+function engancheEje(s,puntosDe){
+  var lim=10/view.z, mios=puntosDe(s), mejor=null, dist=Infinity;
+  piezas.forEach(function(o){
+    if(o.id===s.id) return;
+    puntosDe(o).forEach(function(b){
+      mios.forEach(function(a){
+        var d=b-a;
+        if(Math.abs(d)<lim && Math.abs(d)<dist){ mejor=d; dist=Math.abs(d); }
+      });
+    });
+  });
+  return mejor;
+}
+function aplicaIman(s){
+  if(!opt.iman || !s) return false;
+  var dx=engancheEje(s,puntosX), dy=engancheEje(s,puntosY), algo=false;
+  if(dx!==null){ s.x+=dx; algo=true; }
+  if(dy!==null){ s.y+=dy; algo=true; }
+  return algo;
+}
+/* --- el grupo pegado -------------------------------------------------------- */
+function tocan(a,b){
+  var e=0.6;
+  return a.x < b.x+ancho(b)+e && b.x < a.x+ancho(a)+e &&
+         a.y < b.y+alto(b)+e  && b.y < a.y+alto(a)+e;
+}
+function grupoDe(s){
+  if(!s || s.tipo!=='p') return [];
+  var dentroG={}, pila=[s], out=[];
+  dentroG[s.id]=1;
+  while(pila.length){
+    var c=pila.pop(); out.push(c);
+    piezas.forEach(function(o){
+      if(o.tipo!=='p' || dentroG[o.id]) return;
+      if(tocan(c,o)){ dentroG[o.id]=1; pila.push(o); }
+    });
+  }
+  return out;
+}
+
+/* =========================================================================
+   6. EL BANCO DE PRUEBAS
+   El tablero tiene dos sitios. A la izquierda se construye: se dobla la
+   referencia, se sacan trozos y se juntan hasta tener lo que uno cree que es
+   el mantel encargado. A la derecha se prueba, y para eso el mantel tiene que
+   dejar de ser un montón de trozos y ser una pieza: «▶ Llevar al banco» coge
+   el grupo pegado, exige que forme un rectángulo —un mantel lo es— y monta el
+   banco con dos copias limpias, sin ninguna de las divisiones que se hayan
+   hecho para construir: tu mantel fundido en una pieza y la referencia otra
+   vez entera, que ahí hace de patrón.
+
+   Medir es entonces lo de siempre: doblar el patrón, sacar una parte y cubrir
+   con ella. Como del patrón se sabe cuánto mide en unidades, la cuenta se
+   puede dar en unidades, que es como está escrito el encargo.
+
+   El entorno sigue sin corregir: dice la fracción que sale de lo que hay
+   puesto, no si está acertado. Que cubra sin huecos ni solapes lo mira el
+   alumno.
+   ========================================================================= */
+function patron(){
+  for(var i=0;i<piezas.length;i++) if(piezas[i].tipo==='r' && piezas[i].pat) return piezas[i];
+  return null;
+}
+/* la referencia de trabajo: la que está fuera del banco, con la que se
+   construye */
+function refTrabajo(){
+  for(var i=piezas.length-1;i>=0;i--)
+    if(piezas[i].tipo==='r' && !piezas[i].pat) return piezas[i];
+  return null;
+}
+function refCualquiera(){ return refTrabajo() || patron(); }
+function tuMantel(){
+  for(var i=0;i<piezas.length;i++) if(piezas[i].tipo==='t') return piezas[i];
+  return null;
+}
+function dentroRect(P,r){
+  return !!r && P.x>=r.x && P.x<=r.x+r.w && P.y>=r.y && P.y<=r.y+r.h;
+}
+function enBanco(s){ return dentroRect(centro(s), banco); }
+/* cuánto vale un área en unidades, sabiendo lo que mide la referencia */
+function enU(area){
+  var R=refCualquiera();
+  if(!R) return null;
+  return multFrac(divFrac(area, areaDe(R)), reduce(R.fp,R.fq));
+}
+function valorCelda(s){ return enU(areaCelda(s)); }
+/* un trozo cuenta sobre tu mantel si su centro cae dentro. El patrón también:
+   iterar la referencia sobre lo que se mide es medir */
+function trozosSobre(m){
+  return piezas.filter(function(s){
+    return (s.tipo==='p' || s.tipo==='r') && s.id!==m.id && dentro(centro(s), m);
+  });
+}
+/* en cuántas partes está doblado el patrón y cuánto vale cada una en unidades */
+function partePatron(){
+  var P=patron();
+  if(!P) return null;
+  var mu=multFrac(divFrac(areaCelda(P), areaDe(P)), reduce(P.fp,P.fq));
+  return {area:areaCelda(P), N:P.a*P.b, mu:mu};
+}
+function medidaDe(m){
+  var P=patron();
+  if(!P) return {estado:'sin-patron'};
+  if(!m) return {estado:'sin-mantel'};
+  var T=trozosSobre(m);
+  if(!T.length) return {estado:'sin-trozos'};
+  var at={p:0,q:1};
+  for(var i=0;i<T.length;i++) at=sumaFrac(at, areaDe(T[i]));
+  var enPat=divFrac(at, areaDe(P));
+  var r={estado:'ok', n:T.length, pat:enPat, frac:multFrac(enPat, reduce(P.fp,P.fq))};
+  /* si lo que ha puesto son trozos todos iguales, la cuenta se da tal cual:
+     tantos trozos de los que valen cada uno lo suyo. Se mira que sean iguales
+     ENTRE SÍ, no que sean celdas del patrón: cuando el patrón no se deja
+     doblar de una vez en lo que hace falta, se mide con partes de algo
+     construido por el camino, y esa cuenta vale igual.
+     El total va SIN reducir: arriba las partes que caben, abajo en las que se
+     partió la unidad. */
+  var iguales=true;
+  for(i=1;i<T.length;i++) if(!igualFrac(areaDe(T[i]), areaDe(T[0]))) iguales=false;
+  if(iguales){
+    var mu=enU(areaDe(T[0]));
+    var Q=partePatron();
+    if(mu) r.cuenta={n:T.length, mu:mu, total:{p:T.length*mu.p, q:mu.q},
+                     delPatron: !!(Q && igualFrac(areaDe(T[0]), Q.area))};
+  }
+  return r;
+}
+/* --- montar el banco --------------------------------------------------------
+   Devuelve el motivo por el que no se ha podido, para poder decirlo. */
+function probar(s){
+  if(!s || s.tipo!=='p') return {ok:false, por:'sin-trozo'};
+  var g=grupoDe(s);
+  var R = g.length>1 ? rectanguloDe(g)
+                     : {w:reduce(s.wp,s.wq), h:reduce(s.hp,s.hq)};
+  if(!R) return {ok:false, por:'no-rectangulo', n:g.length};
+  var Rf=refTrabajo();
+  if(!Rf) return {ok:false, por:'sin-referencia'};
+  var E={wp:Rf.wp, wq:Rf.wq, hp:Rf.hp, hq:Rf.hq, rp:Rf.fp, rq:Rf.fq};
+  pushUndo();
+  /* fuera el banco anterior entero, con lo que hubiera dentro */
+  piezas=piezas.filter(function(o){ return !enBanco(o); });
+  var anT=L*R.w.p/R.w.q, alT=L*R.h.p/R.h.q;
+  var anP=L*E.wp/E.wq, alP=L*E.hp/E.hq;
+  var b=caja(piezas);
+  /* el hueco entre tu mantel y el patrón va holgado: los dos llevan cartel, y
+     el cartel se dibuja en pantalla mientras que el hueco se encoge con el
+     zoom, así que con manteles pequeños se pisarían */
+  var padX=L*0.34, padTop=L*0.62, padBot=L*0.5, hueco=L*0.62;
+  var x0 = b? b.x1+L*0.85 : 0, y0 = b? b.y0-L*0.25 : 0;
+  var tm=nuevoTuMantel(R.w, R.h, {x:x0+padX, y:y0+padTop});
+  var cp=nuevaRef(E, {x:x0+padX+anT+hueco, y:y0+padTop}, true);
+  banco={x:x0, y:y0,
+         w:padX*2+anT+hueco+anP,
+         h:padTop+Math.max(alT,alP)+padBot};
+  piezas.push(tm); piezas.push(cp);
+  sel=cp.id;
+  draw();
+  return {ok:true, mantel:tm, patron:cp, n:g.length};
+}
+
+/* --- poner un encargo en el tablero ------------------------------------------ */
+function ponEncargo(E){
+  if(!E) return null;
+  pushUndo();
+  encargo=E; banco=null;
+  var R=nuevaRef(E, {x:-L*E.wp/E.wq/2, y:-L*E.hp/E.hq/2}, false);
+  piezas=[R]; sel=R.id; cacheEnc='';
+  fitView();
+  return R;
+}
+function reinicia(){
+  if(!encargo) return;
+  pushUndo();
+  banco=null;
+  var R=nuevaRef(encargo, {x:-L*encargo.wp/encargo.wq/2, y:-L*encargo.hp/encargo.hq/2}, false);
+  piezas=[R]; sel=R.id;
+  fitView();
+}
+
+/* =========================================================================
+   7. DIBUJO
+   draw() repinta el tablero entero. Tu mantel debajo del todo, que es sobre
+   lo que se pone; encima la referencia y los trozos; y los carteles siempre
+   lo último, en coordenadas de pantalla, para que ni el zoom ni un trozo
+   puesto encima los tapen.
+   ========================================================================= */
+function colorDe(s){
+  if(s.tipo==='r') return (s.fp===s.fq) ? CUNI : CREF;
+  if(s.tipo==='t') return CMANTEL;
+  return CTROZO;
+}
+function rectRedondo(c,x,y,w,h,r){
+  r=Math.min(r, Math.abs(w)/2, Math.abs(h)/2);
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y);
+  c.closePath();
+}
+function etiquetaCabe(c,txt,anchoCelda,altoCelda){
+  if(!txt || altoCelda<13) return '';
+  return (c.measureText(txt).width+6<anchoCelda) ? txt : '';
+}
+/* la etiqueta lleva la unidad detrás, «1/3 u», que si no parece un número
+   suelto; si el trozo es estrecho se queda con la fracción y, si no cabe ni
+   eso, no se escribe nada */
+function etiquetaTrozo(c,v,anchoCelda,altoCelda){
+  var f=textoFrac(v);
+  return etiquetaCabe(c, f+' u', anchoCelda, altoCelda) ||
+         etiquetaCabe(c, f, anchoCelda, altoCelda);
+}
+function drawPieza(c,s,marcada){
+  var p=w2s({x:s.x, y:s.y});
+  var w=ancho(s)*view.z, h=alto(s)*view.z;
+  if(!isFinite(p.x)||!isFinite(p.y)||!isFinite(w)||!isFinite(h)) return;
+  var C=colorDe(s);
+  c.save();
+  if(opt.alfa && s.tipo==='p') c.globalAlpha=0.55;
+  c.save();
+  c.shadowColor='rgba(20,25,35,.13)'; c.shadowBlur=6; c.shadowOffsetY=2;
+  rectRedondo(c,p.x,p.y,w,h,3.5*view.z);
+  c.fillStyle=C.f; c.fill();
+  c.restore();
+
+  if(s.a>1 || s.b>1){
+    c.save();
+    rectRedondo(c,p.x,p.y,w,h,3.5*view.z); c.clip();
+    c.strokeStyle=C.b; c.lineWidth=Math.max(1.4, 1.8*view.z);
+    var k;
+    for(k=1;k<s.a;k++){
+      var X=p.x+w*k/s.a;
+      c.beginPath(); c.moveTo(X,p.y); c.lineTo(X,p.y+h); c.stroke();
+    }
+    for(k=1;k<s.b;k++){
+      var Y=p.y+h*k/s.b;
+      c.beginPath(); c.moveTo(p.x,Y); c.lineTo(p.x+w,Y); c.stroke();
+    }
+    c.restore();
+  }
+  /* las etiquetas dicen lo que vale cada celda EN UNIDADES. Tu mantel no se
+     etiqueta nunca: cuánto mide es justo lo que está en juego */
+  if(opt.etiq && s.tipo!=='t'){
+    var v=valorCelda(s);
+    if(v){
+      c.save();
+      c.fillStyle=C.t;
+      c.font=Math.max(8,Math.min(13,10*view.z))+'px -apple-system,Segoe UI,Roboto,sans-serif';
+      c.textAlign='center'; c.textBaseline='middle';
+      var txt=etiquetaTrozo(c, v, w/s.a, h/s.b);
+      if(txt) for(var i=0;i<s.a;i++) for(var j=0;j<s.b;j++)
+        c.fillText(txt, p.x+w*(i+0.5)/s.a, p.y+h*(j+0.5)/s.b);
+      c.restore();
+    }
+  }
+
+  rectRedondo(c,p.x,p.y,w,h,3.5*view.z);
+  c.lineWidth=marcada? 2.6 : (s.pat? 2 : 1.3);
+  c.strokeStyle=marcada? '#1f4e8c' : C.b;
+  c.stroke();
+  c.restore();
+}
+/* en el cartel de la referencia va lo que mide, que es el dato del problema;
+   en el de tu mantel no va ningún número, que es lo que se busca */
+function textoCartel(s){
+  if(s.tipo==='t') return 'tu mantel';
+  if(s.tipo!=='r') return '';
+  return s.fp===s.fq ? 'u' : s.nombre+' · '+textoFrac(reduce(s.fp,s.fq))+' u';
+}
+/* el cartel se dibuja en coordenadas de pantalla y el último de todo, para que
+   ni el zoom ni un trozo puesto encima lo tapen */
+function drawCartel(c,s,txt){
+  if(!txt) return;
+  var p=w2s({x:s.x, y:s.y});
+  c.save();
+  c.font='600 12px -apple-system,Segoe UI,Roboto,sans-serif';
+  var w=c.measureText(txt).width+15, h=21;
+  var x=p.x, y=p.y-h-5;
+  rectRedondo(c,x,y,w,h,7);
+  c.fillStyle=colorDe(s).b; c.fill();
+  c.fillStyle='#fff'; c.textAlign='left'; c.textBaseline='middle';
+  c.fillText(txt, x+7.5, y+h/2+0.5);
+  c.restore();
+}
+/* el banco: un panel rotulado que separa el sitio de construir del de probar */
+function rotuloBanco(){
+  return encargo ? 'PRUEBA TU MANTEL · TE PEDÍAN '+textoFrac({p:encargo.p,q:encargo.q})+' U'
+                 : 'PRUEBA TU MANTEL';
+}
+function drawBanco(c){
+  if(!banco) return;
+  var p=w2s({x:banco.x, y:banco.y});
+  var w=banco.w*view.z, h=banco.h*view.z;
+  if(!isFinite(p.x)||!isFinite(w)) return;
+  c.save();
+  rectRedondo(c,p.x,p.y,w,h,12);
+  c.fillStyle='#f3f5f8'; c.fill();
+  c.setLineDash([6,5]); c.lineWidth=1.4; c.strokeStyle='#c8cfd9'; c.stroke();
+  c.setLineDash([]);
+  /* el rótulo va FUERA, encima de la esquina: dentro se lo comen los carteles,
+     porque el hueco de arriba se encoge con el zoom y el cartel no */
+  c.font='600 11.5px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.fillStyle='#8a919c'; c.textAlign='left'; c.textBaseline='bottom';
+  c.fillText(rotuloBanco(), p.x+2, p.y-6);
+  c.restore();
+}
+function drawTodo(c){
+  drawBanco(c);
+  piezas.forEach(function(s){ if(s.tipo==='t') drawPieza(c,s,s.id===sel); });
+  piezas.forEach(function(s){ if(s.tipo==='r') drawPieza(c,s,s.id===sel); });
+  piezas.forEach(function(s){ if(s.tipo==='p') drawPieza(c,s,s.id===sel); });
+  piezas.forEach(function(s){ if(s.tipo==='t' || s.tipo==='r') drawCartel(c,s,textoCartel(s)); });
+}
+function draw(){
+  var W=cv.width/(window.devicePixelRatio||1), H=cv.height/(window.devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fbfbfa'; ctx.fillRect(0,0,W,H);
+  drawTodo(ctx);
+  updateUI();
+}
+
+/* =========================================================================
+   8. INTERACCIÓN
+   ========================================================================= */
+function pos(e){
+  var r=stage.getBoundingClientRect();
+  return {x:e.clientX-r.left, y:e.clientY-r.top};
+}
+function piezaEn(P){
+  var i;
+  for(i=piezas.length-1;i>=0;i--) if(piezas[i].tipo==='p' && dentro(P,piezas[i])) return piezas[i];
+  for(i=piezas.length-1;i>=0;i--) if(piezas[i].tipo==='r' && dentro(P,piezas[i])) return piezas[i];
+  for(i=piezas.length-1;i>=0;i--) if(piezas[i].tipo==='t' && dentro(P,piezas[i])) return piezas[i];
+  return null;
+}
+cv.addEventListener('pointerdown',function(e){
+  cv.setPointerCapture(e.pointerId);
+  var s=pos(e), w=s2w(s);
+  var t=piezaEn(w);
+  if(t && !opt.mano && e.button!==1 && e.button!==2){
+    sel=t.id;
+    piezas=piezas.filter(function(q){ return q.id!==t.id; }).concat([t]);
+    pushUndo();
+    drag={modo:'mover', w0:w, s:t, x0:t.x, y0:t.y};
+    draw(); return;
+  }
+  if(!t && !opt.mano && e.button===0) sel=null;
+  drag={modo:'pan', s0:s, v0:{x:view.x, y:view.y}};
+  draw();
+});
+cv.addEventListener('pointermove',function(e){
+  if(!drag) return;
+  var s=pos(e), w=s2w(s);
+  if(drag.modo==='pan'){
+    view.x=drag.v0.x+(s.x-drag.s0.x); view.y=drag.v0.y+(s.y-drag.s0.y);
+    draw(); return;
+  }
+  drag.s.x=drag.x0+(w.x-drag.w0.x);
+  drag.s.y=drag.y0+(w.y-drag.w0.y);
+  draw();
+});
+function suelta(){
+  if(!drag) return;
+  if(drag.modo==='mover') aplicaIman(drag.s);
+  drag=null;
+  draw();
+}
+cv.addEventListener('pointerup',suelta);
+cv.addEventListener('pointercancel',suelta);
+cv.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var s=pos(e), w=s2w(s);
+  var z=Math.max(0.2, Math.min(3, view.z*(e.deltaY<0?1.12:1/1.12)));
+  view.z=z; view.x=s.x-w.x*z; view.y=s.y-w.y*z;
+  draw();
+},{passive:false});
+
+/* --- pedir encargos --------------------------------------------------------- */
+function avisoEncargo(E){
+  if(E.modo===1)
+    return 'Encargo: un mantel de '+textoFrac({p:E.p,q:E.q})+' u, y ahí tienes la unidad';
+  return 'Encargo: un mantel de '+textoFrac({p:E.p,q:E.q})+' u, con un mantel A que mide '+
+         textoFrac(reduce(E.rp,E.rq))+' u';
+}
+function modoActual(){ return +document.getElementById('modo').value===2 ? 2 : 1; }
+document.getElementById('modo').addEventListener('change',function(){
+  document.getElementById('aMano').placeholder = modoActual()===2 ? '5/6 desde 3/4' : '5/6';
+});
+document.getElementById('nuevo').addEventListener('click',function(){
+  var E=encargoAlAzar(modoActual(), +document.getElementById('nivel').value);
+  ponEncargo(E);
+  flash(avisoEncargo(E));
+});
+document.getElementById('crear').addEventListener('click',function(){
+  var caja0=document.getElementById('aMano');
+  var lectura=leeEncargoTexto(caja0.value);
+  if(!lectura){ flash('Escribe cuánto tiene que medir el mantel, por ejemplo 5/6'); return; }
+  var modo=modoActual();
+  if(lectura.ref && modo===1){ flash('Para dar un mantel de referencia, cambia antes el modo'); return; }
+  var f=reduce(lectura.obj.p, lectura.obj.q);
+  if(f.p===f.q){ flash('Entonces el mantel sería la propia unidad, y no habría nada que fabricar'); return; }
+  if(f.q>MAXD){ flash('El denominador no puede pasar de '+MAXD+', que es en cuántas partes se puede doblar'); return; }
+  var E=encargoConcreto(modo, f, lectura.ref);
+  if(!E){
+    flash(modo===2 && lectura.ref
+      ? 'Desde ese mantel no se llega a ese encargo con los dobleces que hay'
+      : 'Con esa medida el mantel o la unidad se salen de la pantalla');
+    return;
+  }
+  ponEncargo(E); caja0.value='';
+  flash(avisoEncargo(E));
+});
+
+/* --- botones de la pieza ------------------------------------------------------ */
+function conSel(f){
+  return function(){ var s=seleccionada(); if(s) f(s); };
+}
+function conTrozo(f){
+  return function(){ var s=seleccionada(); if(s && s.tipo==='p') f(s); };
+}
+document.getElementById('colMenos').addEventListener('click',conSel(function(s){ parte(s,s.a-1,s.b); }));
+document.getElementById('colMas').addEventListener('click',conSel(function(s){ parte(s,s.a+1,s.b); }));
+document.getElementById('filMenos').addEventListener('click',conSel(function(s){ parte(s,s.a,s.b-1); }));
+document.getElementById('filMas').addEventListener('click',conSel(function(s){ parte(s,s.a,s.b+1); }));
+document.getElementById('entera').addEventListener('click',conSel(function(s){ parte(s,1,1); }));
+document.getElementById('sacar').addEventListener('click',conSel(function(s){
+  var t=sacarTrozo(s);
+  if(t) flash(s.a*s.b>1 ? 'Ahí tienes una de las '+(s.a*s.b)+' partes'
+                        : 'Ahí tienes una copia entera');
+}));
+document.getElementById('separar').addEventListener('click',conTrozo(function(s){
+  var h=separar(s);
+  if(h) flash('Ese trozo son ahora '+h.length+' trozos sueltos');
+  else flash('Pártelo antes en columnas o en filas');
+}));
+document.getElementById('unir').addEventListener('click',conTrozo(function(s){
+  var n=grupoDe(s).length;
+  var t=unir(s);
+  if(t) flash('Esos '+n+' trozos son ya una sola pieza, sin marcas');
+  else flash('Esos trozos no forman un rectángulo: colócalos de otra manera y vuelve a probar');
+}));
+document.getElementById('dupD').addEventListener('click',conTrozo(function(s){ duplicaEn(s,'d'); }));
+document.getElementById('dupB').addEventListener('click',conTrozo(function(s){ duplicaEn(s,'b'); }));
+document.getElementById('probar').addEventListener('click',conTrozo(function(s){
+  var r=probar(s);
+  if(r.ok){
+    fitView();
+    flash('Ahí tienes el banco: tu mantel en una pieza y la referencia otra vez entera');
+  } else if(r.por==='no-rectangulo')
+    flash('Esos '+r.n+' trozos no forman un rectángulo, y un mantel lo es');
+  else if(r.por==='sin-referencia')
+    flash('Se ha perdido la referencia: pide otro encargo o deshaz');
+}));
+document.getElementById('borrar').addEventListener('click',function(){
+  var s=seleccionada(); if(!s) return;
+  if(s.tipo==='r' && !s.pat) return;         // sin la referencia no queda nada que medir
+  pushUndo();
+  piezas=piezas.filter(function(q){ return q.id!==s.id; });
+  sel=null; draw();
+});
+document.getElementById('vaciar').addEventListener('click',function(){
+  if(!encargo){ flash('Pide antes un encargo'); return; }
+  if(!confirm('¿Volver a empezar este mismo encargo?')) return;
+  reinicia();
+});
+document.getElementById('undo').addEventListener('click',doUndo);
+document.getElementById('iman').addEventListener('change',function(e){ opt.iman=e.target.checked?1:0; });
+document.getElementById('etiq').addEventListener('change',function(e){ opt.etiq=e.target.checked?1:0; draw(); });
+document.getElementById('comp').addEventListener('change',function(e){ opt.comp=e.target.checked?1:0; draw(); });
+document.getElementById('transp').addEventListener('click',function(){
+  opt.alfa=opt.alfa?0:1; this.classList.toggle('on', !!opt.alfa); draw();
+});
+document.getElementById('mano').addEventListener('click',function(){
+  opt.mano=opt.mano?0:1; this.classList.toggle('on', !!opt.mano); draw();
+});
+document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.2); });
+document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.2); });
+function zoomAt(k){
+  var r=stage.getBoundingClientRect(), c={x:r.width/2, y:r.height/2}, w=s2w(c);
+  view.z=Math.max(0.2, Math.min(3, view.z*k));
+  view.x=c.x-w.x*view.z; view.y=c.y-w.y*view.z;
+  draw();
+}
+document.getElementById('fit').addEventListener('click',fitView);
+function fitView(){
+  var r=stage.getBoundingClientRect(), m=62;   /* margen para carteles y rótulos */
+  var b=cajaTodo();
+  if(!b){ view={x:(r.width||600)/2, y:(r.height||400)/2, z:1}; draw(); return; }
+  var z=Math.min((r.width-2*m)/((b.x1-b.x0)||1), (r.height-2*m)/((b.y1-b.y0)||1));
+  view.z=Math.max(0.2, Math.min(1.6, z));
+  view.x=r.width/2-((b.x0+b.x1)/2)*view.z;
+  view.y=r.height/2-((b.y0+b.y1)/2)*view.z+14;
+  draw();
+}
+document.addEventListener('keydown',function(e){
+  if(e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+  var k=(e.key||'').toLowerCase();
+  if((e.ctrlKey||e.metaKey) && k==='z'){ e.preventDefault(); doUndo(); return; }
+  if(k==='d'){ document.getElementById('dupD').click(); }
+  else if(k==='b'){ document.getElementById('dupB').click(); }
+  else if(k==='p'){ document.getElementById('probar').click(); }
+  else if(k==='s'){ document.getElementById('sacar').click(); }
+  else if(k==='e'){ document.getElementById('separar').click(); }
+  else if(k==='j'){ document.getElementById('unir').click(); }
+  else if(e.key==='ArrowUp'){ document.getElementById('filMas').click(); e.preventDefault(); }
+  else if(e.key==='ArrowDown'){ document.getElementById('filMenos').click(); e.preventDefault(); }
+  else if(e.key==='ArrowRight'){ document.getElementById('colMas').click(); e.preventDefault(); }
+  else if(e.key==='ArrowLeft'){ document.getElementById('colMenos').click(); e.preventDefault(); }
+  else if(e.key==='Delete' || e.key==='Backspace'){ document.getElementById('borrar').click(); e.preventDefault(); }
+  else if(e.key==='Escape'){ sel=null; draw(); }
+});
+
+/* --- guardar y abrir ------------------------------------------------------------
+   Al leer no se cree nada de lo que venga en el archivo: se valida pieza a
+   pieza y, si algo no cuadra, se rechaza entero. */
+function datosActuales(){
+  return {formato:'manteles-a-medida', version:1, encargo:encargo, banco:banco,
+    piezas:piezas.map(function(s){
+      return {tipo:s.tipo, wp:s.wp, wq:s.wq, hp:s.hp, hq:s.hq, a:s.a, b:s.b, pat:s.pat||0,
+              fp:s.fp||0, fq:s.fq||1,
+              x:+s.x.toFixed(2), y:+s.y.toFixed(2), nombre:s.nombre}; })};
+}
+document.getElementById('save').addEventListener('click',function(){
+  var blob=new Blob([JSON.stringify(datosActuales(),null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download='manteles-a-medida.json'; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+document.getElementById('add').addEventListener('click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leer(f); });
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }catch(err){ flash('No he podido leer ese archivo'); } };
+  r.readAsText(f);
+}
+function entero(v){ var n=Number(v); return isFinite(n) && Math.round(n)===n ? n : null; }
+function limpiaPiezas(lista){
+  if(!Array.isArray(lista)) return null;
+  var out=[];
+  for(var i=0;i<lista.length;i++){
+    var s=lista[i];
+    var tipo = s.tipo==='r' ? 'r' : s.tipo==='p' ? 'p' : s.tipo==='t' ? 't' : null;
+    if(!tipo) return null;
+    var wp=entero(s.wp), wq=entero(s.wq), hp=entero(s.hp), hq=entero(s.hq);
+    if(wp===null||wq===null||hp===null||hq===null) return null;
+    if(!(wp>0 && wq>0 && hp>0 && hq>0)) return null;
+    if(wq>1e6 || hq>1e6 || wp>1e6 || hp>1e6) return null;
+    var x=Number(s.x), y=Number(s.y);
+    if(!isFinite(x) || !isFinite(y)) return null;
+    var a=Math.max(1, Math.min(MAXD, Math.round(Number(s.a)||1)));
+    var b=Math.max(1, Math.min(MAXD, Math.round(Number(s.b)||1)));
+    var fp=0, fq=1;
+    if(tipo==='r'){
+      fp=entero(s.fp); fq=entero(s.fq);
+      if(fp===null||fq===null||fp<1||fq<1) return null;   // la referencia trae su medida
+    }
+    var yaHayPatron=out.some(function(o){ return o.pat; });
+    var yaHayMantel=out.some(function(o){ return o.tipo==='t'; });
+    if(tipo==='t' && yaHayMantel) return null;            // tu mantel es uno
+    out.push({id:nid++, tipo:tipo, wp:wp, wq:wq, hp:hp, hq:hq, a:a, b:b,
+              pat: tipo==='r' && s.pat && !yaHayPatron ? 1 : 0,   /* patrón hay uno */
+              fp:fp, fq:fq, x:x, y:y,
+              nombre: tipo==='r' ? (fp===fq ? 'u' : 'A') : ''});
+  }
+  return out;
+}
+function limpiaBanco(b){
+  if(!b) return null;
+  var x=Number(b.x), y=Number(b.y), w=Number(b.w), h=Number(b.h);
+  if(![x,y,w,h].every(isFinite) || !(w>0 && h>0)) return null;
+  return {x:x, y:y, w:w, h:h};
+}
+function limpiaEncargo(e){
+  if(!e) return null;
+  var v=[entero(e.p),entero(e.q),entero(e.rp),entero(e.rq),
+         entero(e.wp),entero(e.wq),entero(e.hp),entero(e.hq)];
+  for(var i=0;i<v.length;i++) if(v[i]===null || v[i]<1) return null;
+  return {modo: Number(e.modo)===2?2:1, p:v[0],q:v[1], rp:v[2],rq:v[3],
+          wp:v[4],wq:v[5],hp:v[6],hq:v[7]};
+}
+function loadData(d){
+  var nuevas=d && limpiaPiezas(d.piezas);
+  if(!nuevas){ flash('Ese archivo no trae nada que yo entienda'); return; }
+  pushUndo();
+  if(importMode==='add'){
+    /* al añadir no se trae ni el banco ni el encargo del archivo: el que manda
+       es el de aquí, y ni dos patrones ni dos manteles pueden convivir */
+    var yaP=!!patron(), yaT=!!tuMantel(), sobran=[];
+    nuevas.forEach(function(s){
+      if(s.pat){ if(yaP) s.pat=0; else yaP=true; }
+      if(s.tipo==='t'){ if(yaT) sobran.push(s.id); else yaT=true; }
+    });
+    nuevas=nuevas.filter(function(s){ return sobran.indexOf(s.id)<0; });
+    piezas=piezas.concat(nuevas);
+  } else {
+    piezas=nuevas; banco=limpiaBanco(d.banco); encargo=limpiaEncargo(d.encargo);
+  }
+  sel=null; cacheEnc=''; fitView();
+  flash(nuevas.length+(nuevas.length===1?' pieza cargada':' piezas cargadas'));
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); });
+});
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='replace'; leer(f); }
+});
+document.getElementById('png').addEventListener('click',function(){
+  var b=cajaTodo();
+  if(!b){ flash('No hay nada que exportar'); return; }
+  var m=30, sc=2, W=(b.x1-b.x0)+2*m, H=(b.y1-b.y0)+2*m+18;
+  var oc=document.createElement('canvas'); oc.width=W*sc; oc.height=H*sc;
+  var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
+  var g={x:view.x,y:view.y,z:view.z}, ctx0=ctx, sel0=sel;
+  view={x:m-b.x0, y:m+18-b.y0, z:1}; ctx=o; sel=null;
+  drawTodo(o);
+  ctx=ctx0; view=g; sel=sel0;
+  oc.toBlob(function(blob){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.download='manteles-a-medida.png'; a.href=url; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+  });
+  draw();
+});
+
+/* =========================================================================
+   9. INTERFAZ
+   Los paneles de abajo son contabilidad, no corrección: dicen en cuántas
+   partes está doblado el patrón, cuánto vale cada una y cuánto se ha puesto
+   encima de tu mantel. La fracción que sale de ahí es lo que mide lo puesto,
+   cubra o no cubra.
+   ========================================================================= */
+document.getElementById('help').addEventListener('click',function(){
+  infoEl.classList.toggle('show');
+  if(!infoEl.innerHTML) infoEl.innerHTML=ayuda();
+});
+function ayuda(){
+  return '<div><b>Manteles a medida</b><br>'+
+ 'Aquí no se mide un mantel: se fabrica. Llega un encargo —«un mantel que mida 5/6 u»— y hay que '+
+ 'construirlo con lo que haya en el tablero. Se construye a la izquierda y se prueba a la derecha, '+
+ 'en el banco.</div>'+
+ '<div style="margin-top:7px"><b>Los dos modos</b><br>'+
+ '<b>Desde la unidad</b> pone en el tablero la unidad, la pieza con la <b>u</b> en el cartel. '+
+ '<b>Desde otro mantel</b> no la pone: en su lugar hay un mantel <b>A</b> del que sí se sabe lo que '+
+ 'mide, y lo dice su cartel. En los dos casos el encargo está escrito en unidades.</div>'+
+ '<div style="margin-top:7px"><b>Los niveles</b><br>'+
+ 'No cambian solo el tamaño de los números: cambian de qué denominadores se sortea el encargo. En '+
+ 'fácil son mitades, tercios y cuartos; en normal se añaden quintos, sextos y octavos; en difícil '+
+ 'son séptimos, novenos y onceavos, que no se dejan doblar por mitades. Y en el modo desde otro '+
+ 'mantel, el nivel difícil escoge además referencias con las que el mantel pedido no sale de un '+
+ 'solo doblez.</div>'+
+ '<div style="margin-top:7px"><b>Partir</b><br>'+
+ 'Con una pieza seleccionada, los botones de columnas y filas la parten en partes iguales. Son '+
+ 'marcas: la pieza sigue entera. Se puede partir la referencia y se pueden partir tus trozos.</div>'+
+ '<div style="margin-top:7px"><b>✂ Sacar un trozo</b><br>'+
+ 'Saca al tablero una copia de <i>una</i> de las partes en que hayas dejado marcada la pieza. Si la '+
+ 'pieza está sin partir, la copia es entera.</div>'+
+ '<div style="margin-top:7px"><b>⧉ Duplicar a la derecha / debajo</b><br>'+
+ 'Pone otra copia pegada al lado o encima-abajo, ya enganchada. Es la manera rápida de repetir un '+
+ 'trozo muchas veces.</div>'+
+ '<div style="margin-top:7px"><b>⁙ Separar en trozos</b> y <b>⬒ Unir en una pieza</b><br>'+
+ 'Separar rompe de verdad uno de tus trozos por las marcas que le hayas puesto: quedan sueltos y se '+
+ 'mueven por separado. Unir hace lo contrario: coge el trozo seleccionado y todos los que estén '+
+ 'pegados a él y los convierte en una sola pieza lisa, sin marcas por dentro. Solo se puede si entre '+
+ 'todos forman un rectángulo; si no, hay que recolocarlos. La referencia ni se rompe ni se une.</div>'+
+ '<div style="margin-top:7px"><b>▶ Llevar al banco</b><br>'+
+ 'Cuando tengas montado el mantel, selecciónalo y pulsa este botón: a la derecha aparece el '+
+ '<b>banco</b> con dos copias limpias, sin ninguna de las divisiones que hayas hecho para construir. '+
+ 'Tu mantel fundido en una sola pieza y la referencia otra vez entera, que ahí hace de <b>patrón</b>. '+
+ 'Lo de la izquierda se queda como estaba, y volver a pulsar rehace el banco.<br>'+
+ 'Un mantel es un rectángulo, así que los trozos tienen que formar uno para poder llevarlos. Y al '+
+ 'banco puedes llevar cualquier cosa que hayas construido, no solo lo que creas que es la '+
+ 'respuesta.</div>'+
+ '<div style="margin-top:7px"><b>Medir en el banco</b><br>'+
+ 'El programa no dice si tu mantel es el del encargo: lo que te da es un sitio donde comprobarlo tú. '+
+ 'Dobla el patrón en las partes que quieras, saca una con <b>✂</b> y ponte a cubrir tu mantel con '+
+ 'ella, que es medir de toda la vida. El patrón entero también sirve: puesto encima cuenta como lo '+
+ 'que él mide. Si lo que pones cubre tu mantel sin huecos ni solapes, eso es lo que mide; compáralo '+
+ 'con el encargo.</div>'+
+ '<div style="margin-top:7px"><b>Comprobaciones</b><br>'+
+ 'La casilla de la barra de arriba hace que el programa lleve él la cuenta: cuánto vale en unidades '+
+ 'cada parte del patrón y cuánto has puesto encima de tu mantel. Ni siquiera entonces mira si cubre '+
+ 'o no: eso lo miras tú. Apagada, que es como empieza, el recuento lo llevas entero. Un trozo cuenta '+
+ 'cuando su centro cae dentro de tu mantel.</div>'+
+ '<div style="margin-top:7px"><b>Lo demás</b><br>'+
+ 'El <b>imán</b> engancha bordes con bordes y marcas con marcas. <b>◑ Transparencia</b> deja ver lo '+
+ 'que hay debajo de los trozos. <b>Etiquetas</b> escribe dentro de cada trozo lo que vale en '+
+ 'unidades; conviene tenerla apagada al principio, porque encendida regala la cuenta. Tu mantel no '+
+ 'se etiqueta nunca. Se guarda y se abre en un archivo, y ↶ o Ctrl+Z deshace.<br>'+
+ 'En la casilla de escribir el encargo se admite «5/6», y en el modo desde otro mantel también '+
+ '«5/6 desde 3/4» para fijar los dos datos.</div>'+
+ '<div style="margin-top:7px"><b>Para pensar</b><br>'+
+ '¿De cuántas formas distintas se puede montar el mismo encargo? ¿Sirven todas para llevarlas al '+
+ 'banco? ¿Hay encargos que se hagan sin doblar nada? Si al medir sale una fracción distinta de la '+
+ 'del encargo, ¿el mantel se ha quedado grande o pequeño, y cuánto? En el modo desde otro mantel: '+
+ '¿hace falta rehacer la unidad, o se puede ir directo de A a tu mantel? ¿Y cuántas partes de A hay '+
+ 'que juntar entonces?</div>'+
+ '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+}
+function iconoParte(a,b,lado,C){
+  lado=lado||17; C=C||CTROZO;
+  var s='<svg width="'+lado+'" height="'+lado+'" viewBox="0 0 '+lado+' '+lado+'">'+
+    '<rect x="0.7" y="0.7" width="'+(lado-1.4)+'" height="'+(lado-1.4)+'" rx="2" fill="'+C.f+
+    '" stroke="'+C.b+'" stroke-width="1"/>';
+  var k;
+  for(k=1;k<a;k++){
+    var X=(0.7+(lado-1.4)*k/a).toFixed(2);
+    s+='<line x1="'+X+'" y1="1" x2="'+X+'" y2="'+(lado-1)+'" stroke="'+C.b+'" stroke-width="1"/>';
+  }
+  for(k=1;k<b;k++){
+    var Y=(0.7+(lado-1.4)*k/b).toFixed(2);
+    s+='<line x1="1" y1="'+Y+'" x2="'+(lado-1)+'" y2="'+Y+'" stroke="'+C.b+'" stroke-width="1"/>';
+  }
+  return s+'</svg>';
+}
+function panelEncargoHTML(){
+  if(!encargo)
+    return '<div class="nota" style="margin-top:0">Pide un encargo y te dirán qué mantel hay que '+
+           'fabricar y con qué cuentas para hacerlo.</div>';
+  var t='<div>Te encargan un mantel que mida <span class="gr">'+
+        textoFrac({p:encargo.p,q:encargo.q})+' u</span>.</div>';
+  t+= encargo.modo===1
+    ? '<div class="nota">Tienes la unidad ahí al lado: es la pieza del cartel <b>u</b>.</div>'
+    : '<div class="nota">De la unidad no hay ni rastro. Lo que tienes es el mantel <b>A</b>, del que '+
+      'sí se sabe lo que mide: <b>'+textoFrac(reduce(encargo.rp,encargo.rq))+' u</b>.</div>';
+  return t;
+}
+function panelBancoHTML(){
+  var P=patron(), T=tuMantel();
+  if(!P || !T)
+    return '<div class="nota" style="margin-top:0">Cuando tengas montado el mantel, selecciónalo y '+
+           'pulsa aquí: a la derecha aparecen tu mantel en una sola pieza y una copia limpia de la '+
+           'referencia, para que lo midas.</div>';
+  var n=P.a*P.b;
+  var nom = P.fp===P.fq ? 'la unidad' : 'el mantel '+P.nombre;
+  return '<div>En el banco, tu mantel y '+nom+' de patrón'+
+         (n>1 ? ', doblado en <b>'+n+'</b> partes.' : ', sin doblar.')+'</div>'+
+         '<div class="nota">'+(n>1
+           ? 'Saca una parte con <b>✂</b> y ponte a cubrir tu mantel con ella.'
+           : 'Dóblalo en columnas y filas y ya puedes medir con él.')+'</div>';
+}
+function panelMedirHTML(){
+  var P=patron(), T=tuMantel();
+  if(!P || !T)
+    return '<div class="nota" style="margin-top:0">En cuanto lleves tu mantel al banco, aquí se irá '+
+           'contando lo que pongas encima.</div>';
+  var Q=partePatron(), h='', esU=(P.fp===P.fq);
+  var nom = esU ? 'la unidad' : 'el mantel '+P.nombre;
+  if(Q && Q.N>1)
+    h+='<div class="mant">Has doblado '+nom+' en '+Q.N+' partes iguales'+
+       (esU ? '' : ', y '+P.nombre+' mide '+textoFrac(reduce(P.fp,P.fq))+' u')+
+       ': cada parte es <b>'+textoFrac(Q.mu)+' u</b>.</div>';
+  var r=medidaDe(T);
+  if(r.estado!=='ok')
+    return h+'<div class="mant"><b>Tu mantel:</b> <span style="color:#8a919c">todavía no has puesto '+
+           'nada encima.</span></div>';
+  var cifra, extra='', cada='';
+  if(r.cuenta){
+    cifra=textoFrac(r.cuenta.total);
+    if(textoFrac(r.cuenta.total)!==textoFrac(r.frac))
+      extra=' <span style="color:#8a919c">(o sea '+textoFrac(r.frac)+' u)</span>';
+    /* si lo puesto no son partes del patrón, hay que decir de qué son partes,
+       porque si no la fracción sale de la nada */
+    if(!r.cuenta.delPatron && r.n>1)
+      cada=' de <b>'+textoFrac(r.cuenta.mu)+' u</b> cada uno';
+  } else cifra=textoFrac(r.frac);
+  var pedido = encargo ? textoFrac({p:encargo.p,q:encargo.q})+' u' : null;
+  return h+'<div class="mant"><b>Tu mantel:</b> has puesto <b>'+r.n+'</b> '+
+         (r.n===1?'trozo':'trozos')+cada+', que miden <span class="gr">'+cifra+' u</span>.'+extra+
+         '<div class="nota">Si cubren tu mantel sin huecos ni solapes, eso es lo que mide.'+
+         (pedido? ' El encargo pedía '+pedido+'.' : '')+'</div></div>';
+}
+var cachePartes='', cacheBanco='', cacheMedir='', cacheEnc='';
+function updateUI(){
+  var s=seleccionada();
+  var esTrozo = !!s && s.tipo==='p';
+  ['colMenos','colMas','filMenos','filMas','entera','sacar'].forEach(function(id){
+    document.getElementById(id).disabled=!s; });
+  document.getElementById('separar').disabled=!(esTrozo && s.a*s.b>1);
+  document.getElementById('unir').disabled=!(esTrozo && grupoDe(s).length>1);
+  document.getElementById('dupD').disabled=!esTrozo;
+  document.getElementById('dupB').disabled=!esTrozo;
+  document.getElementById('probar').disabled=!esTrozo;
+  document.getElementById('borrar').disabled=!s || (s.tipo==='r' && !s.pat);
+
+  var C = s ? colorDe(s) : CTROZO;
+  var claveP = (s? (s.a+'x'+s.b+':'+s.tipo+(s.pat?'*':'')+(s.fp||0)+'/'+(s.fq||1)) : '-');
+  if(claveP!==cachePartes){
+    cachePartes=claveP;
+    document.getElementById('ncol').innerHTML = s? (iconoParte(s.a,1,15,C)+s.a) : '—';
+    document.getElementById('nfil').innerHTML = s? (iconoParte(1,s.b,15,C)+s.b) : '—';
+  }
+  var claveE = encargo ? encargo.modo+':'+encargo.p+'/'+encargo.q+':'+encargo.rp+'/'+encargo.rq : '-';
+  if(claveE!==cacheEnc){ cacheEnc=claveE; document.getElementById('panelEncargo').innerHTML=panelEncargoHTML(); }
+
+  var P=patron(), T=tuMantel();
+  var claveB=(P? P.id+':'+P.a+'x'+P.b+':'+P.fp+'/'+P.fq : '-')+(T? ':'+T.id : '');
+  if(claveB!==cacheBanco){ cacheBanco=claveB; document.getElementById('panelBanco').innerHTML=panelBancoHTML(); }
+  /* la cuenta solo se enseña si se pide: el material no corrige por su cuenta */
+  document.getElementById('h2Medir').style.display = opt.comp? '' : 'none';
+  document.getElementById('panelMedir').style.display = opt.comp? '' : 'none';
+  var rM = (opt.comp && T)? medidaDe(T) : {estado:'-'};
+  var claveM=(opt.comp?'C':'-')+claveB+'||'+rM.estado+':'+(rM.n||0)+
+             ':'+(rM.frac?textoFrac(rM.frac):'')+':'+(rM.cuenta? textoFrac(rM.cuenta.total) : '');
+  if(claveM!==cacheMedir){
+    cacheMedir=claveM;
+    if(opt.comp) document.getElementById('panelMedir').innerHTML=panelMedirHTML();
+  }
+
+  var t;
+  if(flashMsg && Date.now()-flashT<2300) t=flashMsg;
+  else if(!piezas.length) t='Pide un encargo: te dirán qué mantel hay que fabricar';
+  else if(s && s.tipo==='t') t='Este es tu mantel: cúbrelo con partes del patrón para saber cuánto mide';
+  else if(s && s.tipo==='r' && s.pat && s.a*s.b>1)
+    t='El patrón, doblado en '+(s.a*s.b)+' · saca una parte con S y cubre tu mantel con ella';
+  else if(s && s.tipo==='r' && s.pat) t='El patrón del banco: dóblalo en columnas y filas para medir con él';
+  else if(s && s.tipo==='r') t='Pártela en columnas y filas, y saca una de las partes con S';
+  else if(esTrozo) t='D y B duplican al lado · J une lo pegado · E separa · P lleva tu mantel al banco';
+  else t='Arrastra para colocar · con la transparencia se ve lo que hay bajo los trozos';
+  hintEl.textContent=t;
+}
+
+/* =========================================================================
+   10. ARRANQUE
+   ========================================================================= */
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr));
+  cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+(function init(){
+  var r=stage.getBoundingClientRect();
+  view={x:(r.width||700)/2, y:(r.height||420)/2, z:1};
+  ponEncargo(encargoAlAzar(1,1));
+  undoStack=[];
+  resize();
+})();
+
+/* =========================================================================
+  11. AUTOCOMPROBACIÓN  ·  añade #test al final de la dirección
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){ out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':'')); if(!c) fails++; }
+
+  try{
+
+  /* --- fracciones ------------------------------------------------------------ */
+  ok('reducir simplifica', (function(){ var f=reduce(18,12); return f.p===3 && f.q===2; })());
+  ok('5/6 y 10/12 son la misma fracción', igualFrac(reduce(5,6), reduce(10,12)));
+  ok('sumar fracciones da el total reducido', (function(){
+      var f=sumaFrac({p:1,q:6},{p:1,q:3}); return f.p===1 && f.q===2; })());
+  ok('dividir fracciones compara dos áreas', (function(){
+      var f=divFrac({p:3,q:2},{p:9,q:5}); return f.p===5 && f.q===6; })(),
+     textoFrac(divFrac({p:3,q:2},{p:9,q:5})));
+  ok('multiplicar fracciones pasa de patrones a unidades', (function(){
+      var f=multFrac({p:10,q:9},{p:3,q:4}); return f.p===5 && f.q===6; })(),
+     textoFrac(multFrac({p:10,q:9},{p:3,q:4})));
+  ok('«5/6» se lee bien', (function(){ var f=leeFraccion('5/6'); return f && f.p===5 && f.q===6; })());
+  ok('lo que no es una fracción se rechaza',
+     leeFraccion('mantel')===null && leeFraccion('3/0')===null && leeFraccion('0/5')===null);
+  ok('«5/6 desde 3/4» da las dos fracciones del encargo', (function(){
+      var e=leeEncargoTexto('5/6 desde 3/4');
+      return e && e.obj.p===5 && e.obj.q===6 && e.ref.p===3 && e.ref.q===4; })());
+  ok('«5/6» a secas deja la referencia sin decidir', (function(){
+      var e=leeEncargoTexto('5/6'); return e && e.obj.p===5 && e.obj.q===6 && e.ref===null; })());
+  ok('y un texto con tres fracciones se rechaza', leeEncargoTexto('5/6 desde 3/4 desde 1/2')===null);
+
+  /* --- guardo lo que hubiera en el tablero ------------------------------------ */
+  var antesP=piezas, antesS=sel, antesV=view, antesI=opt.iman, antesE=opt.etiq,
+      antesC=opt.comp, antesU=undoStack, antesB=banco, antesEnc=encargo;
+  piezas=[]; sel=null; view={x:0,y:0,z:1}; opt.iman=1; opt.etiq=0; opt.comp=1;
+  undoStack=[]; banco=null; encargo=null;
+
+  /* --- lo que propone el entorno ------------------------------------------------ */
+  ok('un encargo igual a la unidad no vale: no habría nada que fabricar', !objetivoValido(3,3));
+  ok('ni una fracción que se pueda simplificar, porque el doblez que pide sería otro',
+     !objetivoValido(4,6));
+  ok('ni un denominador mayor que las partes en que se puede doblar', !objetivoValido(5,13));
+  ok('una referencia que midiera lo mismo que la unidad tampoco vale', !referenciaValida(2,2));
+  ok('el paso directo de A al mantel pedido es (p·s)/(q·r)', (function(){
+      var m=pasoDirecto(5,6,3,4); return m.p===10 && m.q===9; })(), textoFrac(pasoDirecto(5,6,3,4)));
+  ok('si ese paso pide doblar A en más de '+MAXD+', no hay ruta directa', !hayRutaDirecta(5,6,3,13));
+  ok('y si A y el mantel pedido midieran lo mismo, no hay encargo', !alcanzable(3,4,3,4));
+  ok('hay encargos a los que no se llega doblando A una sola vez y sí rehaciendo la unidad',
+     !hayRutaDirecta(5,7,3,4) && hayRutaPorLaUnidad(5,7,3,4) && alcanzable(5,7,3,4),
+     'el paso directo pediría doblar A en '+pasoDirecto(5,7,3,4).q+' partes');
+  ok('y otros a los que no se llega de ninguna manera',
+     !alcanzable(5,6,7,11), 'ni doblando A ni rehaciendo la unidad con 11 copias');
+
+  /* --- la dificultad se regula con suelos, no solo con topes ---------------------- */
+  ok('los tres niveles proponen encargos desde la unidad que se pueden fabricar', (function(){
+      var malos=[];
+      [0,1,2].forEach(function(nv){
+        var N=NIVELES[nv];
+        for(var i=0;i<300;i++){
+          var E=encargoAlAzar(1,nv);
+          if(E.modo!==1) malos.push('modo '+E.modo);
+          else if(!objetivoValido(E.p,E.q)) malos.push('objetivo '+E.p+'/'+E.q);
+          else if(N.qs.indexOf(E.q)<0) malos.push('denominador '+E.q+' fuera del nivel '+nv);
+          else if(E.p>N.maxp) malos.push('se pasa del nivel '+nv);
+          else if(E.rp!==1 || E.rq!==1) malos.push('la referencia no es la unidad');
+        }
+      });
+      return malos.length===0; })(), 'los tres niveles, 300 encargos cada uno');
+  ok('y los del modo desde otro mantel están al alcance y caben en la pantalla', (function(){
+      var malos=[];
+      [0,1,2].forEach(function(nv){
+        var N=NIVELES[nv];
+        for(var i=0;i<300;i++){
+          var E=encargoAlAzar(2,nv);
+          if(E.modo!==2) malos.push('modo '+E.modo);
+          else if(!objetivoValido(E.p,E.q)) malos.push('objetivo '+E.p+'/'+E.q);
+          else if(N.qs.indexOf(E.q)<0) malos.push('denominador '+E.q+' fuera del nivel '+nv);
+          else if(!referenciaValida(E.rp,E.rq)) malos.push('referencia '+E.rp+'/'+E.rq);
+          else if(!alcanzable(E.p,E.q,E.rp,E.rq)) malos.push('no se llega');
+          else if(!formaValida({wp:E.wp,wq:E.wq,hp:E.hp,hq:E.hq},E.p,E.q,E.rp,E.rq))
+            malos.push('forma fuera de pantalla');
+        }
+      });
+      return malos.length===0; })(), 'los tres niveles, 300 encargos cada uno');
+  ok('el nivel difícil nunca saca mitades, tercios ni cuartos: es lo que fallaba con solo topes',
+     (function(){
+      var vistos={};
+      for(var i=0;i<400;i++){
+        vistos[encargoAlAzar(1,2).q]=1;
+        vistos[encargoAlAzar(2,2).q]=1;
+      }
+      var qs=Object.keys(vistos);
+      for(i=0;i<qs.length;i++) if(NIVELES[2].qs.indexOf(+qs[i])<0) return false;
+      return true; })(),
+     'denominadores de difícil: '+NIVELES[2].qs.join(', '));
+  ok('y el fácil no saca séptimos ni onceavos', (function(){
+      for(var i=0;i<400;i++) if(NIVELES[0].qs.indexOf(encargoAlAzar(1,0).q)<0) return false;
+      return true; })(), 'denominadores de fácil: '+NIVELES[0].qs.join(', '));
+  ok('en fácil y en normal siempre se llega doblando la referencia una sola vez', (function(){
+      for(var nv=0;nv<2;nv++) for(var i=0;i<300;i++){
+        var E=encargoAlAzar(2,nv);
+        var m=pasoDirecto(E.p,E.q,E.rp,E.rq);
+        if(m.q>NIVELES[nv].maxn || m.p>NIVELES[nv].maxm) return false;
+      }
+      return true; })(), 'de un doblez, con n hasta '+NIVELES[1].maxn);
+  ok('y en difícil ese atajo no existe: el doblez que pediría no cabe en una pieza', (function(){
+      var peor=0;
+      for(var i=0;i<300;i++){
+        var E=encargoAlAzar(2,2);
+        if(pasoDirecto(E.p,E.q,E.rp,E.rq).q<=MAXD) return false;
+        if(!hayRutaPorLaUnidad(E.p,E.q,E.rp,E.rq)) return false;
+        peor=Math.max(peor, E.rq);
+      }
+      return true; })(), 'ninguno de 300 se hace de un solo doblez');
+  ok('pedir «5/6 desde 3/4» da justo ese encargo', (function(){
+      var E=encargoConcreto(2,{p:5,q:6},{p:3,q:4});
+      return E && E.p===5 && E.q===6 && E.rp===3 && E.rq===4; })());
+  ok('pedir «5/6» sin referencia se la inventa, pero alcanzable', (function(){
+      for(var i=0;i<50;i++){
+        var E=encargoConcreto(2,{p:5,q:6},null);
+        if(!E || !alcanzable(E.p,E.q,E.rp,E.rq)) return false;
+      }
+      return true; })());
+  ok('y un encargo imposible avisa en vez de inventárselo',
+     encargoConcreto(2,{p:5,q:6},{p:7,q:11})===null, 'ni 66 dobleces ni 11 copias');
+  ok('desde la unidad, la referencia que se pone es un cuadrado de medida 1', (function(){
+      var E=encargoConcreto(1,{p:5,q:6},null);
+      return E && E.rp===1 && E.rq===1 && E.wp===1 && E.wq===1 && E.hp===1 && E.hq===1; })());
+
+  /* --- las piezas ----------------------------------------------------------------- */
+  var E1={modo:1,p:5,q:6,rp:1,rq:1,wp:1,wq:1,hp:1,hq:1};
+  var U=ponEncargo(E1);
+  ok('el tablero del encargo empieza con una sola pieza, la referencia',
+     piezas.length===1 && piezas[0].tipo==='r', piezas.length);
+  ok('la unidad es un cuadrado del lado base',
+     Math.abs(ancho(U)-L)<1e-9 && Math.abs(alto(U)-L)<1e-9);
+  ok('y su cartel es una u, sin números', textoCartel(U)==='u', textoCartel(U));
+  ok('el rótulo del banco recuerda el encargo mientras se mide',
+     rotuloBanco().indexOf('5/6')>=0, rotuloBanco());
+
+  /* --- partir ---------------------------------------------------------------------- */
+  parte(U,3,2);
+  ok('partida en 3 por 2 hay 2 marcas verticales y 1 horizontal',
+     marcasX(U).length===2 && marcasY(U).length===1);
+  ok('y las marcas caen donde toca', marcasX(U).every(function(x,k){
+      return Math.abs(x-(U.x+ancho(U)*(k+1)/3))<1e-9; }));
+  ok('cada parte de la unidad partida en 3 por 2 vale 1/6 de unidad',
+     textoFrac(valorCelda(U))==='1/6', textoFrac(valorCelda(U)));
+  parte(U,99,99);
+  ok('no se puede partir en más de '+MAXD, U.a===MAXD && U.b===MAXD);
+  parte(U,0,0);
+  ok('ni en menos de una parte', U.a===1 && U.b===1);
+  parte(U,3,2);
+
+  /* --- sacar, duplicar, unir ---------------------------------------------------------- */
+  var T0=sacarTrozo(U);
+  ok('el trozo sacado de la unidad partida en 6 vale 1/6 de unidad',
+     igualFrac(areaDe(T0), {p:1,q:6}), textoFrac(areaDe(T0)));
+  ok('y sale sin partir, para poder volver a partirlo', T0.a===1 && T0.b===1);
+  ok('el trozo sale a la derecha de la unidad, sin taparla', T0.x>=U.x+ancho(U));
+  ok('la referencia no se puede separar en trozos sueltos', separar(U)===null);
+  ok('ni duplicar', duplicaEn(U,'d')===null);
+
+  /* --- LA FABRICACIÓN, MODO DESDE LA UNIDAD ---------------------------------------------
+     El encargo es 5/6 u: la unidad doblada en 6 y cinco de esas partes juntas.
+     Es la comprobación central del primer modo. */
+  var tira=[T0];
+  for(var i=1;i<5;i++) tira.push(duplicaEn(tira[i-1],'d'));
+  ok('los cinco van pegados en fila', tira.every(function(t,k){
+      return k===0 || Math.abs(t.x-(tira[k-1].x+ancho(tira[k-1])))<1e-9; }));
+  ok('los cinco se reconocen como un solo grupo', grupoDe(T0).length===5, grupoDe(T0).length);
+  var areaCinco=(function(){ var s={p:0,q:1};
+    tira.forEach(function(t){ s=sumaFrac(s, areaDe(t)); }); return s; })();
+  ok('entre los cinco miden 5/6 de unidad, que es lo encargado',
+     igualFrac(enU(areaCinco), {p:5,q:6}), textoFrac(enU(areaCinco)));
+  ok('con cuatro se quedaría corto y con seis se pasaría', (function(){
+      var cuatro={p:0,q:1}, seis={p:0,q:1};
+      for(var k=0;k<4;k++) cuatro=sumaFrac(cuatro, areaDe(T0));
+      for(k=0;k<6;k++) seis=sumaFrac(seis, areaDe(T0));
+      return cuatro.p*areaCinco.q < areaCinco.p*cuatro.q &&
+             seis.p*areaCinco.q > areaCinco.p*seis.q; })());
+  var M1=unir(T0);
+  ok('los cinco se unen en un mantel de una pieza', !!M1);
+  ok('que mide 5/3 por 1/2 del lado base',
+     M1 && M1.wp===5 && M1.wq===3 && M1.hp===1 && M1.hq===2,
+     M1? M1.wp+'/'+M1.wq+' x '+M1.hp+'/'+M1.hq : '—');
+  ok('y sigue midiendo 5/6 de unidad después de unirlo',
+     igualFrac(enU(areaDe(M1)), {p:5,q:6}), textoFrac(enU(areaDe(M1))));
+
+  /* --- otra forma para el mismo encargo ------------------------------------------------- */
+  ok('doblando la unidad en 12 y juntando 10 sale otro mantel que mide lo mismo', (function(){
+      var guardaP=piezas, guardaS=sel;
+      var E=ponEncargo({modo:1,p:5,q:6,rp:1,rq:1,wp:1,wq:1,hp:1,hq:1});
+      parte(E,4,3);
+      var t=sacarTrozo(E);
+      var suma={p:0,q:1};
+      for(var k=0;k<10;k++) suma=sumaFrac(suma, areaDe(t));
+      var bien = igualFrac(enU(suma), {p:5,q:6}) && !igualFrac(areaDe(t), {p:1,q:6});
+      piezas=guardaP; sel=guardaS;
+      return bien; })(), 'diez doceavos, con trozos de otro tamaño y otra forma');
+
+  /* --- el imán ------------------------------------------------------------------------------ */
+  piezas=[]; sel=null; banco=null;
+  var W=ponEncargo(E1);
+  parte(W,3,2);
+  var anW=ancho(W)/3;
+  ok('un trozo casi pegado a otro se engancha por el borde', (function(){
+      var b1=nuevoTrozo({p:1,q:3},{p:1,q:2},{x:0,y:3*L}, false);
+      var b2=nuevoTrozo({p:1,q:3},{p:1,q:2},{x:anW+5, y:3*L+4}, false);
+      piezas.push(b1); piezas.push(b2);
+      aplicaIman(b2);
+      var bien=Math.abs(b2.x-(b1.x+anW))<1e-9 && Math.abs(b2.y-b1.y)<1e-9;
+      piezas=piezas.filter(function(s){ return s.id!==b1.id && s.id!==b2.id; });
+      return bien; })());
+  ok('y uno que está lejos se queda donde lo sueltes', (function(){
+      var b3=nuevoTrozo({p:1,q:2},{p:1,q:2},{x:9*L, y:7*L}, false);
+      piezas.push(b3);
+      var x0=b3.x, y0=b3.y;
+      aplicaIman(b3);
+      var quieto=Math.abs(b3.x-x0)<1e-9 && Math.abs(b3.y-y0)<1e-9;
+      piezas=piezas.filter(function(s){ return s.id!==b3.id; });
+      return quieto; })());
+  ok('el imán engancha también con las marcas de doblar la referencia', (function(){
+      var b4=nuevoTrozo({p:1,q:5},{p:1,q:5},{x:W.x+ancho(W)*2/3+6, y:W.y-5}, false);
+      piezas.push(b4);
+      aplicaIman(b4);
+      var bien=Math.abs(b4.x-(W.x+ancho(W)*2/3))<1e-9 && Math.abs(b4.y-W.y)<1e-9;
+      piezas=piezas.filter(function(s){ return s.id!==b4.id; });
+      return bien; })());
+
+  /* --- separar y el grupo pegado ---------------------------------------------------------- */
+  piezas=[]; sel=null;
+  var g0=nuevoTrozo({p:1,q:1},{p:1,q:1},{x:0,y:0});
+  piezas=[g0];
+  parte(g0,3,2);
+  var hijos=separar(g0);
+  ok('separar un trozo partido en 3 por 2 da seis trozos', hijos && hijos.length===6, hijos&&hijos.length);
+  ok('y entre todos ocupan lo mismo que el trozo de partida', (function(){
+      var s={p:0,q:1};
+      hijos.forEach(function(h){ s=sumaFrac(s, areaDe(h)); });
+      return s.p===1 && s.q===1; })());
+  ok('los seis quedan embaldosando el sitio del original, sin huecos', (function(){
+      var an=L/3, al=L/2, visto={};
+      for(var k=0;k<hijos.length;k++){
+        var ci=Math.round(hijos[k].x/an), cj=Math.round(hijos[k].y/al);
+        if(Math.abs(hijos[k].x-ci*an)>1e-9 || Math.abs(hijos[k].y-cj*al)>1e-9) return false;
+        if(ci<0||ci>2||cj<0||cj>1) return false;
+        if(visto[ci+','+cj]) return false;
+        visto[ci+','+cj]=1;
+      }
+      return Object.keys(visto).length===6; })());
+  ok('el grupo pegado son los seis', grupoDe(hijos[0]).length===6, grupoDe(hijos[0]).length);
+  ok('y uno apartado no entra en el grupo', (function(){
+      var lejos=nuevoTrozo({p:1,q:1},{p:1,q:1},{x:5*L,y:5*L});
+      piezas.push(lejos);
+      var n=grupoDe(hijos[0]).length;
+      piezas=piezas.filter(function(s){ return s.id!==lejos.id; });
+      return n===6; })());
+
+  /* --- un mantel es un rectángulo ------------------------------------------------------------ */
+  piezas=[]; sel=null;
+  function pon(w,h,x,y){
+    var t=nuevoTrozo(w,h,{x:x,y:y}); piezas.push(t); return t;
+  }
+  var f1={p:1,q:1};
+  var c1=pon(f1,f1,0,0), c2=pon(f1,f1,L,0), c3=pon(f1,f1,0,L);
+  ok('tres cuadrados en ele no se pueden unir: no forman un rectángulo',
+     unir(c1)===null, 'la caja mide 2 por 2 y solo hay 3 de área');
+  var c4=pon(f1,f1,L,L);
+  var U4=unir(c1);
+  ok('completando el cuadrado sí se unen', !!U4);
+  ok('y sale una pieza de dos por dos, con el área de los cuatro',
+     U4 && igualFrac(areaDe(U4), {p:4,q:1}), U4? textoFrac(areaDe(U4)) : '—');
+  ok('la pieza unida no lleva marcas por dentro: está lista para partirla de nuevo',
+     U4.a===1 && U4.b===1);
+  ok('en el tablero queda una pieza donde había cuatro', piezas.length===1, piezas.length);
+  piezas=[]; sel=null;
+  ok('un rectángulo con un hueco en medio tampoco se une', (function(){
+      var lista=[];
+      for(var i=0;i<3;i++) for(var j=0;j<3;j++)
+        if(!(i===1&&j===1)) lista.push(pon(f1,f1,L*i,L*j));
+      var r=unir(lista[0]);
+      piezas=[]; sel=null;
+      return r===null; })(), 'la fila de arriba y la columna de la izquierda están enteras');
+  ok('ni dos piezas pegadas de alturas distintas', (function(){
+      var a=pon(f1,f1,0,0), b=pon(f1,{p:1,q:2},L,0);
+      var r=unir(a);
+      piezas=[]; sel=null;
+      return r===null; })());
+  ok('y llevar al banco una ele no se admite: un mantel es un rectángulo', (function(){
+      piezas=[]; sel=null; banco=null;
+      var R=ponEncargo(E1);
+      var a=pon(f1,f1,3*L,0), b=pon(f1,f1,4*L,0), c=pon(f1,f1,3*L,L);
+      var r=probar(a);
+      return r.ok===false && r.por==='no-rectangulo'; })());
+
+  /* --- EL RECORRIDO ENTERO, MODO DESDE LA UNIDAD ----------------------------------------------
+     Es lo que se hace de verdad delante de la pantalla: doblar la unidad en 6,
+     sacar una parte, juntar cinco, unirlas, llevarlas al banco y medir allí el
+     mantel con una copia limpia de la unidad. */
+  piezas=[]; sel=null; banco=null;
+  var A1=ponEncargo(E1);
+  parte(A1,3,2);
+  var p1=sacarTrozo(A1), q1=p1;
+  for(i=1;i<5;i++) q1=duplicaEn(q1,'d');
+  var man1=unir(p1);
+  var r1=probar(man1);
+  ok('llevar el mantel montado al banco lo monta', r1.ok===true, r1.por||'ok');
+  var P1=patron(), TM1=tuMantel();
+  ok('en el banco hay un patrón y tu mantel', !!P1 && !!TM1);
+  ok('el patrón es la referencia otra vez entera, sin las divisiones de construir',
+     P1.a===1 && P1.b===1 && P1.fp===1 && P1.fq===1, 'la de construir sigue partida en '+A1.a+'x'+A1.b);
+  ok('y lleva su cartel de siempre', textoCartel(P1)==='u', textoCartel(P1));
+  ok('tu mantel llega en una pieza lisa y sin ningún número escrito',
+     TM1.a===1 && TM1.b===1 && textoCartel(TM1)==='tu mantel', textoCartel(TM1));
+  ok('la zona de construir se queda como estaba: la referencia y el mantel montado',
+     piezas.filter(function(s){ return !enBanco(s); }).length===2,
+     piezas.filter(function(s){ return !enBanco(s); }).length);
+  ok('el banco cae a la derecha de lo construido',
+     banco.x > caja(piezas.filter(function(s){ return !enBanco(s); })).x1);
+  ok('volver a llevar rehace el banco en vez de acumular otro', (function(){
+      var r2=probar(man1);
+      return r2.ok && piezas.filter(function(s){ return s.pat; }).length===1 &&
+             piezas.filter(function(s){ return s.tipo==='t'; }).length===1; })(),
+     piezas.length+' piezas en total');
+  P1=patron(); TM1=tuMantel();
+
+  /* en 3 por 2, no en 6 columnas: las partes tienen que tener la forma que
+     embaldosa el mantel, y no solo su área. Con seis columnas el área sale
+     igual y sin embargo no cubren */
+  parte(P1,3,2);
+  ok('doblado en 3 por 2, cada parte del patrón vale 1/6 de unidad',
+     textoFrac(partePatron().mu)==='1/6', textoFrac(partePatron().mu));
+  var m1=sacarTrozo(P1);
+  m1.x=TM1.x; m1.y=TM1.y;
+  var cubren1=[m1];
+  for(i=1;i<5;i++) cubren1.push(duplicaEn(cubren1[i-1],'d'));
+  ok('cinco de esas partes llegan justo al borde de tu mantel',
+     Math.abs((cubren1[4].x+ancho(cubren1[4]))-(TM1.x+ancho(TM1)))<1e-9 &&
+     Math.abs(alto(m1)-alto(TM1))<1e-9);
+  var med1=medidaDe(TM1);
+  ok('midiendo así, a tu mantel le salen los 5/6 del encargo',
+     med1.estado==='ok' && med1.n===5 && igualFrac(med1.frac,{p:5,q:6}),
+     med1.frac? med1.n+' partes → '+textoFrac(med1.frac)+' u' : '—');
+  ok('la cuenta se da sin simplificar: arriba las partes que caben, abajo en las que se dobló',
+     med1.cuenta && textoFrac(med1.cuenta.total)==='5/6' && med1.cuenta.delPatron &&
+     partePatron().N===6,
+     med1.cuenta? textoFrac(med1.cuenta.total) : 'sin cuenta');
+  ok('y una parte más se pasaría del mantel',
+     Math.abs((cubren1[4].x+2*ancho(m1))-(TM1.x+ancho(TM1)))>1e-6);
+  ok('quitando una parte, la cuenta baja a 4/6 aunque la fracción sea 2/3', (function(){
+      var guarda=cubren1[4].x;
+      cubren1[4].x=TM1.x-3*ancho(TM1);
+      var r=medidaDe(TM1);
+      cubren1[4].x=guarda;
+      return r.cuenta && textoFrac(r.cuenta.total)==='4/6' &&
+             r.frac.p===2 && r.frac.q===3; })());
+  ok('un mantel mal fabricado se mide igual, y sale la fracción que sea', (function(){
+      /* seis partes en vez de cinco: el entorno no protesta, da 6/6 */
+      var extra=duplicaEn(cubren1[4],'d');
+      extra.x=TM1.x+ancho(TM1)/2; extra.y=TM1.y;   /* dentro, aunque solape */
+      var r=medidaDe(TM1);
+      piezas=piezas.filter(function(s){ return s.id!==extra.id; });
+      return r.n===6 && textoFrac(r.cuenta.total)==='6/6' && textoFrac(r.frac)==='1'; })(),
+     'seis sextos: la cuenta sale, el juicio no');
+
+  /* --- EL RECORRIDO ENTERO, MODO DESDE OTRO MANTEL --------------------------------------------
+     A mide 3/4 u y el encargo es 5/6 u. El paso directo es (5·4)/(6·3)=10/9:
+     doblar A en 9 y juntar 10 de esas partes. En el banco se mide con A, y
+     como de A se sabe lo que mide, la cuenta puede darse en unidades. */
+  piezas=[]; sel=null; banco=null;
+  var E2={modo:2,p:5,q:6,rp:3,rq:4,wp:3,wq:2,hp:1,hq:1};
+  var A2=ponEncargo(E2);
+  ok('la referencia del segundo modo lleva su nombre y su medida en el cartel',
+     textoCartel(A2)==='A · 3/4 u', textoCartel(A2));
+  ok('y no es la unidad: la unidad no está en el tablero',
+     A2.fp!==A2.fq && !piezas.some(function(s){ return s.tipo==='r' && s.fp===s.fq; }));
+  ok('A mide 3/4 de unidad, así que la unidad ocuparía 4/3 de A',
+     igualFrac(enU(areaDe(A2)), {p:3,q:4}), textoFrac(enU(areaDe(A2))));
+  parte(A2,9,1);
+  ok('doblado A en 9, cada parte vale 1/12 de unidad',
+     textoFrac(valorCelda(A2))==='1/12', textoFrac(valorCelda(A2)));
+  var p2=sacarTrozo(A2), q2=p2;
+  for(i=1;i<10;i++) q2=duplicaEn(q2,'d');
+  ok('diez de esas partes son un grupo de diez', grupoDe(p2).length===10, grupoDe(p2).length);
+  var man2=unir(p2);
+  ok('las diez se unen en un mantel de una pieza', !!man2);
+  ok('y ese mantel mide los 5/6 de unidad del encargo',
+     igualFrac(enU(areaDe(man2)), {p:5,q:6}), textoFrac(enU(areaDe(man2))));
+  ok('nueve se habrían quedado en 3/4 y once se habrían pasado a 11/12', (function(){
+      var nueve={p:0,q:1}, once={p:0,q:1};
+      for(var k=0;k<9;k++) nueve=sumaFrac(nueve,{p:1,q:6});
+      for(k=0;k<11;k++) once=sumaFrac(once,{p:1,q:6});
+      return textoFrac(enU(nueve))==='3/4' && textoFrac(enU(once))==='11/12'; })(),
+     'nueve partes vuelven a dar A');
+  var r2=probar(man2);
+  ok('llevar al banco monta el patrón A y tu mantel', r2.ok===true, r2.por||'ok');
+  var P2=patron(), TM2=tuMantel();
+  ok('el patrón del banco es A, limpio y con su medida',
+     P2.a===1 && P2.b===1 && P2.fp===3 && P2.fq===4 && textoCartel(P2)==='A · 3/4 u',
+     textoCartel(P2));
+  parte(P2,9,1);
+  ok('doblado el patrón en 9, cada parte vuelve a ser 1/12 de unidad',
+     textoFrac(partePatron().mu)==='1/12', textoFrac(partePatron().mu));
+  var m2=sacarTrozo(P2);
+  m2.x=TM2.x; m2.y=TM2.y;
+  var cubren2=[m2];
+  for(i=1;i<10;i++) cubren2.push(duplicaEn(cubren2[i-1],'d'));
+  ok('diez partes llegan justo al borde de tu mantel',
+     Math.abs((cubren2[9].x+ancho(cubren2[9]))-(TM2.x+ancho(TM2)))<1e-9 &&
+     Math.abs(alto(m2)-alto(TM2))<1e-9);
+  var med2=medidaDe(TM2);
+  ok('en patrones tu mantel mide 10/9 de A', igualFrac(med2.pat,{p:10,q:9}), textoFrac(med2.pat));
+  ok('y en unidades, los 5/6 del encargo',
+     med2.estado==='ok' && med2.n===10 && igualFrac(med2.frac,{p:5,q:6}),
+     med2.n+' partes → '+textoFrac(med2.frac)+' u');
+  ok('la cuenta se enseña sin simplificar: 10/12 de unidad',
+     med2.cuenta && textoFrac(med2.cuenta.total)==='10/12' && med2.cuenta.delPatron &&
+     partePatron().N===9,
+     med2.cuenta? textoFrac(med2.cuenta.total)+' con el patrón doblado en '+partePatron().N : 'sin cuenta');
+
+  /* --- EL PATRÓN ENTERO TAMBIÉN MIDE -----------------------------------------------------------
+     Iterar la referencia sobre lo que se mide es medir: puesta encima cuenta
+     como lo que ella mide, no como una unidad. */
+  ok('el patrón A puesto encima de tu mantel cuenta 3/4 de unidad', (function(){
+      var fuera=cubren2.map(function(t){ return t.x; });
+      cubren2.forEach(function(t){ t.x=TM2.x-6*ancho(TM2); });
+      var gx=P2.x, gy=P2.y, ga=P2.a;
+      P2.a=1;
+      P2.x=TM2.x+ancho(TM2)/2-ancho(P2)/2; P2.y=TM2.y+alto(TM2)/2-alto(P2)/2;
+      var r=medidaDe(TM2);
+      P2.x=gx; P2.y=gy; P2.a=ga;
+      cubren2.forEach(function(t,k){ t.x=fuera[k]; });
+      return r.estado==='ok' && r.n===1 && igualFrac(r.frac,{p:3,q:4}); })(),
+     'un patrón entero → 3/4 u');
+  ok('y si lo puesto no son todos trozos iguales, no hay cuenta que dar, solo la fracción',
+     (function(){
+      var raro=nuevoTrozo({p:1,q:7},{p:1,q:7},
+                          {x:TM2.x+ancho(TM2)/2, y:TM2.y+alto(TM2)/2});
+      piezas.push(raro);
+      var r=medidaDe(TM2);
+      piezas=piezas.filter(function(s){ return s.id!==raro.id; });
+      return !r.cuenta && !!r.frac; })());
+  ok('sin patrón no hay medida', (function(){
+      P2.pat=0;
+      var e=medidaDe(TM2).estado;
+      P2.pat=1;
+      return e==='sin-patron'; })());
+  ok('lo de la zona de construir no cuenta: se mide el mantel del banco',
+     medidaDe(man2).estado==='sin-trozos' && medidaDe(TM2).estado==='ok');
+
+  /* --- la cuenta solo sale si se pide -----------------------------------------------------------
+     El material no corrige por su cuenta: el recuento vive detrás de la casilla
+     de comprobaciones, y apagada no se enseña nada. */
+  sel=null;
+  opt.comp=0; cacheMedir=''; cacheBanco=''; draw();
+  ok('con las comprobaciones apagadas, el panel de la cuenta no se ve',
+     document.getElementById('panelMedir').style.display==='none' &&
+     document.getElementById('h2Medir').style.display==='none');
+  ok('y el del banco dice lo que hay sin sacar cuentas',
+     document.getElementById('panelBanco').textContent.indexOf('1/12')<0 &&
+     document.getElementById('panelBanco').textContent.indexOf('10/12')<0,
+     document.getElementById('panelBanco').textContent.replace(/\s+/g,' ').slice(0,52));
+  opt.comp=1; cacheMedir=''; draw();
+  var txtMed=document.getElementById('panelMedir').textContent.replace(/\s+/g,' ');
+  ok('encendidas, aparece con la fracción que ha medido el alumno',
+     document.getElementById('panelMedir').style.display!=='none' && txtMed.indexOf('10/12')>=0,
+     txtMed.slice(0,86));
+  ok('el panel no juzga: en ningún sitio dice si está acertado o no',
+     !/\b(bien|mal|correct|incorrect|acierto|error|fallo)/i.test(txtMed), txtMed.slice(0,60));
+  ok('la medida que se enseña sale de lo que ha puesto el alumno, no de la respuesta',
+     (function(){
+      var quitado=cubren2[9];
+      piezas=piezas.filter(function(s){ return s.id!==quitado.id; });
+      cacheMedir=''; draw();
+      var t=document.getElementById('panelMedir').textContent;
+      piezas.push(quitado);
+      return t.indexOf('9/12')>=0 || t.indexOf('3/4')>=0; })(),
+     document.getElementById('panelMedir').textContent.replace(/\s+/g,' ').slice(0,86));
+  ok('y el encargo se recuerda al lado, para que lo compare quien mide',
+     document.getElementById('panelMedir').textContent.indexOf('5/6')>=0);
+
+  /* --- EL RECORRIDO ENTERO CUANDO NO HAY ATAJO ------------------------------------------------
+     El nivel difícil del modo desde otro mantel propone encargos a los que no
+     se llega doblando A una sola vez: A mide 3/4 u y se piden 5/7 u, o sea
+     20/21 de A, y en 21 partes no se puede doblar nada. Hay que construir por
+     etapas. Y lo mismo pasa DENTRO del banco: allí tampoco se puede doblar el
+     patrón en 21, así que se mide con partes de lo que se haya construido, y
+     la cuenta tiene que seguir saliendo. Esta prueba existe porque el diseño
+     se rompería justo aquí si la cuenta solo supiera contar celdas del patrón. */
+  piezas=[]; sel=null; banco=null;
+  var E3={modo:2,p:5,q:7,rp:3,rq:4,wp:3,wq:2,hp:1,hq:1};
+  var A6=ponEncargo(E3);
+  ok('con este encargo el paso directo pediría 21 dobleces, que no caben',
+     !hayRutaDirecta(5,7,3,4), textoFrac(pasoDirecto(5,7,3,4))+' de A');
+  parte(A6,3,1);
+  var c6=sacarTrozo(A6);
+  ok('doblado A en 3, cada parte vale 1/4 de unidad',
+     textoFrac(enU(areaDe(c6)))==='1/4', textoFrac(enU(areaDe(c6))));
+  var d6=c6;
+  for(i=1;i<4;i++) d6=duplicaEn(d6,'d');
+  var uni6=unir(c6);
+  ok('cuatro de esas partes rehacen la unidad entera',
+     !!uni6 && textoFrac(enU(areaDe(uni6)))==='1', uni6? textoFrac(enU(areaDe(uni6))) : '—');
+  parte(uni6,7,1);
+  var e6=sacarTrozo(uni6);
+  ok('y doblando esa unidad en 7, cada parte vale 1/7 de unidad',
+     textoFrac(enU(areaDe(e6)))==='1/7', textoFrac(enU(areaDe(e6))));
+  var f6=e6;
+  for(i=1;i<5;i++) f6=duplicaEn(f6,'d');
+  var man6=unir(e6);
+  ok('cinco de ellas son el mantel encargado, 5/7 de unidad',
+     !!man6 && textoFrac(enU(areaDe(man6)))==='5/7', man6? textoFrac(enU(areaDe(man6))) : '—');
+  var r6=probar(man6);
+  ok('y se lleva al banco como cualquier otro', r6.ok===true, r6.por||'ok');
+  var P6=patron(), TM6=tuMantel();
+  ok('el patrón del banco sigue siendo A, que tampoco se deja doblar en 21',
+     P6.fp===3 && P6.fq===4 && pasoDirecto(5,7,3,4).q>MAXD, textoCartel(P6));
+  /* en el banco se rehace otra vez la unidad, y se mide con partes de ella */
+  parte(P6,3,1);
+  var g6=sacarTrozo(P6), h6=g6;
+  for(i=1;i<4;i++) h6=duplicaEn(h6,'d');
+  var u6=unir(g6);
+  ok('en el banco la unidad se rehace igual, con cuatro partes del patrón',
+     !!u6 && textoFrac(enU(areaDe(u6)))==='1', u6? textoFrac(enU(areaDe(u6))) : '—');
+  parte(u6,7,1);
+  var j6=sacarTrozo(u6);
+  j6.x=TM6.x; j6.y=TM6.y;
+  var cubren6=[j6];
+  for(i=1;i<5;i++) cubren6.push(duplicaEn(cubren6[i-1],'d'));
+  ok('cinco séptimos de esa unidad llegan justo al borde de tu mantel',
+     Math.abs((cubren6[4].x+ancho(cubren6[4]))-(TM6.x+ancho(TM6)))<1e-9 &&
+     Math.abs(alto(j6)-alto(TM6))<1e-9);
+  var med6=medidaDe(TM6);
+  ok('y midiendo así salen los 5/7 del encargo',
+     med6.estado==='ok' && med6.n===5 && igualFrac(med6.frac,{p:5,q:7}),
+     med6.n+' partes → '+textoFrac(med6.frac)+' u');
+  ok('la cuenta sale aunque lo puesto NO sean celdas del patrón',
+     !!med6.cuenta && med6.cuenta.delPatron===false &&
+     textoFrac(med6.cuenta.mu)==='1/7' && textoFrac(med6.cuenta.total)==='5/7',
+     med6.cuenta? '5 trozos de '+textoFrac(med6.cuenta.mu)+' → '+textoFrac(med6.cuenta.total)
+                : 'sin cuenta');
+  opt.comp=1; cacheMedir=''; sel=null; draw();
+  var txt6=document.getElementById('panelMedir').textContent.replace(/\s+/g,' ');
+  ok('y el panel dice de cuánto es cada trozo, que si no la fracción saldría de la nada',
+     txt6.indexOf('1/7 u cada uno')>=0, txt6.slice(0,96));
+
+  /* --- las etiquetas van en unidades, y tu mantel no lleva ninguna ------------------------------ */
+  piezas=[]; sel=null; banco=null;
+  var A3=ponEncargo(E2);
+  var e3=nuevoTrozo({p:1,q:2},{p:1,q:1},{x:0,y:L*2.4});
+  piezas.push(e3);
+  ok('con A de 3/4 u, un trozo de 1/2 de lado base vale 1/4 de unidad',
+     textoFrac(valorCelda(e3))==='1/4', textoFrac(valorCelda(e3)));
+  parte(e3,3,1);
+  ok('y si ese trozo se parte en 3, cada parte vale 1/12',
+     textoFrac(valorCelda(e3))==='1/12', textoFrac(valorCelda(e3)));
+  ok('sin referencia en el tablero no se etiqueta nada', (function(){
+      var g=piezas;
+      piezas=[e3];
+      var v=valorCelda(e3);
+      piezas=g;
+      return v===null; })());
+  ctx.save();
+  ctx.font='10px -apple-system,Segoe UI,Roboto,sans-serif';
+  var anLargo=ctx.measureText('1/6 u').width, anCorto=ctx.measureText('1/6').width;
+  var etL=etiquetaTrozo(ctx,{p:1,q:6},anLargo+8,40);
+  var etC=etiquetaTrozo(ctx,{p:1,q:6},anCorto+8,40);
+  var etN=etiquetaTrozo(ctx,{p:1,q:6},anCorto,40);
+  var etBaja=etiquetaTrozo(ctx,{p:1,q:6},anLargo+8,9);
+  ctx.restore();
+  ok('la etiqueta lleva la unidad detrás: 1/6 u', etL==='1/6 u', etL);
+  ok('si el trozo es estrecho se queda con la fracción sola', etC==='1/6', etC);
+  ok('si no cabe ni eso, no se escribe nada', etN==='', '«'+etN+'»');
+  ok('y si el trozo es muy bajo, tampoco', etBaja==='', '«'+etBaja+'»');
+
+  /* --- guardar y abrir ------------------------------------------------------------------------ */
+  piezas=[]; sel=null; encargo=E2;
+  banco={x:-40, y:-15, w:3*L, h:2*L};
+  var s1=nuevoTrozo({p:3,q:10},{p:1,q:1},{x:11,y:22}); s1.a=2; s1.b=3;
+  var s2=nuevaRef(E2,{x:-30,y:80},true);
+  var s3=nuevoTuMantel({p:5,q:3},{p:1,q:2},{x:120,y:-5});
+  piezas=[s1,s2,s3];
+  function firmaDe(){
+    return piezas.map(function(s){
+      return s.tipo+':'+s.wp+'/'+s.wq+'x'+s.hp+'/'+s.hq+':'+s.a+','+s.b+':u'+(s.pat||0)+
+             ':'+(s.fp||0)+'/'+(s.fq||1)+':'+s.x.toFixed(2)+','+s.y.toFixed(2); }).join(' | ');
+  }
+  var firma=firmaDe();
+  var data=datosActuales();
+  banco=null; encargo=null;
+  importMode='replace'; loadData(JSON.parse(JSON.stringify(data)));
+  ok('guardar y volver a abrir conserva las piezas, las divisiones y el patrón',
+     firmaDe()===firma, firmaDe());
+  ok('y también el banco', !!banco && Math.abs(banco.w-3*L)<1e-9, banco? banco.w : 'sin banco');
+  ok('y el encargo, que si no no se sabría qué se estaba fabricando',
+     !!encargo && encargo.p===5 && encargo.q===6 && encargo.rp===3 && encargo.rq===4 &&
+     encargo.modo===2, encargo? encargo.p+'/'+encargo.q+' desde '+encargo.rp+'/'+encargo.rq : '—');
+  var n0=piezas.length;
+  importMode='add'; loadData(JSON.parse(JSON.stringify(data)));
+  ok('el botón ＋ añade sin borrar lo que había, y deja fuera el segundo mantel tuyo',
+     piezas.length===n0+2, piezas.length);
+  ok('no aparece un segundo patrón, que patrón hay uno',
+     piezas.filter(function(s){ return s.pat; }).length===1,
+     piezas.filter(function(s){ return s.pat; }).length);
+  ok('ni un segundo mantel tuyo',
+     piezas.filter(function(s){ return s.tipo==='t'; }).length===1,
+     piezas.filter(function(s){ return s.tipo==='t'; }).length);
+  importMode='replace';
+  ok('un archivo con dos patrones deja solo el primero', (function(){
+      var l=limpiaPiezas([{tipo:'r',wp:1,wq:1,hp:1,hq:1,a:1,b:1,pat:1,fp:3,fq:4,x:0,y:0},
+                          {tipo:'r',wp:1,wq:1,hp:1,hq:1,a:1,b:1,pat:1,fp:3,fq:4,x:0,y:0}]);
+      return l && l.filter(function(s){ return s.pat; }).length===1; })());
+  ok('un archivo con una referencia sin medida se rechaza',
+     limpiaPiezas([{tipo:'r',wp:1,wq:1,hp:1,hq:1,a:1,b:1,x:0,y:0}])===null);
+  ok('y uno con dos manteles tuyos',
+     limpiaPiezas([{tipo:'t',wp:1,wq:1,hp:1,hq:1,a:1,b:1,x:0,y:0},
+                   {tipo:'t',wp:1,wq:1,hp:1,hq:1,a:1,b:1,x:0,y:0}])===null);
+  ok('y uno con lados de cero o negativos',
+     limpiaPiezas([{tipo:'p',wp:0,wq:1,hp:1,hq:1,a:1,b:1,x:0,y:0}])===null &&
+     limpiaPiezas([{tipo:'p',wp:1,wq:1,hp:-2,hq:1,a:1,b:1,x:0,y:0}])===null);
+  ok('y uno con coordenadas que no son números',
+     limpiaPiezas([{tipo:'p',wp:1,wq:1,hp:1,hq:1,a:1,b:1,x:'ahí',y:0}])===null);
+  ok('y uno con una pieza de un tipo que no existe',
+     limpiaPiezas([{tipo:'servilleta',wp:1,wq:1,hp:1,hq:1,a:1,b:1,x:0,y:0}])===null);
+  ok('un encargo con números raros se descarta en vez de romper el tablero',
+     limpiaEncargo({modo:2,p:5,q:0,rp:3,rq:4,wp:1,wq:1,hp:1,hq:1})===null &&
+     limpiaEncargo({modo:1,p:'x',q:6,rp:1,rq:1,wp:1,wq:1,hp:1,hq:1})===null);
+
+  /* --- reiniciar y deshacer ------------------------------------------------------------------- */
+  piezas=[]; sel=null; undoStack=[]; banco=null;
+  var A4=ponEncargo(E1);
+  parte(A4,4,1);
+  var t4=sacarTrozo(A4);
+  duplicaEn(t4,'d');
+  ok('en el tablero hay ya la unidad y dos trozos', piezas.length===3, piezas.length);
+  reinicia();
+  ok('reiniciar deja el mismo encargo con la referencia sola',
+     piezas.length===1 && piezas[0].tipo==='r' && piezas[0].a===1 &&
+     encargo.p===5 && encargo.q===6, piezas.length+' pieza(s)');
+  doUndo();
+  ok('y deshacer devuelve lo que había', piezas.length===3, piezas.length);
+  undoStack=[];
+  piezas=[]; sel=null; banco=null;
+  var A5=ponEncargo(E1);
+  parte(A5,2,1);
+  var t5=sacarTrozo(A5);
+  probar(t5);
+  ok('llevar al banco deja un patrón y un mantel tuyo',
+     !!patron() && !!tuMantel() && !!banco);
+  doUndo();
+  ok('y deshacer se lo lleva entero, banco incluido',
+     !patron() && !tuMantel() && !banco, piezas.length+' piezas');
+
+  piezas=antesP; sel=antesS; view=antesV; opt.iman=antesI; opt.etiq=antesE;
+  opt.comp=antesC; undoStack=antesU; banco=antesB; encargo=antesEnc;
+  cachePartes=''; cacheBanco=''; cacheMedir=''; cacheEnc='';
+  draw();
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+    try{ draw(); }catch(e2){}
+  }
+
+  /* --- informe ------------------------------------------------------------------------------- */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length
+                                         : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación de Manteles a medida</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__mantelesAMedida={
+  test:runSelfTest, L:L, MAXD:MAXD, NIVELES:NIVELES, FORMAS:FORMAS, opt:opt,
+  piezas:function(){ return piezas; }, sel:function(){ return sel; },
+  encargo:function(){ return encargo; }, banco:function(){ return banco; },
+  ancho:ancho, alto:alto, areaDe:areaDe, areaCelda:areaCelda,
+  marcasX:marcasX, marcasY:marcasY, parte:parte, sacarTrozo:sacarTrozo, separar:separar,
+  duplicaEn:duplicaEn, grupoDe:grupoDe, unir:unir, rectanguloDe:rectanguloDe,
+  probar:probar, patron:patron, tuMantel:tuMantel, refTrabajo:refTrabajo, enBanco:enBanco,
+  enU:enU, valorCelda:valorCelda, medidaDe:medidaDe, partePatron:partePatron,
+  trozosSobre:trozosSobre, textoCartel:textoCartel, textoFrac:textoFrac,
+  ponEncargo:ponEncargo, reinicia:reinicia, cajaTodo:cajaTodo,
+  encargoAlAzar:encargoAlAzar, encargoConcreto:encargoConcreto,
+  objetivoValido:objetivoValido, referenciaValida:referenciaValida, pasoDirecto:pasoDirecto,
+  hayRutaDirecta:hayRutaDirecta, hayRutaPorLaUnidad:hayRutaPorLaUnidad, alcanzable:alcanzable,
+  leeFraccion:leeFraccion, leeEncargoTexto:leeEncargoTexto,
+  reduce:reduce, divFrac:divFrac, sumaFrac:sumaFrac, multFrac:multFrac,
+  aplicaIman:aplicaIman, load:loadData, setMode:function(m){ importMode=m; },
+  view:function(){ return view; }, w2s:w2s, s2w:s2w,
+  redraw:draw, fit:fitView
+};
+
+})();
+</script>
+</body>
+</html>
