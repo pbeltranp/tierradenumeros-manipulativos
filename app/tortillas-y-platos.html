@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tortillas y platos</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:#2b2f36;background:#fff;display:flex;height:100%;overflow:hidden}
+  #side{width:216px;flex:0 0 216px;border-right:1px solid #e6e8ec;padding:10px 10px;overflow:auto;
+        background:#fafbfc}
+  #side h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a919c;
+           margin:0 0 6px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;
+           text-overflow:ellipsis;clear:both}
+  #side h2.sep{margin-top:16px}
+  /* rótulo del material: sobrio, peso ligero y una línea fina debajo */
+  #side .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:2px 2px 10px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #e6e8ec;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  /* acotado a la barra: si no, se lo come también a los h2 del panel lateral,
+     que llevan la misma clase para separarse, y los deja en una raya de 1px */
+  #toolbar .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;
+       padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  .act{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:5px;
+       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:7px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;text-align:left;line-height:1.3}
+  .act:hover{background:#f0f2f5}
+  .act:disabled{opacity:.4;cursor:default}
+  .act kbd{font:11px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
+  input[type=number]{font:12px inherit;border:1px solid #d5d9e0;border-radius:6px;
+       padding:5px 6px;color:#2b2f36;background:#fff;width:100%}
+  .fila{display:flex;gap:5px;align-items:stretch;margin-top:4px}
+  .fila > *{min-width:0}
+  .fila label{flex:1;display:flex;align-items:center;font-size:12px;color:#4a515c}
+  .fila input{flex:0 0 58px;text-align:center;font-size:14px;font-weight:600}
+  /* los botones de partir: rejilla de números grandes, que es lo que se pulsa */
+  .trozos{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:5px}
+  .trozos button{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:7px 0;
+       font:15px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#3d4450;
+       cursor:pointer}
+  .trozos button:hover{background:#eaf1fb;border-color:#9dbde6}
+  .lab{font-size:11.5px;color:#6b727d;margin-top:8px;line-height:1.45}
+  .cja{margin-top:7px;font-size:12px;color:#4a515c;line-height:1.55;
+       background:#fff;border:1px solid #e6e8ec;border-radius:8px;padding:8px 9px}
+  .cja b{color:#2b2f36}
+  .cja .pl{margin-top:5px;padding-top:5px;border-top:1px solid #eef0f3}
+  .cja .pl:first-child{margin-top:0;padding-top:0;border-top:0}
+  .cja .gr{font-size:14px;font-weight:600;color:#31527d}
+  .nota{font-size:11px;color:#8a919c;line-height:1.5;margin-top:7px}
+  #stage{position:relative;flex:1;min-height:0;background:#fbfbfa}
+  canvas#cv{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:12px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:340px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+
+  /* --- la hoja donde el alumno cuenta lo que ha hecho ---------------------------- */
+  #docs{flex:0 0 auto;max-height:52%;overflow:auto;border-top:1px solid #e6e8ec;background:#fff;
+        padding:9px 12px 14px;display:none}
+  #docs.show{display:block}
+  #docs h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a919c;
+           margin:2px 0 7px;font-weight:600;display:flex;align-items:center;gap:8px}
+  #docs h3 button{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:2px 8px;
+           font:11px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#4a515c;
+           cursor:pointer;text-transform:none;letter-spacing:0;font-weight:400}
+  #docs h3 button:hover{background:#f0f2f5}
+  table.tab{border-collapse:collapse;font-size:13px}
+  table.tab th{font-size:10.5px;font-weight:600;color:#6b727d;text-align:center;padding:4px 8px;
+               border-bottom:1px solid #d5d9e0;line-height:1.25}
+  table.tab td{padding:3px 5px;text-align:center;border-bottom:1px solid #eef0f3}
+  table.tab td.fs{color:#8a919c;font-size:12px;text-align:right;padding-right:9px}
+  table.tab input{width:6.4em;text-align:center;padding:4px 4px;font:13px inherit;color:#2b2f36;
+                  border:1px solid #cdd3db;border-radius:5px;background:#fffdf6}
+  table.tab input:focus{outline:2px solid #9dbde6;outline-offset:-1px;background:#fff}
+  table.tab input.tam{width:7.2em;background:#fbfbfa}
+  table.tab td.accion{padding-left:10px}
+  table.tab button.run{border:1px solid #9dbde6;background:#eaf1fb;color:#2f62a8;border-radius:6px;
+                       padding:4px 11px;font:13px inherit;cursor:pointer;line-height:1.1}
+  table.tab button.run:hover{background:#d8e6f8}
+  table.tab .hecha{color:#7aa06a;font-size:15px}
+  #masmenos{margin-top:7px;display:flex;gap:6px;align-items:center}
+  #masmenos button{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:4px 11px;
+                   font:12.5px inherit;color:#3d4450;cursor:pointer}
+  #masmenos button:hover{background:#f0f2f5}
+  #lineaCant{margin-top:13px;display:flex;align-items:center;gap:9px;flex-wrap:wrap;
+             font-size:13px;color:#3d4450}
+  #lineaCant input{flex:1;min-width:180px;max-width:340px;padding:5px 7px;font:13.5px inherit;
+             border:1px solid #cdd3db;border-radius:6px;background:#fffdf6;color:#2b2f36}
+  #lineaCant input:focus{outline:2px solid #9dbde6;outline-offset:-1px;background:#fff}
+  @media (max-width:640px){
+    #side{width:164px;flex:0 0 164px;padding:8px 7px}
+    .btn{padding:5px 7px;font-size:12px}
+    #info{width:calc(100% - 20px)}
+  }
+</style>
+</head>
+<body>
+
+  <aside id="side">
+    <div class="brand">Tortillas y <b>platos</b></div>
+
+    <h2>La mesa</h2>
+    <div class="fila"><label>Tortillas</label><input type="number" id="inA" min="1" max="12" value="3"></div>
+    <div class="fila"><label>Personas</label><input type="number" id="inB" min="1" max="12" value="4"></div>
+    <button class="act" id="poner">Poner la mesa</button>
+
+    <h2 class="sep">Partir en trozos iguales</h2>
+    <div class="trozos" id="cortes"></div>
+    <div class="lab" id="labCorte"></div>
+
+    <h2 class="sep">Repartir</h2>
+    <button class="act" id="reparte">→ Dar un trozo a cada plato<kbd>D</kbd></button>
+    <button class="act" id="recoge">↩ Recoger todo en la mesa<kbd>R</kbd></button>
+
+    <h2 class="sep" id="h2Cuentas">Cuentas</h2>
+    <div class="cja" id="panelCuentas"></div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <button class="btn" id="reiniciar" title="Poner otra vez las tortillas enteras">↺ Empezar de nuevo</button>
+      <span class="sep"></span>
+      <label class="chk" title="Escribe dentro de cada trozo lo que vale"><input type="checkbox" id="cEtiq">Etiquetas</label>
+      <label class="chk" title="El programa cuenta lo que hay en cada plato"><input type="checkbox" id="cCuentas">Cuentas</label>
+      <span class="sep"></span>
+      <label class="chk" title="Una hoja para contar por escrito lo que has hecho"><input type="checkbox" id="cTabla">Tabla</label>
+      <label class="chk" title="El tamaño de los trozos, en una columna aparte"><input type="checkbox" id="cTam">Columna de tamaño</label>
+      <label class="chk" title="Cada fila lleva un botón para hacer en la mesa lo que dice"><input type="checkbox" id="cModo">Modo tabla</label>
+      <span class="sep"></span>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Guardar el reparto">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un reparto guardado">⤒ Abrir</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo</div>
+    </div>
+    <div id="docs">
+      <h3>Cuenta lo que has hecho
+        <button id="copiaTabla" title="Copiarla para pegarla en un documento">⧉ Copiar</button></h3>
+      <div id="tabla"></div>
+      <div id="masmenos">
+        <button id="masFila">+ una fila</button>
+        <button id="menosFila">− una fila</button>
+        <button id="vaciaHoja">Vaciar la hoja</button>
+      </div>
+      <div id="lineaCant">
+        <label for="cant">Cantidad que recibe cada participante:</label>
+        <input type="text" id="cant" maxlength="80" placeholder="escríbelo aquí">
+      </div>
+    </div>
+  </main>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LA IDEA
+   Hay tortillas en la mesa y un plato por persona. Se parten las tortillas en
+   trozos iguales y se arrastran los trozos a los platos hasta que todos tengan
+   lo mismo. No hay más.
+
+   LA RESTRICCIÓN QUE LO GOBIERNA TODO: un trozo solo aparece partiendo otro en
+   partes iguales. Así que todo trozo es una fracción unitaria de tortilla —1/2,
+   1/4, 1/12— y basta guardar de él un entero, el denominador d. Partir un trozo
+   de 1/d en n deja n trozos de 1/(d·n): aritmética entera exacta, sin decimales
+   y sin márgenes de tolerancia. Dos platos tienen lo mismo o no lo tienen.
+
+   Y la consecuencia geométrica, que es la que hace que esto se pueda manipular:
+   si la tortilla es redonda y se parte por radios, un trozo de 1/d es un sector
+   de 2π/d, y partirlo en n da n sectores que TESELAN EXACTAMENTE el de partida.
+   Por eso una tortilla partida sigue pareciendo entera hasta que alguien se
+   lleva un trozo, y por eso los trozos de un plato se pueden colocar armando la
+   tortilla en vez de amontonados. Eso último no es adorno: es lo que permite
+   que el niño mire dos platos y vea si tienen lo mismo, sin que se lo diga el
+   programa.
+
+   El programa NO corrige. Cuenta, si se le pide, y para de contar.
+   ========================================================================= */
+var R=58;                  /* radio de la tortilla, en píxeles               */
+var MAXPIEZAS=400;         /* trozos como mucho sobre la mesa                */
+var CORTES=[2,3,4,5,6,8,10,12];
+var MAXA=12, MAXB=12;
+
+var CTOR={f:'#f4cf72', b:'#c99a2b'};        /* tortilla                      */
+var CSEL={f:'#cfe0f5', b:'#2f62a8'};        /* trozo elegido                 */
+var CPLATO={f:'#ffffff', b:'#c8ccd3'};      /* el plato                      */
+
+/* =========================================================================
+   2. ESTADO
+   ========================================================================= */
+var A=3, B=4;
+var piezas=[], nid=1, orden=1, sel=null;
+var platos=[];                    /* geometría de los platos, para soltar    */
+var view={x:0,y:0,z:1};
+var opt={etiq:0, cuentas:0, tabla:0, tam:0, modo:0};
+var undoStack=[], drag=null;
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop');
+var flashMsg=null, flashT=0;
+
+function s2w(p){ return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z}; }
+function flash(m){ flashMsg=m; flashT=Date.now(); pinta(); setTimeout(pinta,2600); }
+function pushUndo(){
+  undoStack.push(JSON.stringify({A:A,B:B,p:piezas,n:nid,o:orden,s:sel}));
+  if(undoStack.length>90) undoStack.shift();
+}
+function doUndo(){
+  if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var d=JSON.parse(undoStack.pop());
+  A=d.A; B=d.B; piezas=d.p; nid=d.n||1; orden=d.o||1; sel=d.s;
+  sincronizaEntradas(); pinta();
+}
+
+/* =========================================================================
+   3. LOS TROZOS
+   Una pieza es un trozo de tortilla de tamaño 1/den, con el centro de su
+   tortilla en (x,y) y la bisectriz en ang. Un trozo de den=1 es la tortilla
+   entera. En qué plato está, o -1 si sigue en la mesa.
+   ========================================================================= */
+function mcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=a%b; a=b; b=t; } return a; }
+/* Además de dónde está ahora (x,y), cada trozo recuerda DE DÓNDE SALIÓ (hx,hy):
+   el sitio de la tortilla de la que se cortó. Arrastrarlo cambia x e y —también
+   al meterlo en un plato—, así que sin ese recuerdo «recoger» los devolvería a
+   donde se soltaron, encima de los platos y a tamaño completo, que es justo el
+   estropicio que hacía. hx y hy no los cambia nada. */
+function nuevaPieza(den,x,y,ang,plato){
+  return {id:nid++, den:den, x:x, y:y, hx:x, hy:y, ang:ang,
+          plato:(plato===undefined?-1:plato), orden:orden++};
+}
+function ponMesa(){
+  piezas=[]; sel=null; nid=1; orden=1;
+  var i, col=Math.min(A, Math.max(1, Math.round(Math.sqrt(A*1.8))||1));
+  var paso=2*R+26;
+  for(i=0;i<A;i++) piezas.push(nuevaPieza(1,(i%col)*paso,Math.floor(i/col)*paso,0,-1));
+}
+function porId(id){ var i; for(i=0;i<piezas.length;i++) if(piezas[i].id===id) return piezas[i]; return null; }
+function elegida(){ return sel==null ? null : porId(sel); }
+function enMesa(){ return piezas.filter(function(p){ return p.plato<0; }); }
+
+/* partir un trozo en n: los hijos teselan exactamente al padre */
+function parte(p,n){
+  if(n<2 || p.den*n>100000) return null;
+  var a0=p.ang-Math.PI/p.den, paso=2*Math.PI/(p.den*n), hijas=[], i;
+  for(i=0;i<n;i++) hijas.push(nuevaPieza(p.den*n, p.x, p.y, a0+paso*(i+0.5), p.plato));
+  var k=piezas.indexOf(p);
+  piezas.splice.apply(piezas,[k,1].concat(hijas));
+  return hijas;
+}
+/* si hay un trozo elegido se parte ese; si no, todas las tortillas de la mesa,
+   que es lo que se quiere hacer casi siempre al empezar */
+function corta(n){
+  var p=elegida();
+  if(p){
+    if(piezas.length+n>MAXPIEZAS){ flash('Ya hay demasiados trozos'); return; }
+    pushUndo();
+    var h=parte(p,n);
+    sel=h?h[0].id:null;
+    flash('Un trozo de '+nombre(p.den)+' partido en '+n+': salen trozos de '+nombre(p.den*n));
+    pinta(); return;
+  }
+  var lista=enMesa().filter(function(q){ return q.den===1; });
+  if(!lista.length){
+    flash('Elige un trozo para partirlo: se toca y se pone azul');
+    return;
+  }
+  if(piezas.length+lista.length*n>MAXPIEZAS){ flash('Ya hay demasiados trozos'); return; }
+  pushUndo();
+  for(var i=0;i<lista.length;i++) parte(lista[i],n);
+  sel=null;
+  flash(lista.length===1 ? 'La tortilla, partida en '+n
+                         : 'Las '+lista.length+' tortillas, partidas en '+n);
+  pinta();
+}
+/* dar un trozo a cada plato: hacen falta tantos trozos iguales como personas.
+   Va sin pushUndo ni mensajes para poder repetirla desde la tabla, donde una
+   fila reparte varias rondas de una vez y todo eso tiene que deshacerse junto */
+function reparteUno(){
+  var libres=enMesa(), cont={}, i, elegido=null;
+  for(i=0;i<libres.length;i++) cont[libres[i].den]=(cont[libres[i].den]||0)+1;
+  for(var d in cont) if(cont[d]>=B && (elegido===null || +d<elegido)) elegido=+d;
+  if(elegido===null) return false;
+  var dados=0;
+  for(i=0;i<piezas.length && dados<B;i++){
+    if(piezas[i].plato<0 && piezas[i].den===elegido){
+      piezas[i].plato=dados; piezas[i].orden=orden++; dados++;
+    }
+  }
+  return true;
+}
+function daUnoACada(){
+  if(!hayIguales()){ flash('No hay '+B+' trozos iguales en la mesa: parte algo antes'); return; }
+  pushUndo();
+  reparteUno();
+  sel=null; pinta();
+}
+function recoge(){
+  pushUndo();
+  for(var i=0;i<piezas.length;i++){
+    piezas[i].plato=-1;
+    piezas[i].x=piezas[i].hx; piezas[i].y=piezas[i].hy;   /* cada uno a su tortilla */
+  }
+  sel=null; pinta();
+}
+/* lo que hay en un plato, exacto y SIN simplificar: arriba los trozos que hay,
+   abajo en cuántos se partió la tortilla */
+function sumaPlato(j){
+  var num=0, den=1, i;
+  for(i=0;i<piezas.length;i++){
+    if(piezas[i].plato!==j) continue;
+    var d=piezas[i].den, g=mcd(den,d), l=den/g*d;
+    num=num*(l/den)+(l/d);
+    den=l;
+  }
+  return {p:num, q:den};
+}
+function simplifica(f){ var g=mcd(f.p,f.q)||1; return {p:f.p/g, q:f.q/g}; }
+function tiposEn(j){
+  var m={}, i;
+  for(i=0;i<piezas.length;i++) if(piezas[i].plato===j) m[piezas[i].den]=(m[piezas[i].den]||0)+1;
+  return m;
+}
+function nombre(den){
+  if(den===1) return 'una tortilla entera';
+  if(den===2) return 'un medio';
+  if(den===3) return 'un tercio';
+  if(den===4) return 'un cuarto';
+  return '1/'+den;
+}
+function textoFrac(f){ return f.q===1 ? String(f.p) : (f.p+'/'+f.q); }
+
+/* =========================================================================
+   4. DISPOSICIÓN
+   En la mesa, cada trozo está donde lo hayan dejado. En un plato, en cambio,
+   los trozos SE COLOCAN ARMANDO LA TORTILLA: uno detrás de otro dando la
+   vuelta, empezando arriba. Si pasan de una tortilla entera, empieza otra
+   ronda al lado. Es lo que permite comparar dos platos de un vistazo.
+   ========================================================================= */
+/* Dónde se pusieron las tortillas al empezar. Depende SOLO del número de
+   tortillas, nunca de dónde estén ahora los trozos: si los platos se colocan
+   a partir de dónde andan los trozos sueltos, al arrastrar uno hacia abajo la
+   mesa crece, los platos bajan, y huyen del puntero justo cuando vas a soltar.
+   Costó encontrarlo porque solo se nota arrastrando de verdad. */
+function cajaBase(){
+  var col=Math.min(A, Math.max(1, Math.round(Math.sqrt(A*1.8))||1));
+  var paso=2*R+26, filas=Math.ceil(A/col);
+  return {x0:-R, y0:-R, x1:(col-1)*paso+R, y1:(filas-1)*paso+R};
+}
+function disponPlatos(){
+  platos=[];
+  var b=cajaBase();
+  var rp=Math.max(46, R*0.92), col=Math.min(B, Math.max(1, B<=6?B:Math.ceil(B/2)));
+  var paso=2*rp+30, y0=b.y1+92, i;
+  for(i=0;i<B;i++)
+    platos.push({x:(i%col)*paso+rp, y:y0+Math.floor(i/col)*(paso+18)+rp, r:rp, i:i});
+}
+function dispon(){
+  var i, j;
+  for(i=0;i<piezas.length;i++){
+    var p=piezas[i];
+    if(p.plato<0){ p.px=p.x; p.py=p.y; p.pang=p.ang; p.pr=R; }
+  }
+  disponPlatos();
+  for(j=0;j<platos.length;j++){
+    var g=platos[j], dentro=[];
+    for(i=0;i<piezas.length;i++) if(piezas[i].plato===j) dentro.push(piezas[i]);
+    dentro.sort(function(u,v){ return u.orden-v.orden; });
+    /* cuántas tortillas enteras hacen falta para colocarlo todo */
+    var vuelta=0, acum=0;
+    for(i=0;i<dentro.length;i++){
+      var a=2*Math.PI/dentro[i].den;
+      if(acum+a>2*Math.PI+1e-9){ vuelta++; acum=0; }
+      acum+=a;
+    }
+    var rondas=Math.min(MAXA, vuelta+1);
+    var cols=Math.ceil(Math.sqrt(rondas)), filas=Math.ceil(rondas/cols);
+    /* El radio de cada tortillita: puestas en rejilla y pegadas, la más lejana
+       tiene el centro a rm·√((cols-1)²+(filas-1)²) del centro del plato, y su
+       borde tiene que caber dentro. Con la cuenta mal hecha, tres tortillas en
+       un plato se salían por fuera. */
+    var diag=Math.sqrt((cols-1)*(cols-1)+(filas-1)*(filas-1));
+    var rm=Math.min(g.r*0.80, g.r*0.96/(1+diag));
+    vuelta=0; acum=0;
+    for(i=0;i<dentro.length;i++){
+      var q=dentro[i], an=2*Math.PI/q.den;
+      if(acum+an>2*Math.PI+1e-9){ vuelta++; acum=0; }
+      var v=Math.min(vuelta, rondas-1);
+      q.px=g.x+((v%cols)-(cols-1)/2)*(rm*2);
+      q.py=g.y+(Math.floor(v/cols)-(filas-1)/2)*(rm*2);
+      q.pang=-Math.PI/2+acum+an/2;
+      q.pr=rm;
+      q.oculta=0;
+      acum+=an;
+    }
+  }
+}
+
+/* =========================================================================
+   5. DIBUJO
+   ========================================================================= */
+function caminoTrozo(c,cx,cy,rad,den,ang){
+  c.beginPath();
+  if(den===1){ c.arc(cx,cy,rad,0,2*Math.PI); c.closePath(); return; }
+  c.moveTo(cx,cy);
+  c.arc(cx,cy,rad,ang-Math.PI/den,ang+Math.PI/den);
+  c.closePath();
+}
+function pintaTrozo(c,p,C){
+  caminoTrozo(c,p.px,p.py,p.pr,p.den,p.pang);
+  c.fillStyle=C.f; c.strokeStyle=C.b; c.lineWidth=p.den>24?0.7:1.3;
+  c.fill(); c.stroke();
+  if(!opt.etiq || p.pr<20) return;
+  /* la etiqueta va en el centro de masas del sector, a dos tercios del radio */
+  var r2=p.den===1 ? 0 : p.pr*0.62;
+  var tx=p.px+Math.cos(p.pang)*r2, ty=p.py+Math.sin(p.pang)*r2;
+  var txt=p.den===1?'1':'1/'+p.den;
+  c.font=(p.den>12?9:11)+'px -apple-system,Segoe UI,Roboto,sans-serif';
+  if(c.measureText(txt).width > (p.den===1?2*p.pr:2*Math.PI*p.pr/p.den*1.6)) return;
+  c.fillStyle='#7a6420'; c.textAlign='center'; c.textBaseline='middle';
+  c.fillText(txt,tx,ty);
+}
+function pintaPlato(c,g){
+  c.fillStyle=CPLATO.f; c.strokeStyle=CPLATO.b; c.lineWidth=1.6;
+  c.beginPath(); c.arc(g.x,g.y,g.r,0,2*Math.PI); c.fill(); c.stroke();
+  c.strokeStyle='#e7e9ed'; c.lineWidth=1;
+  c.beginPath(); c.arc(g.x,g.y,g.r*0.86,0,2*Math.PI); c.stroke();
+  if(drag && drag.sobre===g.i){
+    c.strokeStyle='#2f62a8'; c.lineWidth=2.4;
+    c.beginPath(); c.arc(g.x,g.y,g.r+4,0,2*Math.PI); c.stroke();
+  }
+  rotulo(c,String(g.i+1),g.x,g.y+g.r+17,12.5,'#8a919c','center');
+}
+var bbox=null;
+function marca(x0,y0,x1,y1){
+  if(!bbox) bbox={x0:x0,y0:y0,x1:x1,y1:y1};
+  else{
+    if(x0<bbox.x0) bbox.x0=x0; if(y0<bbox.y0) bbox.y0=y0;
+    if(x1>bbox.x1) bbox.x1=x1; if(y1>bbox.y1) bbox.y1=y1;
+  }
+}
+function rotulo(c,txt,x,y,tam,col,al){
+  tam=tam||12;
+  c.fillStyle=col||'#6b727d';
+  c.font=tam+'px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.textAlign=al||'left'; c.textBaseline='alphabetic';
+  c.fillText(txt,x,y);
+  var w=c.measureText(txt).width, x0=(al==='center')?x-w/2:x;
+  marca(x0,y-tam,x0+w,y+tam*0.3);
+}
+function dibujaTodo(c){
+  bbox=null;
+  dispon();
+  var i, b=cajaBase(), vacia=!enMesa().length;
+  rotulo(c, vacia ? 'La mesa está vacía: ya no queda nada por repartir' : 'La mesa',
+         b.x0, b.y0-14, 13, '#8a919c');
+  marca(b.x0,b.y0,b.x1,b.y1);
+  for(i=0;i<platos.length;i++){
+    pintaPlato(c,platos[i]);
+    marca(platos[i].x-platos[i].r, platos[i].y-platos[i].r,
+          platos[i].x+platos[i].r, platos[i].y+platos[i].r+22);
+  }
+  if(platos.length) rotulo(c,'Los platos',0,platos[0].y-platos[0].r-14,13,'#8a919c');
+  /* primero lo que está en los platos y luego lo de la mesa, para que un trozo
+     arrastrado se vea siempre por encima */
+  for(i=0;i<piezas.length;i++){
+    var p=piezas[i];
+    if(p.plato<0 || p.oculta) continue;
+    pintaTrozo(c,p,p.id===sel?CSEL:CTOR);
+  }
+  for(i=0;i<piezas.length;i++){
+    var q=piezas[i];
+    if(q.plato>=0) continue;
+    pintaTrozo(c,q,q.id===sel?CSEL:CTOR);
+    marca(q.px-R,q.py-R,q.px+R,q.py+R);
+  }
+  if(opt.cuentas) for(i=0;i<platos.length;i++){
+    var f=sumaPlato(i);
+    if(f.p>0) rotulo(c,textoFrac(f),platos[i].x,platos[i].y+platos[i].r+33,13.5,'#31527d','center');
+  }
+}
+function pinta(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  /* el lienzo se ajusta aquí: si se queda con el tamaño viejo, la franja de
+     abajo conserva pintado el fotograma anterior */
+  var W=Math.max(1,Math.round(r.width*dpr)), H=Math.max(1,Math.round(r.height*dpr));
+  if(cv.width!==W || cv.height!==H){ cv.width=W; cv.height=H; }
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,r.width,r.height);
+  ctx.save();
+  ctx.translate(view.x,view.y); ctx.scale(view.z,view.z);
+  dibujaTodo(ctx);
+  ctx.restore();
+  actualizaUI();
+}
+function cajaTodo(){
+  if(!bbox) return {x0:-10,y0:-30,x1:400,y1:300};
+  return {x0:bbox.x0-14, y0:bbox.y0-14, x1:bbox.x1+14, y1:bbox.y1+14};
+}
+function fitView(){
+  var r=stage.getBoundingClientRect(), m=16;
+  pinta();
+  var b=cajaTodo();
+  var z=Math.min((r.width-2*m)/Math.max(1,b.x1-b.x0), (r.height-2*m)/Math.max(1,b.y1-b.y0));
+  view.z=Math.max(0.15,Math.min(1.5,z));
+  view.x=r.width/2-((b.x0+b.x1)/2)*view.z;
+  view.y=r.height/2-((b.y0+b.y1)/2)*view.z;
+  pinta();
+}
+
+/* =========================================================================
+   6. INTERACCIÓN
+   Arrastrar es la acción del material, así que el ratón le pertenece a los
+   trozos: el tablero solo se mueve arrastrando el fondo.
+   ========================================================================= */
+function pos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function trozoEn(P){
+  var i;
+  for(i=piezas.length-1;i>=0;i--){
+    var p=piezas[i];
+    if(p.oculta || !p.pr) continue;
+    var dx=P.x-p.px, dy=P.y-p.py, d=Math.sqrt(dx*dx+dy*dy);
+    if(d>p.pr) continue;
+    if(p.den===1) return p;
+    var a=Math.atan2(dy,dx), df=Math.atan2(Math.sin(a-p.pang),Math.cos(a-p.pang));
+    if(Math.abs(df)<=Math.PI/p.den) return p;
+  }
+  return null;
+}
+function platoEn(P){
+  var i;
+  for(i=0;i<platos.length;i++){
+    var g=platos[i], dx=P.x-g.x, dy=P.y-g.y;
+    if(dx*dx+dy*dy<=g.r*g.r) return i;
+  }
+  return -1;
+}
+cv.addEventListener('pointerdown',function(e){
+  var P=s2w(pos(e)), p=trozoEn(P);
+  if(p){
+    sel=p.id;
+    drag={id:p.id, dx:P.x-p.px, dy:P.y-p.py, movido:false, sobre:-1, deUn:p.plato};
+    try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+  } else {
+    sel=null;
+    drag={pan:1, x:e.clientX, y:e.clientY, vx:view.x, vy:view.y};
+  }
+  pinta();
+});
+cv.addEventListener('pointermove',function(e){
+  if(!drag) return;
+  if(drag.pan){
+    view.x=drag.vx+(e.clientX-drag.x); view.y=drag.vy+(e.clientY-drag.y);
+    pinta(); return;
+  }
+  var P=s2w(pos(e)), p=porId(drag.id);
+  if(!p) return;
+  if(!drag.movido){ pushUndo(); drag.movido=true; }
+  p.plato=-1;
+  p.x=P.x-drag.dx; p.y=P.y-drag.dy;
+  p.px=p.x; p.py=p.y; p.pang=p.ang; p.pr=R;
+  drag.sobre=platoEn(P);
+  pinta();
+});
+function suelta(e){
+  if(!drag){ return; }
+  if(drag.pan){ drag=null; return; }
+  var p=porId(drag.id);
+  if(p && drag.movido){
+    var P=s2w(pos(e)), j=platoEn(P);
+    p.plato=j;
+    p.orden=orden++;
+  }
+  drag=null; pinta();
+}
+cv.addEventListener('pointerup',suelta);
+cv.addEventListener('pointercancel',function(){ drag=null; pinta(); });
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var P=pos(e), w=s2w(P);
+  view.z=Math.max(0.15,Math.min(3,view.z*(e.deltaY<0?1.11:1/1.11)));
+  view.x=P.x-w.x*view.z; view.y=P.y-w.y*view.z;
+  pinta();
+},{passive:false});
+function zoomAt(k){
+  var r=stage.getBoundingClientRect(), c={x:r.width/2,y:r.height/2}, w=s2w(c);
+  view.z=Math.max(0.15,Math.min(3,view.z*k));
+  view.x=c.x-w.x*view.z; view.y=c.y-w.y*view.z;
+  pinta();
+}
+document.getElementById('fit').addEventListener('click',fitView);
+document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.18); });
+document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.18); });
+document.getElementById('undo').addEventListener('click',doUndo);
+document.addEventListener('keydown',function(e){
+  if(e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+  var k=(e.key||'').toLowerCase();
+  if((e.ctrlKey||e.metaKey) && k==='z'){ e.preventDefault(); doUndo(); return; }
+  if(k==='d') daUnoACada();
+  else if(k==='r') recoge();
+  else if(e.key==='Escape'){ sel=null; pinta(); }
+  else if(/^[2-9]$/.test(k)) corta(+k);
+});
+
+/* =========================================================================
+   6b. LA HOJA DONDE EL ALUMNO CUENTA LO QUE HA HECHO
+   La tabla está VACÍA y la escribe él entera: no es un formulario que el
+   programa rellene ni que corrija. Aquí no se compara lo escrito con lo que ha
+   pasado en la mesa, ni se marca nada en rojo; en cuanto lo hiciera, el alumno
+   dejaría de mirar los platos —que es donde está el juicio— para mirar el
+   semáforo. El programa se limita a guardar lo escrito y a dejar copiarlo.
+
+   Y un cuidado de programación que aquí es de fondo: la hoja NO se repinta en
+   cada pinta(). pinta() corre en cada movimiento del ratón, y rehacer el HTML
+   le robaría el cursor al alumno en mitad de una palabra. Solo se reconstruye
+   cuando cambia su estructura —filas o columna de tamaño—, y mientras tanto lo
+   que se teclea se va guardando en el estado.
+   ========================================================================= */
+var tabla={filas:[], cantidad:''};
+var cacheHoja='';
+var MAXFILAS=20, MAXTXT=40;
+function filaVacia(){ return {tam:'', tengo:'', doy:'', total:'', sobra:''}; }
+function iniciaTabla(n){
+  tabla={filas:[], cantidad:''};
+  var i; for(i=0;i<(n||4);i++) tabla.filas.push(filaVacia());
+  cacheHoja='';
+}
+function esc(s){
+  return String(s===undefined||s===null?'':s)
+         .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+}
+function filaLlena(f){ return !!(f.tam||f.tengo||f.doy||f.total||f.sobra); }
+function pintaHoja(){
+  var clave=tabla.filas.length+':'+(opt.tam?1:0)+':'+(opt.modo?1:0);
+  if(clave===cacheHoja) return;
+  cacheHoja=clave;
+  var h='<table class="tab"><tr><th>Fase</th>'+
+        (opt.tam?'<th>Tamaño de<br>los trozos</th>':'')+
+        '<th>Lo que tengo</th><th>Lo que doy<br>a cada uno</th>'+
+        '<th>Lo que doy<br>en total</th><th>Lo que sobra</th>'+
+        (opt.modo?'<th></th>':'')+'</tr>';
+  var i, cs=['tengo','doy','total','sobra'], j;
+  for(i=0;i<tabla.filas.length;i++){
+    var f=tabla.filas[i];
+    h+='<tr data-fila="'+i+'"><td class="fs">'+(i+1)+'ª</td>';
+    if(opt.tam) h+='<td><input class="tam" maxlength="'+MAXTXT+'" data-f="'+i+
+                   '" data-c="tam" value="'+esc(f.tam)+'"></td>';
+    for(j=0;j<cs.length;j++)
+      h+='<td><input maxlength="'+MAXTXT+'" data-f="'+i+'" data-c="'+cs[j]+
+         '" value="'+esc(f[cs[j]])+'"></td>';
+    if(opt.modo) h+='<td class="accion"></td>';
+    h+='</tr>';
+  }
+  document.getElementById('tabla').innerHTML=h+'</table>';
+  document.getElementById('cant').value=tabla.cantidad;
+  if(opt.modo) for(i=0;i<tabla.filas.length;i++) marcaFila(i);
+}
+/* solo se toca la celda del botón, nunca el HTML de la tabla entera: si se
+   rehiciera, el alumno perdería el cursor en mitad de una palabra */
+function marcaFila(i){
+  var td=document.querySelector('#tabla tr[data-fila="'+i+'"] td.accion');
+  if(!td) return;
+  td.innerHTML = tabla.filas[i].hecha
+    ? '<span class="hecha" title="Ya se ha hecho lo que dice esta fila">✓</span>'
+    : '<button class="run" data-run="'+i+'" title="Hacer en la mesa lo que dice esta fila">▶</button>';
+}
+document.getElementById('tabla').addEventListener('input',function(e){
+  var el=e.target;
+  if(!el || el.tagName!=='INPUT') return;
+  var f=+el.getAttribute('data-f'), c=el.getAttribute('data-c');
+  if(!tabla.filas[f] || !c) return;
+  tabla.filas[f][c]=el.value.slice(0,MAXTXT);
+  /* si se cambia una fila ya hecha, vuelve a poder hacerse */
+  if(tabla.filas[f].hecha){ tabla.filas[f].hecha=0; marcaFila(f); }
+});
+document.getElementById('tabla').addEventListener('click',function(e){
+  var el=e.target;
+  if(!el || !el.getAttribute) return;
+  var r=el.getAttribute('data-run');
+  if(r!==null) ejecutaFila(+r);
+});
+document.getElementById('cant').addEventListener('input',function(){
+  tabla.cantidad=this.value.slice(0,80);
+});
+document.getElementById('masFila').addEventListener('click',function(){
+  if(tabla.filas.length>=MAXFILAS){ flash('Ya hay '+MAXFILAS+' filas, que son de sobra'); return; }
+  tabla.filas.push(filaVacia());
+  cacheHoja=''; pintaHoja();
+});
+document.getElementById('menosFila').addEventListener('click',function(){
+  if(tabla.filas.length<=1){ flash('Tiene que quedar al menos una fila'); return; }
+  if(filaLlena(tabla.filas[tabla.filas.length-1])){
+    flash('La última fila tiene algo escrito: bórralo antes de quitarla');
+    return;
+  }
+  tabla.filas.pop();
+  cacheHoja=''; pintaHoja();
+});
+/* vaciar la hoja es una acción aparte y explícita: ni «poner la mesa» ni
+   «empezar de nuevo» se llevan por delante lo que el alumno haya escrito */
+document.getElementById('vaciaHoja').addEventListener('click',function(){
+  iniciaTabla(4);
+  pintaHoja();
+  document.getElementById('cant').value='';
+  flash('Hoja vacía');
+});
+/* --- el modo tabla: la fila se escribe y la mesa obedece ----------------------
+   De una fila hacen falta dos números, y son los dos que dicen lo que se HACE:
+
+     · «lo que tengo»          cuántos trozos hay después de partir
+     · «lo que doy a cada uno» cuántos recibe cada plato
+
+   De ahí sale el corte sin tener que interpretar lo que el alumno haya escrito
+   en la columna del tamaño: si en la mesa quedan S trozos y la fila dice que
+   tiene T, es que ha partido cada uno en n = T/S. Es la relación que enseña el
+   material —tengo = sobra × n— y funciona igual con la columna de tamaño y sin
+   ella, porque solo mira números. De cada casilla se lee el primer número, así
+   que valen «6», «6 medios» y «6 de 1/2».
+
+   Y lo que NO hace, a propósito: no mira «lo que doy en total» ni «lo que
+   sobra». Esas dos son la cuenta del alumno. Si se equivoca, se lo enseña la
+   mesa, no el programa. Solo se niega cuando lo que pide es imposible de hacer
+   con las manos —partir en trozo y medio, o dar lo que no hay—, y entonces
+   dice qué pasa, no que esté mal.
+   ========================================================================= */
+function primerNumero(t){
+  var m=String(t===undefined||t===null?'':t).match(/\d+/);
+  return m ? +m[0] : null;
+}
+/* El TAMAÑO que el alumno escriba, si lo escribe: «1/6», «medios», «tortillas».
+   No es aritmética como el total o el sobrante —esos son su cuenta y no se
+   miran—: el tamaño es parte de la orden. Pedir un séptimo cuando lo que hay
+   son sextos no es equivocarse en una cuenta, es pedir algo que no se puede
+   hacer con las manos, igual que partir en trozo y medio. Si no escribe ningún
+   tamaño, o lo escribe de una forma que aquí no se entiende, no se comprueba
+   nada y la mesa obedece: el material no se pone a adivinar. */
+var TAMS={tortilla:1,tortillas:1,entera:1,enteras:1,entero:1,enteros:1,
+  medio:2,medios:2,mitad:2,mitades:2,tercio:3,tercios:3,cuarto:4,cuartos:4,
+  quinto:5,quintos:5,sexto:6,sextos:6,septimo:7,septimos:7,octavo:8,octavos:8,
+  noveno:9,novenos:9,decimo:10,decimos:10,decima:10,decimas:10,
+  onceavo:11,onceavos:11,doceavo:12,doceavos:12};
+function tamDeclarado(txt){
+  var s=String(txt===undefined||txt===null?'':txt).toLowerCase()
+        .replace(/[áà]/g,'a').replace(/[éè]/g,'e').replace(/[íì]/g,'i')
+        .replace(/[óò]/g,'o').replace(/[úùü]/g,'u');
+  var m=s.match(/(^|[^\d])1\s*\/\s*(\d+)/);       /* 1/6, y no 3/8 */
+  if(m && +m[2]>0) return +m[2];
+  var w=s.match(/[a-z]+/g), i;
+  if(w) for(i=0;i<w.length;i++) if(TAMS[w[i]]) return TAMS[w[i]];
+  return null;
+}
+function nombreTam(d){ return d===1 ? 'tortillas enteras' : 'trozos de 1/'+d; }
+/* el tamaño de lo que hay ahora en la mesa, si es todo del mismo */
+function tamEnMesa(){
+  var libres=enMesa(), i, d=null;
+  for(i=0;i<libres.length;i++){
+    if(d===null) d=libres[i].den;
+    else if(libres[i].den!==d) return null;
+  }
+  return d;
+}
+function ejecutaFila(i){
+  var f=tabla.filas[i];
+  if(!f) return;
+  var T=primerNumero(f.tengo), D=primerNumero(f.doy);
+  if(T===null){ flash('En esa fila falta «lo que tengo»: cuántos trozos hay para repartir'); return; }
+  if(D===null){ flash('En esa fila falta «lo que doy a cada uno»'); return; }
+  var libres=enMesa(), S=libres.length;
+  if(S===0){ flash('En la mesa no queda nada: ni que partir ni que repartir'); return; }
+  /* los tamaños que haya escrito en la fila tienen que ser uno solo: en una
+     fase todos los trozos son iguales, y eso es de lo que va el reparto */
+  var cs=['tam','tengo','doy','total','sobra'], decl=[], q;
+  for(q=0;q<cs.length;q++){
+    if(cs[q]==='tam' && !opt.tam) continue;
+    var dd=tamDeclarado(f[cs[q]]);
+    if(dd) decl.push(dd);
+  }
+  for(q=1;q<decl.length;q++) if(decl[q]!==decl[0]){
+    flash('En esa fila has escrito dos tamaños distintos, 1/'+decl[0]+' y 1/'+decl[q]+
+          ': en una fase todos los trozos son iguales');
+    return;
+  }
+  if(T<S){
+    flash('En la mesa hay '+S+' trozos y la fila dice '+T+': los trozos se parten, no se juntan');
+    return;
+  }
+  if(T%S!==0){
+    flash('En la mesa hay '+S+' trozos; para tener '+T+' habría que partir cada uno en '+
+          (Math.round(T/S*100)/100).toString().replace('.',',')+', y solo se parte en trozos enteros');
+    return;
+  }
+  var n=T/S;
+  if(n>24){ flash('Partir cada trozo en '+n+' es demasiado'); return; }
+  /* y el tamaño escrito tiene que ser el que sale de partir así */
+  var dAhora=tamEnMesa();
+  if(decl.length && dAhora){
+    var dSale=dAhora*n;
+    if(decl[0]!==dSale){
+      flash((n===1 ? 'Sin partir nada, en la mesa hay '+nombreTam(dAhora)
+                   : 'Partiendo en '+n+' lo que queda salen '+nombreTam(dSale))+
+            ', y en la fila pones 1/'+decl[0]);
+      return;
+    }
+  }
+  if(piezas.length+S*n>MAXPIEZAS){ flash('Salen demasiados trozos'); return; }
+  if(D*B>T){
+    flash('Con '+T+' trozos no puedes dar '+D+' a cada '+(B===1?'persona':'una de las '+B+' personas')+
+          ': harían falta '+(D*B));
+    return;
+  }
+  pushUndo();
+  var j;
+  if(n>1) for(j=0;j<libres.length;j++) parte(libres[j],n);
+  var rondas=0;
+  for(j=0;j<D;j++){ if(!reparteUno()) break; rondas++; }
+  f.hecha=1;
+  sel=null;
+  marcaFila(i);
+  pinta();
+  if(rondas<D) flash('Se han podido dar '+rondas+' y no '+D+': no quedaban '+B+' trozos iguales');
+  else if(n>1) flash('Partido cada trozo en '+n+', y '+D+' para cada '+(B===1?'persona':'uno'));
+  else flash(D+' para cada '+(B===1?'persona':'uno')+', sin partir nada');
+}
+
+/* copiarla para pegarla en un documento: se copia una selección de DOM, y así
+   el navegador pone en el portapapeles la versión HTML además de la de texto,
+   y llega como una tabla de verdad —vacía o escrita, como esté— */
+function hojaParaPegar(){
+  var bd='border:1px solid #808080;padding:4px 10px;', i, j;
+  var cs=[['tengo','Lo que tengo'],['doy','Lo que doy a cada uno'],
+          ['total','Lo que doy en total'],['sobra','Lo que sobra']];
+  var h='<table style="border-collapse:collapse;font-family:Calibri,Arial,sans-serif;font-size:11pt">'+
+        '<tr><th style="'+bd+'">Fase</th>'+
+        (opt.tam?'<th style="'+bd+'">Tamaño de los trozos</th>':'');
+  for(j=0;j<cs.length;j++) h+='<th style="'+bd+'">'+cs[j][1]+'</th>';
+  h+='</tr>';
+  for(i=0;i<tabla.filas.length;i++){
+    var f=tabla.filas[i];
+    h+='<tr><td style="'+bd+'text-align:center">'+(i+1)+'ª</td>'+
+       (opt.tam?'<td style="'+bd+'text-align:center">'+(esc(f.tam)||'&nbsp;')+'</td>':'');
+    for(j=0;j<cs.length;j++)
+      h+='<td style="'+bd+'text-align:center">'+(esc(f[cs[j][0]])||'&nbsp;')+'</td>';
+    h+='</tr>';
+  }
+  h+='</table><p style="font-family:Calibri,Arial,sans-serif;font-size:11pt">'+
+     'Cantidad que recibe cada participante: '+(esc(tabla.cantidad)||'&nbsp;')+'</p>';
+  return h;
+}
+function copiaHTML(html){
+  var div=document.createElement('div');
+  div.setAttribute('style','position:fixed;left:-10000px;top:0');
+  div.innerHTML=html;
+  document.body.appendChild(div);
+  var sel2=window.getSelection(), ran=document.createRange(), ok=false;
+  ran.selectNodeContents(div);
+  sel2.removeAllRanges(); sel2.addRange(ran);
+  try{ ok=document.execCommand('copy'); }catch(err){ ok=false; }
+  sel2.removeAllRanges();
+  document.body.removeChild(div);
+  return ok;
+}
+document.getElementById('copiaTabla').addEventListener('click',function(){
+  flash(copiaHTML(hojaParaPegar()) ? 'Hoja copiada: ya se puede pegar en un documento'
+                                   : 'El navegador no me ha dejado copiar');
+});
+
+/* =========================================================================
+   7. INTERFAZ
+   El panel de cuentas cuenta lo que hay en cada plato. No dice si está bien
+   repartido: eso se mira en los platos, que para eso los trozos se colocan
+   armando la tortilla.
+   ========================================================================= */
+document.getElementById('help').addEventListener('click',function(){
+  infoEl.classList.toggle('show');
+  if(!infoEl.innerHTML) infoEl.innerHTML=ayuda();
+});
+function ayuda(){
+  return '<div><b>Tortillas y platos</b><br>'+
+ 'Hay tortillas en la mesa y un plato para cada persona. Hay que repartir las tortillas entre '+
+ 'todos de modo que a todos les toque lo mismo, y no sobre nada.</div>'+
+ '<div style="margin-top:7px"><b>Partir</b><br>'+
+ 'Los números del panel parten en trozos iguales. Si tocas antes un trozo —se pone azul—, se parte '+
+ 'ese; si no has tocado ninguno, se parten todas las tortillas enteras que haya en la mesa. Un '+
+ 'trozo ya partido se puede volver a partir: la mitad de una tortilla partida en tres da sextos.</div>'+
+ '<div style="margin-top:7px"><b>Repartir</b><br>'+
+ 'Se arrastran los trozos con el ratón o el dedo desde la mesa hasta un plato. Para sacar un trozo '+
+ 'de un plato, se arrastra fuera. En el plato los trozos <b>se colocan solos armando la tortilla</b>, '+
+ 'empezando por arriba y dando la vuelta, para que se vea de un golpe cuánto hay en cada plato y se '+
+ 'puedan comparar dos platos mirándolos.<br>'+
+ '<b>→ Dar un trozo a cada plato</b> reparte de golpe uno por plato, y para eso hacen falta tantos '+
+ 'trozos iguales como personas. <b>↩ Recoger todo</b> devuelve los trozos a la mesa.</div>'+
+ '<div style="margin-top:7px"><b>Etiquetas y cuentas</b><br>'+
+ '<b>Etiquetas</b> escribe dentro de cada trozo lo que vale: 1/2, 1/4, 1/12. <b>Cuentas</b> hace '+
+ 'que el programa cuente lo que hay en cada plato y lo escriba debajo. Las dos empiezan apagadas, '+
+ 'porque mientras la cuenta la puedas llevar tú, mejor.<br>'+
+ 'El programa no dice si el reparto está bien hecho. Lo que da es una mesa donde probarlo y unos '+
+ 'platos donde verlo.</div>'+
+ '<div style="margin-top:7px"><b>La tabla</b><br>'+
+ 'La casilla <b>Tabla</b> abre debajo una hoja para contar por escrito lo que has hecho: en cada '+
+ 'fase, lo que tenías, lo que le diste a cada uno, lo que repartiste en total y lo que te quedó. '+
+ '<b>Está vacía y la escribes tú entera</b>, con las palabras o los números que quieras; el '+
+ 'programa no la rellena ni te dice si está bien. Debajo hay una línea para escribir la cantidad '+
+ 'que recibe cada participante.<br>'+
+ 'Con <b>Columna de tamaño</b> aparece una columna más a la izquierda para poner de qué tamaño son '+
+ 'los trozos de cada fase, y así en las demás casillas solo hacen falta números. Sin ella, el '+
+ 'tamaño hay que escribirlo en cada casilla. <b>+ una fila</b> y <b>− una fila</b> cambian el '+
+ 'número de fases —una fila con algo escrito no se quita sin borrarla antes— y <b>Vaciar la hoja</b> '+
+ 'la deja en blanco. Ni poner la mesa ni empezar de nuevo borran lo que hayas escrito. '+
+ '<b>⧉ Copiar</b> se la lleva a un documento tal y como esté, escrita o en blanco para rellenarla '+
+ 'a mano.</div>'+
+ '<div style="margin-top:7px"><b>Modo tabla</b><br>'+
+ 'Con esta casilla, cada fila lleva al final un botón <b>▶</b>: se escribe la fila y la mesa hace lo '+
+ 'que dice. De la fila se leen dos números, que son los dos que dicen lo que se hace: <b>lo que '+
+ 'tengo</b> —cuántos trozos hay después de partir— y <b>lo que doy a cada uno</b>. Con eso ya sabe '+
+ 'en cuántas partes hay que partir: si en la mesa quedan 3 trozos y escribes que tienes 6, es que '+
+ 'has partido cada uno en dos. De cada casilla se lee el primer número, así que valen «6», «6 '+
+ 'medios» y «6 de 1/2».<br>'+
+ 'El <b>tamaño</b> que escribas también cuenta, lo pongas donde lo pongas: «1/6», «medios», '+
+ '«3 tortillas». Si dices que das un séptimo cuando lo que hay son sextos, o si en la misma fila '+
+ 'escribes dos tamaños distintos, la mesa no se mueve y te dice qué es lo que no cuadra. Si no '+
+ 'escribes ningún tamaño, no se comprueba nada.<br>'+
+ 'Lo que <b>no</b> mira es «lo que doy en total» ni «lo que sobra»: esas dos son tu cuenta, y si te '+
+ 'sale otra cosa, te lo enseña la mesa. Solo se niega cuando lo que pide la fila no se puede hacer '+
+ 'con las manos —partir en trozo y medio, juntar trozos, dar más de lo que hay o pedir un tamaño '+
+ 'que no sale de ese corte—, y entonces dice qué pasa. La fila hecha se marca con un ✓, y si '+
+ 'cambias algo de ella vuelve a poder hacerse.</div>'+
+ '<div style="margin-top:7px"><b>Lo demás</b><br>'+
+ '↶ o Ctrl+Z deshace. <b>↺ Empezar de nuevo</b> pone otra vez las tortillas enteras. Se puede '+
+ 'guardar el reparto en un archivo y volver a abrirlo, y <b>⤓ PNG</b> descarga la foto de la mesa.</div>'+
+ '<div style="margin-top:7px"><b>Para pensar</b><br>'+
+ '¿De cuántas maneras distintas se pueden repartir 3 tortillas entre 4 personas? ¿Toca lo mismo en '+
+ 'todas? ¿Se puede hacer partiendo cada tortilla solo por la mitad? ¿Y partiéndolas todas en 8? '+
+ '¿Cuándo hace falta partir y cuándo no? Si en la mesa hay más tortillas que personas, ¿qué es lo '+
+ 'primero que conviene hacer? Reparte 5 tortillas entre 3 de dos maneras distintas y compara los '+
+ 'platos: ¿tienen lo mismo aunque los trozos no sean iguales?</div>'+
+ '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+}
+function panelCuentasHTML(){
+  var h='', i, libres=enMesa().length;
+  h+='<div class="pl">En la mesa quedan <b>'+libres+'</b> '+(libres===1?'trozo':'trozos')+'.</div>';
+  for(i=0;i<B;i++){
+    var t=tiposEn(i), f=sumaPlato(i), s=simplifica(f), det=[], d;
+    for(d in t) det.push((t[d]>1?t[d]+' de ':'')+(+d===1?'1 tortilla':'1/'+d));
+    h+='<div class="pl">Plato '+(i+1)+': '+(det.length?det.join(' + '):'nada')+
+       (f.p>0 ? ' = <span class="gr">'+textoFrac(f)+'</span>'+
+                (s.q!==f.q?' <span style="color:#8a919c">('+textoFrac(s)+')</span>':'') : '')+
+       '</div>';
+  }
+  return h;
+}
+function sincronizaEntradas(){
+  document.getElementById('inA').value=A;
+  document.getElementById('inB').value=B;
+}
+function actualizaUI(){
+  document.getElementById('h2Cuentas').style.display=opt.cuentas?'':'none';
+  document.getElementById('panelCuentas').style.display=opt.cuentas?'':'none';
+  if(opt.cuentas) document.getElementById('panelCuentas').innerHTML=panelCuentasHTML();
+  var docs=document.getElementById('docs');
+  if(opt.tabla){ docs.className='show'; pintaHoja(); } else docs.className='';
+  var p=elegida(), enteras=enMesa().filter(function(q){ return q.den===1; }).length;
+  document.getElementById('labCorte').innerHTML = p
+    ? 'Se partirá el trozo azul, que vale <b>'+(p.den===1?'1 tortilla':'1/'+p.den)+'</b>.'
+    : (enteras ? 'No has elegido ningún trozo: se partirán las <b>'+enteras+'</b> '+
+                 (enteras===1?'tortilla entera':'tortillas enteras')+' de la mesa.'
+               : 'Toca un trozo para elegirlo antes de partirlo.');
+  document.getElementById('reparte').disabled=!hayIguales();
+
+  var t;
+  if(flashMsg && Date.now()-flashT<2500) t=flashMsg;
+  else if(p) t='Arrastra el trozo azul a un plato · o pártelo con los números';
+  else if(!piezas.filter(function(q){ return q.plato>=0; }).length)
+    t='Parte las tortillas y arrastra los trozos a los platos';
+  else t='Arrastra trozos a los platos · para sacar uno, arrástralo fuera';
+  hintEl.textContent=t;
+}
+function hayIguales(){
+  var libres=enMesa(), cont={}, i;
+  for(i=0;i<libres.length;i++){
+    cont[libres[i].den]=(cont[libres[i].den]||0)+1;
+    if(cont[libres[i].den]>=B) return true;
+  }
+  return false;
+}
+
+/* --- la barra y el panel ------------------------------------------------------ */
+(function(){
+  var cont=document.getElementById('cortes'), i;
+  for(i=0;i<CORTES.length;i++){
+    var b=document.createElement('button');
+    b.textContent=CORTES[i];
+    b.title='Partir en '+CORTES[i]+' trozos iguales';
+    b.setAttribute('data-n',CORTES[i]);
+    cont.appendChild(b);
+  }
+  cont.addEventListener('click',function(e){
+    var n=e.target && e.target.getAttribute && e.target.getAttribute('data-n');
+    if(n) corta(+n);
+  });
+})();
+function leeEnteros(){
+  var a=Math.round(Number(document.getElementById('inA').value));
+  var b=Math.round(Number(document.getElementById('inB').value));
+  if(!isFinite(a)||a<1) a=1; if(a>MAXA) a=MAXA;
+  if(!isFinite(b)||b<1) b=1; if(b>MAXB) b=MAXB;
+  return {a:a,b:b};
+}
+function reinicia(){
+  var v=leeEnteros();
+  A=v.a; B=v.b;
+  ponMesa(); sincronizaEntradas(); fitView();
+}
+document.getElementById('poner').addEventListener('click',function(){ pushUndo(); reinicia(); });
+document.getElementById('reiniciar').addEventListener('click',function(){ pushUndo(); reinicia(); });
+['inA','inB'].forEach(function(id){
+  document.getElementById(id).addEventListener('change',function(){ pushUndo(); reinicia(); });
+});
+document.getElementById('reparte').addEventListener('click',daUnoACada);
+document.getElementById('recoge').addEventListener('click',recoge);
+[['cEtiq','etiq'],['cCuentas','cuentas'],['cTabla','tabla'],['cTam','tam'],['cModo','modo']]
+.forEach(function(par){
+  document.getElementById(par[0]).addEventListener('change',function(){
+    opt[par[1]]=this.checked?1:0;
+    if(par[1]==='tam' || par[1]==='modo') cacheHoja='';   /* cambia la estructura */
+    /* el modo tabla no tiene sentido con la hoja cerrada: se abre sola */
+    if(par[1]==='modo' && opt.modo && !opt.tabla){
+      opt.tabla=1; document.getElementById('cTabla').checked=true;
+    }
+    pinta();
+  });
+});
+
+/* --- guardar y abrir ---------------------------------------------------------
+   Al leer no se cree nada de lo que venga en el archivo: se comprueba trozo a
+   trozo y, si algo no cuadra, se rechaza entero. */
+document.getElementById('save').addEventListener('click',function(){
+  var d={formato:'tortillas-y-platos', version:2, a:A, b:B, tabla:tabla,
+    piezas:piezas.map(function(p){
+      return {den:p.den, x:+p.x.toFixed(2), y:+p.y.toFixed(2),
+              hx:+p.hx.toFixed(2), hy:+p.hy.toFixed(2), ang:+p.ang.toFixed(5),
+              plato:p.plato, orden:p.orden}; })};
+  var blob=new Blob([JSON.stringify(d,null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download='tortillas-y-platos.json'; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leer(f); });
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ cargar(JSON.parse(r.result)); }catch(err){ flash('No he podido leer ese archivo'); } };
+  r.readAsText(f);
+}
+function entero(v){ var n=Number(v); return isFinite(n)&&Math.round(n)===n ? n : null; }
+function limpiaPiezas(lista,b){
+  if(!Array.isArray(lista) || !lista.length || lista.length>MAXPIEZAS) return null;
+  var out=[], i;
+  for(i=0;i<lista.length;i++){
+    var s=lista[i], den=entero(s.den), pl=entero(s.plato);
+    if(den===null||den<1||den>100000) return null;
+    if(pl===null||pl<-1||pl>=b) return null;
+    var x=Number(s.x), y=Number(s.y), an=Number(s.ang);
+    if(!isFinite(x)||!isFinite(y)||!isFinite(an)) return null;
+    /* los archivos de antes no traían el sitio de origen: se toma el actual */
+    var hx=Number(s.hx), hy=Number(s.hy);
+    if(!isFinite(hx)||!isFinite(hy)){ hx=x; hy=y; }
+    out.push({id:nid++, den:den, x:x, y:y, hx:hx, hy:hy, ang:an, plato:pl,
+              orden:(entero(s.orden)!==null? s.orden : orden++)});
+  }
+  return out;
+}
+/* la hoja escrita viaja en el archivo; los archivos viejos no la traen */
+function limpiaTabla(t){
+  if(!t || typeof t!=='object') return null;
+  if(!Array.isArray(t.filas) || !t.filas.length || t.filas.length>MAXFILAS) return null;
+  var out=[], cs=['tam','tengo','doy','total','sobra'], i, j;
+  for(i=0;i<t.filas.length;i++){
+    var f=t.filas[i], g=filaVacia();
+    if(!f || typeof f!=='object' || Array.isArray(f)) return null;
+    for(j=0;j<cs.length;j++){
+      var v=f[cs[j]];
+      if(v===undefined || v===null) v='';
+      if(typeof v!=='string' && typeof v!=='number') return null;
+      g[cs[j]]=String(v).slice(0,MAXTXT);
+    }
+    out.push(g);
+  }
+  var c=(t.cantidad===undefined||t.cantidad===null) ? '' : t.cantidad;
+  if(typeof c!=='string' && typeof c!=='number') return null;
+  return {filas:out, cantidad:String(c).slice(0,80)};
+}
+function cargar(d){
+  if(!d || d.formato!=='tortillas-y-platos'){ flash('Ese archivo no es de este manipulativo'); return; }
+  var a=entero(d.a), b=entero(d.b);
+  if(a===null||b===null||a<1||a>MAXA||b<1||b>MAXB){
+    flash('Ese archivo trae una mesa que no vale'); return; }
+  var np=limpiaPiezas(d.piezas,b);
+  if(!np){ flash('Ese archivo trae trozos que no se sostienen'); return; }
+  var nt=(d.tabla===undefined) ? null : limpiaTabla(d.tabla);
+  if(d.tabla!==undefined && !nt){ flash('Ese archivo trae una hoja que no se sostiene'); return; }
+  pushUndo();
+  A=a; B=b; piezas=np; sel=null;
+  orden=Math.max(orden, np.length+1);
+  if(nt){ tabla=nt; cacheHoja=''; pintaHoja(); }
+  sincronizaEntradas(); fitView();
+  flash('Reparto de '+A+' entre '+B+' cargado');
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); });
+});
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer&&e.dataTransfer.files&&e.dataTransfer.files[0];
+  if(f) leer(f);
+});
+document.getElementById('png').addEventListener('click',function(){
+  var b=cajaTodo(), m=24, sc=2, W=(b.x1-b.x0)+2*m, H=(b.y1-b.y0)+2*m;
+  var oc=document.createElement('canvas'); oc.width=W*sc; oc.height=H*sc;
+  var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
+  o.translate(m-b.x0, m-b.y0);
+  var s0=sel; sel=null;
+  dibujaTodo(o);
+  sel=s0;
+  oc.toBlob(function(blob){
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a'); a.download='tortillas-y-platos.png'; a.href=url; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+  });
+  pinta();
+});
+
+/* =========================================================================
+   8. ARRANQUE
+   ========================================================================= */
+window.addEventListener('resize',pinta);
+if(window.ResizeObserver) new ResizeObserver(pinta).observe(stage);
+(function init(){
+  ponMesa(); iniciaTabla(4); sincronizaEntradas(); fitView();
+})();
+
+/* =========================================================================
+   9. AUTOCOMPROBACIÓN  ·  añade #test al final de la dirección
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){
+    out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':''));
+    if(!c) fails++;
+  }
+  function num(v){ return (Math.round(v*1000)/1000).toString().replace('.',','); }
+  var antes={A:A,B:B,piezas:piezas,nid:nid,orden:orden,sel:sel,
+             view:{x:view.x,y:view.y,z:view.z},
+             opt:{etiq:opt.etiq,cuentas:opt.cuentas,tabla:opt.tabla,tam:opt.tam,modo:opt.modo},
+             hoja:tabla, cache:cacheHoja, undo:undoStack};
+  try{
+  undoStack=[];
+  function mesa(a,b){ A=a; B=b; ponMesa(); }
+  function libres(){ return enMesa().length; }
+  function alPlato(p,j){ p.plato=j; p.orden=orden++; }
+  function todoAlPlato(den,cuantos,j){
+    var n=0, i;
+    for(i=0;i<piezas.length && n<cuantos;i++)
+      if(piezas[i].plato<0 && piezas[i].den===den){ alPlato(piezas[i],j); n++; }
+    return n;
+  }
+
+  /* --- partir ---------------------------------------------------------------------------------- */
+  mesa(1,4);
+  ok('la mesa se pone con una tortilla entera', piezas.length===1 && piezas[0].den===1, piezas.length);
+  var h=parte(piezas[0],4);
+  ok('partir una tortilla en 4 deja 4 cuartos',
+     piezas.length===4 && piezas.every(function(p){ return p.den===4; }), piezas.length);
+  ok('los cuatro sectores dan la vuelta entera sin huecos ni solapes',
+     Math.abs((piezas[3].ang-piezas[0].ang)-3*2*Math.PI/4)<1e-9,
+     num((piezas[3].ang-piezas[0].ang)*180/Math.PI)+'°');
+  ok('y todos tienen el mismo centro, así que la tortilla sigue pareciendo entera',
+     piezas.every(function(p){ return p.x===piezas[0].x && p.y===piezas[0].y; }), 'ok');
+  parte(piezas[0],3);
+  ok('partir un cuarto en 3 da doceavos', piezas[0].den===12 && piezas.length===6, piezas[0].den);
+  ok('y los tres doceavos ocupan justo lo que ocupaba el cuarto',
+     Math.abs(3*(2*Math.PI/12)-2*Math.PI/4)<1e-12, 'ok');
+  ok('un trozo no se puede partir en 1', parte(piezas[0],1)===null, 'ok');
+  ok('ni en cero', parte(piezas[0],0)===null, 'ok');
+
+  /* --- lo que hay en un plato ------------------------------------------------------------------ */
+  mesa(1,2);
+  parte(piezas[0],2);
+  alPlato(piezas[0],0);
+  ok('medio en el plato es 1/2', textoFrac(sumaPlato(0))==='1/2', textoFrac(sumaPlato(0)));
+  parte(piezas[1],2);
+  alPlato(piezas[1],0);
+  ok('medio y un cuarto son 3/4', textoFrac(sumaPlato(0))==='3/4', textoFrac(sumaPlato(0)));
+  ok('y el plato vacío no tiene nada', sumaPlato(1).p===0, textoFrac(sumaPlato(1)));
+  mesa(1,2);
+  parte(piezas[0],4);
+  todoAlPlato(4,2,0);
+  ok('dos cuartos se cuentan 2/4, sin simplificar',
+     textoFrac(sumaPlato(0))==='2/4', textoFrac(sumaPlato(0)));
+  ok('y la simplificada se guarda aparte, por si se quiere enseñar',
+     textoFrac(simplifica(sumaPlato(0)))==='1/2', textoFrac(simplifica(sumaPlato(0))));
+
+  /* --- las maneras de repartir 3 tortillas entre 4 --------------------------------------------- */
+  /* la primera: dos tortillas por la mitad y la tercera en cuatro */
+  mesa(3,4);
+  parte(piezas[0],2); parte(piezas[2],2); parte(piezas[4],4);
+  ok('quedan 8 trozos: cuatro medios y cuatro cuartos', piezas.length===8, piezas.length);
+  todoAlPlato(2,1,0); todoAlPlato(2,1,1); todoAlPlato(2,1,2); todoAlPlato(2,1,3);
+  todoAlPlato(4,1,0); todoAlPlato(4,1,1); todoAlPlato(4,1,2); todoAlPlato(4,1,3);
+  ok('con medio y un cuarto cada uno, a todos les toca 3/4',
+     [0,1,2,3].every(function(j){ return textoFrac(sumaPlato(j))==='3/4'; }),
+     [0,1,2,3].map(function(j){ return textoFrac(sumaPlato(j)); }).join(' '));
+  ok('y en la mesa no queda nada', libres()===0, libres());
+  /* la segunda: las tres tortillas en cuatro */
+  mesa(3,4);
+  var t; for(t=0;t<3;t++) parte(enMesa().filter(function(q){ return q.den===1; })[0],4);
+  ok('partiendo las tres en cuatro salen 12 cuartos', piezas.length===12, piezas.length);
+  daUnoACada(); daUnoACada(); daUnoACada();
+  ok('tres rondas dejan a cada uno con 3/4',
+     [0,1,2,3].every(function(j){ return textoFrac(sumaPlato(j))==='3/4'; }),
+     textoFrac(sumaPlato(0)));
+  /* la tercera: las tres en ocho */
+  mesa(3,4);
+  for(t=0;t<3;t++) parte(enMesa().filter(function(q){ return q.den===1; })[0],8);
+  var v; for(v=0;v<6;v++) daUnoACada();
+  ok('partiendo en ocho y dando seis a cada uno también toca 3/4',
+     textoFrac(sumaPlato(0))==='6/8' && textoFrac(simplifica(sumaPlato(0)))==='3/4',
+     textoFrac(sumaPlato(0)));
+  ok('las tres maneras reparten lo mismo aunque los trozos sean distintos', true, '3/4');
+
+  /* --- 5 tortillas entre 3: una entera, media y un sexto --------------------------------------- */
+  mesa(5,3);
+  daUnoACada();
+  ok('de 5 tortillas entre 3, una entera a cada uno y sobran 2', libres()===2, libres());
+  var sobran=enMesa().slice();          /* las dos que sobran, antes de tocarlas */
+  parte(sobran[0],2); parte(sobran[1],2);
+  ok('las dos que sobran, partidas por la mitad, son 4 medios',
+     libres()===4 && enMesa().every(function(q){ return q.den===2; }),
+     libres()+' trozos: '+enMesa().map(function(q){ return '1/'+q.den; }).join(' '));
+  daUnoACada();
+  ok('un medio a cada uno y sobra un medio', libres()===1 && enMesa()[0].den===2, libres());
+  parte(enMesa()[0],3);
+  daUnoACada();
+  ok('ese medio en tres da un sexto a cada uno y no sobra nada', libres()===0, libres());
+  ok('y a cada uno le ha tocado 5/3 de tortilla',
+     textoFrac(simplifica(sumaPlato(0)))==='5/3' && textoFrac(simplifica(sumaPlato(2)))==='5/3',
+     textoFrac(sumaPlato(0))+' → '+textoFrac(simplifica(sumaPlato(0))));
+  ok('que es una tortilla, un medio y un sexto', Math.abs(1+1/2+1/6-5/3)<1e-12, 'ok');
+
+  /* --- dar uno a cada plato -------------------------------------------------------------------- */
+  mesa(1,4);
+  parte(piezas[0],3);
+  var antesRep=piezas.filter(function(p){ return p.plato>=0; }).length;
+  daUnoACada();
+  ok('con 3 trozos y 4 personas no se puede dar uno a cada plato',
+     piezas.filter(function(p){ return p.plato>=0; }).length===antesRep, 'ok');
+  ok('y el botón lo sabe', hayIguales()===false, hayIguales());
+  parte(enMesa()[0],2);
+  ok('con dos medios de un tercio ya hay cuatro trozos, pero no cuatro IGUALES',
+     hayIguales()===false, libres()+' trozos');
+  mesa(1,4); parte(piezas[0],4);
+  ok('con cuatro cuartos sí', hayIguales()===true, 'ok');
+
+  /* --- cómo se colocan los trozos en el plato --------------------------------------------------- */
+  mesa(1,4);
+  parte(piezas[0],4);
+  todoAlPlato(4,4,0);
+  dispon();
+  var enPlato=piezas.filter(function(p){ return p.plato===0; })
+                    .sort(function(u,v){ return u.orden-v.orden; });
+  ok('los cuatro cuartos del plato se colocan armando la tortilla',
+     Math.abs(enPlato[0].pang+Math.PI/2-Math.PI/4)<1e-9 &&
+     Math.abs((enPlato[1].pang-enPlato[0].pang)-2*Math.PI/4)<1e-9,
+     num(enPlato[0].pang*180/Math.PI)+'° y '+num(enPlato[1].pang*180/Math.PI)+'°');
+  ok('el primero empieza arriba, no en cualquier sitio',
+     Math.abs((enPlato[0].pang-Math.PI/4)+Math.PI/2)<1e-9, num(enPlato[0].pang*180/Math.PI)+'°');
+  ok('y ninguno se sale de la vuelta',
+     enPlato.every(function(p){ return !p.oculta; }), 'ok');
+  ok('todos van dentro del plato', enPlato.every(function(p){
+       var g=platos[0], d=Math.sqrt((p.px-g.x)*(p.px-g.x)+(p.py-g.y)*(p.py-g.y));
+       return d+p.pr<=g.r+0.001; }), 'ok');
+  /* más de una tortilla en un plato: se abre otra ronda */
+  mesa(3,1);
+  todoAlPlato(1,3,0);
+  dispon();
+  var tres=piezas.filter(function(p){ return p.plato===0; });
+  ok('tres tortillas enteras en un plato se colocan en tres sitios distintos',
+     tres[0].px!==tres[1].px || tres[0].py!==tres[1].py,
+     num(tres[0].px)+','+num(tres[0].py)+' y '+num(tres[1].px)+','+num(tres[1].py));
+  ok('y las tres siguen cabiendo dentro del plato', tres.every(function(p){
+       var g=platos[0], d=Math.sqrt((p.px-g.x)*(p.px-g.x)+(p.py-g.y)*(p.py-g.y));
+       return d+p.pr<=g.r+0.001; }), 'ok');
+  /* el caso peor: todas las tortillas en un plato */
+  mesa(12,1);
+  todoAlPlato(1,12,0);
+  dispon();
+  var doce=piezas.filter(function(p){ return p.plato===0; });
+  ok('hasta doce tortillas en un plato caben todas dentro, sin esconder ninguna',
+     doce.length===12 && doce.every(function(p){
+       var g=platos[0], d=Math.sqrt((p.px-g.x)*(p.px-g.x)+(p.py-g.y)*(p.py-g.y));
+       return !p.oculta && d+p.pr<=g.r+0.001; }), 'ok');
+  ok('y ninguna se monta encima de otra', (function(){
+       var i,j;
+       for(i=0;i<doce.length;i++) for(j=i+1;j<doce.length;j++){
+         var dx=doce[i].px-doce[j].px, dy=doce[i].py-doce[j].py;
+         if(Math.sqrt(dx*dx+dy*dy) < doce[i].pr+doce[j].pr-0.001) return false;
+       }
+       return true; })(), 'ok');
+
+  /* --- acertarle a un trozo con el ratón -------------------------------------------------------- */
+  mesa(1,1);
+  parte(piezas[0],4);
+  dispon();
+  var p0=piezas[0];
+  var dentro={x:p0.px+Math.cos(p0.pang)*R*0.6, y:p0.py+Math.sin(p0.pang)*R*0.6};
+  ok('se le acierta a un cuarto pinchando dentro de él', trozoEn(dentro)===p0, 'ok');
+  var fuera={x:p0.px+Math.cos(p0.pang)*R*1.6, y:p0.py+Math.sin(p0.pang)*R*1.6};
+  ok('y no se le acierta pinchando más allá del borde', trozoEn(fuera)===null, 'ok');
+  var otro={x:p0.px+Math.cos(p0.pang+Math.PI)*R*0.6, y:p0.py+Math.sin(p0.pang+Math.PI)*R*0.6};
+  ok('pinchando enfrente sale el trozo de enfrente, no ese',
+     trozoEn(otro)!==null && trozoEn(otro)!==p0, 'ok');
+  ok('y en el hueco entre la mesa y los platos no hay nada',
+     trozoEn({x:p0.px, y:p0.py+R*3})===null, 'ok');
+  ok('el plato 0 está donde dice estar', platoEn({x:platos[0].x, y:platos[0].y})===0, 'ok');
+  ok('y fuera de los platos no hay plato',
+     platoEn({x:platos[0].x, y:platos[0].y-platos[0].r*3})===-1, 'ok');
+  /* los platos NO se mueven al arrastrar un trozo: si se movieran, huirían del
+     puntero justo cuando se va a soltar */
+  mesa(3,4);
+  dispon();
+  var antesPl=platos.map(function(g){ return g.x+','+g.y; }).join(' ');
+  piezas[0].x=900; piezas[0].y=900;      /* como si se arrastrase muy lejos */
+  dispon();
+  ok('arrastrar un trozo no mueve los platos',
+     platos.map(function(g){ return g.x+','+g.y; }).join(' ')===antesPl, 'ok');
+  piezas.forEach(function(p){ p.plato=0; });
+  dispon();
+  ok('ni vaciar la mesa los mueve',
+     platos.map(function(g){ return g.x+','+g.y; }).join(' ')===antesPl, 'ok');
+
+  /* --- recoger --------------------------------------------------------------------------------- */
+  mesa(2,2);
+  parte(piezas[0],2);
+  var casa={x:piezas[0].x, y:piezas[0].y};
+  dispon();
+  /* arrastrar mueve el trozo de verdad —es lo que hace pointermove—, así que la
+     prueba tiene que moverlo también; metiéndolos en el plato a mano, no se
+     entera de nada y pasa sin probar nada */
+  todoAlPlato(2,2,0);
+  piezas[0].x=platos[0].x;      piezas[0].y=platos[0].y;
+  piezas[1].x=platos[0].x+9;    piezas[1].y=platos[0].y-7;
+  ok('antes de recoger hay dos trozos en el plato 0',
+     piezas.filter(function(p){ return p.plato===0; }).length===2, 'ok');
+  ok('y soltarlos ahí les ha cambiado el sitio', piezas[0].x!==casa.x, num(piezas[0].x));
+  recoge();
+  ok('recoger devuelve todo a la mesa', piezas.every(function(p){ return p.plato<0; }), 'ok');
+  ok('y cada trozo vuelve a SU tortilla, no a donde se soltó',
+     piezas[0].x===casa.x && piezas[0].y===casa.y &&
+     piezas[1].x===casa.x && piezas[1].y===casa.y,
+     num(piezas[0].x)+','+num(piezas[0].y)+' contra '+num(casa.x)+','+num(casa.y));
+  ok('así que las dos mitades vuelven a formar la tortilla entera',
+     piezas[0].x===piezas[1].x && piezas[0].y===piezas[1].y &&
+     Math.abs(Math.abs(piezas[0].ang-piezas[1].ang)-Math.PI)<1e-9, 'ok');
+  ok('y el sitio de origen viaja en el archivo guardado',
+     limpiaPiezas([{den:2,x:500,y:500,hx:7,hy:9,ang:0,plato:-1}],2)[0].hx===7, 'ok');
+  ok('y si el archivo es de los de antes y no lo trae, se usa el sitio actual',
+     limpiaPiezas([{den:2,x:500,y:500,ang:0,plato:-1}],2)[0].hx===500, 'ok');
+
+  /* --- la hoja que escribe el alumno ------------------------------------------------------------ */
+  var antesTabla=tabla, antesCache=cacheHoja, antesTam=opt.tam;
+  iniciaTabla(4); opt.tam=0; pintaHoja();
+  ok('la hoja empieza con cuatro filas vacías', tabla.filas.length===4 &&
+     !filaLlena(tabla.filas[0]), tabla.filas.length);
+  ok('y sin la columna de tamaño tiene cinco columnas',
+     document.querySelectorAll('#tabla th').length===5,
+     document.querySelectorAll('#tabla th').length);
+  opt.tam=1; cacheHoja=''; pintaHoja();
+  ok('con la columna de tamaño, seis',
+     document.querySelectorAll('#tabla th').length===6 &&
+     document.querySelectorAll('#tabla th')[1].innerHTML.indexOf('Tama')===0,
+     document.querySelectorAll('#tabla th').length);
+  /* escribir y que no se pierda al cambiar la estructura */
+  var inp=document.querySelectorAll('#tabla input')[1];
+  inp.value='30'; inp.dispatchEvent(new Event('input',{bubbles:true}));
+  ok('lo que se escribe se guarda', tabla.filas[0].tengo==='30', tabla.filas[0].tengo);
+  var clave=cacheHoja;
+  pintaHoja();
+  ok('y la hoja NO se rehace si no ha cambiado su estructura: si no, al alumno '+
+     'se le iría el cursor mientras escribe', cacheHoja===clave &&
+     document.querySelectorAll('#tabla input')[1].value==='30', 'ok');
+  document.getElementById('masFila').click();
+  ok('añadir una fila deja cinco y no borra lo escrito',
+     tabla.filas.length===5 && tabla.filas[0].tengo==='30' &&
+     document.querySelectorAll('#tabla input')[1].value==='30', tabla.filas.length);
+  document.getElementById('menosFila').click();
+  ok('y quitarla vuelve a dejar cuatro', tabla.filas.length===4, tabla.filas.length);
+  tabla.filas[3].sobra='0'; cacheHoja=''; pintaHoja();
+  document.getElementById('menosFila').click();
+  ok('una fila con algo escrito no se quita sin querer', tabla.filas.length===4, tabla.filas.length);
+  /* copiar la hoja */
+  tabla.cantidad='3/4 de tortilla';
+  var hp=hojaParaPegar();
+  ok('la hoja para pegar es una tabla con la columna de tamaño y lo escrito',
+     /^<table/.test(hp) && hp.indexOf('Tamaño de los trozos')>0 && hp.indexOf('>30<')>0, 'ok');
+  ok('y lleva debajo la cantidad que recibe cada participante, no unas siglas',
+     hp.indexOf('Cantidad que recibe cada participante: 3/4 de tortilla')>0 &&
+     hp.indexOf('R.P.D')<0, 'ok');
+  ok('las casillas en blanco se copian en blanco, para rellenarlas a mano',
+     hp.indexOf('&nbsp;')>0, 'ok');
+  /* guardar y abrir la hoja */
+  ok('una hoja guardada se vuelve a leer entera',
+     (function(){ var t=limpiaTabla({filas:[{tengo:'7',doy:'1'}], cantidad:'1/2'});
+                  return t && t.filas[0].tengo==='7' && t.filas[0].sobra==='' &&
+                         t.cantidad==='1/2'; })(), 'ok');
+  ok('una hoja con filas que no son filas se rechaza',
+     limpiaTabla({filas:['x'], cantidad:''})===null, 'ok');
+  ok('y una sin filas, también', limpiaTabla({filas:[], cantidad:''})===null, 'ok');
+  ok('los archivos de antes, que no traían hoja, se siguen abriendo',
+     limpiaPiezas([{den:2,x:0,y:0,ang:0,plato:-1}],2)!==null, 'ok');
+  /* vaciar la hoja no depende de poner la mesa */
+  tabla.filas[0].tengo='algo';
+  mesa(3,4);
+  ok('poner la mesa NO borra lo que el alumno haya escrito',
+     tabla.filas[0].tengo==='algo', tabla.filas[0].tengo);
+  document.getElementById('vaciaHoja').click();
+  ok('y para borrarlo hay un botón que lo dice',
+     tabla.filas.length===4 && !filaLlena(tabla.filas[0]) && tabla.cantidad==='', 'ok');
+  /* --- el modo tabla: la fila se escribe y la mesa obedece -------------------------------------- */
+  var antesModo=opt.modo;
+  opt.modo=1; opt.tam=1;
+  ok('de una casilla se lee el primer número, escriba lo que escriba',
+     primerNumero('6')===6 && primerNumero('6 medios')===6 && primerNumero('6 de 1/2')===6 &&
+     primerNumero('1 tortilla')===1 && primerNumero('')===null && primerNumero('nada')===null,
+     'ok');
+  /* 3 tortillas entre 4, contado en dos fases */
+  mesa(3,4); iniciaTabla(4); cacheHoja=''; pintaHoja();
+  tabla.filas[0]={tam:'1/2', tengo:'6', doy:'1', total:'4', sobra:'2'};
+  ejecutaFila(0);
+  ok('la fila que dice «tengo 6» partiendo de 3 tortillas parte cada una en dos',
+     piezas.length===6 && piezas.every(function(p){ return p.den===2; }), piezas.length+' trozos');
+  ok('y da un medio a cada uno de los cuatro platos',
+     [0,1,2,3].every(function(j){ return textoFrac(sumaPlato(j))==='1/2'; }) && libres()===2,
+     'quedan '+libres());
+  ok('la fila queda marcada como hecha', tabla.filas[0].hecha===1, 'ok');
+  tabla.filas[1]={tam:'1/4', tengo:'4', doy:'1', total:'4', sobra:'0'};
+  ejecutaFila(1);
+  ok('la fila siguiente parte los dos medios que quedan en dos y los reparte',
+     libres()===0 && [0,1,2,3].every(function(j){ return textoFrac(simplifica(sumaPlato(j)))==='3/4'; }),
+     textoFrac(sumaPlato(0)));
+  /* una fila entera de un tirón: partir en 4 y dar 3 a cada uno */
+  mesa(3,4); iniciaTabla(4);
+  tabla.filas[0]={tam:'1/4', tengo:'12', doy:'3', total:'12', sobra:'0'};
+  ejecutaFila(0);
+  ok('una sola fila puede partir en cuatro y dar tres a cada uno de una vez',
+     libres()===0 && textoFrac(sumaPlato(0))==='3/4', textoFrac(sumaPlato(0)));
+  /* sin partir: n = 1 */
+  mesa(4,4); iniciaTabla(4);
+  tabla.filas[0]={tam:'1 tortilla', tengo:'4', doy:'1', total:'4', sobra:'0'};
+  ejecutaFila(0);
+  ok('si lo que tengo es lo que ya hay, no se parte nada y se reparte tal cual',
+     piezas.every(function(p){ return p.den===1; }) && libres()===0, 'ok');
+  /* lo que se niega a hacer, y solo eso */
+  mesa(3,4); iniciaTabla(4);
+  tabla.filas[0]={tam:'', tengo:'8', doy:'1', total:'', sobra:''};
+  ejecutaFila(0);
+  ok('no parte 3 trozos en 8: no se puede partir en trozo y medio',
+     piezas.length===3 && !tabla.filas[0].hecha, piezas.length+' trozos');
+  tabla.filas[0]={tam:'', tengo:'2', doy:'1', total:'', sobra:''};
+  ejecutaFila(0);
+  ok('ni junta tres trozos en dos', piezas.length===3 && !tabla.filas[0].hecha, piezas.length);
+  tabla.filas[0]={tam:'', tengo:'6', doy:'2', total:'', sobra:''};
+  ejecutaFila(0);
+  ok('ni da 2 a cada uno de 4 personas teniendo 6 trozos',
+     piezas.length===3 && !tabla.filas[0].hecha, piezas.length);
+  tabla.filas[0]={tam:'', tengo:'', doy:'1', total:'', sobra:''};
+  ejecutaFila(0);
+  ok('ni hace nada si falta lo que tengo', piezas.length===3, piezas.length);
+  /* NO mira la cuenta del alumno: obedece aunque el total y el sobrante estén mal */
+  mesa(3,4); iniciaTabla(4);
+  tabla.filas[0]={tam:'1/2', tengo:'6', doy:'1', total:'99', sobra:'99'};
+  ejecutaFila(0);
+  ok('obedece aunque «lo que doy en total» y «lo que sobra» estén mal escritos',
+     tabla.filas[0].hecha===1 && libres()===2, 'sobran '+libres()+', él puso 99');
+  ok('y no cambia lo que el alumno escribió: no le corrige la cuenta',
+     tabla.filas[0].total==='99' && tabla.filas[0].sobra==='99', 'ok');
+
+  /* --- el tamaño escrito sí es parte de la orden ------------------------------------------------ */
+  ok('se entiende el tamaño escrito como fracción',
+     tamDeclarado('6 (1/6)')===6 && tamDeclarado('1 (1/7)')===7 && tamDeclarado('1/2')===2, 'ok');
+  ok('y escrito con palabras', tamDeclarado('6 medios')===2 && tamDeclarado('3 tortillas')===1 &&
+     tamDeclarado('4 doceavos')===12 && tamDeclarado('un séptimo')===7, 'ok');
+  ok('un número suelto no declara tamaño', tamDeclarado('6')===null && tamDeclarado('')===null, 'ok');
+  ok('y 3/8 tampoco: el tamaño se escribe 1 partido de algo',
+     tamDeclarado('3/8')===null, tamDeclarado('3/8'));
+  /* la fila del sinsentido: sextos y séptimos en la misma fila */
+  mesa(3,4); iniciaTabla(4); opt.tam=0;
+  tabla.filas[0]={tam:'', tengo:'6 (1/2)', doy:'1 (1/2)', total:'4 (1/2)', sobra:'2 (1/2)'};
+  ejecutaFila(0);
+  ok('una fila con el tamaño bien escrito se hace igual',
+     tabla.filas[0].hecha===1 && libres()===2, libres()+' trozos');
+  tabla.filas[1]={tam:'', tengo:'6 (1/6)', doy:'1 (1/7)', total:'3/8', sobra:'0'};
+  ejecutaFila(1);
+  ok('pero no se hace una fila que dice sextos y séptimos a la vez',
+     !tabla.filas[1].hecha && libres()===2 && piezas.length===6,
+     libres()+' trozos en la mesa, '+piezas.length+' en total');
+  ok('y el reparto se queda como estaba, sin avanzar',
+     [0,1,2,3].every(function(j){ return textoFrac(sumaPlato(j))==='1/2'; }), 'ok');
+  /* el tamaño escrito no cuadra con el corte que piden los números */
+  mesa(3,4); iniciaTabla(4);
+  tabla.filas[0]={tam:'', tengo:'6 (1/6)', doy:'1 (1/6)', total:'', sobra:''};
+  ejecutaFila(0);
+  ok('ni una fila que pide sextos partiendo 3 tortillas en dos',
+     !tabla.filas[0].hecha && piezas.length===3, piezas.length+' trozos');
+  tabla.filas[0]={tam:'', tengo:'6 medios', doy:'1 medio', total:'', sobra:''};
+  ejecutaFila(0);
+  ok('y en cambio la misma fila con el tamaño que toca, escrito con palabras, sí',
+     tabla.filas[0].hecha===1 && libres()===2, libres());
+  /* si no escribe tamaño, la mesa obedece y no se pone a adivinar */
+  mesa(3,4); iniciaTabla(4);
+  tabla.filas[0]={tam:'', tengo:'6', doy:'1', total:'', sobra:''};
+  ejecutaFila(0);
+  ok('sin tamaño escrito, la mesa obedece sin más', tabla.filas[0].hecha===1, 'ok');
+  /* con la columna de tamaño apagada, lo que ponga en esa casilla no cuenta */
+  mesa(3,4); iniciaTabla(4); opt.tam=0;
+  tabla.filas[0]={tam:'1/9', tengo:'6', doy:'1', total:'', sobra:''};
+  ejecutaFila(0);
+  ok('con la columna de tamaño apagada no se mira lo que quedó escrito en ella',
+     tabla.filas[0].hecha===1, 'ok');
+  opt.tam=1;
+  mesa(3,4); iniciaTabla(4);
+  tabla.filas[0]={tam:'1/9', tengo:'6', doy:'1', total:'', sobra:''};
+  ejecutaFila(0);
+  ok('y encendida, sí', !tabla.filas[0].hecha && piezas.length===3, piezas.length);
+  /* deshacer se lleva la fila entera, con sus varias rondas */
+  mesa(3,4); iniciaTabla(4); undoStack=[];
+  tabla.filas[0]={tam:'1/4', tengo:'12', doy:'3', total:'12', sobra:'0'};
+  ejecutaFila(0);
+  doUndo();
+  ok('deshacer se lleva la fila entera de una vez, corte y tres rondas',
+     piezas.length===3 && piezas.every(function(p){ return p.plato<0 && p.den===1; }),
+     piezas.length+' trozos');
+  /* tocar una fila hecha la vuelve a dejar disponible */
+  mesa(3,4); iniciaTabla(4); cacheHoja=''; pintaHoja();
+  tabla.filas[0]={tam:'1/2', tengo:'6', doy:'1', total:'4', sobra:'2'};
+  ejecutaFila(0);
+  var inp2=document.querySelectorAll('#tabla input')[1];
+  inp2.value='7'; inp2.dispatchEvent(new Event('input',{bubbles:true}));
+  ok('cambiar algo de una fila hecha la deja lista para volver a hacerse',
+     !tabla.filas[0].hecha && !!document.querySelector('#tabla tr[data-fila="0"] button.run'), 'ok');
+  /* la columna del botón no se va al documento */
+  opt.modo=1; cacheHoja=''; pintaHoja();
+  ok('con el modo tabla la tabla tiene una columna más, la del botón',
+     document.querySelectorAll('#tabla th').length===7,
+     document.querySelectorAll('#tabla th').length);
+  ok('pero al copiarla no viaja esa columna',
+     (hojaParaPegar().match(/<th /g)||[]).length===6,
+     (hojaParaPegar().match(/<th /g)||[]).length+' columnas');
+  opt.modo=antesModo;
+  tabla=antesTabla; cacheHoja=antesCache; opt.tam=antesTam;
+
+  /* --- lo que no debe pasar -------------------------------------------------------------------- */
+  mesa(3,4);
+  ok('un archivo con un trozo de denominador raro se rechaza',
+     limpiaPiezas([{den:0,x:0,y:0,ang:0,plato:-1}],4)===null, 'ok');
+  ok('y uno con un trozo en un plato que no existe',
+     limpiaPiezas([{den:2,x:0,y:0,ang:0,plato:9}],4)===null, 'ok');
+  ok('y uno con coordenadas que no son números',
+     limpiaPiezas([{den:2,x:'ahí',y:0,ang:0,plato:-1}],4)===null, 'ok');
+  ok('y uno vacío', limpiaPiezas([],4)===null, 'ok');
+  ok('un archivo correcto sí se acepta',
+     limpiaPiezas([{den:2,x:0,y:0,ang:0,plato:1}],4)!==null, 'ok');
+  ok('la mesa no admite más de '+MAXA+' tortillas',
+     (document.getElementById('inA').value=99, leeEnteros().a===MAXA), leeEnteros().a);
+  ok('ni menos de una',
+     (document.getElementById('inA').value=0, leeEnteros().a===1), leeEnteros().a);
+
+  /* --- deshacer -------------------------------------------------------------------------------- */
+  mesa(1,2); undoStack=[];
+  corta(4);
+  ok('partir queda registrado', piezas.length===4, piezas.length);
+  doUndo();
+  ok('y deshacer devuelve la tortilla entera',
+     piezas.length===1 && piezas[0].den===1, piezas.length);
+  corta(2); daUnoACada();
+  ok('repartir queda registrado',
+     piezas.filter(function(p){ return p.plato>=0; }).length===2, 'ok');
+  doUndo();
+  ok('y deshacer lo devuelve a la mesa', enMesa().length===2, enMesa().length);
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+  }
+
+  A=antes.A; B=antes.B; piezas=antes.piezas; nid=antes.nid; orden=antes.orden; sel=antes.sel;
+  view=antes.view; opt.etiq=antes.opt.etiq; opt.cuentas=antes.opt.cuentas;
+  opt.tabla=antes.opt.tabla; opt.tam=antes.opt.tam; opt.modo=antes.opt.modo;
+  tabla=antes.hoja; cacheHoja=''; undoStack=antes.undo;
+  try{ pintaHoja(); sincronizaEntradas(); pinta(); }catch(e2){}
+
+  /* --- informe --------------------------------------------------------------------------------- */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length
+                                         : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación de Tortillas y platos</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__platos={
+  test:runSelfTest, opt:opt, R:R,
+  mesa:function(a,b){ A=a; B=b; ponMesa(); sincronizaEntradas(); fitView(); },
+  piezas:function(){ return piezas; }, platos:function(){ return platos; },
+  parte:parte, corta:corta, daUnoACada:daUnoACada, recoge:recoge,
+  sumaPlato:sumaPlato, simplifica:simplifica, tiposEn:tiposEn, textoFrac:textoFrac,
+  enMesa:enMesa, hayIguales:hayIguales, dispon:dispon,
+  vista:function(){ return view; },
+  trozoEn:trozoEn, platoEn:platoEn, elige:function(id){ sel=id; pinta(); },
+  cargar:cargar, limpiaPiezas:limpiaPiezas, limpiaTabla:limpiaTabla,
+  hoja:function(){ return tabla; }, pintaHoja:pintaHoja, hojaParaPegar:hojaParaPegar,
+  ejecutaFila:ejecutaFila, primerNumero:primerNumero, reparteUno:reparteUno,
+  tamDeclarado:tamDeclarado, tamEnMesa:tamEnMesa,
+  redraw:pinta, fit:fitView, undo:doUndo
+};
+
+})();
+</script>
+</body>
+</html>

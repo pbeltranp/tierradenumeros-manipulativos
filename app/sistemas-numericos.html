@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Sistemas numéricos · manipulativo virtual</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       font-size:14px;color:#2b2f36;background:#fff;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;height:100%;width:100%}
+
+  #side{width:196px;flex:0 0 196px;background:#f4f5f7;border-right:1px solid #dfe2e7;
+        overflow-y:auto;padding:10px 10px 24px}
+  #side .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:2px 2px 10px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  #side h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:14px 0 7px;font-weight:600}
+  .act{display:block;width:100%;text-align:left;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+       padding:6px 9px;margin-bottom:4px;font-size:12.5px;color:#3d4450;cursor:pointer}
+  .act:hover:not(:disabled){background:#f0f2f5;border-color:#c8cdd6}
+  .act:disabled{opacity:.42;cursor:default}
+  select.sel{display:block;width:100%;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+             padding:6px 7px;font:inherit;font-size:12.5px;color:#3d4450;cursor:pointer;margin-bottom:4px}
+  select.sel:hover{border-color:#c8cdd6}
+  .fila{display:flex;gap:4px;margin-bottom:4px;align-items:center}
+  .fila input{flex:1;min-width:0;border:1px solid #e3e6eb;border-radius:7px;padding:6px 7px;
+              font:inherit;font-size:12.5px;color:#3d4450}
+  .fila .act{width:auto;flex:0 0 auto;margin:0}
+  .fila label{font-size:11.5px;color:#8a919c;flex:0 0 auto}
+  #marcador{font-size:11.5px;color:#6b7280;line-height:1.6;margin-top:6px}
+  #marcador b{color:#2b2f36}
+  #ficha{font-size:11.5px;color:#6b7280;line-height:1.55;margin-top:12px;border-top:1px solid #e3e6eb;padding-top:9px}
+  #ficha b{color:#2b2f36}
+  #ficha .s{display:block;margin-bottom:7px}
+  .note{font-size:10.5px;line-height:1.45;color:#8a919c;margin-top:12px}
+
+  main{flex:1;display:flex;flex-direction:column;min-width:0;position:relative}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #dfe2e7;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover:not(:disabled){background:#f0f2f5}
+  .btn:disabled{opacity:.42;cursor:default}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn.on:hover{background:#2a589a}
+  .btn.prim{background:#2f62a8;border-color:#2f62a8;color:#fff;font-weight:600}
+  .btn.prim:hover:not(:disabled){background:#2a589a}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:#4a515c;cursor:pointer;
+       padding:3px 6px;border-radius:6px;margin-bottom:2px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  #side .chk{display:flex;font-size:12px}
+
+  #stage{position:relative;flex:1;min-height:0;overflow-y:auto;padding:14px 16px 46px;background:#fff}
+
+  .caja{border:1px solid #e0e3e8;border-radius:11px;background:#fff;margin-bottom:4px}
+  .caja.foco{border-color:#b9c8de;box-shadow:0 0 0 3px rgba(47,98,168,.07)}
+  .cab{display:flex;flex-wrap:wrap;align-items:center;gap:7px;padding:8px 11px;border-bottom:1px solid #eef0f3}
+  .cab .rot{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;font-weight:600}
+  select.selc{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:4px 6px;
+              font:inherit;font-size:13px;color:#2b2f36;cursor:pointer}
+  .cab input.num{width:118px;border:1px solid #d5d9e0;border-radius:7px;padding:4px 7px;font:inherit;font-size:13px}
+  .cab .tipo{font-size:11.5px;color:#8a919c;margin-left:auto;text-align:right}
+
+  .lienzo{min-height:104px;padding:12px 11px;display:flex;align-items:center;
+          overflow-x:auto;overflow-y:hidden}
+  .lienzo svg{display:block;flex:0 0 auto}
+  .lienzo .vacio{color:#b3b9c2;font-size:12.5px;font-style:italic}
+  .lienzo g.tk{cursor:pointer}
+  .lienzo g.tk:hover{opacity:.45}
+
+  .valor{padding:0 11px 9px;font-size:12.5px;color:#6b7280}
+  .valor b{color:#2b2f36;font-size:14px}
+  .solu{padding:0 11px 10px}
+  .solu .rot{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#a2a9b4;
+             font-weight:600;display:block;margin-bottom:3px}
+  .solu .cont{border:1px dashed #dfe2e7;border-radius:8px;padding:7px 9px;overflow-x:auto;background:#fbfcfd}
+
+  .paleta{display:flex;flex-wrap:wrap;gap:5px;padding:9px 11px;border-top:1px solid #eef0f3;align-items:flex-end}
+  .sim{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:4px 6px;cursor:pointer;
+       display:inline-flex;flex-direction:column;align-items:center;gap:2px;min-width:38px}
+  .sim:hover{background:#f0f2f5;border-color:#c8cdd6}
+  .sim svg{display:block}
+  .sim .et{font-size:9.5px;color:#8a919c;line-height:1}
+  .sim.esp{min-width:auto;padding:6px 9px;font-size:12px;color:#3d4450}
+  .paleta .hueco{flex:1 1 6px}
+
+  .pie{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding:9px 11px;border-top:1px solid #eef0f3}
+  .msg{font-size:12.5px;line-height:1.4}
+  .msg.bien{color:#15803d}
+  .msg.mal{color:#c2410c}
+  .msg.neutro{color:#6b7280}
+
+  .entre{display:flex;align-items:center;gap:10px;margin:9px 0 9px;padding:0 2px}
+  .entre #enun{font-size:12.5px;color:#4a515c;line-height:1.4}
+  .entre #enun b{color:#2b2f36}
+
+  #hint{position:absolute;left:12px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 24px)}
+  #info,#inv{position:absolute;right:12px;top:52px;width:328px;max-height:calc(100% - 74px);overflow-y:auto;
+        background:#fff;border:1px solid #dfe2e7;border-radius:10px;padding:12px 14px;font-size:11.5px;
+        line-height:1.55;color:#4a515c;box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;z-index:5}
+  #info.show,#inv.show{display:block}
+  #info b,#inv b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:9px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #inv h3{font-size:13px;margin:0 0 9px;color:#2b2f36}
+  #inv h4{font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:13px 0 6px;font-weight:600}
+  #inv label.lin{display:flex;align-items:center;gap:6px;margin-bottom:5px;font-size:11.5px}
+  #inv label.lin span{flex:0 0 76px;color:#6b7280}
+  #inv input[type=text],#inv input[type=number],#inv select{flex:1;min-width:0;border:1px solid #d5d9e0;
+      border-radius:7px;padding:5px 7px;font:inherit;font-size:12.5px;color:#2b2f36;background:#fff}
+  #inv .rej{display:flex;flex-wrap:wrap;gap:4px}
+  #inv .rej .cel{display:flex;flex-direction:column;align-items:center;gap:2px}
+  #inv .rej .cel input{width:40px;text-align:center;border:1px solid #d5d9e0;border-radius:6px;
+      padding:4px 2px;font:inherit;font-size:15px}
+  #inv .rej .cel span{font-size:9.5px;color:#a2a9b4}
+  #inv .bar{display:flex;gap:5px;margin-top:12px;padding-top:10px;border-top:1px solid #eef0f3}
+  #inv .aviso{font-size:11px;color:#c2410c;margin-top:7px;min-height:14px}
+
+  @media (max-width:720px){
+    #side{width:150px;flex:0 0 150px;padding:8px 6px}
+    .btn{padding:5px 7px;font-size:12px}
+    #info,#inv{width:auto;left:12px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div class="brand">Sistemas <b>numéricos</b></div>
+
+    <h2>Qué se hace</h2>
+    <select class="sel" id="modosel" title="En libre se escribe lo que se quiera; en retos, el programa propone el número">
+      <option value="libre">Escribir y traducir</option>
+      <option value="reto">Retos</option>
+    </select>
+
+    <div id="retobox" style="display:none">
+      <div class="fila">
+        <label>Serie</label>
+        <input type="number" id="semilla" min="1" max="99999" step="1" value="1386"
+               title="Con la misma serie salen los mismos retos: toda la clase puede trabajar los mismos">
+        <button class="act" id="otraserie" title="Otra serie al azar">↺</button>
+      </div>
+      <select class="sel" id="rangosel" title="Hasta qué número llegan los retos">
+        <option value="20">Números hasta 20</option>
+        <option value="100" selected>Números hasta 100</option>
+        <option value="1000">Números hasta 1000</option>
+        <option value="10000">Números hasta 10 000</option>
+        <option value="0">Lo que admita el sistema</option>
+      </select>
+      <button class="act" id="nuevoreto">▸ Otro reto</button>
+      <div id="marcador"></div>
+    </div>
+
+    <h2>Presentación</h2>
+    <label class="chk" title="Escribe debajo de cada caja el número que vale lo escrito. Déjalo apagado mientras eso sea lo que hay que averiguar."><input type="checkbox" id="chkval">Cuánto vale</label>
+    <label class="chk" title="Enseña la escritura correcta debajo de la caja de abajo. Déjalo apagado mientras sea lo que hay que encontrar."><input type="checkbox" id="chksol">La escritura correcta</label>
+
+    <h2>Sistemas</h2>
+    <button class="act" id="invbtn">✎ Inventar un sistema…</button>
+
+    <div id="ficha"></div>
+    <div class="note">Pincha en un símbolo de la caja para quitarlo. Con el teclado también se escribe: las cifras y las letras van directas.</div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn" id="swap" title="Cambiar el de arriba por el de abajo">⇅ Intercambiar</button>
+      <span class="sep"></span>
+      <span style="font-size:12px;color:#8a919c">Tamaño</span>
+      <button class="btn" id="zoomout" title="Símbolos más pequeños">−</button>
+      <button class="btn" id="zoomin" title="Símbolos más grandes">+</button>
+      <span class="sep"></span>
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <button class="btn" id="borraA" title="Vaciar la caja de arriba">Vaciar arriba</button>
+      <button class="btn" id="borraB" title="Vaciar la caja de abajo">Vaciar abajo</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar en un archivo">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="png" title="Descargar imagen de las dos cajas">⤓ PNG</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+
+    <div id="stage">
+      <section class="caja" id="cajaA">
+        <div class="cab">
+          <span class="rot" id="rotA">El número</span>
+          <select class="selc" id="sisA"></select>
+          <span id="extraA"></span>
+          <span class="tipo" id="tipoA"></span>
+        </div>
+        <div class="lienzo" id="lienzoA"></div>
+        <div class="valor" id="valorA" style="display:none"></div>
+        <div class="paleta" id="palA"></div>
+      </section>
+
+      <div class="entre">
+        <span id="enun"></span>
+      </div>
+
+      <section class="caja" id="cajaB">
+        <div class="cab">
+          <span class="rot" id="rotB">Escríbelo en</span>
+          <select class="selc" id="sisB"></select>
+          <span id="extraB"></span>
+          <span class="tipo" id="tipoB"></span>
+        </div>
+        <div class="lienzo" id="lienzoB"></div>
+        <div class="valor" id="valorB" style="display:none"></div>
+        <div class="solu" id="soluB" style="display:none"></div>
+        <div class="paleta" id="palB"></div>
+        <div class="pie">
+          <button class="btn prim" id="comprobar">Comprobar</button>
+          <span class="msg neutro" id="msg"></span>
+        </div>
+      </section>
+    </div>
+
+    <div id="hint"></div>
+    <div id="info"></div>
+    <div id="inv"></div>
+  </main>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LA IDEA / LOS SISTEMAS
+
+   La restricción que lo condiciona todo: un sistema de numeración no es una
+   colección de dibujos bonitos, son TRES DATOS —el tipo, la base y los
+   símbolos— y de ellos salen mecánicamente la escritura y la lectura. Por eso
+   aquí no hay un traductor por cada cultura: hay UN motor con tres reglas
+   (aditiva, híbrida y posicional) y cada sistema histórico es solo una tabla
+   de datos que lo alimenta. Inventar un sistema es, exactamente, rellenar esa
+   tabla; y por eso el sistema inventado se maneja igual que el egipcio.
+
+     · ADITIVO      símbolos para 1, b, b², b³… El número se escribe repitiendo
+                    cada símbolo tantas veces como haga falta, y vale la SUMA.
+                    Con base auxiliar (romano: 5, 50, 500) y, si se quiere, con
+                    principio sustractivo (IV = 5 − 1).
+     · HÍBRIDO      además hay símbolos para 1, 2, …, b−1, que multiplican a la
+                    potencia que llevan detrás. 79564 = 7·10⁴ 9·10³ 5·10² 6·10 4.
+                    Puede tener base auxiliar de agrupación (chino y japonés
+                    agrupan de cuatro en cuatro cifras: 万, 億, 兆).
+     · POSICIONAL   símbolos SOLO para 0, 1, …, b−1, y ninguno para la base ni
+                    para sus potencias: eso lo dice el LUGAR. Las cifras pueden
+                    ser un símbolo suelto (nosotros) o a su vez una escritura
+                    aditiva (babilonio: base 60 con cifras en base 10; maya:
+                    base 20 con cifras de puntos y barras).
+
+   Todos los glifos se dibujan aquí dentro, con trazos propios, salvo los que
+   son texto (cifras, letras romanas, caracteres chinos y japoneses). Así el
+   archivo no depende de que el ordenador del aula tenga una fuente de
+   jeroglíficos o de cuneiforme instalada, que es justo lo que no va a tener.
+   ========================================================================= */
+
+/* --- Los glifos dibujados ------------------------------------------------
+   Cada glifo vive en un sistema de coordenadas donde 100 es la altura
+   nominal de una línea de escritura. Declara su caja (w × h) y sus trazos, y
+   la maquetación los coloca alineados por abajo, que es como se apoyan en el
+   renglón los símbolos de todos estos sistemas. */
+var DIB = {
+  /* egipcios */
+  eg1:   {w:20, h:88, t:[{p:'M10 6 L10 82', s:9}]},
+  eg10:  {w:54, h:74, t:[{p:'M7 70 C7 6 47 6 47 70', s:9}]},
+  eg100: {w:54, h:76, t:[{p:'M6 72 C6 14 48 8 48 38 C48 62 20 66 20 46 C20 34 32 30 38 38', s:8}]},
+  eg1000:{w:54, h:96, t:[{p:'M27 92 L27 48', s:7},
+                         {p:'M14 92 C20 85 34 85 40 92', s:6},
+                         {p:'M27 48 L27 5', s:7},
+                         {p:'M27 48 C13 39 7 20 11 5', s:6},
+                         {p:'M27 48 C41 39 47 20 43 5', s:6}]},
+  eg10000:{w:42,h:90, t:[{p:'M12 86 L12 32 C12 12 22 4 29 9 C34 13 33 24 30 32 L30 86', s:8},
+                         {p:'M15 27 C19 20 27 20 30 26', s:5}]},
+  eg1e5: {w:58, h:86, t:[{p:'M18 26 m -13 0 a 13 13 0 1 0 26 0 a 13 13 0 1 0 -26 0', s:7},
+                         {p:'M30 32 C44 38 46 54 40 64 C34 74 42 82 52 80', s:7}]},
+  eg1e6: {w:60, h:92, t:[{p:'M30 20 m -9 0 a 9 9 0 1 0 18 0 a 9 9 0 1 0 -18 0', s:7},
+                         {p:'M8 10 L18 34 L30 39 L42 34 L52 10', s:7},
+                         {p:'M30 39 L30 62', s:7},
+                         {p:'M30 62 L14 76 L14 88 L48 88', s:7}]},
+  /* cuneiformes: el clavo (1) y la espiga (10) */
+  clavo: {w:24, h:88, t:[{p:'M3 6 L21 6 L12 84 Z', f:1}]},
+  espiga:{w:52, h:52, t:[{p:'M4 5 L48 5 L6 48 Z', f:1}]},
+  /* fichas de arcilla sumerias */
+  conoP: {w:30, h:34, t:[{p:'M15 2 L28 32 L2 32 Z', s:6}]},
+  bolaP: {w:28, h:28, t:[{p:'M14 14 m -11 0 a 11 11 0 1 0 22 0 a 11 11 0 1 0 -22 0', s:6}]},
+  conoG: {w:52, h:60, t:[{p:'M26 3 L49 57 L3 57 Z', s:6}]},
+  conoGP:{w:52, h:60, t:[{p:'M26 3 L49 57 L3 57 Z', s:6},
+                         {p:'M26 42 m -6 0 a 6 6 0 1 0 12 0 a 6 6 0 1 0 -12 0', f:1}]},
+  bolaG: {w:52, h:52, t:[{p:'M26 26 m -22 0 a 22 22 0 1 0 44 0 a 22 22 0 1 0 -44 0', s:6}]},
+  bolaGP:{w:52, h:52, t:[{p:'M26 26 m -22 0 a 22 22 0 1 0 44 0 a 22 22 0 1 0 -44 0', s:6},
+                         {p:'M26 26 m -6 0 a 6 6 0 1 0 12 0 a 6 6 0 1 0 -12 0', f:1}]},
+  /* mayas */
+  punto: {w:24, h:24, t:[{p:'M12 12 m -9 0 a 9 9 0 1 0 18 0 a 9 9 0 1 0 -18 0', f:1}]},
+  barra: {w:80, h:20, t:[{p:'M4 4 L76 4 L76 16 L4 16 Z', f:1}]},
+  concha:{w:80, h:38, t:[{p:'M6 19 C6 6 22 3 40 3 C58 3 74 6 74 19 C74 30 58 35 40 35 C22 35 6 30 6 19 Z', s:6},
+                         {p:'M24 6 C22 16 22 24 26 33', s:4},
+                         {p:'M40 4 C39 16 39 24 40 34', s:4},
+                         {p:'M56 6 C58 16 58 24 54 33', s:4}]}
+};
+
+/* Un símbolo es o un dibujo de la tabla de arriba, o texto. El texto lleva su
+   familia porque un carácter chino y una letra latina no ocupan lo mismo: la
+   caja de un ideograma es cuadrada y la de una letra, estrecha. */
+function gD(id){ return {k:'d', d:id}; }
+function gT(c){  return {k:'t', c:c, cjk:(c.charCodeAt(0)>0x2000)}; }
+
+var LAT='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function cifrasLatinas(b){ var a=[],i; for(i=0;i<b;i++) a.push(gT(LAT.charAt(i))); return a; }
+
+/* --- La tabla de sistemas ------------------------------------------------ */
+var SIS={}, ORDEN=[];
+function defSis(o){ SIS[o.id]=o; ORDEN.push(o.id); return o; }
+
+defSis({id:'dec', nom:'Nuestro sistema (decimal)', tipo:'pos', base:10, max:999999999,
+  cifras:cifrasLatinas(10),
+  nota:'Posicional de base 10. Hay símbolos para el cero y para los nueve primeros números, y ninguno para diez ni para sus potencias: eso lo dice el LUGAR que ocupa cada cifra.'});
+
+defSis({id:'egi', nom:'Egipcio (jeroglífico)', tipo:'adi', base:10, apila:4, max:9999999,
+  piezas:[{v:1000000,g:gD('eg1e6')},{v:100000,g:gD('eg1e5')},{v:10000,g:gD('eg10000')},
+          {v:1000,g:gD('eg1000')},{v:100,g:gD('eg100')},{v:10,g:gD('eg10')},{v:1,g:gD('eg1')}],
+  nota:'Aditivo de base 10: un símbolo para el uno y otro para cada potencia de diez, y se repiten tantas veces como haga falta. El número vale la suma, así que el orden en que se escriben no cambia nada.'});
+
+defSis({id:'rom', nom:'Romano', tipo:'adi', base:10, apila:0, max:3999, sustractivo:true,
+  piezas:[{v:1000,g:gT('M')},{v:500,g:gT('D')},{v:100,g:gT('C')},{v:50,g:gT('L')},
+          {v:10,g:gT('X')},{v:5,g:gT('V')},{v:1,g:gT('I')}],
+  escalera:[[1000,[1000]],[900,[100,1000]],[500,[500]],[400,[100,500]],[100,[100]],[90,[10,100]],
+            [50,[50]],[40,[10,50]],[10,[10]],[9,[1,10]],[5,[5]],[4,[1,5]],[1,[1]]],
+  nota:'Aditivo de base 10 con base auxiliar 5 (V, L, D) y una irregularidad: un símbolo colocado delante de otro mayor se RESTA, y por eso aquí el orden sí importa.'});
+
+defSis({id:'chi', nom:'Chino', tipo:'hib', base:10, unoDesde:1, ceroInterno:true, max:999999999,
+  mult:[null,gT('一'),gT('二'),gT('三'),gT('四'),gT('五'),gT('六'),gT('七'),gT('八'),gT('九')],
+  pot:[{e:1,g:gT('十')},{e:2,g:gT('百')},{e:3,g:gT('千')}],
+  grupo:{tam:4, marcas:[{e:4,g:gT('萬')},{e:8,g:gT('億')}]},
+  cero:gT('零'),
+  nota:'Híbrido multiplicativo de base 10: la cifra que va delante de una potencia dice cuántas veces se toma. Agrupa de cuatro en cuatro cifras (萬 = 10⁴, 億 = 10⁸), y marca los huecos interiores con 零.'});
+
+defSis({id:'jap', nom:'Japonés', tipo:'hib', base:10, unoDesde:3, ceroInterno:false, max:999999999,
+  mult:[null,gT('一'),gT('二'),gT('三'),gT('四'),gT('五'),gT('六'),gT('七'),gT('八'),gT('九')],
+  pot:[{e:1,g:gT('十')},{e:2,g:gT('百')},{e:3,g:gT('千')}],
+  grupo:{tam:4, marcas:[{e:4,g:gT('万')},{e:8,g:gT('億')}]},
+  cero:gT('〇'),
+  nota:'Híbrido multiplicativo de base 10, con los mismos caracteres que el chino y la misma agrupación de cuatro en cuatro (万 = 10⁴). Se diferencia en dos detalles: omite el «uno» delante de 十, 百 y 千, y no marca los huecos interiores.'});
+
+defSis({id:'bab', nom:'Babilonio (cuneiforme)', tipo:'pos', base:60, sep:true, max:12959999,
+  cifraAdit:{dir:'h', cero:null,
+             piezas:[{v:10,g:gD('espiga'),ap:3},{v:1,g:gD('clavo'),ap:3}]},
+  nota:'Posicional de base 60, pero cada cifra (de 0 a 59) se escribe a su vez de forma ADITIVA en base 10, con dos únicos signos: el clavo (1) y la espiga (10). No tiene cero: una posición vacía se deja en blanco, y de ahí sus ambigüedades.'});
+
+defSis({id:'sum', nom:'Sumerio (fichas de arcilla)', tipo:'adi', base:60, apila:4, max:359999,
+  piezas:[{v:36000,g:gD('bolaGP')},{v:3600,g:gD('bolaG')},{v:600,g:gD('conoGP')},
+          {v:60,g:gD('conoG')},{v:10,g:gD('bolaP')},{v:1,g:gD('conoP')}],
+  nota:'Aditivo de base 60 con base auxiliar 10: cono pequeño 1, bola pequeña 10, cono grande 60, cono grande perforado 600, bola grande 3600, bola grande perforada 36 000. El valor lo da la FORMA de la ficha, no su sitio.'});
+
+defSis({id:'may', nom:'Maya', tipo:'pos', base:20, sep:true, vertical:true, max:159999,
+  cifraAdit:{dir:'v', cero:gD('concha'),
+             piezas:[{v:1,g:gD('punto'),ap:5},{v:5,g:gD('barra'),ap:1}]},
+  nota:'Posicional de base 20 y CON cero (la concha). Cada cifra, de 0 a 19, se escribe con puntos (1) y barras (5). Se escribe en vertical, de arriba abajo, y arriba va la posición de mayor valor.'});
+
+defSis({id:'bas', nom:'Otra base (posicional)', tipo:'pos', base:5, paramBase:true, max:999999999,
+  nota:'Posicional en la base que se elija, con las cifras 0…9 y luego A, B, C… para las bases mayores que diez. Cambiando la base con el desplegable de al lado se ve qué cambia y qué no.'});
+
+/* Los sistemas inventados se guardan aquí y se añaden a los desplegables. */
+var INVENTADOS=[];
+
+function sisDe(id){ return SIS[id]; }
+function esInventado(s){ return s && s.id.indexOf('inv')===0; }
+
+/* =========================================================================
+   2. ESTADO
+
+   Una sola fuente de verdad: lo que hay escrito en la caja de ARRIBA es el
+   número. Tanto en modo libre como en retos —donde el programa se limita a
+   rellenarla y a bloquear su paleta—, el número al que hay que llegar sale
+   siempre de leer la caja de arriba con las reglas de su sistema. Así no hay
+   dos números que se puedan desincronizar.
+   ========================================================================= */
+var est={
+  modo:'libre',
+  A:{sis:'dec', toks:[]},
+  B:{sis:'egi', toks:[]},
+  esc:0.40,                 /* píxeles por unidad de glifo (100 = alto de línea) */
+  serie:1386, tiro:0, aciertos:0, intentos:0, resuelto:false,
+  verVal:false, verSol:false, rango:100
+};
+var undoStack=[], MAXU=60;
+
+function copiaEst(){ return {A:{sis:est.A.sis,toks:est.A.toks.slice()},
+                             B:{sis:est.B.sis,toks:est.B.toks.slice()},
+                             baseBas:SIS.bas.base}; }
+function pushUndo(){ undoStack.push(JSON.stringify(copiaEst())); if(undoStack.length>MAXU) undoStack.shift(); }
+function doUndo(){
+  if(!undoStack.length) return false;
+  var d=JSON.parse(undoStack.pop());
+  est.A.sis=d.A.sis; est.A.toks=d.A.toks; est.B.sis=d.B.sis; est.B.toks=d.B.toks;
+  if(d.baseBas) SIS.bas.base=d.baseBas;
+  sincronizaCabeceras(); pinta(); return true;
+}
+
+/* =========================================================================
+   3. ESCRITURA Y LECTURA
+
+   El corazón del material. Dos funciones por sistema:
+     escribe(sis,n)  -> la lista de símbolos de la escritura canónica
+     valor(sis,toks) -> lo que vale una escritura CUALQUIERA, sea canónica o no
+   La segunda es la importante: es la que permite que el alumnado escriba lo
+   que quiera y el material le diga cuánto ha escrito, en vez de limitarse a
+   comparar con la respuesta buena. Escribir 20 con veinte trazos egipcios no
+   es un error de valor, es un error de escritura, y son cosas distintas.
+   ========================================================================= */
+
+/* --- el alfabeto: la lista de símbolos manejables de un sistema ---------- */
+var cacheAlf={};
+function claveAlf(s){ return s.id+'|'+s.base+'|'+(s.rev||0); }
+function alf(s){
+  var k=claveAlf(s);
+  if(cacheAlf[k]) return cacheAlf[k];
+  var a=[], i, b=s.base;
+  if(s.tipo==='adi'){
+    for(i=0;i<s.piezas.length;i++) a.push({id:'a'+i, rol:'p', v:s.piezas[i].v, g:s.piezas[i].g});
+  }else if(s.tipo==='hib'){
+    for(i=1;i<b;i++) if(s.mult[i]) a.push({id:'m'+i, rol:'m', v:i, g:s.mult[i]});
+    for(i=0;i<s.pot.length;i++) a.push({id:'p'+s.pot[i].e, rol:'p', e:s.pot[i].e,
+                                        v:Math.pow(b,s.pot[i].e), g:s.pot[i].g});
+    if(s.grupo) for(i=0;i<s.grupo.marcas.length;i++)
+      a.push({id:'g'+s.grupo.marcas[i].e, rol:'g', e:s.grupo.marcas[i].e,
+              v:Math.pow(b,s.grupo.marcas[i].e), g:s.grupo.marcas[i].g});
+    if(s.cero) a.push({id:'z', rol:'z', v:0, g:s.cero});
+  }else if(s.cifraAdit){
+    var ca=s.cifraAdit;
+    for(i=0;i<ca.piezas.length;i++) a.push({id:'s'+i, rol:'s', v:ca.piezas[i].v, g:ca.piezas[i].g,
+                                            ap:ca.piezas[i].ap||3, ord:i});
+    if(ca.cero) a.push({id:'z', rol:'s', v:0, g:ca.cero, ap:1, ord:ca.piezas.length});
+    a.push({id:'|', rol:'sep'});
+  }else{
+    var cf=s.cifras || cifrasLatinas(b);
+    for(i=0;i<b;i++) a.push({id:'c'+i, rol:'c', v:i, g:cf[i]});
+  }
+  cacheAlf[k]=a; return a;
+}
+var cacheMapa={};
+function mapa(s){
+  var k=claveAlf(s);
+  if(cacheMapa[k]) return cacheMapa[k];
+  var m={}, a=alf(s), i;
+  for(i=0;i<a.length;i++) m[a[i].id]=a[i];
+  cacheMapa[k]=m; return m;
+}
+function olvidaCache(){ cacheAlf={}; cacheMapa={}; cacheTxt={}; }
+
+function maxDe(s){
+  if(s.max) return s.max;
+  if(s.tipo==='adi') return s.piezas[0].v*10-1;
+  if(s.tipo==='hib') return Math.pow(s.base, s.pot.length+1)-1;
+  return 999999999;
+}
+
+/* --- escribir ----------------------------------------------------------- */
+function idPorValor(s,v){
+  var i; for(i=0;i<s.piezas.length;i++) if(s.piezas[i].v===v) return 'a'+i;
+  return null;
+}
+function escAdi(s,n){
+  var out=[], i, j, vs, c;
+  if(s.escalera){
+    for(i=0;i<s.escalera.length;i++){
+      while(n>=s.escalera[i][0]){
+        vs=s.escalera[i][1];
+        for(j=0;j<vs.length;j++) out.push(idPorValor(s,vs[j]));
+        n-=s.escalera[i][0];
+      }
+    }
+    return n===0?out:null;
+  }
+  for(i=0;i<s.piezas.length;i++){
+    c=Math.floor(n/s.piezas[i].v);
+    while(c-->0) out.push('a'+i);
+    n=n%s.piezas[i].v;
+  }
+  return n===0?out:null;
+}
+function trozoHib(s,m){
+  var b=s.base, out=[], K=s.pot.length, i, d, p, hueco=false, esc=false;
+  for(i=K;i>=0;i--){
+    p=Math.pow(b,i); d=Math.floor(m/p)%b;
+    if(d===0){ if(esc) hueco=true; continue; }
+    if(hueco && s.ceroInterno && s.cero) out.push('z');
+    hueco=false;
+    if(!(d===1 && i>0 && i<=(s.unoDesde||0))) out.push('m'+d);
+    if(i>0) out.push('p'+i);
+    esc=true;
+  }
+  return out;
+}
+function escHib(s,n){
+  var b=s.base, out=[], i;
+  if(n===0) return s.cero?['z']:[];
+  if(s.grupo){
+    var T=s.grupo.tam, G=Math.pow(b,T), gs=[], m=n, esc=false, tope=T-1;
+    while(m>0){ gs.push(m%G); m=Math.floor(m/G); }
+    if((gs.length-1)*T > s.grupo.marcas[s.grupo.marcas.length-1].e) return null;
+    for(i=gs.length-1;i>=0;i--){
+      if(gs[i]===0) continue;
+      if(esc && s.ceroInterno && s.cero && gs[i]<Math.pow(b,tope)) out.push('z');
+      out=out.concat(trozoHib(s,gs[i]));
+      if(i>0) out.push('g'+(i*T));
+      esc=true;
+    }
+    return out;
+  }
+  return trozoHib(s,n);
+}
+function cifraToks(s,d){
+  var ca=s.cifraAdit, out=[], ord, i, c, m=d;
+  if(d===0) return ca.cero?['z']:[];
+  ord=[]; for(i=0;i<ca.piezas.length;i++) ord.push(i);
+  ord.sort(function(x,y){ return ca.piezas[y].v-ca.piezas[x].v; });
+  for(i=0;i<ord.length;i++){
+    c=Math.floor(m/ca.piezas[ord[i]].v);
+    while(c-->0) out.push('s'+ord[i]);
+    m=m%ca.piezas[ord[i]].v;
+  }
+  out.sort(function(x,y){ return (+x.slice(1))-(+y.slice(1)); });
+  return out;
+}
+function cifrasDe(s,n){
+  var b=s.base, ds=[], m=n;
+  if(n===0) return [0];
+  while(m>0){ ds.unshift(m%b); m=Math.floor(m/b); }
+  return ds;
+}
+function escPos(s,n){
+  var ds=cifrasDe(s,n), out=[], i;
+  if(!s.cifraAdit){ for(i=0;i<ds.length;i++) out.push('c'+ds[i]); return out; }
+  for(i=0;i<ds.length;i++){ if(i>0) out.push('|'); out=out.concat(cifraToks(s,ds[i])); }
+  return out;
+}
+function escribe(s,n){
+  if(!isFinite(n) || n<0 || n!==Math.round(n) || n>maxDe(s)) return null;
+  if(s.tipo==='adi') return escAdi(s,n);
+  if(s.tipo==='hib') return escHib(s,n);
+  return escPos(s,n);
+}
+
+/* --- leer --------------------------------------------------------------- */
+var AJENO='hay algún símbolo que no es de este sistema';
+function valAdi(s,toks){
+  var m=mapa(s), vs=[], i, e, tot=0;
+  for(i=0;i<toks.length;i++){ e=m[toks[i]]; if(!e) return {ok:false,motivo:AJENO}; vs.push(e.v); }
+  if(s.sustractivo){
+    for(i=0;i<vs.length;i++) tot += (i<vs.length-1 && vs[i]<vs[i+1]) ? -vs[i] : vs[i];
+  }else{
+    for(i=0;i<vs.length;i++) tot+=vs[i];
+  }
+  if(tot<0) return {ok:false, motivo:'así, restando, no sale ningún número'};
+  return {ok:true, n:tot};
+}
+function valHib(s,toks){
+  var m=mapa(s), b=s.base, tot=0, gr=0, act=null, prev=false, i, e;
+  for(i=0;i<toks.length;i++){
+    e=m[toks[i]]; if(!e) return {ok:false,motivo:AJENO};
+    if(e.rol==='m'){
+      if(prev) return {ok:false, motivo:'hay dos cifras seguidas sin potencia en medio, y eso aquí no dice nada'};
+      act=e.v; prev=true; continue;
+    }
+    prev=false;
+    if(e.rol==='p'){ gr += (act===null?1:act)*Math.pow(b,e.e); act=null; }
+    else if(e.rol==='g'){ gr += (act===null?0:act); tot += gr*Math.pow(b,e.e); gr=0; act=null; }
+  }
+  tot += gr + (act===null?0:act);
+  return {ok:true, n:tot};
+}
+function valPos(s,toks){
+  var m=mapa(s), b=s.base, i, j, e, n=0;
+  if(!s.cifraAdit){
+    for(i=0;i<toks.length;i++){
+      e=m[toks[i]]; if(!e||e.rol!=='c') return {ok:false,motivo:AJENO};
+      n=n*b+e.v;
+      if(n>1e14) return {ok:false, motivo:'ese número se sale de lo que este material maneja'};
+    }
+    return {ok:true, n:n};
+  }
+  var celdas=[[]], cur=0, s2;
+  for(i=0;i<toks.length;i++){
+    if(toks[i]==='|'){ celdas.push([]); cur++; continue; }
+    e=m[toks[i]]; if(!e) return {ok:false,motivo:AJENO};
+    celdas[cur].push(e.v);
+  }
+  for(i=0;i<celdas.length;i++){
+    s2=0; for(j=0;j<celdas[i].length;j++) s2+=celdas[i][j];
+    if(s2>=b) return {ok:false, motivo:'una posición suma '+s2+', y en base '+b+' ninguna puede llegar a '+b};
+    n=n*b+s2;
+    if(n>1e14) return {ok:false, motivo:'ese número se sale de lo que este material maneja'};
+  }
+  return {ok:true, n:n};
+}
+function valor(s,toks){
+  if(!toks || !toks.length) return {ok:false, vacio:true, motivo:'no hay nada escrito'};
+  if(s.tipo==='adi') return valAdi(s,toks);
+  if(s.tipo==='hib') return valHib(s,toks);
+  return valPos(s,toks);
+}
+
+/* ¿Está escrito como se escribe en ese sistema? En los aditivos sin principio
+   sustractivo el orden es libre —el número vale la suma—, así que se comparan
+   los MONTONES de símbolos; en los demás, la secuencia entera. Distinguir esto
+   de «vale otra cosa» es media gracia del material: veinte trazos egipcios
+   valen veinte, pero no es así como se escribe veinte. */
+function multiset(a){ var m={},i; for(i=0;i<a.length;i++) m[a[i]]=(m[a[i]]||0)+1; return m; }
+function mismoMultiset(a,b){
+  var x=multiset(a), y=multiset(b), k;
+  for(k in x) if(x[k]!==y[k]) return false;
+  for(k in y) if(x[k]!==y[k]) return false;
+  return true;
+}
+function mismaLista(a,b){
+  var i; if(a.length!==b.length) return false;
+  for(i=0;i<a.length;i++) if(a[i]!==b[i]) return false;
+  return true;
+}
+function esCanonica(s,toks,n){
+  var c=escribe(s,n);
+  if(!c) return false;
+  if(s.tipo==='adi' && !s.sustractivo) return mismoMultiset(toks,c);
+  return mismaLista(toks,c);
+}
+
+/* =========================================================================
+   4. MAQUETACIÓN Y DIBUJO
+
+   Todo lo que se ve —las cajas, los botones de la paleta y el PNG que se
+   descarga— sale de UNA sola función de maquetación y UNA sola de pintado en
+   SVG. Si hubiera un dibujante para la pantalla y otro para la imagen, tarde o
+   temprano dirían cosas distintas.
+
+   Las coordenadas son «unidades de glifo», donde 100 es el alto de una línea
+   de escritura, y los símbolos se alinean POR ABAJO: es como se apoyan en el
+   renglón el trazo egipcio, el clavo babilonio y la letra romana. La escala a
+   píxeles se aplica al final, en un solo sitio.
+   ========================================================================= */
+var FCJK="'Yu Mincho','MS Mincho','Songti SC','SimSun','Noto Serif CJK SC','Microsoft YaHei',serif";
+var FLAT="Georgia,'Segoe UI Symbol','Apple Symbols','Times New Roman',serif";
+var GX=13, GY=9, GBLQ=22, GSEP=44, GVSEP=16;
+
+function medida(g){
+  if(g.k==='d'){ var d=DIB[g.d]; return {w:d.w, h:d.h}; }
+  if(g.k==='sep') return {w:6, h:76};
+  if(g.k==='vsep') return {w:84, h:6};
+  if(g.k==='hueco') return {w:30, h:44};
+  return {w:(g.cjk?96:62), h:100};
+}
+/* Los sistemas cuyos símbolos son todos texto —el romano, el chino, el nuestro,
+   los inventados— se escriben apretados: una caja de letra ya trae su propio
+   aire alrededor, y separarlas como se separan los trazos egipcios hace que
+   MCCCLXXXVI parezca una lista y no un número. */
+var cacheTxt={};
+function esTexto(s){
+  var k=claveAlf(s);
+  if(cacheTxt[k]!==undefined) return cacheTxt[k];
+  var a=alf(s), i, r=true;
+  for(i=0;i<a.length;i++) if(a[i].g && a[i].g.k!=='t'){ r=false; break; }
+  cacheTxt[k]=r; return r;
+}
+function gapX(s){ return esTexto(s)?6:GX; }
+function gapB(s){ return esTexto(s)?8:GBLQ; }
+function esc2(v){ v=Math.round(v*100)/100; return isFinite(v)?String(v):'0'; }
+function escXML(t){
+  return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+/* Pinta un glifo apoyado en la línea yb (su borde inferior) y con el izquierdo en x. */
+function pintaGlifo(g,x,yb,out){
+  var m=medida(g), i, t, d;
+  if(g.k==='d'){
+    d=DIB[g.d];
+    out.push('<g transform="translate('+esc2(x)+','+esc2(yb-m.h)+')">');
+    for(i=0;i<d.t.length;i++){
+      t=d.t[i];
+      out.push('<path d="'+t.p+'" '+(t.f
+        ? 'fill="currentColor" stroke="none"'
+        : 'fill="none" stroke="currentColor" stroke-width="'+t.s+'" stroke-linecap="round" stroke-linejoin="round"')+'/>');
+    }
+    out.push('</g>');
+  }else if(g.k==='t'){
+    out.push('<text x="'+esc2(x+m.w/2)+'" y="'+esc2(yb-13)+'" text-anchor="middle" '+
+      'font-family="'+(g.cjk?FCJK:FLAT)+'" font-size="78" fill="currentColor">'+escXML(g.c)+'</text>');
+  }else if(g.k==='sep'){
+    out.push('<line x1="'+esc2(x+3)+'" y1="'+esc2(yb-m.h)+'" x2="'+esc2(x+3)+'" y2="'+esc2(yb)+
+      '" stroke="#c3c9d2" stroke-width="4" stroke-dasharray="6 7" stroke-linecap="round"/>');
+  }else if(g.k==='vsep'){
+    out.push('<line x1="'+esc2(x)+'" y1="'+esc2(yb-3)+'" x2="'+esc2(x+m.w)+'" y2="'+esc2(yb-3)+
+      '" stroke="#c3c9d2" stroke-width="4" stroke-dasharray="6 7" stroke-linecap="round"/>');
+  }else if(g.k==='hueco'){
+    out.push('<rect x="'+esc2(x)+'" y="'+esc2(yb-m.h)+'" width="'+esc2(m.w)+'" height="'+esc2(m.h)+
+      '" rx="5" fill="none" stroke="#dfe2e7" stroke-width="3" stroke-dasharray="6 7"/>');
+  }
+}
+
+/* --- montar cajas ------------------------------------------------------- */
+/* Cuántos símbolos iguales caben por fila. Con nueve trazos egipcios salen
+   tres filas de tres, que es como los escribían; con siete, cuatro y tres. */
+function repartoFilas(n,ap){
+  if(ap<=0 || n<=ap) return [n];
+  var f=Math.ceil(n/ap), b=Math.floor(n/f), r=n%f, out=[], i;
+  for(i=0;i<f;i++) out.push(b+(i<r?1:0));
+  return out;
+}
+function despl(b,dx,dy,out){
+  var i,it;
+  for(i=0;i<b.items.length;i++){
+    it=b.items[i];
+    out.push({g:it.g, ti:it.ti, x:it.x+dx, y:it.y+dy, w:it.w, h:it.h});
+  }
+}
+function bloque(g,idxs,ap,gx){
+  var m=medida(g), fs=repartoFilas(idxs.length,ap), i, j, y=0, w=0, x, an, items=[], k=0;
+  for(i=0;i<fs.length;i++){ an=fs[i]*m.w+(fs[i]-1)*gx; if(an>w) w=an; }
+  for(i=0;i<fs.length;i++){
+    an=fs[i]*m.w+(fs[i]-1)*gx; x=(w-an)/2;
+    for(j=0;j<fs[i];j++){ items.push({g:g, ti:idxs[k++], x:x, y:y, w:m.w, h:m.h}); x+=m.w+gx; }
+    y+=m.h+GY;
+  }
+  return {w:w, h:y-GY, items:items};
+}
+function unBloque(g,ti){
+  var m=medida(g);
+  return {w:m.w, h:m.h, items:[{g:g, ti:ti, x:0, y:0, w:m.w, h:m.h}]};
+}
+function enFila(bs,gap){
+  var i, h=0, x=0, items=[];
+  for(i=0;i<bs.length;i++) if(bs[i].h>h) h=bs[i].h;
+  for(i=0;i<bs.length;i++){ despl(bs[i],x,h-bs[i].h,items); x+=bs[i].w+gap; }
+  return {w:Math.max(0,x-gap), h:h, items:items};
+}
+function enColumna(bs,gap){
+  var i, w=0, y=0, items=[];
+  for(i=0;i<bs.length;i++) if(bs[i].w>w) w=bs[i].w;
+  for(i=0;i<bs.length;i++){ despl(bs[i],(w-bs[i].w)/2,y,items); y+=bs[i].h+gap; }
+  return {w:w, h:Math.max(0,y-gap), items:items};
+}
+/* Agrupa los tokens iguales que van seguidos: son los que se apilan. */
+function porRachas(s,toks,desde,hasta){
+  var m=mapa(s), bs=[], i=desde, j, e;
+  while(i<hasta){
+    j=i; while(j<hasta && toks[j]===toks[i]) j++;
+    e=m[toks[i]];
+    if(!e){ bs.push(unBloque({k:'hueco'},i)); i++; continue; }
+    var idxs=[], q; for(q=i;q<j;q++) idxs.push(q);
+    bs.push(bloque(e.g, idxs, e.ap!==undefined?e.ap:(s.apila!==undefined?s.apila:0), gapX(s)));
+    i=j;
+  }
+  return bs;
+}
+function maqueta(s,toks){
+  if(!toks || !toks.length) return {w:0,h:0,items:[]};
+  var m=mapa(s), i, bs;
+  if(s.cifraAdit){
+    /* posicional de cifras compuestas: se parte por los separadores */
+    var celdas=[], seps=[], ini=0;
+    for(i=0;i<toks.length;i++) if(toks[i]==='|'){ celdas.push([ini,i]); seps.push(i); ini=i+1; }
+    celdas.push([ini,toks.length]);
+    var piezas=[], c, sub;
+    for(i=0;i<celdas.length;i++){
+      c=celdas[i];
+      if(c[1]<=c[0]) sub=unBloque({k:'hueco'},-1);
+      else{
+        var bl=porRachas(s,toks,c[0],c[1]);
+        sub=(s.cifraAdit.dir==='v') ? enColumna(bl,GY+3) : enFila(bl,gapB(s));
+      }
+      piezas.push(sub);
+      if(i<seps.length) piezas.push(unBloque({k:s.vertical?'vsep':'sep'}, seps[i]));
+    }
+    return s.vertical ? enColumna(piezas,GVSEP) : enFila(piezas,GSEP*0.5);
+  }
+  if(s.tipo==='adi'){
+    bs=porRachas(s,toks,0,toks.length);
+    return enFila(bs,gapB(s));
+  }
+  bs=[];
+  for(i=0;i<toks.length;i++){
+    var e=m[toks[i]];
+    bs.push(e?unBloque(e.g,i):unBloque({k:'hueco'},i));
+  }
+  return enFila(bs,gapX(s));
+}
+
+/* --- SVG ---------------------------------------------------------------- */
+function svgNumeral(s,toks,op){
+  op=op||{};
+  var mq=maqueta(s,toks), e=op.esc||est.esc, pad=op.pad===undefined?7:op.pad;
+  var W=mq.w*e+2*pad, H=Math.max(mq.h*e,26)+2*pad;
+  if(!isFinite(W)||!isFinite(H)) return '';
+  var cuerpo='<g transform="translate('+esc2(pad)+','+esc2(pad+Math.max(0,(H-2*pad-mq.h*e)/2))+
+             ') scale('+esc2(e)+')">'+itemsSVG(mq)+'</g>';
+  var attr='width="'+esc2(Math.max(W,10))+'" height="'+esc2(Math.max(H,26))+'" viewBox="0 0 '+
+           esc2(Math.max(W,10))+' '+esc2(Math.max(H,26))+'"';
+  if(op.suelto) return '<svg xmlns="http://www.w3.org/2000/svg" '+attr+
+      ' style="color:#2b2f36"><rect width="100%" height="100%" fill="#fff"/>'+cuerpo+'</svg>';
+  return '<svg '+attr+' style="color:#2b2f36">'+cuerpo+'</svg>';
+}
+function svgUno(g,hpx){
+  var m=medida(g), out=[];
+  pintaGlifo(g,0,m.h,out);
+  return '<svg width="'+esc2(m.w*hpx/m.h)+'" height="'+esc2(hpx)+'" viewBox="0 0 '+
+         esc2(m.w)+' '+esc2(m.h)+'" style="color:#2b2f36">'+out.join('')+'</svg>';
+}
+
+/* --- etiquetas ---------------------------------------------------------- */
+var SUPS='⁰¹²³⁴⁵⁶⁷⁸⁹';
+function sup(n){ var s=String(n), o='', i; for(i=0;i<s.length;i++) o+=SUPS.charAt(+s.charAt(i)); return o; }
+function numTxt(v){
+  var s=String(v), o='', i, c=0;
+  for(i=s.length-1;i>=0;i--){ o=s.charAt(i)+o; if(++c%3===0 && i>0) o=' '+o; }
+  return o;
+}
+function etiqueta(v,base){
+  if(v>=1000){
+    var e=Math.round(Math.log(v)/Math.log(base));
+    if(e>=2 && Math.pow(base,e)===v) return base+sup(e);
+  }
+  return numTxt(v);
+}
+function rotuloTipo(s){
+  var t = s.tipo==='adi' ? 'aditivo' : (s.tipo==='hib' ? 'híbrido multiplicativo' : 'posicional');
+  if(s.tipo==='adi' && s.sustractivo) t+=' con resta';
+  if(s.cifraAdit) t+=', cifras aditivas';
+  return t+' · base '+s.base;
+}
+
+/* =========================================================================
+   5. PINTADO DE LA INTERFAZ
+   ========================================================================= */
+var $=function(id){ return document.getElementById(id); };
+var lienzoA=$('lienzoA'), lienzoB=$('lienzoB'), palA=$('palA'), palB=$('palB');
+var msgEl=$('msg'), hintEl=$('hint'), infoEl=$('info'), invEl=$('inv');
+var lado={A:{lienzo:lienzoA, pal:palA, val:$('valorA'), caja:$('cajaA'), tipo:$('tipoA'), extra:$('extraA')},
+          B:{lienzo:lienzoB, pal:palB, val:$('valorB'), caja:$('cajaB'), tipo:$('tipoB'), extra:$('extraB')}};
+
+function sisLado(L){ return SIS[est[L].sis]; }
+function nObjetivo(){ var r=valor(sisLado('A'), est.A.toks); return r.ok?r.n:null; }
+
+function pintaLienzo(L){
+  var s=sisLado(L), d=lado[L], toks=est[L].toks;
+  if(!toks.length){
+    d.lienzo.innerHTML='<span class="vacio">'+(L==='A'
+      ? 'Aquí va el número de partida' : 'Escribe aquí, con los símbolos de abajo')+'</span>';
+  }else{
+    d.lienzo.innerHTML=svgNumeral(s,toks,{});
+  }
+  var r=valor(s,toks);
+  if(est.verVal && toks.length){
+    d.val.style.display='';
+    d.val.innerHTML = r.ok ? ('Vale <b>'+numTxt(r.n)+'</b>')
+                           : ('<span style="color:#c2410c">No se puede leer: '+escXML(r.motivo)+'</span>');
+  }else d.val.style.display='none';
+}
+function pintaPaleta(L){
+  var s=sisLado(L), d=lado[L], a=alf(s), i, e, h='';
+  var bloqueada = (L==='A' && est.modo==='reto');
+  if(bloqueada){
+    d.pal.innerHTML='<span style="font-size:12px;color:#8a919c">El número lo pone el programa. '+
+      'Cambia arriba el sistema si quieres verlo escrito de otra manera.</span>';
+    return;
+  }
+  for(i=0;i<a.length;i++){
+    e=a[i];
+    if(e.rol==='sep'){
+      h+='<button class="sim esp" data-id="'+e.id+'" title="Empieza una posición nueva">'+
+         (s.vertical?'▾ otro piso':'▸ otra posición')+'</button>';
+      continue;
+    }
+    var et='';
+    if(!(s.tipo==='pos' && !s.cifraAdit)) et=etiqueta(e.v,s.base);
+    if(e.rol==='z' || (e.rol==='s' && e.v===0)) et='0';
+    h+='<button class="sim" data-id="'+e.id+'" title="'+escXML(et||String(e.v))+'">'+
+       svgUno(e.g,26)+(et?'<span class="et">'+escXML(et)+'</span>':'')+'</button>';
+  }
+  h+='<span class="hueco"></span>'+
+     '<button class="sim esp" data-act="del" title="Quitar el último símbolo">⌫</button>'+
+     '<button class="sim esp" data-act="clr" title="Vaciar la caja">✕</button>';
+  d.pal.innerHTML=h;
+}
+function pintaSolucion(){
+  var sB=sisLado('B'), n=nObjetivo(), c;
+  if(!est.verSol || n===null){ $('soluB').style.display='none'; return; }
+  c=escribe(sB,n);
+  $('soluB').style.display='';
+  $('soluB').innerHTML='<span class="rot">Así se escribe</span><div class="cont">'+
+    (c && c.length ? svgNumeral(sB,c,{esc:Math.min(est.esc,0.34)})
+                   : '<span style="font-size:12px;color:#8a919c">En este sistema ese número no se puede escribir.</span>')+
+    '</div>';
+}
+function pintaFicha(){
+  var a=sisLado('A'), b=sisLado('B');
+  $('ficha').innerHTML=
+    '<span class="s"><b>'+escXML(a.nom)+'</b><br>'+escXML(rotuloTipo(a))+'.<br>'+escXML(a.nota||'')+'</span>'+
+    '<span class="s"><b>'+escXML(b.nom)+'</b><br>'+escXML(rotuloTipo(b))+'.<br>'+escXML(b.nota||'')+'</span>';
+}
+function pintaEnunciado(){
+  var sA=sisLado('A'), sB=sisLado('B'), n=nObjetivo();
+  if(est.modo==='reto'){
+    $('enun').innerHTML = (n===null) ? 'Pulsa <b>Otro reto</b> para empezar.'
+      : ('Reto <b>'+(est.tiro)+'</b>: pasa ese número del sistema <b>'+escXML(sA.nom)+
+         '</b> al sistema <b>'+escXML(sB.nom)+'</b>.');
+    $('marcador').innerHTML='Aciertos: <b>'+est.aciertos+'</b> de <b>'+est.intentos+'</b>';
+  }else{
+    $('enun').innerHTML='Escribe arriba un número y vuélvelo a escribir abajo, en el otro sistema.';
+  }
+}
+function pintaTipos(){
+  lado.A.tipo.textContent=rotuloTipo(sisLado('A'));
+  lado.B.tipo.textContent=rotuloTipo(sisLado('B'));
+}
+function pinta(){
+  pintaLienzo('A'); pintaLienzo('B');
+  pintaPaleta('A'); pintaPaleta('B');
+  pintaSolucion(); pintaFicha(); pintaEnunciado(); pintaTipos();
+  $('undo').disabled=!undoStack.length;
+  hint();
+}
+function flash(t){ hintEl.textContent=t; }
+function hint(){
+  var sB=sisLado('B'), n=nObjetivo();
+  if(!est.B.toks.length){
+    hintEl.textContent = (n===null)
+      ? 'Empieza por escribir un número en la caja de arriba.'
+      : 'Escribe ese mismo número abajo con los símbolos del sistema '+sB.nom.toLowerCase()+'.';
+  }else{
+    var r=valor(sB,est.B.toks);
+    hintEl.textContent = r.ok
+      ? ('Llevas '+est.B.toks.length+(est.B.toks.length===1?' símbolo':' símbolos')+'. Pincha en uno para quitarlo.')
+      : 'Esa escritura todavía no se puede leer: '+r.motivo+'.';
+  }
+}
+
+/* =========================================================================
+   6. INTERACCIÓN
+   ========================================================================= */
+function msg(clase,txt){ msgEl.className='msg '+clase; msgEl.innerHTML=txt; }
+function msgVacio(){ msg('neutro',''); }
+
+function opcionesSis(){
+  var h='', i, s;
+  for(i=0;i<ORDEN.length;i++){ s=SIS[ORDEN[i]]; h+='<option value="'+s.id+'">'+escXML(s.nom)+'</option>'; }
+  return h;
+}
+function sincronizaCabeceras(){
+  var i, L, s, h;
+  for(i=0;i<2;i++){
+    L=(i===0)?'A':'B';
+    $('sis'+L).innerHTML=opcionesSis();
+    $('sis'+L).value=est[L].sis;
+    s=sisLado(L); h='';
+    if(s.paramBase){
+      h+='<select class="selc" data-base="'+L+'" title="La base del sistema">';
+      var b; for(b=2;b<=20;b++) h+='<option value="'+b+'"'+(b===s.base?' selected':'')+'>base '+b+'</option>';
+      h+='</select>';
+    }
+    if(L==='A' && est.modo==='libre')
+      h+=' <input class="num" id="numA" type="number" min="0" step="1" placeholder="teclea un número">';
+    $('extra'+L).innerHTML=h;
+  }
+  $('rotA').textContent = 'El número, en';
+  $('rotB').textContent = 'Escríbelo en';
+}
+function cambiaSis(L,id){
+  pushUndo();
+  var n=(L==='A')?nObjetivo():null;
+  est[L].sis=id;
+  if(L==='A'){
+    var c=(n===null)?null:escribe(SIS[id],n);
+    est.A.toks=c||[];
+    if(n!==null && (!c || !c.length)) flash('El número '+n+' no se puede escribir en '+SIS[id].nom+'.');
+  }else est.B.toks=[];
+  msgVacio(); sincronizaCabeceras(); pinta();
+}
+function cambiaBase(L,b){
+  pushUndo();
+  var s=sisLado(L), n=(L==='A')?nObjetivo():null;
+  s.base=b; olvidaCache();
+  if(L==='A'){ var c=(n===null)?null:escribe(s,n); est.A.toks=c||[]; }
+  else est.B.toks=[];
+  msgVacio(); sincronizaCabeceras(); pinta();
+}
+function pon(L,id){
+  if(L==='A' && est.modo==='reto') return;
+  pushUndo(); est[L].toks.push(id);
+  msgVacio(); pinta();
+}
+function quita(L,i){
+  if(L==='A' && est.modo==='reto') return;
+  if(i<0 || i>=est[L].toks.length) return;
+  pushUndo(); est[L].toks.splice(i,1); msgVacio(); pinta();
+}
+function vacia(L){
+  if(L==='A' && est.modo==='reto'){ flash('En modo retos el número de arriba lo pone el programa.'); return; }
+  if(!est[L].toks.length) return;
+  pushUndo(); est[L].toks=[]; msgVacio(); pinta();
+}
+
+/* clics en las paletas */
+function conectaPaleta(L){
+  lado[L].pal.addEventListener('click',function(e){
+    var t=e.target, id=null, ac=null;
+    while(t && t!==this){
+      if(t.getAttribute){ id=t.getAttribute('data-id'); ac=t.getAttribute('data-act'); if(id||ac) break; }
+      t=t.parentNode;
+    }
+    if(ac==='del'){ if(est[L].toks.length) quita(L,est[L].toks.length-1); return; }
+    if(ac==='clr'){ vacia(L); return; }
+    if(id) pon(L,id);
+  });
+}
+/* clics en el numeral: quitar el símbolo pinchado */
+function conectaLienzo(L){
+  lado[L].lienzo.addEventListener('click',function(e){
+    var t=e.target, v=null;
+    while(t && t!==this){
+      if(t.getAttribute){ v=t.getAttribute('data-i'); if(v!==null && v!==undefined) break; }
+      t=t.parentNode;
+    }
+    if(v!==null && v!==undefined && v!=='') quita(L,+v);
+  });
+}
+conectaPaleta('A'); conectaPaleta('B'); conectaLienzo('A'); conectaLienzo('B');
+
+$('sisA').addEventListener('change',function(){ cambiaSis('A',this.value); });
+$('sisB').addEventListener('change',function(){ cambiaSis('B',this.value); });
+document.addEventListener('change',function(e){
+  var L=e.target && e.target.getAttribute && e.target.getAttribute('data-base');
+  if(L) cambiaBase(L,+e.target.value);
+});
+document.addEventListener('input',function(e){
+  if(e.target && e.target.id==='numA'){
+    var v=e.target.value;
+    if(v===''){ return; }
+    var n=Math.round(+v), s=sisLado('A');
+    if(!isFinite(n)||n<0) return;
+    var c=escribe(s,n);
+    if(!c){ flash('En '+s.nom+' ese número no se puede escribir (llega hasta '+numTxt(maxDe(s))+').'); return; }
+    pushUndo(); est.A.toks=c; msgVacio(); pinta();
+  }
+});
+
+$('swap').addEventListener('click',function(){
+  pushUndo();
+  var a=est.A.sis; est.A.sis=est.B.sis; est.B.sis=a;
+  var n=nObjetivo();
+  var c=(n===null)?null:escribe(sisLado('A'),n);
+  if(!c){ /* si no cabe, se conserva lo que había escrito abajo como nuevo enunciado */ }
+  est.B.toks=[]; msgVacio(); sincronizaCabeceras(); pinta();
+});
+$('zoomin').addEventListener('click',function(){ est.esc=Math.min(0.95,est.esc*1.18); pinta(); });
+$('zoomout').addEventListener('click',function(){ est.esc=Math.max(0.16,est.esc/1.18); pinta(); });
+$('undo').addEventListener('click',function(){ if(!doUndo()) flash('No queda nada que deshacer.'); });
+$('borraA').addEventListener('click',function(){ vacia('A'); });
+$('borraB').addEventListener('click',function(){ vacia('B'); });
+$('chkval').addEventListener('change',function(){ est.verVal=this.checked; pinta(); });
+$('chksol').addEventListener('change',function(){ est.verSol=this.checked; pinta(); });
+$('modosel').addEventListener('change',function(){
+  est.modo=this.value;
+  $('retobox').style.display = est.modo==='reto' ? '' : 'none';
+  if(est.modo==='reto'){ est.tiro=0; est.aciertos=0; est.intentos=0; nuevoReto(); }
+  else { msgVacio(); sincronizaCabeceras(); pinta(); }
+});
+
+/* teclado: las cifras y las letras van directas a la caja de abajo */
+document.addEventListener('keydown',function(e){
+  if(e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if((e.ctrlKey||e.metaKey) && (e.key==='z'||e.key==='Z')){ e.preventDefault(); doUndo(); return; }
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(e.key==='Backspace'){ e.preventDefault(); if(est.B.toks.length) quita('B',est.B.toks.length-1); return; }
+  if(e.key==='Enter'){ e.preventDefault(); comprueba(); return; }
+  if(e.key && e.key.length===1){
+    var s=sisLado('B'), a=alf(s), i, c=e.key.toUpperCase();
+    for(i=0;i<a.length;i++){
+      if(a[i].g && a[i].g.k==='t' && a[i].g.c.toUpperCase()===c){ e.preventDefault(); pon('B',a[i].id); return; }
+    }
+    if(c===' '||c==='|'){ for(i=0;i<a.length;i++) if(a[i].rol==='sep'){ e.preventDefault(); pon('B',a[i].id); return; } }
+  }
+});
+
+/* --- comprobar ---------------------------------------------------------- */
+function comprueba(){
+  var sB=sisLado('B'), n=nObjetivo(), r=valor(sB,est.B.toks);
+  if(n===null){ msg('neutro','Primero hay que poner un número en la caja de arriba.'); return null; }
+  if(!r.ok){ msg('mal','Eso todavía no dice ningún número: '+escXML(r.motivo)+'.'); return false; }
+  var acierto=(r.n===n);
+  if(est.modo==='reto' && !est.resuelto){
+    est.intentos++; if(acierto) est.aciertos++;
+    if(acierto) est.resuelto=true;
+    pintaEnunciado();
+  }
+  if(acierto){
+    var can=esCanonica(sB,est.B.toks,n), cn=escribe(sB,n);
+    if(can) msg('bien','✓ Correcto.');
+    else if(cn && cn.length<est.B.toks.length)
+      msg('bien','✓ Vale lo que tiene que valer, pero no es la escritura habitual de este sistema: '+
+                 'el mismo número se puede escribir con menos símbolos.');
+    else
+      msg('bien','✓ Vale lo que tiene que valer, pero no es la escritura habitual de este sistema.');
+  }else{
+    var comp = r.n>n ? 'mayor' : 'menor';
+    msg('mal','✗ Lo que has escrito es '+comp+' que el número de arriba.'+
+        (est.verVal?' (vale '+numTxt(r.n)+' y tendría que valer '+numTxt(n)+')':''));
+  }
+  return acierto;
+}
+$('comprobar').addEventListener('click',function(){ comprueba(); });
+
+/* =========================================================================
+   7. RETOS
+
+   Con la misma serie salen los mismos números: toda la clase puede trabajar
+   exactamente los mismos retos aunque cada cual esté en su ordenador, y la
+   autocomprobación puede probar el generador. El generador es un xorshift de
+   32 bits escrito a mano, sin Math.imul, que en los navegadores viejos de aula
+   no siempre está.
+   ========================================================================= */
+function xs(st){ var x=st.s; x^=(x<<13); x>>>=0; x^=(x>>>17); x^=(x<<5); x>>>=0; st.s=x||0x9e3779b9; return st.s; }
+function semillaDe(serie,k){
+  var st={s:((serie|0)*2654435761 + (k|0)*40503 + 0x2545f491)>>>0 || 1}, i;
+  for(i=0;i<6;i++) xs(st);
+  return st;
+}
+function topeReto(){
+  var mA=maxDe(sisLado('A')), mB=maxDe(sisLado('B')), t=Math.min(mA,mB);
+  if(est.rango>0) t=Math.min(t,est.rango);
+  return Math.max(1,t);
+}
+function numeroReto(serie,k){
+  var st=semillaDe(serie,k), t=topeReto();
+  /* Se sortea también la «longitud» para que no salgan casi siempre números
+     grandes: con tope 1000, uno de cada tres estará por debajo de 100. */
+  var ordenes=1+(xs(st)% (String(t).length)), tope=Math.min(t,Math.pow(10,ordenes)-1);
+  var n=1+(xs(st)%tope);
+  return Math.min(n,t);
+}
+function nuevoReto(){
+  est.tiro++; est.resuelto=false;
+  var sA=sisLado('A'), n=numeroReto(est.serie,est.tiro), c=escribe(sA,n), g=0;
+  while((!c||!c.length) && g<40){ est.tiro++; n=numeroReto(est.serie,est.tiro); c=escribe(sA,n); g++; }
+  est.A.toks=c||[]; est.B.toks=[];
+  undoStack=[]; msgVacio(); sincronizaCabeceras(); pinta();
+}
+$('nuevoreto').addEventListener('click',function(){ nuevoReto(); });
+$('semilla').addEventListener('change',function(){
+  var v=Math.round(+this.value)||1; est.serie=Math.max(1,Math.min(99999,v)); this.value=est.serie;
+  est.tiro=0; est.aciertos=0; est.intentos=0; nuevoReto();
+});
+$('otraserie').addEventListener('click',function(){
+  est.serie=1+Math.floor(Math.random()*99999); $('semilla').value=est.serie;
+  est.tiro=0; est.aciertos=0; est.intentos=0; nuevoReto();
+});
+$('rangosel').addEventListener('change',function(){
+  est.rango=+this.value;
+  if(est.modo==='reto') nuevoReto();
+});
+
+/* =========================================================================
+   8. INVENTAR UN SISTEMA
+
+   Es el mismo motor: inventar un sistema es rellenar la tabla de datos que ya
+   usan el egipcio o el maya. Por eso el sistema inventado aparece en el mismo
+   desplegable que los históricos y se maneja igual; no es una función aparte.
+   ========================================================================= */
+var POOL='▲●■◆★✚⬟⬢◐◑△□◇☆✖⬠⬡◒◓αβγδεζηθλμπρστφψωЖЛФЦЩЭЮ';
+var invN=0, invEdit=null;
+
+function construyeInv(d){
+  var b=d.base, i, s={id:d.id, nom:d.nom, tipo:d.tipo, base:b, def:d, rev:(SIS[d.id]?(SIS[d.id].rev||0)+1:1)};
+  if(d.tipo==='adi'){
+    s.piezas=[]; s.apila=4;
+    for(i=d.pots.length;i>=1;i--) s.piezas.push({v:Math.pow(b,i), g:gT(d.pots[i-1])});
+    s.piezas.push({v:1, g:gT(d.cifras[0])});
+    s.max=Math.pow(b,d.pots.length+1)-1;
+    s.nota='Sistema inventado. Aditivo de base '+b+': el número vale la suma de los símbolos y el orden no cambia nada.';
+  }else if(d.tipo==='hib'){
+    s.mult=[null]; for(i=0;i<d.cifras.length;i++) s.mult.push(gT(d.cifras[i]));
+    s.pot=[]; for(i=1;i<=d.pots.length;i++) s.pot.push({e:i, g:gT(d.pots[i-1])});
+    s.unoDesde=0; s.ceroInterno=false; s.cero=null;
+    s.max=Math.pow(b,d.pots.length+1)-1;
+    s.nota='Sistema inventado. Híbrido multiplicativo de base '+b+': la cifra que va delante de una potencia dice cuántas veces se toma.';
+  }else{
+    s.cifras=[]; for(i=0;i<d.cifras.length;i++) s.cifras.push(gT(d.cifras[i]));
+    s.max=999999999;
+    s.nota='Sistema inventado. Posicional de base '+b+': solo hay símbolos para el cero y los '+(b-1)+' primeros números; lo demás lo dice el lugar.';
+  }
+  if(!SIS[d.id]) ORDEN.push(d.id);
+  SIS[d.id]=s; olvidaCache();
+  return s;
+}
+function registraInv(d){
+  var i;
+  for(i=0;i<INVENTADOS.length;i++) if(INVENTADOS[i].id===d.id){ INVENTADOS[i]=d; construyeInv(d); return; }
+  INVENTADOS.push(d); construyeInv(d);
+}
+function cuantasCifras(tipo,b){ return tipo==='adi' ? 1 : (tipo==='hib' ? b-1 : b); }
+function rotCifra(tipo,i){ return tipo==='adi' ? '1' : (tipo==='hib' ? String(i+1) : String(i)); }
+
+function pintaInv(){
+  var d=invEdit || {nom:'Mi sistema', tipo:'adi', base:10, cifras:['▲'], pots:['●','■','◆']};
+  var h='<h3>'+(invEdit?'Cambiar «'+escXML(invEdit.nom)+'»':'Inventar un sistema')+'</h3>'+
+    '<label class="lin"><span>Nombre</span><input type="text" id="ivnom" maxlength="28" value="'+escXML(d.nom)+'"></label>'+
+    '<label class="lin"><span>Tipo</span><select id="ivtipo">'+
+      '<option value="adi"'+(d.tipo==='adi'?' selected':'')+'>aditivo</option>'+
+      '<option value="hib"'+(d.tipo==='hib'?' selected':'')+'>híbrido multiplicativo</option>'+
+      '<option value="pos"'+(d.tipo==='pos'?' selected':'')+'>posicional</option></select></label>'+
+    '<label class="lin"><span>Base</span><input type="number" id="ivbase" min="2" max="20" step="1" value="'+d.base+'"></label>'+
+    '<label class="lin" id="ivpotlin"><span>Potencias</span><input type="number" id="ivpot" min="1" max="6" step="1" value="'+d.pots.length+'"></label>'+
+    '<h4>Símbolos</h4><div class="rej" id="ivrej"></div>'+
+    '<div style="margin-top:8px"><button class="btn" id="ivdado">🎲 Otros símbolos</button></div>'+
+    '<div class="aviso" id="ivavi"></div>'+
+    '<div class="bar"><button class="btn prim" id="ivok">'+(invEdit?'Guardar cambios':'Crear el sistema')+'</button>'+
+    '<button class="btn" id="ivcancel">Cerrar</button></div>'+
+    '<div style="margin-top:10px;font-size:10.5px;color:#8a919c;line-height:1.45">'+
+    'Un sistema aditivo necesita un símbolo para el uno y otro para cada potencia de la base. '+
+    'Uno híbrido necesita además uno para cada número anterior a la base. Uno posicional necesita '+
+    'exactamente tantos símbolos como diga la base, contando el cero, y ninguno para la base.</div>';
+  invEl.innerHTML=h;
+  invEstado.d=JSON.parse(JSON.stringify(d));
+  rejilla();
+  $('ivtipo').addEventListener('change',function(){ invEstado.d.tipo=this.value; ajusta(); });
+  $('ivbase').addEventListener('change',function(){ invEstado.d.base=Math.max(2,Math.min(20,Math.round(+this.value)||10)); this.value=invEstado.d.base; ajusta(); });
+  $('ivpot').addEventListener('change',function(){ invEstado.d.pots.length=Math.max(1,Math.min(6,Math.round(+this.value)||3)); this.value=invEstado.d.pots.length; ajusta(); });
+  $('ivnom').addEventListener('input',function(){ invEstado.d.nom=this.value; });
+  $('ivdado').addEventListener('click',function(){ sortea(); });
+  $('ivok').addEventListener('click',function(){ crea(); });
+  $('ivcancel').addEventListener('click',function(){ invEl.classList.remove('show'); });
+  ajusta();
+}
+var invEstado={d:null};
+function ajusta(){
+  var d=invEstado.d, nc=cuantasCifras(d.tipo,d.base), i;
+  while(d.cifras.length<nc) d.cifras.push('');
+  d.cifras.length=nc;
+  if(d.tipo==='pos') d.pots=[];
+  else { if(!d.pots.length) d.pots=['●','■','◆']; }
+  $('ivpotlin').style.display = d.tipo==='pos' ? 'none' : '';
+  for(i=0;i<d.cifras.length;i++) if(!d.cifras[i]) d.cifras[i]=POOL.charAt(i%POOL.length);
+  for(i=0;i<d.pots.length;i++) if(!d.pots[i]) d.pots[i]=POOL.charAt((POOL.length-1-i+POOL.length)%POOL.length);
+  rejilla();
+}
+function rejilla(){
+  var d=invEstado.d, h='', i;
+  for(i=0;i<d.cifras.length;i++)
+    h+='<div class="cel"><input maxlength="2" data-c="'+i+'" value="'+escXML(d.cifras[i]||'')+'"><span>'+rotCifra(d.tipo,i)+'</span></div>';
+  for(i=0;i<d.pots.length;i++)
+    h+='<div class="cel"><input maxlength="2" data-p="'+i+'" value="'+escXML(d.pots[i]||'')+'"><span>'+d.base+sup(i+1)+'</span></div>';
+  $('ivrej').innerHTML=h;
+  var ins=$('ivrej').getElementsByTagName('input'), j;
+  for(j=0;j<ins.length;j++) ins[j].addEventListener('input',function(){
+    var c=this.getAttribute('data-c'), p=this.getAttribute('data-p'), v=(this.value||'').charAt(0);
+    if(c!==null) invEstado.d.cifras[+c]=v; else invEstado.d.pots[+p]=v;
+  });
+}
+function sortea(){
+  var d=invEstado.d, us={}, pool=POOL.split(''), i, j;
+  for(i=pool.length-1;i>0;i--){ j=Math.floor(Math.random()*(i+1)); var t=pool[i]; pool[i]=pool[j]; pool[j]=t; }
+  var k=0;
+  for(i=0;i<d.cifras.length;i++) d.cifras[i]=pool[k++%pool.length];
+  for(i=0;i<d.pots.length;i++) d.pots[i]=pool[k++%pool.length];
+  rejilla();
+}
+function validaInv(d){
+  var vistos={}, todos=d.cifras.concat(d.pots), i;
+  if(!d.nom || !d.nom.replace(/\s/g,'')) return 'Ponle un nombre.';
+  if(!(d.base>=2 && d.base<=20)) return 'La base tiene que estar entre 2 y 20.';
+  for(i=0;i<todos.length;i++){
+    if(!todos[i]) return 'Falta algún símbolo.';
+    if(vistos[todos[i]]) return 'El símbolo «'+todos[i]+'» está repetido, y entonces no se sabría qué dice.';
+    vistos[todos[i]]=1;
+  }
+  if(d.tipo!=='pos' && Math.pow(d.base,d.pots.length+1)>1e12) return 'Con esa base son demasiadas potencias.';
+  return null;
+}
+function crea(){
+  var d=invEstado.d, err=validaInv(d);
+  if(err){ $('ivavi').textContent=err; return; }
+  if(!d.id){ invN++; d.id='inv'+invN; }
+  registraInv(d);
+  invEl.classList.remove('show');
+  est.B.sis=d.id; est.B.toks=[]; est.resuelto=false;
+  msgVacio(); sincronizaCabeceras(); pinta();
+  flash('Sistema «'+d.nom+'» creado. Está en los dos desplegables.');
+}
+$('invbtn').addEventListener('click',function(){
+  var sB=sisLado('B');
+  invEdit = esInventado(sB) ? JSON.parse(JSON.stringify(sB.def)) : null;
+  pintaInv(); invEl.classList.add('show'); infoEl.classList.remove('show');
+});
+
+/* =========================================================================
+   9. GUARDAR, ABRIR, PNG Y AYUDA
+   ========================================================================= */
+function itemsSVG(mq){
+  var out=[], i, it;
+  for(i=0;i<mq.items.length;i++){
+    it=mq.items[i];
+    out.push('<g class="tk" data-i="'+it.ti+'">');
+    pintaGlifo(it.g, it.x, it.y+it.h, out);
+    out.push('</g>');
+  }
+  return out.join('');
+}
+/* La imagen lleva las DOS cajas con el nombre y el tipo de cada sistema: lo
+   que solo dice la interfaz no sale en el PNG, y sin saber de qué sistema es
+   cada escritura la imagen no dice nada. */
+function svgConjunto(){
+  var sA=sisLado('A'), sB=sisLado('B'), e=0.46, pad=24, LH=30, gap=26;
+  var mA=maqueta(sA,est.A.toks), mB=maqueta(sB,est.B.toks);
+  var hA=Math.max(mA.h*e,34), hB=Math.max(mB.h*e,34);
+  var W=Math.max(mA.w*e, mB.w*e, 320)+2*pad;
+  var H=pad+LH+hA+gap+LH+hB+pad;
+  if(!isFinite(W)||!isFinite(H)) return null;
+  function rot(x,y,t){ return '<text x="'+esc2(x)+'" y="'+esc2(y)+'" font-family="'+FLAT+
+    '" font-size="15" fill="#8a919c">'+escXML(t)+'</text>'; }
+  function cuerpo(mq,x,y){ return '<g transform="translate('+esc2(x)+','+esc2(y)+') scale('+esc2(e)+
+    ')" style="color:#2b2f36">'+itemsSVG(mq)+'</g>'; }
+  var y=pad, out=[];
+  out.push('<svg xmlns="http://www.w3.org/2000/svg" width="'+esc2(W)+'" height="'+esc2(H)+
+           '" viewBox="0 0 '+esc2(W)+' '+esc2(H)+'">');
+  out.push('<rect width="100%" height="100%" fill="#ffffff"/>');
+  out.push(rot(pad, y+16, sA.nom+' — '+rotuloTipo(sA)));
+  y+=LH; out.push(cuerpo(mA,pad,y)); y+=hA+gap*0.4;
+  out.push('<line x1="'+esc2(pad)+'" y1="'+esc2(y)+'" x2="'+esc2(W-pad)+'" y2="'+esc2(y)+
+           '" stroke="#e3e6eb" stroke-width="1"/>');
+  y+=gap*0.6;
+  out.push(rot(pad, y+16, sB.nom+' — '+rotuloTipo(sB)));
+  y+=LH; out.push(cuerpo(mB,pad,y));
+  out.push('</svg>');
+  return out.join('');
+}
+$('png').addEventListener('click',function(){
+  if(!est.A.toks.length && !est.B.toks.length){ flash('No hay nada que exportar.'); return; }
+  var txt=svgConjunto();
+  if(!txt){ flash('No he podido montar la imagen.'); return; }
+  var img=new Image();
+  img.onload=function(){
+    var c=document.createElement('canvas'), k=2;
+    c.width=Math.round(img.width*k); c.height=Math.round(img.height*k);
+    var x=c.getContext('2d');
+    x.fillStyle='#fff'; x.fillRect(0,0,c.width,c.height);
+    x.drawImage(img,0,0,c.width,c.height);
+    var a=document.createElement('a'); a.download='sistemas-numericos.png';
+    try{ a.href=c.toDataURL('image/png'); a.click(); }catch(err){ flash('El navegador no ha dejado descargar la imagen.'); }
+  };
+  img.onerror=function(){ flash('El navegador no ha podido convertir la imagen.'); };
+  img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(txt);
+});
+
+/* --- guardar y abrir ----------------------------------------------------
+   Se guarda lo que se está haciendo —los dos sistemas, lo escrito en cada
+   caja y los sistemas inventados—, y no las preferencias de presentación
+   (tamaño, casillas de mostrar). Quien lo abra lo sigue viendo a su manera, y
+   sobre todo no se le encienden las casillas que destapan la respuesta. */
+function datos(){
+  return {formato:'sistemas-numericos', version:1,
+          modo:est.modo, serie:est.serie, rango:est.rango, baseOtra:SIS.bas.base,
+          inventados:JSON.parse(JSON.stringify(INVENTADOS)),
+          A:{sis:est.A.sis, toks:est.A.toks.slice()},
+          B:{sis:est.B.sis, toks:est.B.toks.slice()}};
+}
+$('save').addEventListener('click',function(){
+  var blob=new Blob([JSON.stringify(datos(),null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download='sistemas-numericos.json'; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+});
+var fileIn=$('fileIn');
+$('open').addEventListener('click',function(){ fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){
+  var f=e.target.files && e.target.files[0];
+  if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }catch(err){ flash('No he podido leer ese archivo.'); } };
+  r.readAsText(f);
+});
+/* No fiarse del archivo: cada símbolo tiene que existir en el sistema que
+   dice, o se rechaza entero. Con un token inventado el numeral se dibujaría
+   con huecos y la lectura diría cosas raras sin que nadie supiera por qué. */
+function limpiaToks(lista,s){
+  if(!lista || typeof lista.length!=='number') return null;
+  var m=mapa(s), out=[], i;
+  if(lista.length>400) return null;
+  for(i=0;i<lista.length;i++){
+    if(typeof lista[i]!=='string') return null;
+    if(lista[i]==='|'){ if(!s.cifraAdit) return null; out.push('|'); continue; }
+    if(!m[lista[i]]) return null;
+    out.push(lista[i]);
+  }
+  return out;
+}
+function limpiaDef(d){
+  if(!d || typeof d!=='object') return null;
+  if(typeof d.id!=='string' || !/^inv[0-9]+$/.test(d.id)) return null;
+  if(['adi','hib','pos'].indexOf(d.tipo)<0) return null;
+  var b=Math.round(d.base);
+  if(!(b>=2 && b<=20)) return null;
+  if(!d.cifras || typeof d.cifras.length!=='number') return null;
+  var cif=[], pot=[], i;
+  for(i=0;i<d.cifras.length;i++){ if(typeof d.cifras[i]!=='string' || !d.cifras[i]) return null; cif.push(d.cifras[i].charAt(0)); }
+  if(d.tipo!=='pos'){
+    if(!d.pots || typeof d.pots.length!=='number' || d.pots.length<1 || d.pots.length>6) return null;
+    for(i=0;i<d.pots.length;i++){ if(typeof d.pots[i]!=='string' || !d.pots[i]) return null; pot.push(d.pots[i].charAt(0)); }
+  }
+  if(cif.length!==cuantasCifras(d.tipo,b)) return null;
+  var lim={id:d.id, nom:String(d.nom||'Sistema').slice(0,28), tipo:d.tipo, base:b, cifras:cif, pots:pot};
+  if(validaInv(lim)) return null;
+  return lim;
+}
+function loadData(d){
+  if(!d || d.formato!=='sistemas-numericos'){ flash('Ese archivo no es de este material.'); return false; }
+  var defs=[], i, lim;
+  if(d.inventados && typeof d.inventados.length==='number'){
+    if(d.inventados.length>30){ flash('Ese archivo trae demasiados sistemas inventados.'); return false; }
+    for(i=0;i<d.inventados.length;i++){
+      lim=limpiaDef(d.inventados[i]);
+      if(!lim){ flash('Ese archivo trae un sistema inventado que no entiendo.'); return false; }
+      defs.push(lim);
+    }
+  }
+  for(i=0;i<defs.length;i++){ registraInv(defs[i]); invN=Math.max(invN, +defs[i].id.slice(3)); }
+  if(d.baseOtra>=2 && d.baseOtra<=20){ SIS.bas.base=Math.round(d.baseOtra); olvidaCache(); }
+  var idA=(d.A&&SIS[d.A.sis])?d.A.sis:est.A.sis, idB=(d.B&&SIS[d.B.sis])?d.B.sis:est.B.sis;
+  var tA=limpiaToks(d.A&&d.A.toks, SIS[idA]), tB=limpiaToks(d.B&&d.B.toks, SIS[idB]);
+  if(tA===null || tB===null){ flash('Ese archivo trae símbolos que no son de esos sistemas.'); return false; }
+  pushUndo();
+  est.A.sis=idA; est.A.toks=tA; est.B.sis=idB; est.B.toks=tB;
+  if(d.modo==='reto'||d.modo==='libre'){ est.modo=d.modo; $('modosel').value=d.modo;
+    $('retobox').style.display = est.modo==='reto'?'':'none'; }
+  if(d.serie>=1 && d.serie<=99999){ est.serie=Math.round(d.serie); $('semilla').value=est.serie; }
+  if(d.rango===0||d.rango===20||d.rango===100||d.rango===1000||d.rango===10000){
+    est.rango=d.rango; $('rangosel').value=String(d.rango); }
+  est.resuelto=false; msgVacio(); sincronizaCabeceras(); pinta();
+  flash('Archivo cargado.');
+  return true;
+}
+
+/* --- panel de ayuda ----------------------------------------------------- */
+$('help').addEventListener('click',function(){ infoEl.classList.toggle('show'); invEl.classList.remove('show'); });
+infoEl.innerHTML=
+ '<b>Sistemas numéricos</b><br>'+
+ 'Arriba se pone un número escrito en un sistema; abajo se vuelve a escribir el mismo número en '+
+ 'otro. Las dos cajas funcionan igual: se pincha en los símbolos de la paleta para ponerlos y '+
+ 'en un símbolo ya puesto para quitarlo.'+
+ '<div style="margin-top:7px"><b>Los tres tipos</b><br>'+
+ 'En un sistema <b>aditivo</b> hay un símbolo para el uno y otro para cada potencia de la base, y '+
+ 'se repiten: el número vale la suma. En uno <b>híbrido multiplicativo</b> hay además un símbolo '+
+ 'para cada número anterior a la base, y el que va delante de una potencia dice cuántas veces se '+
+ 'toma. En uno <b>posicional</b> solo hay símbolos para el cero y los anteriores a la base, y lo '+
+ 'que dice cuánto vale cada cifra es el lugar que ocupa.</div>'+
+ '<div style="margin-top:7px"><b>Cifras que son a su vez una escritura</b><br>'+
+ 'El babilonio es posicional de base 60, pero cada una de sus cifras —de 0 a 59— se escribe de '+
+ 'forma aditiva con dos signos, el clavo (1) y la espiga (10). El maya es posicional de base 20 '+
+ 'con cifras de puntos y barras. En los dos hay un botón para <b>empezar otra posición</b>, porque '+
+ 'sin separar las posiciones no se sabría dónde acaba una cifra y empieza la siguiente.</div>'+
+ '<div style="margin-top:7px"><b>Retos</b><br>'+
+ 'El programa propone un número y hay que pasarlo al otro sistema. La <b>serie</b> decide cuáles '+
+ 'salen: con la misma serie, los mismos retos, así que toda la clase puede trabajar los mismos.</div>'+
+ '<div style="margin-top:7px"><b>Inventar un sistema</b><br>'+
+ 'Se elige el tipo, la base y los símbolos, y el sistema nuevo aparece en los mismos desplegables '+
+ 'que los históricos y se maneja igual. Inventar un sistema es exactamente rellenar la tabla de '+
+ 'datos que ya usan el egipcio o el maya.</div>'+
+ '<div style="margin-top:7px"><b>Las casillas de la izquierda</b><br>'+
+ '<i>Cuánto vale</i> escribe debajo de cada caja el número que vale lo escrito, e <i>La escritura '+
+ 'correcta</i> enseña cómo se escribe. Vienen apagadas: encendidas, el material contesta antes de '+
+ 'que nadie pregunte.</div>'+
+ '<div style="margin-top:7px"><b>Teclado</b><br>'+
+ 'Las cifras y las letras van directas a la caja de abajo. <span style="font-family:monospace">Retroceso</span> '+
+ 'quita el último símbolo, <span style="font-family:monospace">Intro</span> comprueba y '+
+ '<span style="font-family:monospace">Ctrl+Z</span> deshace.</div>'+
+ '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+
+/* =========================================================================
+   10. ARRANQUE
+   ========================================================================= */
+est.A.toks=escribe(SIS.dec,24)||[];
+sincronizaCabeceras();
+pinta();
+
+/* =========================================================================
+   11. AUTOCOMPROBACIÓN
+
+   Se lanza añadiendo #test a la dirección. Es la única evidencia de que las
+   reglas de escritura y de lectura de once sistemas distintos hacen lo que
+   dicen: mirando la pantalla, una espiga de más y un cero interior de menos
+   se ven exactamente igual de bien.
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){
+    out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':''));
+    if(!c) fails++;
+  }
+  function lista(a){ return a?a.join(' '):'null'; }
+  function cuenta(a,t){ var i,c=0; for(i=0;i<a.length;i++) if(a[i]===t) c++; return c; }
+
+  var guardado={A:{sis:est.A.sis,toks:est.A.toks.slice()}, B:{sis:est.B.sis,toks:est.B.toks.slice()},
+                modo:est.modo, verVal:est.verVal, verSol:est.verSol, rango:est.rango,
+                serie:est.serie, tiro:est.tiro, ac:est.aciertos, it:est.intentos,
+                baseBas:SIS.bas.base, undo:undoStack.slice(),
+                nInv:INVENTADOS.length, nOrden:ORDEN.length, invN:invN};
+
+  try{
+    var eg=SIS.egi, ro=SIS.rom, ch=SIS.chi, ja=SIS.jap, ba=SIS.bab, su=SIS.sum, ma=SIS.may, de=SIS.dec;
+
+    /* --- egipcio: aditivo puro ------------------------------------------ */
+    (function(){
+      var t=escribe(eg,1386);
+      ok('el 1386 egipcio lleva 1+3+8+6 = 18 símbolos', t.length===18, t.length);
+      ok('y son un mil, tres cienes, ocho dieces y seis unos',
+         cuenta(t,'a3')===1 && cuenta(t,'a4')===3 && cuenta(t,'a5')===8 && cuenta(t,'a6')===6,
+         cuenta(t,'a3')+'/'+cuenta(t,'a4')+'/'+cuenta(t,'a5')+'/'+cuenta(t,'a6'));
+      ok('el 243688 egipcio lleva 2+4+3+6+8+8 = 31 símbolos', escribe(eg,243688).length===31,
+         escribe(eg,243688).length);
+      ok('en un aditivo de base diez, el número de símbolos es la suma de las cifras',
+         (function(){ var n,s,i,d; for(n=1;n<=2000;n++){ s=0; d=String(n);
+             for(i=0;i<d.length;i++) s+=+d.charAt(i);
+             if(escribe(eg,n).length!==s) return false; } return true; })());
+      ok('el menor número que se escribe con 25 símbolos egipcios es el 799',
+         (function(){ var n; for(n=1;n<799;n++) if(escribe(eg,n).length===25) return false;
+                      return escribe(eg,799).length===25; })());
+      /* prueba negativa: veinte trazos valen veinte, pero no es la escritura */
+      var veinte=[]; for(var q=0;q<20;q++) veinte.push('a6');
+      ok('veinte trazos egipcios VALEN veinte', valor(eg,veinte).n===20, valor(eg,veinte).n);
+      ok('pero veinte trazos NO son la escritura de veinte', !esCanonica(eg,veinte,20));
+      ok('y la escritura de veinte lleva dos símbolos', escribe(eg,20).length===2);
+      /* el orden no cambia el valor en un aditivo sin resta */
+      var mez=escribe(eg,1386).slice().reverse();
+      ok('el egipcio escrito del revés vale lo mismo', valor(eg,mez).n===1386, valor(eg,mez).n);
+      ok('y se sigue dando por buena la escritura, porque el orden ahí no dice nada',
+         esCanonica(eg,mez,1386));
+      ok('el egipcio no llega a diez millones', escribe(eg,10000000)===null);
+    })();
+
+    /* --- romano: aditivo con base auxiliar y resta ----------------------- */
+    (function(){
+      var t=escribe(ro,1386), m=mapa(ro);
+      function letras(a){ var i,s=''; for(i=0;i<a.length;i++) s+=m[a[i]].g.c; return s; }
+      ok('1386 en romano es MCCCLXXXVI', letras(t)==='MCCCLXXXVI', letras(t));
+      ok('1994 en romano es MCMXCIV', letras(escribe(ro,1994))==='MCMXCIV', letras(escribe(ro,1994)));
+      ok('3999 en romano es MMMCMXCIX', letras(escribe(ro,3999))==='MMMCMXCIX', letras(escribe(ro,3999)));
+      ok('en romano no se escribe el 4000', escribe(ro,4000)===null);
+      /* la resta: aquí el orden SÍ dice algo */
+      var iv=['a6','a5'], vi=['a5','a6'];
+      ok('IV vale 4 y VI vale 6: en romano el orden cambia el número',
+         valor(ro,iv).n===4 && valor(ro,vi).n===6, valor(ro,iv).n+' y '+valor(ro,vi).n);
+      ok('y por eso VI no se da por buena escritura del 4', !esCanonica(ro,vi,4));
+      ok('IIII vale 4 pero no es como se escribe',
+         valor(ro,['a6','a6','a6','a6']).n===4 && !esCanonica(ro,['a6','a6','a6','a6'],4));
+      ok('el cero no se escribe en romano', escribe(ro,0).length===0);
+    })();
+
+    /* --- chino y japonés: híbridos con agrupación de cuatro -------------- */
+    (function(){
+      var m=mapa(ch), mj=mapa(ja);
+      function cs(s,a){ var i,r=''; for(i=0;i<a.length;i++) r+=mapa(s)[a[i]].g.c; return r; }
+      ok('79564 en chino es 七萬九千五百六十四', cs(ch,escribe(ch,79564))==='七萬九千五百六十四',
+         cs(ch,escribe(ch,79564)));
+      ok('y lleva nueve símbolos, no treinta y uno como el egipcio',
+         escribe(ch,79564).length===9, escribe(ch,79564).length);
+      ok('diez en chino es 十, sin el uno delante', cs(ch,escribe(ch,10))==='十', cs(ch,escribe(ch,10)));
+      ok('cien en chino sí lleva el uno: 一百', cs(ch,escribe(ch,100))==='一百', cs(ch,escribe(ch,100)));
+      ok('cien en japonés no lo lleva: 百', cs(ja,escribe(ja,100))==='百', cs(ja,escribe(ja,100)));
+      ok('mil en japonés es 千 y en chino 一千',
+         cs(ja,escribe(ja,1000))==='千' && cs(ch,escribe(ch,1000))==='一千');
+      ok('1005 en chino marca el hueco: 一千零五', cs(ch,escribe(ch,1005))==='一千零五', cs(ch,escribe(ch,1005)));
+      ok('1005 en japonés no lo marca: 千五', cs(ja,escribe(ja,1005))==='千五', cs(ja,escribe(ja,1005)));
+      ok('10005 en chino es 一萬零五', cs(ch,escribe(ch,10005))==='一萬零五', cs(ch,escribe(ch,10005)));
+      ok('100000 en chino es 十萬: no hay símbolo propio para cien mil',
+         cs(ch,escribe(ch,100000))==='十萬', cs(ch,escribe(ch,100000)));
+      ok('el 零 no suma nada: quitarlo no cambia el valor',
+         valor(ch,escribe(ch,1005)).n===1005 &&
+         valor(ch,['m1','p3','m5']).n===1005, valor(ch,['m1','p3','m5']).n);
+      ok('dos cifras seguidas sin potencia en medio no dicen nada', !valor(ch,['m2','m3']).ok);
+      ok('una potencia suelta vale una vez esa potencia', valor(ch,['p2']).n===100, valor(ch,['p2']).n);
+    })();
+
+    /* --- babilonio: posicional de base 60 con cifras aditivas ------------ */
+    (function(){
+      var t=escribe(ba,174012);
+      ok('174012 en babilonio son las cifras 48, 20 y 12 en base sesenta',
+         cuenta(t,'|')===2 && valor(ba,t).n===174012, lista(t));
+      ok('la primera cifra son 4 espigas y 8 clavos',
+         t.slice(0,12).join('')==='s0s0s0s0s1s1s1s1s1s1s1s1', t.slice(0,12).join(' '));
+      ok('69 en babilonio son dos posiciones: un clavo y nueve clavos',
+         lista(escribe(ba,69))==='s1 | s1 s1 s1 s1 s1 s1 s1 s1 s1', lista(escribe(ba,69)));
+      ok('un clavo suelto vale 1, pero el mismo signo en otra posición valdría 60',
+         valor(ba,['s1']).n===1 && valor(ba,['s1','|']).n===60,
+         valor(ba,['s1']).n+' y '+valor(ba,['s1','|']).n);
+      ok('una posición no puede sumar 60 ni más', !valor(ba,['s0','s0','s0','s0','s0','s0']).ok);
+      ok('el babilonio no tiene cero: el cero no se escribe', escribe(ba,0).length===0);
+      ok('un hueco entre dos posiciones vale como una posición vacía',
+         valor(ba,['s1','|','|','s1']).n===1*3600+0*60+1, valor(ba,['s1','|','|','s1']).n);
+    })();
+
+    /* --- sumerio: aditivo de base 60 con base auxiliar 10 ---------------- */
+    (function(){
+      var t=escribe(su,174012);
+      ok('174012 en fichas sumerias son 4+8+2+0+1+2 = 17 fichas', t.length===17, t.length);
+      ok('y valen 174012', valor(su,t).n===174012, valor(su,t).n);
+      ok('el reparto avaricioso da el mínimo de fichas, porque cada ficha es múltiplo de la anterior',
+         (function(){ var n; for(n=1;n<=4000;n++){
+            var a=escribe(su,n); if(!a || valor(su,a).n!==n) return false; } return true; })());
+      ok('59 en fichas sumerias son 5 bolas pequeñas y 9 conos pequeños',
+         escribe(su,59).length===14, escribe(su,59).length);
+    })();
+
+    /* --- maya: posicional de base 20 y con cero -------------------------- */
+    (function(){
+      ok('el cero maya es un solo símbolo, la concha', lista(escribe(ma,0))==='z', lista(escribe(ma,0)));
+      ok('20 en maya es un punto y una concha debajo', lista(escribe(ma,20))==='s0 | z', lista(escribe(ma,20)));
+      ok('429 en maya son las cifras 1, 1 y 9', valor(ma,escribe(ma,429)).n===429 &&
+         escribe(ma,429).length===9, lista(escribe(ma,429)));
+      ok('la cifra 9 maya son cuatro puntos y una barra',
+         lista(cifraToks(ma,9))==='s0 s0 s0 s0 s1', lista(cifraToks(ma,9)));
+      ok('en las cifras mayas los puntos van antes que las barras, que es como se dibujan',
+         (function(){ var d,a,i,vb; for(d=1;d<20;d++){ a=cifraToks(ma,d); vb=false;
+             for(i=0;i<a.length;i++){ if(a[i]==='s1') vb=true; else if(vb) return false; } } return true; })());
+      ok('ninguna cifra maya pasa de cuatro puntos',
+         (function(){ var d,a; for(d=0;d<20;d++){ a=cifraToks(ma,d);
+             if(cuenta(a,'s0')>4) return false; } return true; })());
+      ok('una posición maya no puede sumar 20 ni más', !valor(ma,['s1','s1','s1','s1']).ok);
+    })();
+
+    /* --- posicional en cualquier base ------------------------------------ */
+    (function(){
+      var b5=SIS.bas, guarda=b5.base;
+      b5.base=5; olvidaCache();
+      ok('235 en base cinco es 1420', lista(escribe(b5,235))==='c1 c4 c2 c0', lista(escribe(b5,235)));
+      ok('2034 en base cinco es el 269', valor(b5,['c2','c0','c3','c4']).n===269,
+         valor(b5,['c2','c0','c3','c4']).n);
+      b5.base=7; olvidaCache();
+      ok('999 en base siete es 2625', lista(escribe(b5,999))==='c2 c6 c2 c5', lista(escribe(b5,999)));
+      b5.base=12; olvidaCache();
+      ok('25842 en base doce es 12B56', lista(escribe(b5,25842))==='c1 c2 c11 c5 c6', lista(escribe(b5,25842)));
+      b5.base=2; olvidaCache();
+      ok('1001110 en base dos es el 78', valor(b5,['c1','c0','c0','c1','c1','c1','c0']).n===78,
+         valor(b5,['c1','c0','c0','c1','c1','c1','c0']).n);
+      b5.base=13; olvidaCache();
+      ok('ABC6 en base trece es el 23991', valor(b5,['c10','c11','c12','c6']).n===23991,
+         valor(b5,['c10','c11','c12','c6']).n);
+      b5.base=20; olvidaCache();
+      ok('el 17 se escribe 21 en base ocho... y no en base veinte',
+         (function(){ b5.base=8; olvidaCache(); var a=lista(escribe(b5,17));
+            b5.base=20; olvidaCache(); var c=lista(escribe(b5,17));
+            return a==='c2 c1' && c!=='c2 c1'; })());
+      b5.base=guarda; olvidaCache();
+      ok('un cero delante vale lo mismo pero no es la escritura',
+         valor(de,['c0','c0','c2','c4']).n===24 && !esCanonica(de,['c0','c0','c2','c4'],24));
+    })();
+
+    /* --- ida y vuelta en todos los sistemas ------------------------------ */
+    (function(){
+      var ids=['dec','egi','rom','chi','jap','bab','sum','may','bas'], i, j, s, n, t, r, mal=0, casos=0;
+      var muestra=[0,1,4,5,9,10,11,19,20,40,59,60,61,99,100,101,144,360,400,999,1000,1005,
+                   1386,2020,3599,3600,3999];
+      for(i=0;i<ids.length;i++){
+        s=SIS[ids[i]];
+        for(j=0;j<muestra.length;j++){
+          n=muestra[j];
+          if(n>maxDe(s)) continue;
+          t=escribe(s,n);
+          if(t===null) continue;
+          casos++;
+          if(!t.length){ if(n!==0) mal++; continue; }   /* solo el cero puede no escribirse */
+          r=valor(s,t);
+          if(!r.ok || r.n!==n) mal++;
+        }
+      }
+      ok('lo que se escribe se vuelve a leer igual, en los nueve sistemas', mal===0,
+         casos+' casos, '+mal+' mal');
+    })();
+
+    /* --- la maquetación no produce números imposibles --------------------- */
+    (function(){
+      var ids=['dec','egi','rom','chi','jap','bab','sum','may','bas'], i, s, t, mq, k, malo=0, svg;
+      for(i=0;i<ids.length;i++){
+        s=SIS[ids[i]]; t=escribe(s,Math.min(174012,maxDe(s)));
+        if(!t||!t.length) continue;
+        mq=maqueta(s,t);
+        if(!isFinite(mq.w)||!isFinite(mq.h)||mq.w<=0||mq.h<=0) malo++;
+        for(k=0;k<mq.items.length;k++)
+          if(!isFinite(mq.items[k].x)||!isFinite(mq.items[k].y)) malo++;
+        svg=svgNumeral(s,t,{});
+        if(svg.indexOf('NaN')>=0 || svg.indexOf('undefined')>=0 || svg.indexOf('<svg')!==0) malo++;
+      }
+      ok('ninguna maqueta ni ningún SVG salen con NaN (un NaN en un path no da error: no pinta)',
+         malo===0, malo+' problemas');
+      /* nueve trazos egipcios van en tres filas, no en una */
+      var uno=maqueta(eg,['a6']), nueve=maqueta(eg,['a6','a6','a6','a6','a6','a6','a6','a6','a6']);
+      ok('nueve trazos egipcios se apilan en tres filas, no en una',
+         nueve.h>uno.h*2.4 && nueve.w<uno.w*5,
+         'alto '+Math.round(nueve.h)+' y ancho '+Math.round(nueve.w)+
+         '; en una sola fila el ancho sería '+Math.round(9*uno.w+8*GX));
+      ok('el numeral maya crece hacia abajo y el babilonio hacia el lado',
+         maqueta(ma,escribe(ma,429)).h > maqueta(ma,escribe(ma,429)).w &&
+         maqueta(ba,escribe(ba,174012)).w > maqueta(ba,escribe(ba,174012)).h);
+      ok('el reparto en filas hace [3,3,3] con nueve y [4,3] con siete',
+         repartoFilas(9,4).join('')==='333' && repartoFilas(7,4).join('')==='43',
+         repartoFilas(9,4).join('-')+' y '+repartoFilas(7,4).join('-'));
+      var conj=svgConjunto();
+      ok('el PNG lleva las dos cajas y el nombre de los dos sistemas',
+         conj && conj.indexOf('NaN')<0 && conj.indexOf(SIS[est.A.sis].nom)>=0 &&
+         conj.indexOf(SIS[est.B.sis].nom)>=0);
+    })();
+
+    /* --- comprobación y regla del spoiler -------------------------------- */
+    (function(){
+      est.modo='libre'; est.verVal=false; est.verSol=false;
+      est.A.sis='dec'; est.A.toks=escribe(de,1386);
+      est.B.sis='egi'; est.B.toks=[];
+      sincronizaCabeceras(); pinta();
+      ok('con la casilla apagada, la escritura correcta no aparece por ninguna parte',
+         $('soluB').style.display==='none' && $('soluB').innerHTML.indexOf('svg')<0);
+      ok('y tampoco aparece cuánto vale', lado.A.val.style.display==='none');
+      est.B.toks=escribe(eg,1386);
+      ok('la escritura buena se da por correcta', comprueba()===true);
+      ok('y el mensaje no dice el número, que ya está a la vista', msgEl.textContent.indexOf('1386')<0);
+      est.B.toks=escribe(eg,1836);
+      ok('una escritura de otro número no se da por buena', comprueba()===false);
+      ok('y se dice si se ha pasado o se ha quedado corto',
+         msgEl.textContent.indexOf('mayor')>=0, msgEl.textContent);
+      est.B.toks=escribe(eg,986);
+      comprueba();
+      ok('y al revés, si es menor', msgEl.textContent.indexOf('menor')>=0, msgEl.textContent);
+      est.B.toks=[]; for(var q=0;q<20;q++) est.B.toks.push('a6');
+      est.A.toks=escribe(de,20);
+      ok('veinte trazos se dan por buenos de valor pero se avisa de la escritura',
+         comprueba()===true && msgEl.textContent.indexOf('menos símbolos')>=0, msgEl.textContent);
+      est.verSol=true; pinta();
+      ok('con la casilla encendida sí se enseña la escritura correcta',
+         $('soluB').style.display!=='none' && $('soluB').innerHTML.indexOf('svg')>=0);
+      est.verSol=false; pinta();
+    })();
+
+    /* --- retos ----------------------------------------------------------- */
+    (function(){
+      est.modo='reto'; est.A.sis='dec'; est.B.sis='egi'; est.rango=100;
+      est.serie=1386; est.tiro=0; est.aciertos=0; est.intentos=0;
+      var a=[], b=[], i;
+      for(i=1;i<=12;i++) a.push(numeroReto(1386,i));
+      for(i=1;i<=12;i++) b.push(numeroReto(1386,i));
+      ok('con la misma serie salen exactamente los mismos retos', a.join(',')===b.join(','), a.join(','));
+      ok('con otra serie salen otros', numeroReto(777,1)!==numeroReto(1386,1) ||
+                                       numeroReto(777,2)!==numeroReto(1386,2));
+      var fuera=0, t=topeReto();
+      for(i=0;i<a.length;i++) if(a[i]<1||a[i]>t) fuera++;
+      ok('ningún reto se sale de lo que los dos sistemas admiten', fuera===0, 'tope '+t);
+      est.B.sis='rom'; est.rango=0;
+      var t2=topeReto();
+      ok('con el romano abajo, el tope baja a 3999', t2===3999, t2);
+      est.B.sis='egi'; est.rango=100;
+      nuevoReto();
+      ok('un reto nuevo deja la caja de abajo vacía y la de arriba escrita',
+         est.B.toks.length===0 && est.A.toks.length>0);
+      var n=nObjetivo();
+      est.B.toks=escribe(SIS.egi,n);
+      comprueba();
+      ok('acertar a la primera suma un acierto', est.aciertos===1 && est.intentos===1,
+         est.aciertos+'/'+est.intentos);
+      comprueba();
+      ok('y volver a comprobar el mismo reto no vuelve a contar', est.intentos===1, est.intentos);
+      est.modo='libre';
+    })();
+
+    /* --- inventar un sistema --------------------------------------------- */
+    (function(){
+      var d={id:'inv999', nom:'De prueba', tipo:'adi', base:5, cifras:['◐'], pots:['◑','◒','◓']};
+      ok('un sistema con símbolos repetidos se rechaza',
+         !!validaInv({id:'x', nom:'x', tipo:'adi', base:5, cifras:['◐'], pots:['◐','◒','◓']}));
+      ok('y uno bien puesto se acepta', validaInv(d)===null);
+      registraInv(d);
+      var s=SIS.inv999;
+      ok('el sistema inventado aparece en el desplegable', !!s && ORDEN.indexOf('inv999')>=0);
+      ok('aditivo de base cinco: el 39 son 1 de 25, 2 de 5 y 4 de 1, o sea 7 símbolos',
+         escribe(s,39).length===7, escribe(s,39).length);
+      ok('y se vuelve a leer bien', valor(s,escribe(s,39)).n===39, valor(s,escribe(s,39)).n);
+      var d2={id:'inv998', nom:'Posicional raro', tipo:'pos', base:4, cifras:['♠','♥','♦','♣'], pots:[]};
+      registraInv(d2);
+      ok('un posicional inventado de base cuatro escribe el 39 con tres cifras',
+         escribe(SIS.inv998,39).length===3, lista(escribe(SIS.inv998,39)));
+      ok('y vale 39: 2·16 + 1·4 + 3', valor(SIS.inv998,escribe(SIS.inv998,39)).n===39);
+      var d3={id:'inv997', nom:'Híbrido raro', tipo:'hib', base:5, cifras:['α','β','γ','δ'], pots:['λ','μ','π']};
+      registraInv(d3);
+      /* 39 = 1·25 + 2·5 + 4, y aquí el «uno» de las veinticincos también se escribe:
+         omitirlo es una irregularidad del chino y del japonés, no la regla general. */
+      ok('un híbrido inventado de base cinco escribe el 39 con cinco símbolos',
+         escribe(SIS.inv997,39).length===5, lista(escribe(SIS.inv997,39)));
+      ok('y vale 39: 1·25 + 2·5 + 4', valor(SIS.inv997,escribe(SIS.inv997,39)).n===39,
+         valor(SIS.inv997,escribe(SIS.inv997,39)).n);
+      ok('un mismo número necesita menos símbolos en el híbrido que en el aditivo de la misma base',
+         escribe(SIS.inv997,39).length < escribe(s,39).length,
+         escribe(SIS.inv997,39).length+' frente a '+escribe(s,39).length);
+    })();
+
+    /* --- guardar y abrir -------------------------------------------------- */
+    (function(){
+      est.A.sis='bab'; est.A.toks=escribe(SIS.bab,174012);
+      est.B.sis='inv999'; est.B.toks=escribe(SIS.inv999,39);
+      SIS.bas.base=7; olvidaCache();
+      var d=JSON.parse(JSON.stringify(datos()));
+      est.A.sis='dec'; est.A.toks=[]; est.B.sis='egi'; est.B.toks=[]; SIS.bas.base=5; olvidaCache();
+      var r=loadData(d);
+      ok('guardar y abrir devuelve las dos cajas tal cual estaban',
+         r===true && est.A.sis==='bab' && est.B.sis==='inv999' &&
+         valor(SIS.bab,est.A.toks).n===174012 && valor(SIS.inv999,est.B.toks).n===39);
+      ok('y también la base del sistema «otra base»', SIS.bas.base===7, SIS.bas.base);
+      ok('un archivo de otro material se rechaza', loadData({formato:'billetes'})===false);
+      ok('un archivo con símbolos que no son del sistema se rechaza',
+         loadData({formato:'sistemas-numericos', A:{sis:'egi',toks:['zzz']}, B:{sis:'egi',toks:[]}})===false);
+      ok('un sistema inventado con la base fuera de rango se rechaza',
+         loadData({formato:'sistemas-numericos',
+                   inventados:[{id:'inv3',nom:'x',tipo:'pos',base:99,cifras:['a'],pots:[]}]})===false);
+      ok('y no se cuela un separador en un sistema que no tiene posiciones compuestas',
+         limpiaToks(['|'],SIS.egi)===null);
+    })();
+
+    /* --- deshacer --------------------------------------------------------- */
+    (function(){
+      est.A.sis='dec'; est.A.toks=escribe(de,24); est.B.sis='egi'; est.B.toks=[];
+      undoStack=[]; sincronizaCabeceras(); pinta();
+      pon('B','a6'); pon('B','a6');
+      ok('se han puesto dos símbolos', est.B.toks.length===2, est.B.toks.length);
+      doUndo();
+      ok('deshacer quita el último', est.B.toks.length===1, est.B.toks.length);
+      doUndo(); doUndo();
+      ok('y deshacer del todo deja la caja como estaba', est.B.toks.length===0, est.B.toks.length);
+      ok('sin nada que deshacer, deshacer no rompe nada', doUndo()===false || true);
+    })();
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+  }
+
+  /* devolver el material como estaba */
+  while(INVENTADOS.length>guardado.nInv){ var q=INVENTADOS.pop(); delete SIS[q.id]; }
+  ORDEN.length=guardado.nOrden;
+  invN=guardado.invN;
+  est.A.sis=guardado.A.sis; est.A.toks=guardado.A.toks;
+  est.B.sis=guardado.B.sis; est.B.toks=guardado.B.toks;
+  est.modo=guardado.modo; est.verVal=guardado.verVal; est.verSol=guardado.verSol;
+  est.rango=guardado.rango; est.serie=guardado.serie; est.tiro=guardado.tiro;
+  est.aciertos=guardado.ac; est.intentos=guardado.it; est.resuelto=false;
+  SIS.bas.base=guardado.baseBas; undoStack=guardado.undo;
+  olvidaCache();
+  $('modosel').value=est.modo;
+  $('retobox').style.display = est.modo==='reto'?'':'none';
+  $('chkval').checked=est.verVal; $('chksol').checked=est.verSol;
+  $('semilla').value=est.serie; $('rangosel').value=String(est.rango);
+  msgVacio(); sincronizaCabeceras(); pinta();
+
+  var texto=out.join('\n');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:9999;overflow:auto;padding:22px 26px;'+
+    'font:12.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#2b2f36';
+  box.innerHTML=
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__sistemas={
+  test:runSelfTest,
+  SIS:SIS, ORDEN:ORDEN, est:est, alf:alf, mapa:mapa, maxDe:maxDe,
+  escribe:escribe, valor:valor, esCanonica:esCanonica, cifraToks:cifraToks, cifrasDe:cifrasDe,
+  maqueta:maqueta, svgNumeral:svgNumeral, svgConjunto:svgConjunto, repartoFilas:repartoFilas,
+  numeroReto:numeroReto, topeReto:topeReto, nuevoReto:nuevoReto, comprueba:comprueba,
+  registraInv:registraInv, validaInv:validaInv, datos:datos, load:loadData, limpiaToks:limpiaToks,
+  pon:pon, quita:quita, vacia:vacia, doUndo:doUndo, pinta:pinta, cambiaSis:cambiaSis
+};
+
+})();
+</script>
+</body>
+</html>

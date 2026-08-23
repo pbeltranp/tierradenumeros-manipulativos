@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Palotes numéricos · manipulativo virtual</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       font-size:14px;color:#2b2f36;background:#fff;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;height:100%;width:100%}
+
+  #side{width:172px;flex:0 0 172px;background:#f4f5f7;border-right:1px solid #dfe2e7;
+        overflow-y:auto;padding:10px 10px 24px}
+  #side .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:2px 2px 10px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  #side .brand em{display:block;font-style:normal;font-size:10.5px;font-weight:400;letter-spacing:.07em;
+                  text-transform:uppercase;color:#a2a9b4;margin-top:4px}
+  #side h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:14px 0 7px;font-weight:600}
+  #palotes{display:flex;flex-direction:column;gap:4px}
+  .pl{background:#fff;border:1px solid #e3e6eb;border-radius:7px;padding:3px 5px;cursor:grab;
+      touch-action:none;display:flex;align-items:center;gap:6px;min-height:22px}
+  .pl:hover{border-color:#b9c0ca;background:#fbfcfd}
+  .pl:active{cursor:grabbing}
+  .pl span{font-size:10.5px;font-weight:700;color:#6b7280;min-width:13px;text-align:right}
+  .pl.mudo span{visibility:hidden}
+  .pl svg{display:block}
+  .act{display:block;width:100%;text-align:left;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+       padding:6px 9px;margin-bottom:4px;font-size:12.5px;color:#3d4450;cursor:pointer}
+  .act:hover:not(:disabled){background:#f0f2f5;border-color:#c8cdd6}
+  .act:disabled{opacity:.42;cursor:default}
+  .act kbd{float:right;font:inherit;font-size:10.5px;color:#9aa1ab}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px}
+  .pair .act{margin:0;text-align:center;padding:6px 4px}
+  select.sel{display:block;width:100%;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+             padding:6px 7px;font:inherit;font-size:12.5px;color:#3d4450;cursor:pointer}
+  select.sel:hover{border-color:#c8cdd6}
+  #stats{font-size:11.5px;color:#6b7280;line-height:1.6;margin-top:12px;border-top:1px solid #e3e6eb;padding-top:9px}
+  #stats b{color:#2b2f36}
+  .note{font-size:10.5px;line-height:1.45;color:#8a919c;margin-top:12px}
+
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #dfe2e7;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover:not(:disabled){background:#f0f2f5}
+  .btn:disabled{opacity:.42;cursor:default}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn.on:hover{background:#2a589a}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  select.btn{padding:5px 6px}
+  #nliston{width:44px;height:26px;border:1px solid #d5d9e0;border-radius:7px;padding:2px 4px;font:inherit;font-size:12.5px;color:#3d4450}
+  #avanzado{display:none;align-items:center;gap:5px}
+  #avanzado.show{display:inline-flex}
+  #stage{position:relative;flex:1;min-height:0;background:#fff}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:296px;max-height:calc(100% - 20px);overflow-y:auto;
+        background:#fff;border:1px solid #dfe2e7;border-radius:10px;padding:11px 13px;font-size:11.5px;
+        line-height:1.55;color:#4a515c;box-shadow:0 6px 22px rgba(20,25,35,.12);display:none}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .ref{margin-top:9px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;line-height:1.5;color:#6b7280}
+  #info .ref i{color:#4a515c}
+  #info .lic{margin-top:9px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:138px;flex:0 0 138px;padding:8px 6px}
+    .btn{padding:5px 7px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div class="brand">Palotes <b>numéricos</b><em>Stick numbers</em></div>
+
+    <h2>Palotes</h2>
+    <div id="palotes"></div>
+
+    <h2>Color</h2>
+    <select class="sel" id="palsel" title="Con qué colores se pintan los palotes"></select>
+
+    <h2>Palote seleccionado</h2>
+    <button class="act" id="girar" disabled title="Ponerlo de pie, o volverlo a tumbar">⟲ Girar<kbd>R</kbd></button>
+    <div class="pair">
+      <button class="act" id="mas" disabled title="Encajarle un bloque más">＋ bloque</button>
+      <button class="act" id="menos" disabled title="Quitarle un bloque">− bloque</button>
+    </div>
+    <button class="act" id="dup" disabled>Duplicar<kbd>D</kbd></button>
+    <button class="act" id="borrar" disabled>Quitar<kbd>Supr</kbd></button>
+
+    <h2>Colocación</h2>
+    <button class="act" id="diez" title="Saca al tablero un palote de cada número, del 1 al 10">Sacar los diez</button>
+    <button class="act" id="escalera" title="Ordena de menor a mayor, alineados por la salida">≡ Escalera</button>
+    <button class="act" id="revolver" title="Los reparte por el tablero, sin orden">⁂ Desordenar</button>
+
+    <div id="stats"></div>
+    <div class="note">Arrastra un palote al tablero. Se encajan unos con otros: nunca se montan encima.</div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn on" data-tool="move" title="Mover palotes (1)">✥ Mover</button>
+      <button class="btn" data-tool="del" title="Quitar palotes (2)">✕ Quitar</button>
+      <span class="sep"></span>
+      <label class="chk" title="Dónde se escribe el número de cada palote">Nº
+        <select class="btn" id="numsel" style="margin-left:2px">
+          <option value="2">en el último bloque</option>
+          <option value="1">en cada bloque</option>
+          <option value="0">sin números</option>
+        </select>
+      </label>
+      <span class="sep"></span>
+      <label class="chk" title="Marca en el tablero la longitud que hay que alcanzar">Listón
+        <input type="number" id="nliston" min="0" max="10" step="1" value="0">
+      </label>
+      <button class="btn" id="dadoListon" title="Poner el listón en un número al azar">🎲</button>
+      <button class="btn" id="pegarListon" title="Pegar el listón a la salida de los palotes que hay">⇤ Pegar</button>
+      <button class="btn on" data-ori="h" title="Trabajar en horizontal: los palotes tumbados, en filas, y el listón de pie (H)">↔</button>
+      <button class="btn" data-ori="v" title="Trabajar en vertical: los palotes de pie, en columnas, y el listón tumbado (V)">↕</button>
+      <span class="sep"></span>
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <label class="chk" title="Muestra herramientas de comprobación"><input type="checkbox" id="avz">Comprobaciones</label>
+      <span id="avanzado">
+        <label class="chk" title="Escribe al final de cada fila o columna cuántos bloques hay en ella. Déjalo apagado mientras la cuenta sea lo que hay que averiguar."><input type="checkbox" id="chksumas">Σ Bloques de cada línea</label>
+      </span>
+      <span class="sep"></span>
+      <label class="chk"><input type="checkbox" id="showgrid" checked>Retícula</label>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar en un archivo">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir el contenido de un archivo a lo que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="clear">Limpiar</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo de palotes</div>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LA IDEA / LAS PIEZAS
+   Los number sticks de Baroody (1993) son barras SEGMENTADAS, coloreadas y
+   numeradas, hechas con cubos encajables: el palote del 4 son cuatro bloques
+   pegados con el numeral 4 escrito en el ÚLTIMO. Esa es toda la geometría del
+   material y condiciona el archivo entero:
+
+   · Es un modelo de cantidad DISCRETA, no continua. Cada palote se ve dividido
+     en n bloques del tamaño de la unidad, así que se puede contar. Una regleta
+     Cuisenaire es una barra lisa donde el número solo está codificado en la
+     longitud y el color; aquí el número está a la vista.
+   · El numeral va en el último bloque, no en el centro, porque es el principio
+     de cardinalidad: la palabra que se dice al contar el último objeto es la
+     que dice cuántos hay.
+   · Por eso el palote del n ocupa exactamente n casillas CONSECUTIVAS de la
+     retícula, y las casillas son enteras. Todo se hace con aritmética entera.
+   · Los bloques son macizos: dos palotes nunca se montan uno encima de otro.
+     Al soltar, el imán busca el hueco libre más cercano, lo que hace que los
+     palotes se peguen de canto solos.
+
+   ORIENTACIÓN. Un palote se puede tumbar (crece hacia la derecha) o poner de
+   pie (crece hacia arriba). No es simétrico, y la asimetría es la del conteo:
+
+   · Tumbado, se cuenta de izquierda a derecha y el numeral queda a la derecha.
+   · De pie, se cuenta de abajo arriba —como se levanta una torre de cubos— y
+     el numeral queda ARRIBA. Poner el número abajo sería decir que la cuenta
+     acaba en el suelo.
+   · (x,y) es siempre la casilla de arriba a la izquierda de la caja, así que el
+     bloque donde empieza la cuenta es (x,y) tumbado y (x,y+n-1) de pie.
+   · Girar mantiene quieto ese bloque de inicio: el palote se pone de pie sobre
+     su propio extremo, como se levanta un palo del suelo. Así, girar dos veces
+     lo deja exactamente donde estaba, y un palote apoyado en una línea de
+     salida sigue apoyado en ella después de girarlo.
+
+   PALETAS. El color no es parte de la matemática, y por eso se puede cambiar o
+   quitar: es la variable didáctica del material. Las cuatro primeras dan diez
+   colores distintos, uno por número, y solo se diferencian en el aire que
+   tienen: se elige la que mejor se lea en la pantalla o el proyector de cada
+   clase. Las de regletas van después de ellas porque tienen un efecto añadido:
+   puestas así, al comparar los dos materiales lo único que queda a la vista es
+   lo que importa (la segmentación y el numeral). Y las dos últimas ya no son
+   decorativas: una codifica la paridad en el color y la otra lo apaga del todo
+   para que solo quede contar.
+   ========================================================================= */
+var MAXN=10, CELL=36;
+var PALETAS=[
+  /* diez colores muy saturados y variados: la que mejor aguanta un proyector
+     flojo, y por eso la de por defecto */
+  {id:'vivos', nombre:'vivos', colores:
+    ['#f0913a','#b7c4e2','#f2d33f','#a9d18e','#e03a30',
+     '#35bcc9','#f2a7b8','#2e9e4b','#5b3f97','#1f5fb0']},
+  /* los diez tonos del círculo repartidos de 36 en 36 grados, en suave */
+  {id:'pastel', nombre:'pastel', colores:
+    ['#f4a9a0','#f4c9a0','#eee6a0','#c9e6a0','#a0e6b0',
+     '#a0e0e0','#a0c4ea','#b8a8e8','#e2a8e2','#f0a8c8']},
+  /* los mismos diez tonos en oscuro, para fondo claro y mucha luz ambiente */
+  {id:'intensos', nombre:'intensos', colores:
+    ['#b02a25','#d2691e','#9a7d0a','#4f7f1f','#127a4b',
+     '#0f6f7a','#1f5fb0','#4b3f9e','#7d2f9e','#a8265f']},
+  /* la escala de grises: distingue los diez sin usar color, así que vale para
+     imprimir en blanco y negro y para quien no distingue tonos */
+  {id:'grises', nombre:'grises', colores:
+    ['#f2f3f5','#dcdfe4','#c3c8d0','#a9b0bb','#8f97a5',
+     '#757e8d','#5c6675','#454e5c','#2f3742','#1b2129']},
+  /* los colores de las regletas Cuisenaire */
+  {id:'regletas', nombre:'regletas', colores:
+    ['#fdfdfb','#e0322a','#6cbf5a','#e88bb4','#f2ce2b',
+     '#2e8b46','#26262a','#8a5b3a','#2f62c8','#ef8b25']},
+  /* azul y naranja: el par que se sigue distinguiendo con cualquier tipo de
+     daltonismo */
+  {id:'paridad', nombre:'pares e impares', colores:
+    ['#ef8b25','#2f62c8','#ef8b25','#2f62c8','#ef8b25',
+     '#2f62c8','#ef8b25','#2f62c8','#ef8b25','#2f62c8']},
+  {id:'lisa', nombre:'un solo color', colores:
+    ['#d8dce3','#d8dce3','#d8dce3','#d8dce3','#d8dce3',
+     '#d8dce3','#d8dce3','#d8dce3','#d8dce3','#d8dce3']}
+];
+function paleta(id){
+  for(var i=0;i<PALETAS.length;i++) if(PALETAS[i].id===id) return PALETAS[i];
+  return PALETAS[0];
+}
+
+/* =========================================================================
+   2. ESTADO
+   ========================================================================= */
+var pieces=[], nid=1, sel=null;
+var tool='move';
+var view={x:0,y:0,z:1};
+var drag=null, undoStack=[], importMode='replace';
+/* El listón tiene coordenada PROPIA. La primera versión lo anclaba al palote
+   más a la izquierda y se iba con él al moverlo: parecía que el listón se
+   estropeaba solo. Ahora es un objeto más del tablero, se arrastra y solo se
+   mueve si se le mueve. `s` es la línea de salida: la columna de la que arranca
+   tumbado, o la fila sobre la que se apoya de pie. */
+var liston={n:0, s:0};
+/* num: 2 numeral al final · 1 numerar cada bloque · 0 sin numerales
+   pal: nombre de la paleta · vert: se trabaja de pie
+   sumas: escribe los bloques de cada línea. Empieza APAGADO: es la respuesta. */
+var opt={grid:1, num:2, pal:PALETAS[0].id, vert:0, sumas:0};
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop'), statsEl=document.getElementById('stats');
+var flashMsg=null, flashT=0;
+
+function K(x,y){ return x+','+y; }
+function byId(id){ for(var i=0;i<pieces.length;i++) if(pieces[i].id===id) return pieces[i]; return null; }
+function pushUndo(){
+  undoStack.push(JSON.stringify({p:pieces, n:nid, l:liston}));
+  if(undoStack.length>80) undoStack.shift();
+}
+function doUndo(){
+  if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var st=JSON.parse(undoStack.pop());
+  pieces=st.p; nid=st.n; if(st.l) liston=st.l;
+  sel=null; sincronizaListon(); draw();
+}
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2100); }
+
+/* =========================================================================
+   3. GEOMETRÍA
+   Todo en coordenadas de mundo (casillas enteras). Un palote es {n,x,y,v} y
+   (x,y) es siempre su casilla de arriba a la izquierda.
+   ========================================================================= */
+function ancho(p){ return p.v ? 1 : p.n; }
+function alto(p){ return p.v ? p.n : 1; }
+function celdas(p){
+  var cs=[], i;
+  if(p.v){ for(i=0;i<p.n;i++) cs.push({x:p.x, y:p.y+i}); }
+  else   { for(i=0;i<p.n;i++) cs.push({x:p.x+i, y:p.y}); }
+  return cs;
+}
+/* el bloque k de la cuenta (k = 1…n): tumbado se cuenta hacia la derecha, de
+   pie hacia arriba, que es como se levanta una torre de cubos */
+function bloque(p,k){
+  return p.v ? {x:p.x, y:p.y+p.n-k} : {x:p.x+k-1, y:p.y};
+}
+function celdaInicio(p){ return bloque(p,1); }
+/* el numeral va en el último bloque de la cuenta: cardinalidad */
+function celdaNumeral(p){ return bloque(p,p.n); }
+/* girar deja quieto el bloque de inicio: el palote se levanta sobre su extremo */
+function girado(p){
+  var i=celdaInicio(p);
+  return p.v ? {n:p.n, x:i.x, y:i.y, v:0}
+             : {n:p.n, x:i.x, y:i.y-p.n+1, v:1};
+}
+
+function ocupadas(lista,excepto){
+  var m={};
+  for(var i=0;i<lista.length;i++){
+    var p=lista[i]; if(p.id===excepto) continue;
+    var cs=celdas(p);
+    for(var j=0;j<cs.length;j++) m[K(cs[j].x,cs[j].y)]=p.id;
+  }
+  return m;
+}
+function libre(lista,q,excepto){
+  var m=ocupadas(lista,excepto), cs=celdas(q);
+  for(var i=0;i<cs.length;i++) if(m[K(cs[i].x,cs[i].y)]) return false;
+  return true;
+}
+/* El imán. Los desplazamientos candidatos se recorren de menor a mayor coste,
+   con el (0,0) el primero de todos, y se devuelve un OBJETO (o null): guardar
+   el mejor desplazamiento en un número haría que un encaje perfecto valiese 0,
+   que en JavaScript es falso, y cualquier candidato peor lo pisaría.
+   Salirse de la línea cuesta once casillas. La línea es la unidad de trabajo
+   —una fila es una suma, una descomposición, un piso de la torre—, así que un
+   palote soltado encima de otro tiene que salir de canto por el lado y quedarse
+   donde estaba. Y como la línea de un palote de pie es su columna, la tabla de
+   un palote de pie es la del tumbado con los ejes cambiados. */
+function tablaOffsets(alo,atr){
+  var a=[], da, dt;
+  for(dt=-atr;dt<=atr;dt++) for(da=-alo;da<=alo;da++)
+    a.push({a:da, t:dt, coste:Math.abs(da)+11*Math.abs(dt)});
+  a.sort(function(p,q){ return p.coste-q.coste || Math.abs(p.t)-Math.abs(q.t) || p.a-q.a; });
+  return a;
+}
+var OFF_H=tablaOffsets(22,10), OFF_V=tablaOffsets(22,10);
+function hueco(lista,q,excepto){
+  var m=ocupadas(lista,excepto), tabla=q.v?OFF_V:OFF_H;
+  for(var k=0;k<tabla.length;k++){
+    var dc = q.v ? tabla[k].t : tabla[k].a;
+    var dr = q.v ? tabla[k].a : tabla[k].t;
+    var cand={n:q.n, x:q.x+dc, y:q.y+dr, v:q.v}, cs=celdas(cand), bien=true;
+    for(var i=0;i<cs.length;i++) if(m[K(cs[i].x,cs[i].y)]){ bien=false; break; }
+    if(bien) return {x:cand.x, y:cand.y};
+  }
+  return null;
+}
+function caja(){
+  if(!pieces.length) return null;
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  pieces.forEach(function(p){
+    x0=Math.min(x0,p.x); x1=Math.max(x1,p.x+ancho(p));
+    y0=Math.min(y0,p.y); y1=Math.max(y1,p.y+alto(p));
+  });
+  return {x0:x0*CELL, y0:y0*CELL, x1:x1*CELL, y1:y1*CELL};
+}
+/* Cuántos bloques hay en cada línea de trabajo. Los tumbados se agrupan por
+   fila y la cuenta se escribe al final de la fila; los de pie se agrupan por
+   columna y se escribe encima. Un tablero mezclado da las dos cosas, cada una
+   con su grupo, que es lo honesto: son dos cuentas distintas. */
+function totalesH(lista){
+  var m={};
+  lista.forEach(function(p){
+    if(p.v) return;
+    if(!m[p.y]) m[p.y]={t:0, x1:-1e9};
+    m[p.y].t+=p.n; m[p.y].x1=Math.max(m[p.y].x1, p.x+p.n);
+  });
+  return m;
+}
+function totalesV(lista){
+  var m={};
+  lista.forEach(function(p){
+    if(!p.v) return;
+    if(!m[p.x]) m[p.x]={t:0, y0:1e9};
+    m[p.x].t+=p.n; m[p.x].y0=Math.min(m[p.x].y0, p.y);
+  });
+  return m;
+}
+/* la salida de lo que hay puesto: la columna de la que arrancan los tumbados,
+   o la fila sobre la que se apoyan los de pie */
+function salidaDe(lista,vert){
+  if(!lista.length) return 0;
+  var s;
+  if(!vert){ s=1e9; lista.forEach(function(p){ s=Math.min(s,p.x); }); }
+  else     { s=-1e9; lista.forEach(function(p){ s=Math.max(s,p.y+alto(p)); }); }
+  return s;
+}
+
+/* =========================================================================
+   4. ACCIONES
+   ========================================================================= */
+function nueva(n,x,y,v){
+  var p={id:nid++, n:n, x:x, y:y, v:v?1:0}; pieces.push(p); return p;
+}
+function ponerEnHueco(n,x,y,v){
+  var h=hueco(pieces,{n:n,x:x,y:y,v:v?1:0},null);
+  if(!h){ flash('No hay hueco para ese palote'); return null; }
+  return nueva(n,h.x,h.y,v);
+}
+function moverSel(dx,dy){
+  if(sel==null){ flash('Selecciona antes un palote'); return false; }
+  var p=byId(sel); if(!p) return false;
+  if(!libre(pieces,{n:p.n,x:p.x+dx,y:p.y+dy,v:p.v},p.id)){ flash('Ahí ya hay otro palote'); return false; }
+  pushUndo(); p.x+=dx; p.y+=dy; draw(); return true;
+}
+function girarSel(){
+  if(sel==null){ flash('Selecciona antes un palote'); return false; }
+  var p=byId(sel); if(!p) return false;
+  var g=girado(p);
+  if(!libre(pieces,g,p.id)){
+    var h=hueco(pieces,g,p.id);
+    if(!h){ flash('No hay sitio para girarlo'); return false; }
+    g.x=h.x; g.y=h.y;
+  }
+  pushUndo(); p.x=g.x; p.y=g.y; p.v=g.v; draw(); return true;
+}
+/* Construir el palote encajando bloques, que es como se hace con los cubos de
+   verdad. Crece hacia donde está el numeral —a la derecha tumbado, arriba de
+   pie— y, si ese lado está tomado, por el otro. */
+function cambiaBloques(d){
+  if(sel==null){ flash('Selecciona antes un palote'); return false; }
+  var p=byId(sel); if(!p) return false;
+  var n=p.n+d;
+  if(n<1){ flash('Un palote no puede tener menos de un bloque'); return false; }
+  if(n>MAXN){ flash('Los palotes llegan hasta el '+MAXN); return false; }
+  if(d<0){
+    /* al encoger desaparece el bloque del numeral y el de inicio se queda */
+    pushUndo(); p.n=n; if(p.v) p.y+=1; draw(); return true;
+  }
+  var haciaNumeral = p.v ? {n:n, x:p.x, y:p.y-1, v:1} : {n:n, x:p.x, y:p.y, v:0};
+  var haciaInicio  = p.v ? {n:n, x:p.x, y:p.y,   v:1} : {n:n, x:p.x-1, y:p.y, v:0};
+  if(libre(pieces,haciaNumeral,p.id)){ pushUndo(); p.n=n; p.x=haciaNumeral.x; p.y=haciaNumeral.y; draw(); return true; }
+  if(libre(pieces,haciaInicio,p.id)){  pushUndo(); p.n=n; p.x=haciaInicio.x;  p.y=haciaInicio.y;  draw(); return true; }
+  flash('No cabe otro bloque: está encajonado');
+  return false;
+}
+function duplicar(){
+  if(sel==null){ flash('Selecciona antes un palote'); return; }
+  var p=byId(sel); if(!p) return;
+  /* el duplicado sale a la línea de al lado: debajo si está tumbado, al lado
+     si está de pie */
+  var dx=p.v?1:0, dy=p.v?0:1;
+  var h=hueco(pieces,{n:p.n,x:p.x+dx,y:p.y+dy,v:p.v},null);
+  if(!h){ flash('No hay hueco para el duplicado'); return; }
+  pushUndo();
+  var q=nueva(p.n,h.x,h.y,p.v); sel=q.id; draw();
+}
+function quitarSel(){
+  if(sel==null) return;
+  pushUndo();
+  pieces=pieces.filter(function(p){ return p.id!==sel; });
+  sel=null; draw();
+}
+/* La escalera arranca del rincón de origen: tumbada, los palotes salen del
+   x=0 hacia la derecha; de pie, se apoyan en y=0 y suben. Así la línea de
+   salida es la misma en los dos casos y el listón vale para las dos. */
+function colocaEscalera(lista,vert){
+  lista.forEach(function(p,i){
+    p.v=vert?1:0;
+    if(vert){ p.x=i; p.y=-p.n; }
+    else    { p.x=0; p.y=i; }
+  });
+}
+function sacarLosDiez(){
+  pushUndo();
+  for(var n=1;n<=MAXN;n++){
+    var q = opt.vert ? {n:n, x:n-1, y:-n, v:1} : {n:n, x:0, y:n-1, v:0};
+    var h=hueco(pieces,q,null);
+    if(h) nueva(n,h.x,h.y,opt.vert);
+  }
+  sel=null; fitView();
+}
+function escalera(){
+  if(!pieces.length){ flash('No hay palotes que ordenar'); return; }
+  pushUndo();
+  var orden=pieces.slice().sort(function(a,b){ return a.n-b.n || a.id-b.id; });
+  colocaEscalera(orden,opt.vert);
+  pieces=orden; sel=null; fitView();
+}
+/* Repartirlos sin orden es lo que pide el juego de buscar un número concreto:
+   con la escalera hecha, encontrarlo no tiene ninguna gracia. */
+function desordenar(){
+  if(!pieces.length){ flash('No hay palotes que desordenar'); return; }
+  pushUndo();
+  var lista=pieces.slice();
+  for(var i=lista.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1)), t=lista[i]; lista[i]=lista[j]; lista[j]=t;
+  }
+  var puestos=[];
+  lista.forEach(function(p){
+    var x,y;
+    if(p.v){ x=Math.floor(Math.random()*14); y=-(1+Math.floor(Math.random()*12))-p.n+1; }
+    else   { x=Math.floor(Math.random()*14)-1; y=Math.floor(Math.random()*12); }
+    var h=hueco(puestos,{n:p.n,x:x,y:y,v:p.v},null);
+    if(!h) h={x:x, y:y};
+    p.x=h.x; p.y=h.y; puestos.push(p);
+  });
+  pieces=puestos; sel=null; fitView();
+}
+function pegarListon(){
+  if(!pieces.length){ flash('No hay palotes a los que pegar el listón'); return; }
+  liston.s=salidaDe(pieces,opt.vert);
+  flash('Listón pegado a la salida de los palotes'); draw();
+}
+
+/* =========================================================================
+   5. DIBUJO
+   ========================================================================= */
+function w2s(p){ return {x:p.x*view.z+view.x, y:p.y*view.z+view.y}; }
+function s2w(p){ return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z}; }
+function celda(wp){ return {x:Math.floor(wp.x/CELL), y:Math.floor(wp.y/CELL)}; }
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  /* la bandeja solo se rehace si de verdad le ha cambiado la unidad: rehacerla
+     en cada evento de resize tiraría los escuchadores de los diez botones */
+  if(unidadBandeja()!==uBandeja) pintaBandeja();
+  draw();
+}
+function shade(hex,f){
+  var h=(hex||'#888888').replace('#',''); if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+  var r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
+  r=Math.round(r+(f>0?(255-r)*f:r*f)); g=Math.round(g+(f>0?(255-g)*f:g*f)); b=Math.round(b+(f>0?(255-b)*f:b*f));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function lum(hex){
+  var h=(hex||'#888888').replace('#','');
+  return 0.299*parseInt(h.substr(0,2),16)+0.587*parseInt(h.substr(2,2),16)+0.114*parseInt(h.substr(4,2),16);
+}
+function colorDe(n){ return paleta(opt.pal).colores[n-1]; }
+function tintaSobre(col){ return lum(col)>140 ? '#1f2329' : '#ffffff'; }
+
+function roundRect(c,x,y,w,h,r){
+  r=Math.min(r, w/2, h/2);
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y);
+  c.closePath();
+}
+function drawGrid(c,W,H){
+  var s=CELL*view.z; if(s<10) return;
+  var x0=((view.x%s)+s)%s, y0=((view.y%s)+s)%s;
+  c.save(); c.strokeStyle='#e6e9ee'; c.lineWidth=1; c.beginPath();
+  for(var x=x0;x<W;x+=s){ c.moveTo(Math.round(x)+.5,0); c.lineTo(Math.round(x)+.5,H); }
+  for(var y=y0;y<H;y+=s){ c.moveTo(0,Math.round(y)+.5); c.lineTo(W,Math.round(y)+.5); }
+  c.stroke(); c.restore();
+}
+function drawPalote(c,p,seleccionada){
+  var col=colorDe(p.n);
+  var x=p.x*CELL, y=p.y*CELL, an=ancho(p)*CELL, al=alto(p)*CELL, i;
+  if(!isFinite(x)||!isFinite(y)||!isFinite(an)||!isFinite(al)) return;
+  c.save();
+  roundRect(c, x+1, y+1, an-2, al-2, 6);
+  c.fillStyle=col; c.fill();
+  /* las separaciones entre bloques: sin ellas esto sería una regleta */
+  if(p.n>1){
+    c.beginPath();
+    for(i=1;i<p.n;i++){
+      if(p.v){ c.moveTo(x+3, y+i*CELL); c.lineTo(x+an-3, y+i*CELL); }
+      else   { c.moveTo(x+i*CELL, y+3); c.lineTo(x+i*CELL, y+al-3); }
+    }
+    c.lineWidth=1.7; c.strokeStyle=shade(col,-0.30); c.stroke();
+  }
+  roundRect(c, x+1, y+1, an-2, al-2, 6);
+  c.lineWidth=2; c.strokeStyle=shade(col,-0.42); c.stroke();
+  /* numerales */
+  if(opt.num){
+    c.fillStyle=tintaSobre(col);
+    c.textAlign='center'; c.textBaseline='middle';
+    if(opt.num===2){
+      var cn=celdaNumeral(p);
+      c.font='700 '+Math.round(CELL*0.56)+'px -apple-system,Segoe UI,Roboto,sans-serif';
+      c.fillText(String(p.n), cn.x*CELL+CELL/2, cn.y*CELL+CELL/2+1);
+    }else{
+      c.font='700 '+Math.round(CELL*0.36)+'px -apple-system,Segoe UI,Roboto,sans-serif';
+      for(i=1;i<=p.n;i++){
+        var b=bloque(p,i);
+        c.fillText(String(i), b.x*CELL+CELL/2, b.y*CELL+CELL/2+1);
+      }
+    }
+  }
+  c.restore();
+  if(seleccionada){
+    c.save(); c.setLineDash([6/view.z,4/view.z]); c.lineWidth=2/view.z; c.strokeStyle='#2f62a8';
+    c.strokeRect(x-5, y-5, an+10, al+10); c.restore();
+  }
+}
+/* El listón: la longitud que hay que alcanzar. Tumbado es una franja vertical
+   que arranca de su línea de salida; de pie, una franja horizontal que se
+   apoya en ella y sube. Se dibuja en coordenadas de pantalla para que ocupe
+   todo el alto (o el ancho) del tablero por mucho que se desplace la vista. */
+function bordesListon(){
+  if(!(liston.n>0)) return null;
+  if(!opt.vert) return [liston.s*CELL*view.z+view.x, (liston.s+liston.n)*CELL*view.z+view.x];
+  return [liston.s*CELL*view.z+view.y, (liston.s-liston.n)*CELL*view.z+view.y];
+}
+function drawListon(c,W,H){
+  var b=bordesListon(); if(!b) return;
+  if(!isFinite(b[0])||!isFinite(b[1])) return;
+  var lo=Math.min(b[0],b[1]), hi=Math.max(b[0],b[1]);
+  c.save();
+  c.fillStyle='rgba(239,139,37,.075)';
+  if(!opt.vert) c.fillRect(lo,0,hi-lo,H); else c.fillRect(0,lo,W,hi-lo);
+  c.setLineDash([7,5]); c.lineWidth=1.6; c.strokeStyle='rgba(206,112,20,.85)';
+  c.beginPath();
+  if(!opt.vert){
+    c.moveTo(Math.round(b[0])+.5,0); c.lineTo(Math.round(b[0])+.5,H);
+    c.moveTo(Math.round(b[1])-.5,0); c.lineTo(Math.round(b[1])-.5,H);
+  }else{
+    c.moveTo(0,Math.round(b[0])-.5); c.lineTo(W,Math.round(b[0])-.5);
+    c.moveTo(0,Math.round(b[1])+.5); c.lineTo(W,Math.round(b[1])+.5);
+  }
+  c.stroke(); c.setLineDash([]);
+  /* la etiqueta, junto al borde lejano: es el número que hay que alcanzar */
+  var tw=28, th=22, tx, ty;
+  if(!opt.vert){ tx=Math.min(W-tw-6, Math.max(6, b[1]-tw-6)); ty=6; }
+  else         { tx=6; ty=Math.min(H-th-6, Math.max(6, b[1]+6)); }
+  roundRect(c, tx, ty, tw, th, 5);
+  c.fillStyle='rgba(206,112,20,.92)'; c.fill();
+  c.fillStyle='#fff'; c.font='700 13px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.textAlign='center'; c.textBaseline='middle';
+  c.fillText(String(liston.n), tx+tw/2, ty+th/2);
+  c.restore();
+}
+function escena(c,W,H,paraExportar){
+  c.save();
+  if(opt.grid && !paraExportar) drawGrid(c,W,H);
+  drawListon(c,W,H);
+  c.translate(view.x,view.y); c.scale(view.z,view.z);
+  pieces.forEach(function(p){ drawPalote(c,p,!paraExportar && p.id===sel); });
+  /* el fantasma enseña dónde va a encajar el palote que se está arrastrando */
+  if(drag && drag.mode==='move' && drag.landing && !paraExportar){
+    var p2=byId(drag.id);
+    if(p2 && (drag.landing.x!==p2.x || drag.landing.y!==p2.y)){
+      c.save(); c.setLineDash([5,4]); c.lineWidth=2; c.strokeStyle='#2f62a8';
+      c.strokeRect(drag.landing.x*CELL+1, drag.landing.y*CELL+1,
+                   ancho(p2)*CELL-2, alto(p2)*CELL-2);
+      c.restore();
+    }
+  }
+  /* Los bloques de cada línea: es la respuesta a la suma que se esté montando,
+     así que solo se pinta si está encendida la casilla de Comprobaciones. */
+  if(opt.sumas){
+    c.save();
+    c.font='700 '+Math.round(CELL*0.42)+'px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.textBaseline='middle';
+    function pastilla(tx,px,py,centrada){
+      var an=c.measureText(tx).width+12;
+      /* fondo opaco primero: si no, la raya del listón atraviesa la pastilla */
+      roundRect(c, px-(centrada?an/2:5), py-12, an, 24, 6);
+      c.fillStyle='#fff'; c.fill();
+      c.fillStyle='rgba(47,98,168,.10)'; c.fill();
+      c.fillStyle='#2f62a8'; c.textAlign=centrada?'center':'left';
+      c.fillText(tx, centrada?px:px+1, py);
+    }
+    var mh=totalesH(pieces);
+    Object.keys(mh).forEach(function(k){
+      pastilla('= '+mh[k].t, mh[k].x1*CELL+11, (+k)*CELL+CELL/2+1, false);
+    });
+    var mv=totalesV(pieces);
+    Object.keys(mv).forEach(function(k){
+      pastilla('= '+mv[k].t, (+k)*CELL+CELL/2, mv[k].y0*CELL-16, true);
+    });
+    c.restore();
+  }
+  c.restore();
+}
+/* --- el tirador de giro, junto al palote seleccionado --------------------
+   Se dibuja en coordenadas de pantalla y FUERA de escena(), así que no sale en
+   el PNG que se descarga: es un mando, no parte del material. Aquí solo hay uno,
+   porque un palote solo tiene dos posturas: girar es de 90 en 90 y no hay
+   sentido horario ni antihorario que distinguir. */
+function cajaPantalla(p){
+  return {x0:p.x*CELL*view.z+view.x,
+          y0:p.y*CELL*view.z+view.y,
+          x1:(p.x+ancho(p))*CELL*view.z+view.x,
+          y1:(p.y+alto(p))*CELL*view.z+view.y};
+}
+function tirador(){
+  if(sel==null || tool!=='move') return null;
+  var p=byId(sel); if(!p) return null;
+  var W=cv.width/(window.devicePixelRatio||1);
+  var c=cajaPantalla(p), R=14;
+  var x=c.x1+R+12;
+  if(x+R>W-6) x=c.x0-R-12;          // si no cabe a la derecha, al otro lado
+  /* La flecha señala hacia dónde va a girar de verdad. El palote pivota sobre el
+     bloque donde empieza la cuenta, así que uno tumbado se levanta llevando su
+     punta de las 3 a las 12 —a la izquierda— y uno de pie se tumba al contrario. */
+  return {x:x, y:(c.y0+c.y1)/2, r:R, s:(p.v?'↻':'↺')};
+}
+function dibujaTirador(c){
+  var t=tirador(); if(!t) return;
+  if(!isFinite(t.x)||!isFinite(t.y)) return;
+  c.save();
+  c.beginPath(); c.arc(t.x,t.y,t.r,0,6.2832);
+  c.fillStyle='#fff'; c.fill();
+  c.lineWidth=1.8; c.strokeStyle='#2f62a8'; c.stroke();
+  c.fillStyle='#2f62a8'; c.font='700 17px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.textAlign='center'; c.textBaseline='middle';
+  c.fillText(t.s, t.x, t.y+1);
+  c.restore();
+}
+function enTirador(sp){
+  var t=tirador(); if(!t) return false;
+  return Math.hypot(sp.x-t.x, sp.y-t.y) <= t.r+3;
+}
+function draw(){
+  var W=cv.width/(window.devicePixelRatio||1), H=cv.height/(window.devicePixelRatio||1);
+  ctx.clearRect(0,0,W,H); ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,H);
+  escena(ctx,W,H,false);
+  dibujaTirador(ctx);
+  updateUI();
+}
+
+/* =========================================================================
+   6. INTERACCIÓN
+   ========================================================================= */
+function evPos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function paloteEn(g){
+  for(var i=pieces.length-1;i>=0;i--){
+    var p=pieces[i];
+    if(p.v){ if(p.x===g.x && g.y>=p.y && g.y<p.y+p.n) return p; }
+    else   { if(p.y===g.y && g.x>=p.x && g.x<p.x+p.n) return p; }
+  }
+  return null;
+}
+/* ¿el puntero está sobre una de las rayas del listón? */
+function enBordeListon(sp){
+  var b=bordesListon(); if(!b) return false;
+  var v = opt.vert ? sp.y : sp.x;
+  return Math.abs(v-b[0])<=9 || Math.abs(v-b[1])<=9;
+}
+function alFrente(id){
+  var i=-1; for(var k=0;k<pieces.length;k++) if(pieces[k].id===id){ i=k; break; }
+  if(i>=0) pieces.push(pieces.splice(i,1)[0]);
+}
+function onDown(e){
+  /* Capturar el puntero es una comodidad —que el arrastre siga funcionando si el
+     ratón se sale del lienzo—, no un requisito. Y lanza NotFoundError si el
+     pointerId no es de un puntero activo, que es justo lo que pasa con un evento
+     sintético: sin el try, un clic simulado mataba onDown en su primera línea y
+     el manipulativo se quedaba sin poder probarse con el ratón. */
+  try { cv.setPointerCapture && cv.setPointerCapture(e.pointerId); } catch(err){}
+  var sp=evPos(e), g=celda(s2w(sp)), p=paloteEn(g);
+  /* el tirador se comprueba ANTES que los palotes: cae por fuera del palote
+     seleccionado, pero puede quedar encima de otro y ese se llevaría el clic */
+  if(tool==='move' && enTirador(sp)){ girarSel(); return; }
+  if(tool==='del'){
+    if(p){ pushUndo(); pieces=pieces.filter(function(q){ return q!==p; }); if(sel===p.id) sel=null; }
+    draw(); return;
+  }
+  if(p){
+    sel=p.id; alFrente(p.id);
+    drag={mode:'move', id:p.id, from:g, base:{x:p.x,y:p.y}, movido:false, landing:{x:p.x,y:p.y}};
+    draw(); return;
+  }
+  /* el listón se arrastra por cualquiera de sus dos rayas */
+  if(enBordeListon(sp)){
+    var w=s2w(sp);
+    sel=null;
+    drag={mode:'liston', s0:liston.s, w0:(opt.vert?w.y:w.x), movido:false};
+    draw(); return;
+  }
+  sel=null;
+  drag={mode:'pan', sp:sp, v0:{x:view.x,y:view.y}};
+  draw();
+}
+function onMove(e){
+  var sp=evPos(e);
+  if(!drag){
+    /* el cursor avisa de que la raya del listón se puede coger */
+    if(tool==='move'){
+      var g0=celda(s2w(sp));
+      if(enTirador(sp)) cv.style.cursor='pointer';
+      else cv.style.cursor = (!paloteEn(g0) && enBordeListon(sp))
+        ? (opt.vert?'row-resize':'col-resize') : 'default';
+    }
+    return;
+  }
+  if(drag.mode==='pan'){ view.x=drag.v0.x+(sp.x-drag.sp.x); view.y=drag.v0.y+(sp.y-drag.sp.y); draw(); return; }
+  if(drag.mode==='liston'){
+    var w=s2w(sp), d=Math.round(((opt.vert?w.y:w.x)-drag.w0)/CELL);
+    if(!drag.movido && d){ pushUndo(); drag.movido=true; }
+    liston.s=drag.s0+d; draw(); return;
+  }
+  if(drag.mode==='move'){
+    var p=byId(drag.id); if(!p) return;
+    var g=celda(s2w(sp));
+    var dx=g.x-drag.from.x, dy=g.y-drag.from.y;
+    if(!drag.movido && (dx||dy)){ pushUndo(); drag.movido=true; }
+    p.x=drag.base.x+dx; p.y=drag.base.y+dy;
+    drag.landing=hueco(pieces,p,p.id)||{x:p.x,y:p.y};
+    draw(); return;
+  }
+}
+function onUp(){
+  if(drag && drag.mode==='move'){
+    var p=byId(drag.id);
+    if(p){
+      var h=hueco(pieces,p,p.id);
+      if(h){ p.x=h.x; p.y=h.y; }
+    }
+  }
+  drag=null; draw();
+}
+stage.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var sp=evPos(e), antes=s2w(sp);
+  view.z=Math.max(0.3,Math.min(3.5,view.z*Math.exp(-e.deltaY*0.0015)));
+  var desp=s2w(sp);
+  view.x+=(desp.x-antes.x)*view.z; view.y+=(desp.y-antes.y)*view.z;
+  draw();
+},{passive:false});
+cv.addEventListener('pointerdown',onDown);
+window.addEventListener('pointermove',onMove);
+window.addEventListener('pointerup',onUp);
+window.addEventListener('pointercancel',onUp);
+
+window.addEventListener('keydown',function(e){
+  var t=(e.target&&e.target.tagName)||''; if(t==='INPUT'||t==='SELECT') return;
+  var k=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey)&&k==='z'){ doUndo(); e.preventDefault(); return; }
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(k==='escape'){ sel=null; draw(); }
+  else if(e.key==='Delete'||e.key==='Backspace'){ if(sel!=null){ quitarSel(); e.preventDefault(); } }
+  else if(k==='r'||k==='g'){ girarSel(); }
+  else if(k==='d'){ duplicar(); }
+  else if(e.key==='+'||e.key==='='){ cambiaBloques(1); }
+  else if(e.key==='-'){ cambiaBloques(-1); }
+  else if(k==='1') setTool('move');
+  else if(k==='2') setTool('del');
+  else if(k==='h') setOri(0);
+  else if(k==='v') setOri(1);
+  else if(k==='arrowleft'){ moverSel(-1,0); e.preventDefault(); }
+  else if(k==='arrowright'){ moverSel(1,0); e.preventDefault(); }
+  else if(k==='arrowup'){ moverSel(0,-1); e.preventDefault(); }
+  else if(k==='arrowdown'){ moverSel(0,1); e.preventDefault(); }
+});
+
+/* =========================================================================
+   7. INTERFAZ
+   ========================================================================= */
+/* La bandeja tiene que caber en su columna sin barra de desplazamiento, y el
+   palote del 10 es diez veces la unidad. Como todos se dibujan con la MISMA
+   unidad, la escalera de la bandeja sigue siendo proporcional; encoger solo el
+   del 10 con un max-width lo dejaría del mismo largo que el del 9. Los palotes
+   de la bandeja van siempre tumbados, aunque se esté trabajando de pie: la
+   bandeja es la caja del material, y una caja de diez palotes de pie sería una
+   columna de medio metro. */
+function unidadBandeja(){
+  var w=document.getElementById('palotes').clientWidth||140;
+  return Math.max(6, Math.min(11, Math.floor((w-34)/MAXN)));
+}
+var uBandeja=0;
+function miniSVG(n,u){
+  var col=colorDe(n), w=n*u+3, h=u+3;
+  var s='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">';
+  s+='<rect x="1.5" y="1.5" width="'+(n*u)+'" height="'+u+'" rx="2.5" fill="'+col+
+     '" stroke="'+shade(col,-0.42)+'" stroke-width="1.3"/>';
+  for(var i=1;i<n;i++)
+    s+='<line x1="'+(1.5+i*u)+'" y1="3" x2="'+(1.5+i*u)+'" y2="'+(u)+'" stroke="'+
+       shade(col,-0.30)+'" stroke-width="1.1"/>';
+  return s+'</svg>';
+}
+function pintaBandeja(){
+  var cont=document.getElementById('palotes'), html='', u=unidadBandeja();
+  uBandeja=u;
+  for(var n=1;n<=MAXN;n++)
+    html+='<div class="pl'+(opt.num?'':' mudo')+'" data-n="'+n+'" title="Palote del '+n+'">'+
+          miniSVG(n,u)+'<span>'+n+'</span></div>';
+  cont.innerHTML=html;
+  cont.querySelectorAll('.pl').forEach(function(el){
+    el.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      var n=parseInt(el.getAttribute('data-n'),10);
+      var r=stage.getBoundingClientRect(), sp=evPos(e);
+      var dentro = sp.x>0 && sp.y>0 && sp.x<r.width && sp.y<r.height;
+      var g=celda(s2w(dentro ? sp : {x:r.width/2, y:r.height/2}));
+      /* de pie, el palote se levanta desde la casilla donde se ha soltado:
+         el bloque donde empieza la cuenta es el de abajo */
+      var y0 = opt.vert ? g.y-n+1 : g.y;
+      pushUndo();
+      var p=ponerEnHueco(n,g.x,y0,opt.vert);
+      if(!p){ undoStack.pop(); return; }
+      sel=p.id; setTool('move');
+      drag={mode:'move', id:p.id, from:{x:p.x,y:p.y}, base:{x:p.x,y:p.y}, movido:true, landing:{x:p.x,y:p.y}};
+      draw();
+    });
+  });
+}
+function setTool(t){
+  tool=t;
+  document.querySelectorAll('[data-tool]').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-tool')===t); });
+  cv.style.cursor=(t==='move')?'default':'crosshair';
+  draw();
+}
+document.querySelectorAll('[data-tool]').forEach(function(b){
+  b.addEventListener('click',function(){ setTool(b.getAttribute('data-tool')); });
+});
+function setOri(v){
+  opt.vert=v?1:0;
+  document.querySelectorAll('[data-ori]').forEach(function(b){
+    b.classList.toggle('on', (b.getAttribute('data-ori')==='v')===!!opt.vert); });
+  draw();
+}
+document.querySelectorAll('[data-ori]').forEach(function(b){
+  b.addEventListener('click',function(){ setOri(b.getAttribute('data-ori')==='v'); });
+});
+document.getElementById('girar').addEventListener('click',girarSel);
+document.getElementById('mas').addEventListener('click',function(){ cambiaBloques(1); });
+document.getElementById('menos').addEventListener('click',function(){ cambiaBloques(-1); });
+document.getElementById('dup').addEventListener('click',duplicar);
+document.getElementById('borrar').addEventListener('click',quitarSel);
+document.getElementById('diez').addEventListener('click',sacarLosDiez);
+document.getElementById('escalera').addEventListener('click',escalera);
+document.getElementById('revolver').addEventListener('click',desordenar);
+document.getElementById('undo').addEventListener('click',doUndo);
+document.getElementById('numsel').addEventListener('change',function(e){
+  opt.num=parseInt(e.target.value,10); pintaBandeja(); draw(); });
+/* las opciones del selector salen de PALETAS, para que el orden viva en un solo
+   sitio y no se pueda desincronizar del que ve el usuario */
+(function(){
+  var s=document.getElementById('palsel'), html='';
+  PALETAS.forEach(function(p){ html+='<option value="'+p.id+'">'+p.nombre+'</option>'; });
+  s.innerHTML=html; s.value=opt.pal;
+})();
+document.getElementById('palsel').addEventListener('change',function(e){
+  opt.pal=paleta(e.target.value).id; pintaBandeja(); draw(); });
+document.getElementById('avz').addEventListener('change',function(e){
+  document.getElementById('avanzado').classList.toggle('show', e.target.checked); draw(); });
+document.getElementById('chksumas').addEventListener('change',function(e){ opt.sumas=e.target.checked?1:0; draw(); });
+document.getElementById('showgrid').addEventListener('change',function(e){ opt.grid=e.target.checked?1:0; draw(); });
+document.getElementById('nliston').addEventListener('input',function(e){
+  var v=parseInt(e.target.value,10);
+  liston.n=(isFinite(v)&&v>0)?Math.min(MAXN,v):0; draw(); });
+document.getElementById('dadoListon').addEventListener('click',function(){
+  liston.n=1+Math.floor(Math.random()*MAXN); sincronizaListon(); draw(); });
+document.getElementById('pegarListon').addEventListener('click',pegarListon);
+function sincronizaListon(){ document.getElementById('nliston').value=liston.n; }
+document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.2); });
+document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.2); });
+function zoomAt(f){
+  var r=stage.getBoundingClientRect(), c={x:r.width/2,y:r.height/2};
+  var b=s2w(c); view.z=Math.max(0.3,Math.min(3.5,view.z*f)); var a=s2w(c);
+  view.x+=(a.x-b.x)*view.z; view.y+=(a.y-b.y)*view.z; draw();
+}
+document.getElementById('fit').addEventListener('click',fitView);
+function fitView(){
+  var r=stage.getBoundingClientRect(), b=caja();
+  if(!r.width){ draw(); return; }
+  if(!b){ view={x:70, y:opt.vert?r.height-70:40, z:1}; draw(); return; }
+  var m=54, z=Math.min((r.width-2*m)/Math.max(1,b.x1-b.x0), (r.height-2*m)/Math.max(1,b.y1-b.y0));
+  view.z=Math.max(0.3,Math.min(1.8,z));
+  view.x=r.width/2-((b.x0+b.x1)/2)*view.z; view.y=r.height/2-((b.y0+b.y1)/2)*view.z;
+  draw();
+}
+document.getElementById('clear').addEventListener('click',function(){
+  if(!pieces.length) return; pushUndo(); pieces=[]; sel=null; draw(); });
+document.getElementById('png').addEventListener('click',function(){
+  var b=caja(); if(!b){ flash('No hay nada que exportar'); return; }
+  var m=24, sc=2, W=b.x1-b.x0+2*m, H=b.y1-b.y0+2*m;
+  var oc=document.createElement('canvas'); oc.width=W*sc; oc.height=H*sc;
+  var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
+  var g={x:view.x,y:view.y,z:view.z};
+  view.x=-b.x0+m; view.y=-b.y0+m; view.z=1;
+  escena(o,W,H,true);
+  view=g; draw();
+  var a=document.createElement('a'); a.download='palotes-numericos.png'; a.href=oc.toDataURL('image/png'); a.click();
+});
+
+/* --- guardar y abrir ----------------------------------------------------- */
+/* El archivo guarda el TABLERO —los palotes, el listón y si se trabaja de pie,
+   que es lo que le da sentido al listón—, no las opciones de presentación
+   (paleta, numerales, retícula, comprobaciones). Al abrirlo, quien lo abra
+   sigue viéndolo con sus preferencias. */
+function datos(){
+  return {formato:'palotes-numericos', version:2, vertical:opt.vert,
+          liston:{n:liston.n, s:liston.s},
+          piezas:pieces.map(function(p){ return {n:p.n, x:p.x, y:p.y, v:p.v}; })};
+}
+document.getElementById('save').addEventListener('click',function(){
+  if(!pieces.length){ flash('No hay palotes que guardar'); return; }
+  var blob=new Blob([JSON.stringify(datos(),null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download='palotes-numericos.json'; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+document.getElementById('add').addEventListener('click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leer(f); });
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }catch(err){ flash('No he podido leer ese archivo'); } };
+  r.readAsText(f);
+}
+function entero(v){ return typeof v==='number' && isFinite(v) && v===Math.round(v); }
+/* No fiarse del archivo: se valida palote a palote y se rechaza entero si algo
+   no cuadra, en vez de dejar entrar un 0, un 11 o un 3,5. */
+function limpiaPiezas(lista){
+  if(!lista || !lista.length || typeof lista.length!=='number') return null;
+  var res=[];
+  for(var i=0;i<lista.length;i++){
+    var q=lista[i]; if(!q || typeof q!=='object') return null;
+    if(!entero(q.n) || !entero(q.x) || !entero(q.y)) return null;
+    if(q.n<1 || q.n>MAXN) return null;
+    if(q.v!==undefined && q.v!==0 && q.v!==1 && q.v!==true && q.v!==false) return null;
+    res.push({n:q.n, x:q.x, y:q.y, v:(q.v===1||q.v===true)?1:0});
+  }
+  return res;
+}
+function limpiaListon(l){
+  if(l===undefined || l===null) return {n:0, s:0};
+  if(typeof l!=='object') return null;
+  if(!entero(l.n) || !entero(l.s)) return null;
+  if(l.n<0 || l.n>MAXN) return null;
+  return {n:l.n, s:l.s};
+}
+function loadData(d){
+  var limpias=limpiaPiezas(d && (d.piezas||d.pieces));
+  if(!limpias){ flash('Ese archivo no tiene palotes que yo entienda'); return false; }
+  var lst=limpiaListon(d && d.liston);
+  if(!lst){ flash('Ese archivo tiene el listón mal puesto'); return false; }
+  pushUndo();
+  var base = (importMode==='add') ? pieces.slice() : [];
+  if(importMode==='add' && base.length){
+    /* lo añadido se aparta para no pisar lo que había: hacia abajo si está
+       tumbado, hacia la derecha si está de pie */
+    var vertNuevo = limpias.length && limpias[0].v;
+    if(!vertNuevo){
+      var maxy=-1e9; base.forEach(function(p){ maxy=Math.max(maxy,p.y+alto(p)); });
+      var miny=1e9;  limpias.forEach(function(q){ miny=Math.min(miny,q.y); });
+      var dy=maxy+1-miny;
+      limpias.forEach(function(q){ q.y+=dy; });
+    }else{
+      var maxx=-1e9; base.forEach(function(p){ maxx=Math.max(maxx,p.x+ancho(p)); });
+      var minx=1e9;  limpias.forEach(function(q){ minx=Math.min(minx,q.x); });
+      var dx=maxx+1-minx;
+      limpias.forEach(function(q){ q.x+=dx; });
+    }
+  }
+  var res=base;
+  limpias.forEach(function(q){
+    var h = libre(res,q,null) ? {x:q.x,y:q.y} : hueco(res,q,null);
+    if(!h) h={x:q.x, y:q.y};
+    res.push({id:nid++, n:q.n, x:h.x, y:h.y, v:q.v});
+  });
+  pieces=res; sel=null;
+  if(importMode==='replace'){
+    liston=lst; sincronizaListon();
+    if(d && (d.vertical===0 || d.vertical===1)) setOri(d.vertical);
+  }
+  fitView();
+  flash(limpias.length+(limpias.length===1?' palote cargado':' palotes cargados'));
+  return true;
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); }); });
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); }); });
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='add'; leer(f); }
+});
+
+document.getElementById('help').addEventListener('click',function(){ infoEl.classList.toggle('show'); });
+infoEl.innerHTML=
+ '<b>Palotes numéricos</b> · <i>Stick numbers</i><br>'+
+ 'Cada palote es una barra hecha de bloques encajables: el del 7 son siete bloques pegados, y el '+
+ 'numeral 7 va escrito en el <b>último</b>, que es el que se dice al acabar de contar.'+
+ '<div style="margin-top:7px">Se parecen a las regletas Cuisenaire, y pueden llevar sus mismos '+
+ 'colores, pero no son lo mismo: una regleta es una barra lisa donde el número está escondido en la '+
+ 'longitud y el color, y aquí los bloques están a la vista y se pueden contar. Es un modelo de '+
+ 'cantidad <b>discreta</b>, como un puñado de canicas, no de cantidad continua.</div>'+
+ '<div style="margin-top:7px"><b>Herramientas</b><br>'+
+ 'Arrastra un palote de la columna izquierda al tablero. Los palotes se encajan unos con otros y '+
+ 'nunca se montan encima: al soltar uno, se pega solo al hueco libre más cercano de su línea.<br>'+
+ '<b>⟲ Girar</b> lo pone de pie, o lo vuelve a tumbar; también sale un botón redondo al lado del '+
+ 'palote seleccionado, para girarlo con el ratón sin salir del tablero, y su flecha indica hacia '+
+ 'dónde va a girar. De pie se cuenta de abajo '+
+ 'arriba, como al levantar una torre de cubos, así que el numeral queda arriba. Gira sobre su propio '+
+ 'extremo: un palote apoyado en una línea sigue apoyado en ella después de girarlo.<br>'+
+ '<b>↔ ↕</b> deciden si los palotes que se saquen a partir de ahora salen tumbados o de pie, y en '+
+ 'qué sentido trabajan la escalera y el listón.<br>'+
+ '<b>＋ bloque</b> y <b>− bloque</b> construyen el palote encajando o quitando cubos, igual que con '+
+ 'el material de verdad.<br>'+
+ '<b>Nº</b> decide si el número se escribe en el último bloque, en todos (para contar) o en ninguno. '+
+ 'Sin números, la bandeja de la izquierda también se calla.<br>'+
+ '<b>Listón</b> marca en el tablero la longitud que hay que alcanzar. Se arrastra por cualquiera de '+
+ 'sus dos rayas, <b>⇤ Pegar</b> lo lleva a la salida de los palotes que haya, y <b>🎲</b> lo pone en '+
+ 'un número al azar.<br>'+
+ '<b>Sacar los diez</b>, <b>≡ Escalera</b> y <b>⁂ Desordenar</b> preparan el tablero.<br>'+
+ '<b>⤓ Guardar</b>, <b>⤒ Abrir</b> y <b>＋</b> conservan y recuperan lo montado.</div>'+
+ '<div style="margin-top:7px"><b>Los colores</b><br>'+
+ 'El color no es parte de la matemática, y por eso se puede cambiar en la columna de la izquierda. '+
+ 'Las cuatro primeras —<b>vivos</b>, <b>pastel</b>, <b>intensos</b> y <b>grises</b>— dan diez colores '+
+ 'distintos, uno por número, y solo se diferencian en el aire que tienen: se elige la que mejor se lea '+
+ 'en la pantalla o el proyector de cada clase. La de grises además vale para imprimir en blanco y '+
+ 'negro.<br>'+
+ '<b>Regletas</b> son los colores de las Cuisenaire: puestos así, al comparar los dos materiales lo '+
+ 'único que queda a la vista es lo que importa.<br>'+
+ '<b>Un solo color</b> deja los diez palotes idénticos, y entonces solo queda contar. '+
+ '<b>Pares e impares</b> codifica una propiedad en el color: eligiéndola se está dando esa '+
+ 'información, así que vale para repasar y no para descubrir.</div>'+
+ '<div style="margin-top:7px">En <b>Comprobaciones</b> está la opción de escribir cuántos bloques hay '+
+ 'en cada fila o columna. Viene apagada, y conviene dejarla así mientras esa cuenta sea justo lo que '+
+ 'hay que averiguar.</div>'+
+ '<div style="margin-top:7px;color:#8a919c">Atajos: 1 y 2 herramientas · H y V orientación · '+
+ 'R girar · flechas mover · + y − bloques · D duplicar · Supr quitar · Ctrl+Z deshacer · '+
+ 'rueda para el zoom.</div>'+
+ '<div class="ref"><b>De dónde sale el material</b><br>'+
+ 'Baroody, A. J. (1993). Introducing number and arithmetic concepts with number sticks. '+
+ '<i>Teaching Exceptional Children, 26</i>(1), 7–11.<br>'+
+ 'Baroody, A. J. (1989). One point of view: Manipulatives don’t come with guarantees. '+
+ '<i>The Arithmetic Teacher, 37</i>(2), 4–5.</div>'+
+ '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+
+function updateUI(){
+  var p = sel!=null ? byId(sel) : null;
+  ['girar','mas','menos','dup','borrar'].forEach(function(id){ document.getElementById(id).disabled=!p; });
+  if(p){
+    document.getElementById('mas').disabled = (p.n>=MAXN);
+    document.getElementById('menos').disabled = (p.n<=1);
+  }
+  document.getElementById('pegarListon').disabled = !(liston.n>0 && pieces.length);
+  var cuenta={};
+  pieces.forEach(function(q){ cuenta[q.n]=(cuenta[q.n]||0)+1; });
+  var det=Object.keys(cuenta).sort(function(a,b){ return a-b; }).map(function(k){
+    return cuenta[k]+' × '+k; }).join(' · ');
+  statsEl.innerHTML='<b>'+pieces.length+'</b>'+(pieces.length===1?' palote':' palotes')+
+    (det?'<br>'+det:'')+
+    (p?'<br><br>Seleccionado: palote del <b>'+p.n+'</b>'+(p.v?', de pie':', tumbado'):'');
+
+  var t;
+  if(flashMsg && Date.now()-flashT<2000) t=flashMsg;
+  else if(drag && drag.mode==='liston') t='El listón está en '+liston.n;
+  else if(tool==='del') t='Haz clic en un palote para quitarlo del tablero';
+  else if(p) t='Palote del '+p.n+(p.v?' de pie':' tumbado')+' · el botón redondo de al lado lo gira, '+
+              'o la tecla R · flechas para moverlo · + y − le encajan o le quitan un bloque · '+
+              'D duplica · Supr lo quita';
+  else if(liston.n>0) t='El listón está en '+liston.n+' · arrastra sus rayas para moverlo · '+
+              'arrastra un palote de la izquierda al tablero';
+  else t='Arrastra un palote de la izquierda al tablero · se encajan unos con otros, no se montan · '+
+         'arrastra el fondo para mover la vista';
+  hintEl.textContent=t;
+}
+
+/* =========================================================================
+   8. ARRANQUE
+   ========================================================================= */
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+pintaBandeja();
+(function init(){
+  view.x=70; view.y=40; view.z=1;
+  resize();
+})();
+
+/* =========================================================================
+   9. AUTOCOMPROBACIÓN  ·  añade #test al final de la URL
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){
+    out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':''));
+    if(!c) fails++;
+  }
+  function num(v){ return (Math.round(v*1000)/1000).toString().replace('.',','); }
+  function key(lista){
+    return lista.map(function(p){ return p.n+(p.v?'|':'-')+p.x+','+p.y; }).sort().join(' · ');
+  }
+  function kc(p){ return celdas(p).map(function(c){ return c.x+','+c.y; }).join(' '); }
+  function solapan(lista){
+    var v={}, mal=false;
+    lista.forEach(function(p){ celdas(p).forEach(function(c){
+      var k=c.x+','+c.y; if(v[k]) mal=true; v[k]=1; }); });
+    return mal;
+  }
+  /* dibuja una escena aislada en un lienzo aparte y devuelve sus píxeles.
+     Es lo único que caza un NaN en un path: no da error, simplemente no pinta. */
+  function pinta(lista,W,H,ox,oy,idSel){
+    var oc=document.createElement('canvas'); oc.width=W; oc.height=H;
+    var o=oc.getContext('2d'); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
+    var gp=pieces, gv=view, gd=drag, gs=sel;
+    pieces=lista; view={x:ox,y:oy,z:1}; drag=null;
+    sel=(idSel===undefined)?null:idSel;
+    escena(o,W,H,true);
+    pieces=gp; view=gv; drag=gd; sel=gs;
+    return o.getImageData(0,0,W,H);
+  }
+  /* un solo palote, con el lienzo del tamaño justo aunque esté en coordenadas
+     negativas (los palotes de pie de la escalera lo están) */
+  function pintaPieza(p,M){
+    var an=ancho(p)*CELL, al=alto(p)*CELL;
+    return pinta([p], an+2*M, al+2*M, M-p.x*CELL, M-p.y*CELL);
+  }
+  function cuenta(img,test){
+    var d=img.data, n=0;
+    for(var i=0;i<d.length;i+=4) if(test(d[i],d[i+1],d[i+2])) n++;
+    return n;
+  }
+  function bbox(img,test){
+    var d=img.data, x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;
+    for(var i=0;i<d.length;i+=4){
+      if(!test(d[i],d[i+1],d[i+2])) continue;
+      var px=(i/4)%img.width, py=Math.floor((i/4)/img.width);
+      if(px<x0)x0=px; if(px>x1)x1=px; if(py<y0)y0=py; if(py>y1)y1=py;
+    }
+    return {x0:x0,x1:x1,y0:y0,y1:y1,an:x1-x0+1,al:y1-y0+1};
+  }
+  function noBlanco(r,g,b){ return r<246||g<246||b<246; }
+  function oscuro(r,g,b){ return r<90&&g<90&&b<90; }
+  function azul(r,g,b){ return b-r>60; }
+  function naranja(r,g,b){ return r-b>60 && r>150; }
+  /* franjas oscuras al recorrer el palote a lo largo: los dos bordes más las
+     n-1 divisiones interiores. Es lo que distingue un palote de una regleta. */
+  function franjas(n,vert){
+    var p={id:0, n:n, x:0, y:0, v:vert?1:0}, M=14;
+    var gn=opt.num; opt.num=0;
+    var img=pintaPieza(p,M);
+    opt.num=gn;
+    var W=img.width, d=img.data, relleno=lum(colorDe(n));
+    var fijo=M+Math.floor(CELL/2), gr=0, dentro=false, largo=n*CELL, t;
+    for(t=M+1;t<M+largo-1;t++){
+      var i = vert ? ((t*W+fijo)*4) : ((fijo*W+t)*4);
+      var l=0.299*d[i]+0.587*d[i+1]+0.114*d[i+2];
+      var osc = l < relleno-22;
+      if(osc && !dentro){ gr++; dentro=true; }
+      else if(!osc) dentro=false;
+    }
+    return gr;
+  }
+
+  /* se guarda el tablero de quien esté trabajando y se le devuelve al final */
+  var guardado={p:pieces.slice(), n:nid, s:sel, o:JSON.parse(JSON.stringify(opt)),
+                l:{n:liston.n, s:liston.s}, v:{x:view.x,y:view.y,z:view.z},
+                u:undoStack.slice(), im:importMode, t:tool};
+
+  try{
+
+  /* --- 1. la forma del palote, tumbado y de pie --------------------------- */
+  for(var n=1;n<=MAXN;n++){
+    var ph={id:0,n:n,x:3,y:2,v:0}, pv={id:0,n:n,x:3,y:2,v:1};
+    ok('el palote del '+n+' ocupa '+n+' casillas tumbado', celdas(ph).length===n, celdas(ph).length);
+    ok('y '+n+' casillas de pie', celdas(pv).length===n, celdas(pv).length);
+    ok('tumbado, las '+n+' van seguidas en la misma fila',
+       celdas(ph).every(function(c,i){ return c.x===3+i && c.y===2; }));
+    ok('de pie, las '+n+' van seguidas en la misma columna',
+       celdas(pv).every(function(c,i){ return c.x===3 && c.y===2+i; }));
+    ok('tumbado, el numeral del '+n+' va en el bloque de la derecha',
+       celdaNumeral(ph).x===3+n-1 && celdaNumeral(ph).y===2, celdaNumeral(ph).x+','+celdaNumeral(ph).y);
+    ok('de pie, el numeral del '+n+' va ARRIBA, donde acaba la cuenta',
+       celdaNumeral(pv).x===3 && celdaNumeral(pv).y===2, celdaNumeral(pv).x+','+celdaNumeral(pv).y);
+    ok('de pie, la cuenta del '+n+' empieza en el bloque de abajo',
+       celdaInicio(pv).y===2+n-1, celdaInicio(pv).y);
+    ok('y los '+n+' bloques se cuentan de abajo arriba sin repetir ninguno',
+       (function(){ var vs={}, bien=true;
+         for(var k=1;k<=n;k++){ var b=bloque(pv,k); vs[b.x+','+b.y]=1;
+           if(k>1 && b.y!==bloque(pv,k-1).y-1) bien=false; }
+         return bien && Object.keys(vs).length===n; })());
+  }
+  ok('un palote tumbado mide una casilla de alto y uno de pie una de ancho',
+     alto({n:7,x:0,y:0,v:0})===1 && ancho({n:7,x:0,y:0,v:1})===1);
+  ok('cada palote es un bloque más largo que el anterior',
+     [2,3,4,5,6,7,8,9,10].every(function(m){
+       return celdas({n:m,x:0,y:0,v:0}).length===celdas({n:m-1,x:0,y:0,v:0}).length+1; }));
+
+  /* --- 2. girar ----------------------------------------------------------- */
+  [1,2,4,7,10].forEach(function(m){
+    var p={id:0,n:m,x:5,y:9,v:0};
+    var g=girado(p), g2=girado(g);
+    ok('girar el palote del '+m+' lo pone de pie', g.v===1 && !p.v);
+    ok('y girarlo otra vez lo deja exactamente donde estaba',
+       g2.x===p.x && g2.y===p.y && g2.v===0, g2.x+','+g2.y+' v'+g2.v);
+    ok('el bloque donde empieza la cuenta del '+m+' no se mueve al girar',
+       celdaInicio(g).x===celdaInicio(p).x && celdaInicio(g).y===celdaInicio(p).y,
+       celdaInicio(p).x+','+celdaInicio(p).y+' → '+celdaInicio(g).x+','+celdaInicio(g).y);
+    ok('el giro del '+m+' conserva los '+m+' bloques', celdas(g).length===m, celdas(g).length);
+    ok('y cae en casillas enteras',
+       celdas(g).every(function(c){ return c.x===Math.round(c.x) && c.y===Math.round(c.y); }));
+    if(m>1) ok('girar el palote del '+m+' lo cambia de sitio de verdad', kc(g)!==kc(p));
+  });
+  ok('el palote del 1 es el único al que girar no le cambia la casilla',
+     kc(girado({n:1,x:5,y:9,v:0}))===kc({n:1,x:5,y:9,v:0}));
+  ok('un palote de pie apoyado en la fila 9 sigue apoyado en ella al tumbarlo',
+     (function(){ var p={n:6,x:2,y:4,v:1}; return celdaInicio(p).y===9 && celdaInicio(girado(p)).y===9; })());
+
+  pieces=[]; nid=1; sel=null; undoStack=[];
+  var gp1=nueva(4,0,5,0); sel=gp1.id;
+  ok('girar desde la interfaz funciona', girarSel()===true);
+  ok('y deja el palote de pie con la base donde estaba',
+     gp1.v===1 && gp1.y===2 && celdaInicio(gp1).y===5, gp1.x+','+gp1.y+' v'+gp1.v);
+  girarSel();
+  ok('y volver a girarlo lo devuelve tumbado a su sitio',
+     gp1.v===0 && gp1.x===0 && gp1.y===5, gp1.x+','+gp1.y+' v'+gp1.v);
+  doUndo(); doUndo();
+  ok('deshacer deshace también los giros', pieces[0].v===0 && pieces[0].y===5);
+  /* girar contra un obstáculo: el imán tiene que encontrarle sitio */
+  pieces=[]; nid=1; sel=null; undoStack=[];
+  var go=nueva(5,0,5,0); nueva(5,0,1,1); nueva(5,0,-4,1);
+  sel=go.id; girarSel();
+  ok('si al girar no cabe, el imán le busca sitio sin solapar',
+     go.v===1 && !solapan(pieces), key(pieces));
+  ok('sin nada seleccionado, girar no hace nada', (sel=null, girarSel()===false));
+
+  /* --- 2b. el tirador de giro sobre la propia figura ---------------------- */
+  pieces=[]; nid=1; sel=null; undoStack=[]; setTool('move');
+  view.x=60; view.y=60; view.z=1;
+  ok('sin nada seleccionado no hay tirador', tirador()===null);
+  var tp=nueva(4,0,0,0); sel=tp.id;
+  var t1=tirador();
+  ok('con un palote seleccionado, sale el tirador', t1!==null);
+  var cp=cajaPantalla(tp);
+  ok('el tirador cae FUERA del palote, para no robarle el clic al arrastre',
+     t1.x-t1.r > cp.x1, num(t1.x-t1.r)+' > '+num(cp.x1));
+  ok('y centrado a lo alto del palote',
+     Math.abs(t1.y-(cp.y0+cp.y1)/2)<0.5, num(t1.y)+' vs '+num((cp.y0+cp.y1)/2));
+  ok('la flecha del tirador de un palote tumbado apunta a donde va a girar',
+     t1.s==='↺', t1.s);
+  ok('el puntero encima del tirador lo detecta', enTirador({x:t1.x, y:t1.y}));
+  ok('y un poco más allá, ya no', !enTirador({x:t1.x+t1.r+8, y:t1.y}));
+  ok('un clic en el centro del palote no cuenta como clic en el tirador',
+     !enTirador({x:(cp.x0+cp.x1)/2, y:(cp.y0+cp.y1)/2}));
+  /* el tirador gira, y al girar se recoloca junto a la postura nueva */
+  girarSel();
+  var t2=tirador();
+  ok('girar con el tirador deja el palote de pie', tp.v===1);
+  ok('y el tirador se recoloca junto a la postura nueva',
+     t2 && t2.x-t2.r > cajaPantalla(tp).x1, t2?num(t2.x):'null');
+  ok('el tirador de un palote de pie sigue centrado a lo alto',
+     Math.abs(t2.y-(cajaPantalla(tp).y0+cajaPantalla(tp).y1)/2)<0.5);
+  ok('y su flecha se da la vuelta, porque tumbarlo es el giro contrario',
+     t2.s==='↻' && t2.s!==t1.s, t1.s+' → '+t2.s);
+  girarSel();
+  ok('al volver a tumbarlo, la flecha vuelve a ser la de antes', tirador().s===t1.s);
+  /* si no cabe a la derecha, se pone al otro lado */
+  var anchoLienzo=cv.width/(window.devicePixelRatio||1);
+  var tg=nueva(10,0,3,0); sel=tg.id;
+  view.x=anchoLienzo-10*CELL-20;
+  var t3=tirador(), c3=cajaPantalla(tg);
+  ok('si el palote llega al borde derecho, el tirador se pasa al lado izquierdo',
+     t3 && t3.x+t3.r < c3.x0, t3?num(t3.x+t3.r)+' < '+num(c3.x0):'null');
+  view.x=60;
+  /* con la herramienta de quitar no hay tirador: allí el clic borra */
+  setTool('del');
+  ok('con la herramienta ✕ Quitar no sale el tirador', tirador()===null);
+  setTool('move');
+  /* es un mando, no material: no puede salir en el PNG que se descarga, y
+     tampoco el recuadro de seleccion. Los dos se pintan del mismo azul. */
+  var palGuardada=opt.pal; opt.pal='lisa';   /* que ningún palote sea azulado */
+  pieces=[]; nid=1;
+  var tz=nueva(4,0,0,0); sel=tz.id;
+  ok('ni el tirador ni el recuadro de selección salen en el PNG',
+     cuenta(pinta([tz], 10*CELL, 4*CELL, 14, 14, tz.id), azul)===0,
+     cuenta(pinta([tz], 10*CELL, 4*CELL, 14, 14, tz.id), azul)+' px azules');
+  opt.pal=palGuardada; sel=null;
+
+  /* --- 2c. el raton de verdad, con clics sobre el lienzo ------------------
+     Todo lo de arriba llama a las funciones directamente, y eso se cree
+     cualquier cosa: comprueba la geometría del tirador, no que al hacerle clic
+     pase algo. Estos clics entran por pointerdown/pointerup como los de una
+     persona, y son los que cazan un tirador que se dibuja pero no responde. */
+  pieces=[]; nid=1; sel=null; undoStack=[]; setTool('move');
+  view.x=60; view.y=140; view.z=1;
+  var rc=cv.getBoundingClientRect(), idPtr=500;
+  function clic(x,y){
+    idPtr++;
+    var op={bubbles:true, cancelable:true, pointerId:idPtr, isPrimary:true,
+            button:0, pointerType:'mouse', clientX:rc.left+x, clientY:rc.top+y};
+    cv.dispatchEvent(new PointerEvent('pointerdown',op));
+    window.dispatchEvent(new PointerEvent('pointerup',op));
+  }
+  function haySeleccion(){ return !document.getElementById('girar').disabled; }
+  var ma=nueva(5,0,0,0), mb=nueva(3,0,3,0);
+  draw();
+  var cma=cajaPantalla(ma);
+  clic((cma.x0+cma.x1)/2, (cma.y0+cma.y1)/2);
+  ok('un clic sobre un palote lo selecciona', haySeleccion());
+  var tc=tirador();
+  ok('y le saca el tirador', tc!==null);
+  clic(tc.x, tc.y);
+  ok('un clic en el tirador lo pone de pie de verdad', ma.v===1, 'v'+ma.v);
+  ok('y la base se queda en su fila, que es de lo que va el giro',
+     celdaInicio(ma).y===0, celdaInicio(ma).y);
+  ok('y la flecha del tirador se da la vuelta', tirador().s==='↻' && tc.s==='↺',
+     tc.s+' → '+tirador().s);
+  clic(tirador().x, tirador().y);
+  ok('otro clic lo vuelve a tumbar donde estaba',
+     ma.v===0 && ma.x===0 && ma.y===0, ma.x+','+ma.y+' v'+ma.v);
+  clic(rc.width-60, rc.height-60);
+  ok('un clic en un hueco vacío deselecciona', !haySeleccion());
+  ok('y entonces no queda ningún tirador por el tablero', tirador()===null);
+  var cmb=cajaPantalla(mb);
+  clic((cmb.x0+cmb.x1)/2, (cmb.y0+cmb.y1)/2);
+  ok('un clic en otro palote pasa la selección a ese',
+     tirador()!==null && Math.abs(tirador().y-(cmb.y0+cmb.y1)/2)<1);
+  ok('y el primero se ha quedado quieto todo el rato', ma.x===0 && ma.y===0 && ma.v===0);
+  /* el hueco entre el palote y su tirador no es zona de giro */
+  var tcb=tirador(), vAntes=mb.v;
+  clic((cmb.x1+tcb.x-tcb.r)/2, tcb.y);
+  ok('el hueco que hay entre el palote y su tirador no gira nada', mb.v===vAntes);
+  sel=null;
+
+  /* --- 3. paletas --------------------------------------------------------- */
+  var ids=PALETAS.map(function(p){ return p.id; });
+  ok('el orden de las paletas es el previsto: primero las de diez colores, '+
+     'luego regletas, y al final las que dicen algo',
+     ids.join(' ')==='vivos pastel intensos grises regletas paridad lisa', ids.join(' '));
+  ok('«vivos» es la primera y la de por defecto', PALETAS[0].id==='vivos' && opt.pal==='vivos',
+     opt.pal);
+  ok('ya no hay ninguna paleta que se llame «plaquetas»', ids.indexOf('plaquetas')<0);
+  ok('ni «cincos y dieces»', ids.indexOf('cincos')<0);
+  ok('regletas va después de las cuatro de diez colores',
+     ids.indexOf('regletas')===4, ids.indexOf('regletas'));
+  PALETAS.forEach(function(pl){
+    ok('la paleta «'+pl.nombre+'» tiene diez colores', pl.colores.length===10, pl.colores.length);
+    ok('y todos son colores de seis cifras',
+       pl.colores.every(function(c){ return /^#[0-9a-f]{6}$/i.test(c); }));
+    ok('y tiene nombre para el selector', !!pl.nombre && pl.nombre.length>0);
+    opt.pal=pl.id;
+    /* el numeral tiene que leerse sobre cualquier color de cualquier paleta */
+    var peor=1e9;
+    for(var m=1;m<=MAXN;m++)
+      peor=Math.min(peor, Math.abs(lum(colorDe(m))-lum(tintaSobre(colorDe(m)))));
+    ok('en «'+pl.nombre+'», el numeral contrasta con el fondo en los diez palotes',
+       peor>=100, 'peor contraste '+num(peor));
+  });
+  /* las cuatro primeras y regletas: diez colores distintos, uno por número */
+  ['vivos','pastel','intensos','grises','regletas'].forEach(function(nm){
+    opt.pal=nm;
+    var v={}; for(var m=1;m<=MAXN;m++) v[colorDe(m)]=1;
+    ok('en «'+nm+'», los diez palotes tienen diez colores distintos',
+       Object.keys(v).length===10, Object.keys(v).length);
+  });
+  /* en grises no puede haber dos tonos casi iguales, o no se distinguirían */
+  opt.pal='grises';
+  var saltoMin=1e9;
+  for(var g2=2;g2<=MAXN;g2++) saltoMin=Math.min(saltoMin, Math.abs(lum(colorDe(g2))-lum(colorDe(g2-1))));
+  ok('en grises, cada tono se separa del anterior lo suficiente para verse',
+     saltoMin>=15, 'salto más pequeño '+num(saltoMin));
+  ok('y van de claro a oscuro sin volver atrás',
+     (function(){ var bien=true;
+       for(var m=2;m<=MAXN;m++) if(lum(colorDe(m))>=lum(colorDe(m-1))) bien=false;
+       return bien; })());
+  opt.pal='regletas';
+  ok('regletas son los de Cuisenaire: el 7 negro y el 10 naranja',
+     colorDe(7)==='#26262a' && colorDe(10)==='#ef8b25');
+  ok('sobre el 7, negro, el numeral se escribe en blanco', tintaSobre(colorDe(7))==='#ffffff');
+  ok('sobre el 5, amarillo, se escribe en oscuro', tintaSobre(colorDe(5))==='#1f2329');
+  opt.pal='paridad';
+  ok('en pares e impares solo hay dos colores',
+     (function(){ var v={}; for(var m=1;m<=MAXN;m++) v[colorDe(m)]=1; return Object.keys(v).length===2; })());
+  ok('todos los pares comparten color',
+     [2,4,6,8,10].every(function(m){ return colorDe(m)===colorDe(2); }));
+  ok('todos los impares comparten el otro',
+     [1,3,5,7,9].every(function(m){ return colorDe(m)===colorDe(1); }));
+  ok('y el de los pares no es el de los impares', colorDe(2)!==colorDe(1));
+  opt.pal='lisa';
+  var iguales=true; for(var n3=2;n3<=MAXN;n3++) if(colorDe(n3)!==colorDe(1)) iguales=false;
+  ok('con un solo color, los diez palotes se pintan igual y solo queda contar', iguales);
+  opt.pal='zzz-no-existe';
+  ok('una paleta inventada no rompe nada: se cae a la primera',
+     colorDe(7)===PALETAS[0].colores[6], colorDe(7));
+  opt.pal='vivos';
+
+  /* --- 3b. el selector está en la columna, y sale de PALETAS --------------- */
+  var selPal=document.getElementById('palsel');
+  ok('el selector de color está en la columna de la izquierda, no en la barra de arriba',
+     selPal && selPal.closest('#side')!==null && selPal.closest('#toolbar')===null);
+  ok('y va justo debajo de la bandeja de palotes',
+     (function(){ var h2=selPal.previousElementSibling;
+       return h2 && h2.tagName==='H2' && h2.previousElementSibling &&
+              h2.previousElementSibling.id==='palotes'; })());
+  ok('tiene una opción por paleta, en el mismo orden',
+     Array.prototype.map.call(selPal.options,function(o){ return o.value; }).join(' ')===ids.join(' '),
+     Array.prototype.map.call(selPal.options,function(o){ return o.value; }).join(' '));
+  ok('y la que sale marcada es la de por defecto', selPal.value===PALETAS[0].id, selPal.value);
+
+  /* --- 3c. ↔ ↕ junto a las herramientas del listón ------------------------ */
+  var bPeg=document.getElementById('pegarListon');
+  var sigA=bPeg.nextElementSibling, sigB=sigA && sigA.nextElementSibling;
+  ok('los botones ↔ y ↕ van justo a la derecha de ⇤ Pegar',
+     sigA && sigA.getAttribute('data-ori')==='h' && sigB && sigB.getAttribute('data-ori')==='v',
+     (sigA?sigA.textContent.trim():'?')+' '+(sigB?sigB.textContent.trim():'?'));
+  ok('y los tres están en el mismo grupo, sin separador entre medias',
+     bPeg.parentNode===sigA.parentNode &&
+     !document.querySelector('#toolbar .sep + [data-ori]'));
+
+  /* --- 4. el imán: los palotes se encajan, no se montan ------------------- */
+  var L=[{id:1,n:3,x:0,y:0,v:0}];
+  ok('libre() ve ocupada una casilla del palote que hay', !libre(L,{n:1,x:1,y:0,v:0},null));
+  ok('libre() detecta un solape parcial por la derecha', !libre(L,{n:4,x:2,y:0,v:0},null));
+  ok('libre() detecta un solape parcial por la izquierda', !libre(L,{n:4,x:-2,y:0,v:0},null));
+  ok('libre() da por bueno el hueco justo detrás', libre(L,{n:2,x:3,y:0,v:0},null));
+  ok('libre() se salta el propio palote al comprobarlo', libre(L,{n:3,x:0,y:0,v:0},1));
+  ok('libre() cruza bien tumbados con de pie',
+     !libre(L,{n:5,x:2,y:-3,v:1},null) && libre(L,{n:5,x:5,y:-3,v:1},null));
+
+  var h1=hueco(L,{n:2,x:1,y:0,v:0},null);
+  ok('soltar un 2 encima del 3 lo pega justo detrás', h1 && h1.x===3 && h1.y===0,
+     h1?h1.x+','+h1.y:'null');
+  var h2=hueco(L,{n:2,x:0,y:0,v:0},null);
+  ok('soltarlo sobre el principio del 3 lo pega justo delante', h2 && h2.x===-2 && h2.y===0,
+     h2?h2.x+','+h2.y:'null');
+  var h3=hueco(L,{n:2,x:7,y:3,v:0},null);
+  ok('soltarlo en campo libre lo deja donde estaba, sin moverlo un pelo',
+     h3 && h3.x===7 && h3.y===3, h3?h3.x+','+h3.y:'null');
+  var h4=hueco([{id:1,n:10,x:0,y:0,v:0}],{n:2,x:4,y:0,v:0},null);
+  ok('soltar un 2 en medio de un 10 lo saca de canto sin cambiarlo de fila',
+     h4 && h4.y===0, h4?h4.x+','+h4.y:'null');
+  var h5=hueco([{id:1,n:10,x:0,y:0,v:0},{id:2,n:10,x:-10,y:0,v:0},{id:3,n:10,x:10,y:0,v:0}],
+               {n:4,x:4,y:0,v:0},null);
+  ok('pero si la fila entera está tomada, sí se cambia de fila',
+     h5 && h5.y!==0, h5?h5.x+','+h5.y:'null');
+  /* de pie, la línea de trabajo es la columna: el imán tiene que deslizar por
+     ella y no escaparse a la columna de al lado */
+  var v1=hueco([{id:1,n:10,x:3,y:0,v:1}],{n:2,x:3,y:4,v:1},null);
+  ok('de pie, soltar un 2 en medio de un 10 lo saca sin cambiarlo de columna',
+     v1 && v1.x===3, v1?v1.x+','+v1.y:'null');
+  ok('y lo deja pegado a un extremo del 10', v1 && (v1.y===-2 || v1.y===10), v1?v1.y:'null');
+  var v2=hueco([{id:1,n:10,x:3,y:0,v:1},{id:2,n:10,x:3,y:-10,v:1},{id:3,n:10,x:3,y:10,v:1}],
+               {n:4,x:3,y:4,v:1},null);
+  ok('pero si la columna entera está tomada, sí se cambia de columna',
+     v2 && v2.x!==3, v2?v2.x+','+v2.y:'null');
+
+  /* --- 5. mover con las flechas ------------------------------------------ */
+  pieces=[]; nid=1; sel=null; undoStack=[];
+  var a=nueva(3,0,0,0), b=nueva(2,3,0,0);
+  sel=a.id;
+  ok('no se puede empujar un palote encima de otro', moverSel(1,0)===false);
+  ok('y el palote se queda donde estaba', a.x===0 && a.y===0, a.x+','+a.y);
+  ok('sí se puede bajarlo a la fila de abajo', moverSel(0,1)===true);
+  doUndo();
+  ok('deshacer lo devuelve a su fila', pieces[0].x===0 && pieces[0].y===0,
+     pieces[0].x+','+pieces[0].y);
+
+  /* --- 6. encajar y quitar bloques --------------------------------------- */
+  pieces=[]; nid=1; sel=null; undoStack=[];
+  var c1=nueva(4,0,0,0); sel=c1.id;
+  cambiaBloques(1);
+  ok('encajarle un bloque a un 4 tumbado lo convierte en un 5', c1.n===5, c1.n);
+  ok('y crece por la derecha, sin moverse de sitio', c1.x===0, c1.x);
+  cambiaBloques(-1);
+  ok('quitarle un bloque lo devuelve a 4', c1.n===4 && c1.x===0, c1.n+'@'+c1.x);
+  /* de pie crece hacia arriba, que es donde está el numeral, y la base no se mueve */
+  pieces=[]; nid=1; sel=null; undoStack=[];
+  var cv1=nueva(4,0,6,1); sel=cv1.id;
+  ok('el 4 de pie se apoya en la fila 9', celdaInicio(cv1).y===9, celdaInicio(cv1).y);
+  cambiaBloques(1);
+  ok('encajarle un bloque de pie lo convierte en un 5', cv1.n===5, cv1.n);
+  ok('y crece hacia arriba sin levantar la base', celdaInicio(cv1).y===9 && cv1.y===5,
+     'base '+celdaInicio(cv1).y+', arriba '+cv1.y);
+  cambiaBloques(-1);
+  ok('quitarle un bloque de pie le quita el de arriba, no el de la base',
+     cv1.n===4 && celdaInicio(cv1).y===9 && cv1.y===6, cv1.n+' base '+celdaInicio(cv1).y);
+  c1=cv1; c1.n=1; cambiaBloques(-1);
+  ok('un palote no puede quedarse sin bloques', c1.n===1, c1.n);
+  c1.n=MAXN; cambiaBloques(1);
+  ok('y no pasa del 10', c1.n===MAXN, c1.n);
+
+  pieces=[]; nid=1; sel=null; undoStack=[];
+  var d1=nueva(2,2,0,0); nueva(3,4,0,0); sel=d1.id;
+  cambiaBloques(1);
+  ok('si a la derecha hay otro palote, crece por la izquierda', d1.n===3 && d1.x===1,
+     d1.n+'@'+d1.x);
+  pieces=[]; nid=1; sel=null;
+  var d2=nueva(2,2,0,0); nueva(3,4,0,0); nueva(2,0,0,0); sel=d2.id;
+  ok('encajonado por los dos lados, no crece', cambiaBloques(1)===false);
+  ok('y sigue teniendo dos bloques', d2.n===2, d2.n);
+  pieces=[]; nid=1; sel=null;
+  var d3=nueva(2,0,4,1); nueva(3,0,1,1); sel=d3.id;
+  cambiaBloques(1);
+  ok('de pie, si arriba hay otro palote, crece hacia abajo', d3.n===3 && d3.y===4,
+     d3.n+'@'+d3.y);
+
+  /* --- 7. duplicar -------------------------------------------------------- */
+  pieces=[]; nid=1; sel=null; undoStack=[];
+  var e1=nueva(6,0,0,0); sel=e1.id; duplicar();
+  ok('duplicar deja dos palotes', pieces.length===2, pieces.length);
+  ok('el duplicado tiene el mismo número y la misma postura',
+     pieces[1].n===6 && pieces[1].v===0, pieces[1].n+' v'+pieces[1].v);
+  ok('y cae en la fila de al lado, sin solapar', !solapan(pieces) && pieces[1].y===1,
+     pieces[1].x+','+pieces[1].y);
+  pieces=[]; nid=1; sel=null;
+  var e2=nueva(6,0,0,1); sel=e2.id; duplicar();
+  ok('el duplicado de un palote de pie sale a la columna de al lado',
+     pieces[1].v===1 && pieces[1].x===1 && !solapan(pieces), pieces[1].x+','+pieces[1].y);
+
+  /* --- 8. sacar los diez, escalera y desordenar --------------------------- */
+  pieces=[]; nid=1; sel=null; undoStack=[]; opt.vert=0;
+  sacarLosDiez();
+  ok('sacar los diez pone diez palotes', pieces.length===10, pieces.length);
+  ok('uno de cada número del 1 al 10',
+     pieces.map(function(p){ return p.n; }).sort(function(x,y){ return x-y; }).join(',')
+       ==='1,2,3,4,5,6,7,8,9,10');
+  ok('y ninguno solapa a otro', !solapan(pieces));
+  pieces.forEach(function(p){ p.x=5-p.n; p.y=p.n; });
+  escalera();
+  ok('la escalera los ordena de menor a mayor',
+     pieces.map(function(p){ return p.n; }).join(',')==='1,2,3,4,5,6,7,8,9,10',
+     pieces.map(function(p){ return p.n; }).join(','));
+  ok('tumbada, los alinea todos en la columna 0, que es lo que permite compararlos',
+     pieces.every(function(p){ return p.x===0 && !p.v; }));
+  ok('y los pone uno por fila, del 0 al 9', pieces.every(function(p,i){ return p.y===i; }));
+  ok('la escalera tumbada no solapa nada', !solapan(pieces));
+  ok('y su salida es la columna 0', salidaDe(pieces,0)===0, salidaDe(pieces,0));
+  opt.vert=1; escalera();
+  ok('de pie, la escalera pone los diez de pie', pieces.every(function(p){ return p.v===1; }));
+  ok('cada uno en su columna, del 0 al 9', pieces.every(function(p,i){ return p.x===i; }));
+  ok('todos apoyados en la misma fila, que es lo que hace legible la escalera',
+     pieces.every(function(p){ return celdaInicio(p).y===-1; }),
+     pieces.map(function(p){ return celdaInicio(p).y; }).join(','));
+  ok('la escalera de pie no solapa nada', !solapan(pieces));
+  ok('y su salida es la fila 0, la misma que tumbada', salidaDe(pieces,1)===0, salidaDe(pieces,1));
+  var antesDes=key(pieces), cambio=false;
+  for(var intento=0;intento<5;intento++){
+    desordenar();
+    ok('desordenar conserva los diez palotes y sus números',
+       pieces.map(function(p){ return p.n; }).sort(function(x,y){ return x-y; }).join(',')
+         ==='1,2,3,4,5,6,7,8,9,10');
+    ok('desordenar no deja ningún solape', !solapan(pieces));
+    ok('desordenar no cambia a nadie de postura', pieces.every(function(p){ return p.v===1; }));
+    if(key(pieces)!==antesDes) cambio=true;
+  }
+  ok('desordenar cambia de verdad la disposición', cambio);
+  opt.vert=0;
+
+  /* --- 9. los bloques de cada línea --------------------------------------- */
+  pieces=[]; nid=1; sel=null; undoStack=[];
+  nueva(3,0,0,0); nueva(2,3,0,0); nueva(4,0,1,0);
+  var tf=totalesH(pieces);
+  ok('la fila con un 3 y un 2 pegados tiene 5 bloques', tf[0].t===5, tf[0].t);
+  ok('la fila de abajo, con solo un 4, tiene 4', tf[1].t===4, tf[1].t);
+  ok('la primera fila acaba en la columna 5', tf[0].x1===5, tf[0].x1);
+  ok('una fila donde no hay nada ni siquiera aparece', tf[7]===undefined);
+  nueva(1,9,0,0);
+  ok('un palote suelto y separado también cuenta en su fila',
+     totalesH(pieces)[0].t===6, totalesH(pieces)[0].t);
+  /* de pie la línea es la columna, y las dos cuentas no se mezclan */
+  pieces=[]; nid=1;
+  nueva(3,2,-3,1); nueva(2,2,-5,1); nueva(4,0,0,0);
+  var tv=totalesV(pieces), th=totalesH(pieces);
+  ok('la columna con un 3 y un 2 de pie tiene 5 bloques', tv[2].t===5, tv[2].t);
+  ok('y esa columna acaba arriba en la fila -5', tv[2].y0===-5, tv[2].y0);
+  ok('el palote tumbado no se cuela en la cuenta de las columnas', tv[0]===undefined);
+  ok('ni los de pie en la cuenta de las filas', th[0].t===4 && th[-3]===undefined, th[0].t);
+
+  /* --- 10. el listón: coordenada propia, no sigue a los palotes ----------- */
+  var M=14;
+  opt.vert=0; liston.n=7; liston.s=0;
+  pieces=[]; nid=1; sel=null; undoStack=[];
+  /* La franja del listón se localiza contando píxeles naranjas, así que los
+     palotes de estas pruebas no pueden tener nada cálido: con «un solo color»
+     son grises y no falsean la cuenta. Depender de que un número concreto salga
+     verde en la paleta de turno se rompió justo al cambiar la de por defecto. */
+  var palListon=opt.pal; opt.pal='lisa';
+  var q1={id:0,n:3,x:0,y:0,v:0};
+  var bA=bbox(pinta([q1], 20*CELL, 4*CELL, M, M), naranja);
+  q1.x=6;
+  var bB=bbox(pinta([q1], 20*CELL, 4*CELL, M, M), naranja);
+  ok('mover un palote NO arrastra el listón',
+     bA.x0===bB.x0 && bA.x1===bB.x1, 'antes '+bA.x0+'–'+bA.x1+', después '+bB.x0+'–'+bB.x1);
+  ok('y el listón sigue arrancando de su columna', Math.abs(bA.x0-M)<=3, num(bA.x0));
+  ok('y acabando siete casillas más allá', Math.abs(bA.x1-(M+7*CELL))<=3,
+     num(bA.x1)+', esperado '+(M+7*CELL));
+  liston.s=4;
+  var bC=bbox(pinta([], 20*CELL, 4*CELL, M, M), naranja);
+  ok('moviendo el listón a la columna 4, la franja se va con él',
+     Math.abs(bC.x0-(M+4*CELL))<=3 && Math.abs(bC.x1-(M+11*CELL))<=3,
+     num(bC.x0)+'–'+num(bC.x1));
+  liston.n=0;
+  ok('con el listón a 0, el tablero no lleva ninguna marca',
+     cuenta(pinta([], 20*CELL, 4*CELL, M, M), naranja)===0);
+  ok('y bordesListon() no devuelve nada', bordesListon()===null);
+  /* de pie el listón es una franja horizontal que se apoya en su fila y sube */
+  opt.vert=1; liston.n=7; liston.s=0;
+  var bV=bbox(pinta([], 8*CELL, 14*CELL, M, M+10*CELL), naranja);
+  ok('de pie, el listón se apoya en su fila', Math.abs(bV.y1-(M+10*CELL))<=3,
+     num(bV.y1)+', esperado '+(M+10*CELL));
+  ok('y sube siete casillas, no baja', Math.abs(bV.y0-(M+3*CELL))<=3,
+     num(bV.y0)+', esperado '+(M+3*CELL));
+  /* la raya va de borde a borde, pero es de trazos de 7 con huecos de 5, así que
+     el último trazo puede acabar hasta un periodo antes del borde derecho */
+  ok('y la raya arranca del borde izquierdo', bV.x0<=2, bV.x0);
+  ok('y llega al derecho', bV.an>=8*CELL-12, bV.an+' px de '+(8*CELL));
+  opt.vert=0; liston.n=0; liston.s=0;
+  /* pegar el listón a los palotes: a la columna de salida, o a la fila de apoyo */
+  pieces=[]; nid=1; liston.n=5;
+  nueva(3,8,0,0); nueva(2,5,1,0);
+  opt.vert=0; pegarListon();
+  ok('⇤ Pegar lleva el listón a la columna de la que arrancan los tumbados',
+     liston.s===5, liston.s);
+  pieces=[]; nid=1;
+  nueva(3,0,-8,1); nueva(5,1,-10,1);       /* los dos apoyados en la fila -6 */
+  opt.vert=1; pegarListon();
+  ok('y de pie, a la fila en la que se apoyan', liston.s===-5, liston.s);
+  pieces=[]; nid=1;
+  nueva(3,0,-3,1); nueva(5,1,-9,1);        /* apoyos en 0 y en -4: distinta altura */
+  opt.vert=1; pegarListon();
+  ok('y si están a distinta altura, al apoyo más bajo, que es el suelo de todos',
+     liston.s===0, liston.s);
+  opt.vert=0; liston.n=0; liston.s=0;
+  ok('el botón ⇤ Pegar está apagado si no hay listón o no hay palotes',
+     (function(){ liston.n=0; pieces=[]; draw();
+       var off1=document.getElementById('pegarListon').disabled;
+       liston.n=5; draw(); var off2=document.getElementById('pegarListon').disabled;
+       nueva(3,0,0,0); draw(); var on=document.getElementById('pegarListon').disabled;
+       liston.n=0; return off1 && off2 && !on; })());
+  liston.n=0; liston.s=0; opt.pal=palListon;
+
+  /* --- 11. guardar y volver a abrir --------------------------------------- */
+  pieces=[]; nid=1; sel=null; undoStack=[]; opt.vert=0;
+  nueva(3,0,0,0); nueva(2,3,0,0); nueva(7,4,-7,1);
+  liston.n=8; liston.s=2;
+  var antes=key(pieces);
+  importMode='replace';
+  ok('guardar y volver a abrir conserva los palotes, su sitio y su postura',
+     loadData(JSON.parse(JSON.stringify(datos()))) && key(pieces)===antes, key(pieces));
+  ok('y conserva el listón, número y sitio', liston.n===8 && liston.s===2,
+     liston.n+'@'+liston.s);
+  var nAntes=pieces.length;
+  importMode='add';
+  loadData(JSON.parse(JSON.stringify(datos())));
+  ok('el botón ＋ añade sin borrar lo que había', pieces.length===nAntes*2, pieces.length);
+  ok('y lo añadido no se solapa con lo anterior', !solapan(pieces));
+  var lAntes=liston.n;
+  loadData({formato:'palotes-numericos',version:2,liston:{n:1,s:99},piezas:[{n:1,x:40,y:40}]});
+  ok('añadir con ＋ no le cambia el listón a quien está trabajando',
+     liston.n===lAntes, liston.n);
+  importMode='replace';
+
+  ok('un archivo con un palote del 0 se rechaza entero',
+     limpiaPiezas([{n:3,x:0,y:0},{n:0,x:5,y:0}])===null);
+  ok('un archivo con un palote del 11 se rechaza', limpiaPiezas([{n:11,x:0,y:0}])===null);
+  ok('un archivo con un palote de 3,5 bloques se rechaza', limpiaPiezas([{n:3.5,x:0,y:0}])===null);
+  ok('un archivo con coordenadas a medias se rechaza', limpiaPiezas([{n:3,x:0.5,y:0}])===null);
+  ok('un archivo sin coordenadas se rechaza', limpiaPiezas([{n:3}])===null);
+  ok('un archivo con una postura inventada se rechaza',
+     limpiaPiezas([{n:3,x:0,y:0,v:'de pie'}])===null);
+  ok('un archivo vacío se rechaza', limpiaPiezas([])===null);
+  ok('un archivo que no es una lista se rechaza', limpiaPiezas('3,4,5')===null);
+  ok('un archivo correcto sí se acepta', limpiaPiezas([{n:3,x:-2,y:4}]).length===1);
+  ok('un palote sin postura se entiende tumbado', limpiaPiezas([{n:3,x:0,y:0}])[0].v===0);
+  ok('un archivo viejo, sin listón, entra con el listón apagado',
+     limpiaListon(undefined).n===0);
+  ok('un listón del 11 se rechaza', limpiaListon({n:11,s:0})===null);
+  ok('un listón en media casilla se rechaza', limpiaListon({n:5,s:1.5})===null);
+  ok('un listón correcto se acepta', limpiaListon({n:5,s:-3}).s===-3);
+  var solapado=limpiaPiezas([{n:4,x:0,y:0},{n:4,x:1,y:0}]);
+  ok('dos palotes solapados en el archivo pasan el filtro…', solapado && solapado.length===2);
+  pieces=[]; nid=1;
+  loadData({formato:'palotes-numericos',version:2,piezas:[{n:4,x:0,y:0},{n:4,x:1,y:0}]});
+  ok('…pero al colocarlos el imán los separa', pieces.length===2 && !solapan(pieces), key(pieces));
+
+  /* --- 12. deshacer ------------------------------------------------------- */
+  pieces=[]; nid=1; sel=null; undoStack=[];
+  nueva(5,0,0,0); nueva(5,0,1,0);
+  var antesQ=key(pieces);
+  sel=pieces[0].id; quitarSel();
+  ok('quitar deja un palote menos', pieces.length===1, pieces.length);
+  doUndo();
+  ok('y deshacer lo devuelve tal cual', key(pieces)===antesQ, key(pieces));
+  liston={n:4,s:1}; pushUndo(); liston={n:9,s:7}; doUndo();
+  ok('deshacer devuelve también el listón donde estaba',
+     liston.n===4 && liston.s===1, liston.n+'@'+liston.s);
+  liston={n:0,s:0};
+
+  /* --- 13. lo que se dibuja ----------------------------------------------- */
+  opt.pal='regletas'; opt.num=2; opt.sumas=0; liston.n=0; opt.grid=1;
+  [0,1].forEach(function(vv){
+    var como=vv?'de pie':'tumbado';
+    for(var m=1;m<=MAXN;m++){
+      var p={id:0,n:m,x:0,y:vv?-m:0,v:vv};
+      var img=pintaPieza(p,M);
+      var t=cuenta(img,noBlanco);
+      ok('el palote del '+m+' se dibuja de verdad '+como, t>0, t+' px');
+      var bx=bbox(img,noBlanco);
+      var esperadoAn=(vv?1:m)*CELL, esperadoAl=(vv?m:1)*CELL;
+      ok('y '+como+' mide '+num(esperadoAn/CELL)+'×'+num(esperadoAl/CELL)+' casillas',
+         Math.abs(bx.an-esperadoAn)<=4 && Math.abs(bx.al-esperadoAl)<=4,
+         num(bx.an)+'×'+num(bx.al)+' px, esperado '+esperadoAn+'×'+esperadoAl);
+    }
+  });
+  ok('el palote del 4 tumbado enseña sus tres divisiones interiores (más los dos bordes)',
+     franjas(4,0)===5, franjas(4,0)+' franjas');
+  ok('y de pie, las mismas tres', franjas(4,1)===5, franjas(4,1)+' franjas');
+  ok('el del 6 enseña las cinco suyas tumbado', franjas(6,0)===7, franjas(6,0)+' franjas');
+  ok('y de pie', franjas(6,1)===7, franjas(6,1)+' franjas');
+  ok('el del 1 no tiene ninguna división: solo sus dos bordes',
+     franjas(1,0)===2 && franjas(1,1)===2, franjas(1,0)+' y '+franjas(1,1));
+
+  /* el numeral, en el último bloque de la cuenta */
+  opt.num=2;
+  var im5=pintaPieza({id:0,n:5,x:0,y:0,v:0},M);
+  var tinta=bbox(im5,oscuro);
+  ok('con el numeral al final, el palote del 5 escribe algo',
+     cuenta(im5,oscuro)>0, cuenta(im5,oscuro)+' px');
+  var cx=(tinta.x0+tinta.x1)/2 - M;
+  ok('y tumbado lo escribe dentro del quinto bloque, el de la derecha',
+     cx>4*CELL && cx<5*CELL, num(cx)+' px, quinto bloque = '+(4*CELL)+'–'+(5*CELL));
+  var im5v=pintaPieza({id:0,n:5,x:0,y:-5,v:1},M);
+  var tv2=bbox(im5v,oscuro);
+  var cy=(tv2.y0+tv2.y1)/2 - M;
+  ok('y de pie lo escribe en el bloque de ARRIBA, no en el de abajo',
+     cy>0 && cy<CELL, num(cy)+' px, bloque de arriba = 0–'+CELL);
+  opt.num=0;
+  ok('sin números, el palote del 5 no escribe nada',
+     cuenta(pintaPieza({id:0,n:5,x:0,y:0,v:0},M),oscuro)===0);
+  ok('ni de pie', cuenta(pintaPieza({id:0,n:5,x:0,y:-5,v:1},M),oscuro)===0);
+  opt.num=1;
+  function bloquesConTinta(p){
+    var img=pintaPieza(p,M), W=img.width, d=img.data, res=[];
+    for(var k=1;k<=p.n;k++){
+      var b=bloque(p,k), nn=0;
+      var bx0=M+(b.x-p.x)*CELL, by0=M+(b.y-p.y)*CELL;
+      for(var yy=by0+4;yy<by0+CELL-4;yy++) for(var xx=bx0+4;xx<bx0+CELL-4;xx++){
+        var ii=(yy*W+xx)*4;
+        if(oscuro(d[ii],d[ii+1],d[ii+2])) nn++;
+      }
+      res.push(nn>0);
+    }
+    return res;
+  }
+  ok('numerando cada bloque, los cinco llevan su número tumbado',
+     bloquesConTinta({id:0,n:5,x:0,y:0,v:0}).every(function(v){ return v; }),
+     bloquesConTinta({id:0,n:5,x:0,y:0,v:0}).join(','));
+  ok('y también de pie',
+     bloquesConTinta({id:0,n:5,x:0,y:-5,v:1}).every(function(v){ return v; }),
+     bloquesConTinta({id:0,n:5,x:0,y:-5,v:1}).join(','));
+  opt.num=2;
+
+  /* --- 14. lo que NO debe asomar ------------------------------------------ */
+  var escH=[{id:0,n:3,x:0,y:0,v:0},{id:1,n:2,x:3,y:0,v:0}];
+  var escV=[{id:0,n:3,x:0,y:-3,v:1},{id:1,n:2,x:0,y:-5,v:1}];
+  opt.sumas=0;
+  ok('con la casilla apagada, no se escribe en ninguna parte cuántos bloques hay en la fila',
+     cuenta(pinta(escH, 12*CELL, 4*CELL, M, M), azul)===0);
+  ok('ni cuántos hay en la columna',
+     cuenta(pinta(escV, 6*CELL, 9*CELL, M, M+6*CELL), azul)===0);
+  opt.sumas=1;
+  ok('y encendiéndola, sí aparece la de la fila',
+     cuenta(pinta(escH, 12*CELL, 4*CELL, M, M), azul)>0);
+  ok('y la de la columna',
+     cuenta(pinta(escV, 6*CELL, 9*CELL, M, M+6*CELL), azul)>0);
+  opt.sumas=0;
+  ok('la casilla manda también en el PNG que se descarga',
+     cuenta(pinta(escH, 12*CELL, 4*CELL, M, M), azul)===0);
+  pieces=escH.slice();
+  ok('el archivo guardado tampoco lleva la cuenta de cada línea',
+     JSON.stringify(datos()).indexOf('total')<0 && JSON.stringify(datos()).indexOf('suma')<0);
+
+  /* --- 15. la bandeja ----------------------------------------------------- */
+  opt.num=0; pintaBandeja();
+  var mudos=document.querySelectorAll('#palotes .pl.mudo').length;
+  ok('sin números en el tablero, la bandeja tampoco los enseña', mudos===10, mudos);
+  opt.num=2; pintaBandeja();
+  ok('y volviendo a ponerlos, la bandeja los recupera',
+     document.querySelectorAll('#palotes .pl.mudo').length===0);
+  opt.pal='paridad'; pintaBandeja();
+  ok('la bandeja se repinta con la paleta elegida',
+     document.querySelectorAll('#palotes .pl')[1].innerHTML.indexOf(paleta('paridad').colores[1])>=0);
+  opt.pal='regletas'; pintaBandeja();
+  ok('y vuelve a la de regletas',
+     document.querySelectorAll('#palotes .pl')[6].innerHTML.indexOf(paleta('regletas').colores[6])>=0);
+  opt.pal='vivos'; pintaBandeja();
+  ok('y a la de por defecto',
+     document.querySelectorAll('#palotes .pl')[0].innerHTML.indexOf(paleta('vivos').colores[0])>=0);
+
+  /* el palote del 10 es el más ancho de la bandeja y es el que la desborda */
+  var cont=document.getElementById('palotes'), wGuardado=cont.style.width;
+  [126,152,300].forEach(function(w){
+    cont.style.width=w+'px';
+    var u=unidadBandeja();
+    ok('con la columna a '+w+' px, el palote del 10 cabe en la bandeja',
+       MAXN*u+3 <= w-20, 'unidad '+u+' px → '+(MAXN*u+3)+' px de '+(w-20));
+    ok('y los diez se dibujan con la misma unidad, así que la escalera no miente',
+       miniSVG(9,u).indexOf('width="'+(9*u+3)+'"')>=0 &&
+       miniSVG(10,u).indexOf('width="'+(10*u+3)+'"')>=0);
+  });
+  ok('la unidad de la bandeja nunca baja de 6 px ni pasa de 11',
+     (function(){ var bien=true;
+       [40,60,90,126,152,300,900].forEach(function(w){
+         cont.style.width=w+'px'; var u=unidadBandeja();
+         if(u<6||u>11) bien=false; });
+       return bien; })());
+  cont.style.width=wGuardado;
+  pintaBandeja();
+  ok('y la bandeja se queda con sus diez palotes después de todo esto',
+     document.querySelectorAll('#palotes .pl').length===10,
+     document.querySelectorAll('#palotes .pl').length);
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+  }
+
+  /* --- se le devuelve el tablero a quien estuviera trabajando -------------- */
+  pieces=guardado.p; nid=guardado.n; sel=guardado.s; undoStack=guardado.u;
+  importMode=guardado.im; liston=guardado.l;
+  view.x=guardado.v.x; view.y=guardado.v.y; view.z=guardado.v.z;
+  var k; for(k in guardado.o) opt[k]=guardado.o[k];
+  setOri(opt.vert); setTool(guardado.t); sincronizaListon();
+  document.getElementById('palsel').value=opt.pal;
+  pintaBandeja(); draw();
+
+  /* --- informe ------------------------------------------------------------ */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length
+                                         : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación de Palotes numéricos</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__palotes={
+  test:runSelfTest, celdas:celdas, bloque:bloque, celdaInicio:celdaInicio,
+  celdaNumeral:celdaNumeral, girado:girado, ancho:ancho, alto:alto,
+  colorDe:colorDe, tintaSobre:tintaSobre, paletas:PALETAS, paleta:paleta,
+  tirador:tirador, enTirador:enTirador, cajaPantalla:cajaPantalla,
+  libre:libre, hueco:hueco, totalesH:totalesH, totalesV:totalesV, salidaDe:salidaDe,
+  pieces:function(){ return pieces; }, nueva:nueva, byId:byId, opt:opt,
+  liston:function(){ return liston; }, setListon:function(n,s){ liston={n:n,s:s}; sincronizaListon(); },
+  pegarListon:pegarListon, setOri:setOri, bordesListon:bordesListon,
+  cambiaBloques:cambiaBloques, moverSel:moverSel, girarSel:girarSel, duplicar:duplicar,
+  sacarLosDiez:sacarLosDiez, escalera:escalera, desordenar:desordenar,
+  limpiaPiezas:limpiaPiezas, limpiaListon:limpiaListon, load:loadData, datos:datos,
+  setMode:function(m){ importMode=m; }, sel:function(id){ sel=id; },
+  redraw:draw, bandeja:pintaBandeja,
+  reset:function(){ pieces=[]; sel=null; nid=1; undoStack=[]; }
+};
+
+})();
+</script>
+</body>
+</html>

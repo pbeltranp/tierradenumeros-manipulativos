@@ -1,0 +1,2215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Billetes · manipulativo virtual</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       font-size:14px;color:#2b2f36;background:#fff;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;height:100%;width:100%}
+
+  #side{width:178px;flex:0 0 178px;background:#f4f5f7;border-right:1px solid #dfe2e7;
+        overflow-y:auto;padding:10px 10px 24px}
+  #side .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:2px 2px 10px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  #side .brand em{display:block;font-style:normal;font-size:10.5px;font-weight:400;letter-spacing:.07em;
+                  text-transform:uppercase;color:#a2a9b4;margin-top:4px}
+  #side h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:14px 0 7px;font-weight:600}
+  #bandeja{display:flex;flex-direction:column;align-items:center;gap:5px}
+  .bl{display:block;cursor:grab;touch-action:none;border-radius:6px}
+  .bl:hover{filter:brightness(1.04)}
+  .bl:active{cursor:grabbing}
+  .act{display:block;width:100%;text-align:left;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+       padding:6px 9px;margin-bottom:4px;font-size:12.5px;color:#3d4450;cursor:pointer}
+  .act:hover:not(:disabled){background:#f0f2f5;border-color:#c8cdd6}
+  .act:disabled{opacity:.42;cursor:default}
+  .act kbd{float:right;font:inherit;font-size:10.5px;color:#9aa1ab}
+  .pair{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px}
+  .pair .act{margin:0;text-align:center;padding:6px 4px}
+  select.sel{display:block;width:100%;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+             padding:6px 7px;font:inherit;font-size:12.5px;color:#3d4450;cursor:pointer}
+  select.sel:hover{border-color:#c8cdd6}
+  .fila{display:flex;gap:4px;margin-bottom:4px}
+  .fila input{flex:1;min-width:0;border:1px solid #e3e6eb;border-radius:7px;padding:6px 7px;
+              font:inherit;font-size:12.5px;color:#3d4450}
+  .fila .act{width:auto;flex:0 0 auto;margin:0}
+  #stats{font-size:11.5px;color:#6b7280;line-height:1.6;margin-top:12px;border-top:1px solid #e3e6eb;padding-top:9px}
+  #stats b{color:#2b2f36}
+  #stats .tot{display:block;margin-top:6px;padding-top:6px;border-top:1px dashed #e3e6eb;color:#2b2f36}
+  .note{font-size:10.5px;line-height:1.45;color:#8a919c;margin-top:12px}
+
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #dfe2e7;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover:not(:disabled){background:#f0f2f5}
+  .btn:disabled{opacity:.42;cursor:default}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn.on:hover{background:#2a589a}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  select.btn{padding:5px 6px}
+  #avanzado{display:none;align-items:center;gap:5px}
+  #avanzado.show{display:inline-flex}
+  #stage{position:relative;flex:1;min-height:0;background:#fff}
+  canvas{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:310px;max-height:calc(100% - 20px);overflow-y:auto;
+        background:#fff;border:1px solid #dfe2e7;border-radius:10px;padding:11px 13px;font-size:11.5px;
+        line-height:1.55;color:#4a515c;box-shadow:0 6px 22px rgba(20,25,35,.12);display:none}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:9px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:146px;flex:0 0 146px;padding:8px 6px}
+    .btn{padding:5px 7px;font-size:12px}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div class="brand">Billetes <b>posicionales</b></div>
+
+    <h2>Billetes</h2>
+    <div id="bandeja"></div>
+
+    <h2>Cambios</h2>
+    <button class="act" id="agrupar" disabled title="Cambiar los billetes marcados por uno del orden siguiente">⇧ Agrupar<kbd>G</kbd></button>
+    <button class="act" id="desagrupar" disabled title="Cambiar el billete marcado por los del orden anterior">⇩ Desagrupar<kbd>D</kbd></button>
+    <button class="act" id="mismoorden" disabled title="Marcar todos los billetes del mismo orden que el marcado">▭ Los de este orden</button>
+
+    <h2>Marcados</h2>
+    <div class="pair">
+      <button class="act" id="dup" disabled>Duplicar</button>
+      <button class="act" id="borrar" disabled>Quitar</button>
+    </div>
+
+    <h2>Colocación</h2>
+    <div class="fila">
+      <input type="number" id="ncant" min="0" step="1" placeholder="cantidad">
+      <button class="act" id="sacar" title="Sacar esa cantidad con el menor número de billetes">⤒</button>
+    </div>
+    <button class="act" id="ordenar" title="Coloca cada billete en el carril de su orden">≡ Ordenar</button>
+    <button class="act" id="revolver" title="Los reparte por el tablero, sin orden">⁂ Desordenar</button>
+
+    <h2>Color</h2>
+    <select class="sel" id="palsel" title="Con qué colores se pintan los billetes"></select>
+
+    <div id="stats"></div>
+    <div class="note">Arrastra billetes al tablero. Nunca se montan unos encima de otros: siempre se ven todos.</div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn on" data-tool="move" title="Mover billetes (1)">✥ Mover</button>
+      <button class="btn" data-tool="mark" title="Marcar varios con un recuadro (2)">▭ Marcar</button>
+      <button class="btn" data-tool="del" title="Quitar billetes (3)">✕ Quitar</button>
+      <span class="sep"></span>
+      <label class="chk" title="Cuántos billetes de un orden hacen uno del orden siguiente. Con la base b, los billetes se rotulan 1, b, b², b³… y hay que contarlos para saber cuántos hacen un cambio.">Base
+        <select class="btn" id="basesel" style="margin-left:2px"></select>
+      </label>
+      <label class="chk" title="Cuántos billetes distintos hay en la caja">Órdenes
+        <select class="btn" id="ordsel" style="margin-left:2px"></select>
+      </label>
+      <span class="sep"></span>
+      <label class="chk" title="Dibuja dentro de cada billete los del orden anterior: puntos, barras, placas y bloques"><input type="checkbox" id="chkdib" checked>Puntos y placas</label>
+      <label class="chk" title="Franjas de fondo, una por orden, como una tabla de valor posicional">Carriles
+        <select class="btn" id="guisel" style="margin-left:2px">
+          <option value="0">sin carriles</option>
+          <option value="1" selected>a la vista</option>
+          <option value="2">y cada billete al suyo</option>
+        </select>
+      </label>
+      <span class="sep"></span>
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <label class="chk" title="Muestra herramientas de comprobación"><input type="checkbox" id="avz">Comprobaciones</label>
+      <span id="avanzado">
+        <label class="chk" title="Escribe cuánto suma lo que hay en el tablero. Déjalo apagado mientras esa cuenta sea lo que hay que averiguar."><input type="checkbox" id="chktotal">Σ Cuánto hay</label>
+        <button class="btn" id="minimo" title="Hace todos los cambios posibles, hasta dejar el menor número de billetes">⇮ Al mínimo</button>
+      </span>
+      <span class="sep"></span>
+      <label class="chk"><input type="checkbox" id="showgrid" checked>Retícula</label>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar en un archivo">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir el contenido de un archivo a lo que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="clear">Limpiar</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo de billetes</div>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+(function(){
+/* =========================================================================
+   1. LA IDEA / LOS BILLETES
+
+   La restricción que lo condiciona todo: un billete no vale un número, vale
+   un ORDEN. El billete de orden k vale b^k, y la única regla del material es
+   la equivalencia
+
+        b billetes de orden k   <-->   1 billete de orden k+1
+
+   que se puede recorrer en los dos sentidos (agrupar y desagrupar). Por eso
+   el estado guarda el orden de cada billete y NO su valor: cambiar la base no
+   toca los billetes, solo cambia lo que hay escrito en ellos y cuántos hacen
+   falta para un cambio. Un tablero con tres billetes de orden 2 son 300 en
+   base diez y 108 en base seis, y es el mismo tablero.
+
+   De ahí sale también la etiqueta simbólica: si el rótulo es 1, b, b^2, ...,
+   el material sigue funcionando igual porque los cambios se hacen contando
+   billetes, no leyendo su valor. Lo que hay en el tablero deja de ser un
+   número escrito en cifras y pasa a ser un polinomio en b.
+
+   Los billetes son todos del MISMO tamaño. El tamaño no debe codificar el
+   valor: si el de cien fuera diez veces el de diez, el material estaría
+   contando la respuesta con la forma, y además apilar cien billetes sería
+   imposible. Lo que distingue a un billete es lo que lleva escrito.
+   ========================================================================= */
+var MAXK=7;                 /* órdenes disponibles: 0 … 7 */
+var CW=132, CH=64;          /* la casilla donde vive un billete, en mundo */
+var MB=5;                   /* margen del billete dentro de su casilla */
+var GW=2;                   /* ancho, en casillas, del carril de cada orden */
+var MAXP=600;               /* tope de billetes en el tablero */
+var FF='-apple-system,Segoe UI,Roboto,Helvetica Neue,Arial,sans-serif';
+var SUP=['⁰','¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
+var BASES=[2,3,4,5,6,7,8,9,10,12,16];
+
+/* Los colores separan órdenes, no cantidades: no hay ninguna razón para que
+   el de cien sea más oscuro que el de diez, así que se eligen simplemente
+   bien distintos entre sí. Grises vale para fotocopiar y para quien no
+   distingue tonos; papel deja los ocho iguales y entonces solo queda leer. */
+var PALETAS=[
+ {id:'vivos',   nombre:'Vivos',        colores:['#e7ebf0','#f4a79b','#9dc2ea','#f6c87e','#9bd0a8','#c4aee2','#efe097','#93d2cd']},
+ {id:'suaves',  nombre:'Suaves',       colores:['#eef1f5','#f8d3cd','#ccdff4','#fae3bd','#cbe7d2','#ded1ef','#f5eec6','#c5e6e3']},
+ {id:'fuertes', nombre:'Intensos',     colores:['#7c8794','#c0483a','#2f62a8','#c47a17','#2f8b52','#71499e','#a08b1d','#1e8a86']},
+ {id:'grises',  nombre:'Grises',       colores:['#f2f2f2','#dcdcdc','#c6c6c6','#b0b0b0','#9a9a9a','#848484','#6e6e6e','#585858']},
+ {id:'papel',   nombre:'Todos iguales',colores:['#ece5d3','#ece5d3','#ece5d3','#ece5d3','#ece5d3','#ece5d3','#ece5d3','#ece5d3']}
+];
+function paleta(id){
+  for(var i=0;i<PALETAS.length;i++) if(PALETAS[i].id===id) return PALETAS[i];
+  return PALETAS[0];
+}
+
+/* =========================================================================
+   2. ESTADO
+   ========================================================================= */
+/* Un billete es {id, k, x, y}: su orden y su casilla entera del tablero.
+   Nunca hay dos en la misma casilla, que es lo que garantiza que todos se
+   vean y se puedan contar. */
+var pieces=[], nid=1, selIds=[];
+var tool='move';
+var view={x:0,y:0,z:1};
+var drag=null, marco=null, undoStack=[], importMode='replace';
+/* base: cuántos billetes hacen uno del orden siguiente.
+   simb: las etiquetas se escriben con el símbolo b en vez de con cifras.
+   dib:  se dibujan dentro los del orden anterior (puntos, barras, placas).
+   guias: 0 nada · 1 franjas a la vista · 2 además cada billete cae en la suya.
+   total: escribe cuánto hay. Empieza APAGADO: es la respuesta. */
+var opt={base:10, simb:0, ordenes:6, dib:1, guias:1, grid:1, total:0, pal:PALETAS[0].id};
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop'), statsEl=document.getElementById('stats');
+var flashMsg=null, flashT=0;
+
+function byId(id){ for(var i=0;i<pieces.length;i++) if(pieces[i].id===id) return pieces[i]; return null; }
+function estaSel(id){ return selIds.indexOf(id)>=0; }
+function selPiezas(){
+  var r=[], i;
+  for(i=0;i<selIds.length;i++){ var p=byId(selIds[i]); if(p) r.push(p); }
+  return r;
+}
+function ordenLectura(a,b){ return a.y===b.y ? a.x-b.x : a.y-b.y; }
+function pushUndo(){
+  undoStack.push(JSON.stringify({p:pieces, n:nid}));
+  if(undoStack.length>80) undoStack.shift();
+}
+function doUndo(){
+  if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var st=JSON.parse(undoStack.pop());
+  pieces=st.p; nid=st.n; selIds=[]; draw();
+}
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2100); }
+
+/* =========================================================================
+   3. GEOMETRÍA Y ARITMÉTICA DE ÓRDENES
+   ========================================================================= */
+/* El valor se calcula multiplicando, no con Math.pow: con base 16 y orden 7
+   la potencia sigue siendo un entero exacto y así se ve que lo es. */
+function valorOrden(k){ var v=1; for(var i=0;i<k;i++) v*=opt.base; return v; }
+function valorTotal(){ var s=0; for(var i=0;i<pieces.length;i++) s+=valorOrden(pieces[i].k); return s; }
+function superindice(n){
+  var s=String(n), r='', i;
+  for(i=0;i<s.length;i++) r+=SUP[parseInt(s.charAt(i),10)];
+  return r;
+}
+/* Cuántos billetes hacen un cambio, dicho como se rotula el material. Con la
+   base b la respuesta es «b», y no el número que hay por debajo: el material
+   se maneja igual sin saberlo, porque los cambios se hacen contando billetes
+   y no leyendo su valor. Quien quiera el número lo tiene en Comprobaciones. */
+function cuantos(){ return opt.simb ? 'b' : String(opt.base); }
+/* La etiqueta en texto plano, para la barra de estado y el informe de pruebas */
+function etiquetaTxt(k){
+  if(!opt.simb) return String(valorOrden(k));
+  if(k===0) return '1';
+  if(k===1) return 'b';
+  return 'b'+superindice(k);
+}
+/* La misma, en HTML, para la bandeja y el panel lateral */
+function etiquetaHTML(k){
+  if(!opt.simb) return String(valorOrden(k));
+  if(k===0) return '1';
+  if(k===1) return 'b';
+  return 'b<sup>'+k+'</sup>';
+}
+/* Las cifras de n en la base actual: cifras(n)[k] es la cifra del orden k.
+   Es la representación con el MENOR número de billetes, y por construcción
+   ninguna cifra llega a la base. */
+function cifras(n){
+  var b=opt.base, r=[], m=Math.floor(n);
+  while(m>0){ r.push(m%b); m=Math.floor(m/b); }
+  return r;
+}
+function recuento(){
+  var c=[], k;
+  for(k=0;k<=MAXK;k++) c.push(0);
+  for(k=0;k<pieces.length;k++) c[pieces[k].k]++;
+  return c;
+}
+/* Lo que hay en el tablero, escrito tal cual está: 11x100 + 12x10 + 14. No es
+   el total, es la lectura del montón, y por eso puede llevar cifras que pasan
+   de la base. Que se pueda escribir así es justo lo que hace que agrupar
+   tenga sentido. */
+function expresion(){
+  var c=recuento(), t=[], k;
+  for(k=MAXK;k>=0;k--){
+    if(!c[k]) continue;
+    if(k===0) t.push(String(c[k]));
+    else if(opt.simb) t.push((c[k]===1?'':String(c[k]))+etiquetaTxt(k));
+    else t.push(c[k]+'×'+etiquetaTxt(k));
+  }
+  return t.length? t.join(' + ') : '0';
+}
+/* El rótulo de cuánto hay. Devuelve cadena vacía con la casilla apagada, y
+   TODO lo que lo dibuja pregunta por aquí: el panel lateral, el lienzo y el
+   PNG. Es la única forma de que la respuesta no se escape por un sitio. */
+function rotuloTotal(){
+  if(!opt.total || !pieces.length) return '';
+  var v=valorTotal();
+  if(opt.simb) return expresion()+'   (con b = '+opt.base+', vale '+v+')';
+  return expresion()+' = '+v+(opt.base!==10 ? '   (base '+opt.base+')' : '');
+}
+
+/* --- casillas ------------------------------------------------------------ */
+function ocupada(lista,x,y,excl){
+  for(var i=0;i<lista.length;i++){
+    var p=lista[i];
+    if(excl && excl[p.id]) continue;
+    if(p.x===x && p.y===y) return p;
+  }
+  return null;
+}
+/* El carril del orden k: los carriles se leen como se escribe un número, el
+   orden mayor a la izquierda y las unidades a la derecha. */
+function carril(k){ return (opt.ordenes-1-k)*GW; }
+function enCarril(k,x){ var c=carril(k); return x>=c && x<c+GW; }
+/* El hueco libre más cercano a (x,y). Recorre anillos crecientes y dentro de
+   cada anillo se queda con el más próximo de verdad, midiendo en unidades de
+   mundo: la casilla es apaisada y el vecino de arriba está más cerca que el
+   de al lado aunque los dos estén a un paso. */
+function hueco(lista,x,y,excl,limX){
+  var r, dx, dy, mejor=null, dist=Infinity;
+  for(r=0;r<=40;r++){
+    mejor=null; dist=Infinity;
+    for(dx=-r;dx<=r;dx++) for(dy=-r;dy<=r;dy++){
+      if(Math.max(Math.abs(dx),Math.abs(dy))!==r) continue;
+      var nx=x+dx, ny=y+dy;
+      if(limX && (nx<limX[0] || nx>limX[1])) continue;
+      if(ocupada(lista,nx,ny,excl)) continue;
+      var d=(dx*CW)*(dx*CW)+(dy*CH)*(dy*CH);
+      if(d<dist){ dist=d; mejor={x:nx,y:ny}; }
+    }
+    if(mejor) return mejor;
+  }
+  return null;
+}
+/* Dónde acaba cayendo un billete de orden k soltado en (x,y). Con los
+   carriles imantados, la casilla se busca solo dentro del carril de su orden:
+   es lo que hace del tablero una tabla de valor posicional de verdad. */
+function destino(k,x,y,excl){
+  if(opt.guias===2){
+    var c=carril(k);
+    var xx=Math.min(c+GW-1, Math.max(c, x));
+    return hueco(pieces, xx, y, excl, [c, c+GW-1]);
+  }
+  return hueco(pieces, x, y, excl, null);
+}
+function caja(){
+  if(!pieces.length) return null;
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  pieces.forEach(function(p){
+    x0=Math.min(x0,p.x*CW); y0=Math.min(y0,p.y*CH);
+    x1=Math.max(x1,(p.x+1)*CW); y1=Math.max(y1,(p.y+1)*CH);
+  });
+  return {x0:x0,y0:y0,x1:x1,y1:y1};
+}
+
+/* =========================================================================
+   4. ACCIONES
+   ========================================================================= */
+function nuevo(k,x,y){
+  if(pieces.length>=MAXP) return null;
+  var p={id:nid++, k:k, x:x, y:y};
+  pieces.push(p);
+  return p;
+}
+function ponerEnHueco(k,x,y){
+  var h=destino(k,x,y,null);
+  if(!h) return null;
+  return nuevo(k,h.x,h.y);
+}
+/* Mover un grupo entero de golpe. Se prueba el desplazamiento pedido y, si
+   choca con algún billete de fuera del grupo, desplazamientos cercanos: mover
+   tres billetes a la vez tiene que poder fallar sin dejar el grupo roto por
+   la mitad, así que o se mueven todos o no se mueve ninguno. */
+function moverGrupo(ps,dx,dy){
+  var excl={}, i;
+  for(i=0;i<ps.length;i++) excl[ps[i].id]=1;
+  var cand=[[dx,dy]], r, ex, ey;
+  for(r=1;r<=3;r++) for(ex=-r;ex<=r;ex++) for(ey=-r;ey<=r;ey++)
+    if(Math.max(Math.abs(ex),Math.abs(ey))===r) cand.push([dx+ex,dy+ey]);
+  for(var c=0;c<cand.length;c++){
+    var ok=true;
+    for(i=0;i<ps.length;i++){
+      if(ocupada(pieces, ps[i].x+cand[c][0], ps[i].y+cand[c][1], excl)){ ok=false; break; }
+    }
+    if(ok){
+      for(i=0;i<ps.length;i++){ ps[i].x+=cand[c][0]; ps[i].y+=cand[c][1]; }
+      return true;
+    }
+  }
+  return false;
+}
+/* EL CAMBIO, en el sentido de agrupar: se van b billetes del mismo orden y
+   llega uno del siguiente. Se hace de uno en uno —una pulsación, un cambio—
+   porque el gesto es justo lo que hay que hacer consciente. Si hay marcados
+   más de b, se van los primeros en orden de lectura. */
+function agrupar(){
+  var ss=selPiezas(), b=opt.base, i;
+  if(ss.length<b) return {ok:false, razon:'pocos'};
+  var k=ss[0].k;
+  for(i=1;i<ss.length;i++) if(ss[i].k!==k) return {ok:false, razon:'mezcla'};
+  if(k>=MAXK) return {ok:false, razon:'tope'};
+  ss.sort(ordenLectura);
+  var van=ss.slice(0,b), ids={};
+  for(i=0;i<van.length;i++) ids[van[i].id]=1;
+  var x=van[0].x, y=van[0].y;
+  pushUndo();
+  pieces=pieces.filter(function(p){ return !ids[p.id]; });
+  var np=ponerEnHueco(k+1,x,y);
+  selIds = np ? [np.id] : [];
+  return {ok:true, pieza:np, orden:k};
+}
+/* El mismo cambio del revés: un billete se va y llegan b del orden anterior.
+   Un billete de orden 0 no se puede desagrupar: por debajo de la unidad este
+   material no tiene nada, y decirlo es parte de lo que enseña. */
+function desagrupar(ps){
+  var b=opt.base, i, j, hechos=0, nuevos=[];
+  for(i=0;i<ps.length;i++) if(ps[i].k<=0) return {ok:false, razon:'unidad'};
+  if(!ps.length) return {ok:false, razon:'ninguno'};
+  if(pieces.length - ps.length + ps.length*b > MAXP) return {ok:false, razon:'lleno'};
+  pushUndo();
+  for(i=0;i<ps.length;i++){
+    var p=ps[i], k=p.k-1, x=p.x, y=p.y;
+    pieces=pieces.filter(function(q){ return q!==p; });
+    for(j=0;j<b;j++){
+      var np=ponerEnHueco(k,x,y);
+      if(np) nuevos.push(np.id);
+    }
+    hechos++;
+  }
+  selIds=nuevos;
+  return {ok:true, hechos:hechos};
+}
+/* Todos los cambios de agrupar que se puedan hacer, hasta dejar el menor
+   número de billetes. Va de abajo arriba, y los que nacen en un orden entran
+   en el reparto de ese orden porque la lista se rehace en cada vuelta. */
+function alMinimo(){
+  var b=opt.base, hechos=0, k, i;
+  pushUndo();
+  for(k=0;k<MAXK;k++){
+    while(true){
+      var mismos=pieces.filter(function(p){ return p.k===k; });
+      if(mismos.length<b) break;
+      mismos.sort(ordenLectura);
+      var van=mismos.slice(0,b), ids={};
+      for(i=0;i<van.length;i++) ids[van[i].id]=1;
+      var x=van[0].x, y=van[0].y;
+      pieces=pieces.filter(function(p){ return !ids[p.id]; });
+      ponerEnHueco(k+1,x,y);
+      hechos++;
+    }
+  }
+  if(!hechos) undoStack.pop(); else selIds=[];
+  return hechos;
+}
+/* Sacar una cantidad con el menor número de billetes. La cantidad se escribe
+   siempre en base diez —es cuánto vale, no cómo se escribe—, y lo que cambia
+   con la base es el montón de billetes que hace falta. */
+function sacarCantidad(n){
+  if(!isFinite(n) || n<0 || n!==Math.round(n)) return {ok:false, razon:'nonumero'};
+  var cf=cifras(n);
+  if(!cf.length) return {ok:false, razon:'cero'};
+  if(cf.length-1>MAXK) return {ok:false, razon:'grande'};
+  var tot=0, k;
+  for(k=0;k<cf.length;k++) tot+=cf[k];
+  if(pieces.length+tot>MAXP) return {ok:false, razon:'lleno'};
+  pushUndo();
+  var y0=0;
+  if(pieces.length){ var b=caja(); y0=Math.round(b.y1/CH)+1; }
+  var puestos=[];
+  for(k=cf.length-1;k>=0;k--){
+    var c=carril(k);
+    for(var i=0;i<cf[k];i++){
+      var col=c+(i%GW), fila=y0+Math.floor(i/GW);
+      var h=hueco(pieces,col,fila,null,[c,c+GW-1]);
+      if(!h) continue;
+      var p=nuevo(k,h.x,h.y);
+      if(p) puestos.push(p.id);
+    }
+  }
+  selIds=puestos;
+  return {ok:true, cifras:cf, billetes:tot};
+}
+/* Cada billete al carril de su orden, apilados por filas. Es la puesta a
+   punto del tablero, no una respuesta: no cambia ni un billete de sitio en la
+   cuenta, solo los ordena. */
+function ordenar(){
+  if(!pieces.length) return 0;
+  pushUndo();
+  var porK=[], k, i;
+  for(k=0;k<=MAXK;k++) porK.push([]);
+  pieces.forEach(function(p){ porK[p.k].push(p); });
+  var res=[];
+  for(k=MAXK;k>=0;k--){
+    var c=carril(k);
+    for(i=0;i<porK[k].length;i++){
+      var p=porK[k][i];
+      p.x=c+(i%GW); p.y=Math.floor(i/GW);
+      res.push(p);
+    }
+  }
+  pieces=res;
+  return pieces.length;
+}
+function desordenar(){
+  if(!pieces.length) return 0;
+  pushUndo();
+  var n=pieces.length, lado=Math.max(3, Math.ceil(Math.sqrt(n))+2);
+  var libres=[], x, y;
+  for(y=0;y<lado;y++) for(x=0;x<lado*2;x++) libres.push({x:x,y:y});
+  for(var i=libres.length-1;i>0;i--){
+    var j=Math.floor(Math.random()*(i+1)), t=libres[i]; libres[i]=libres[j]; libres[j]=t;
+  }
+  pieces.forEach(function(p,idx){ p.x=libres[idx].x; p.y=libres[idx].y; });
+  return pieces.length;
+}
+function duplicar(){
+  var ss=selPiezas(); if(!ss.length) return 0;
+  pushUndo();
+  var nuevos=[];
+  ss.forEach(function(p){
+    var np=ponerEnHueco(p.k, p.x+1, p.y);
+    if(np) nuevos.push(np.id);
+  });
+  if(!nuevos.length){ undoStack.pop(); return 0; }
+  selIds=nuevos;
+  return nuevos.length;
+}
+function quitarSel(){
+  var ss=selPiezas(); if(!ss.length) return 0;
+  pushUndo();
+  var ids={}; ss.forEach(function(p){ ids[p.id]=1; });
+  pieces=pieces.filter(function(p){ return !ids[p.id]; });
+  selIds=[];
+  return ss.length;
+}
+function marcarMismoOrden(){
+  var ss=selPiezas(); if(ss.length!==1) return 0;
+  var k=ss[0].k, r=[];
+  pieces.forEach(function(p){ if(p.k===k) r.push(p.id); });
+  selIds=r;
+  return r.length;
+}
+
+/* =========================================================================
+   5. DIBUJO
+   ========================================================================= */
+function w2s(p){ return {x:p.x*view.z+view.x, y:p.y*view.z+view.y}; }
+function s2w(p){ return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z}; }
+function celda(wp){ return {x:Math.floor(wp.x/CW), y:Math.floor(wp.y/CH)}; }
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr)); cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  /* la bandeja solo se rehace si de verdad le ha cambiado el ancho a la
+     columna: rehacerla en cada evento de resize tiraría los escuchadores de
+     los billetes que hay dentro */
+  var cb=document.getElementById('bandeja');
+  if(cb && cb.clientWidth && cb.clientWidth!==anchoCol) pintaBandeja();
+  draw();
+}
+function shade(hex,f){
+  var h=(hex||'#888888').replace('#',''); if(h.length===3) h=h.charAt(0)+h.charAt(0)+h.charAt(1)+h.charAt(1)+h.charAt(2)+h.charAt(2);
+  var r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
+  r=Math.round(r+(f>0?(255-r)*f:r*f)); g=Math.round(g+(f>0?(255-g)*f:g*f)); b=Math.round(b+(f>0?(255-b)*f:b*f));
+  return 'rgb('+r+','+g+','+b+')';
+}
+function lum(hex){
+  var h=(hex||'#888888').replace('#','');
+  return 0.299*parseInt(h.substr(0,2),16)+0.587*parseInt(h.substr(2,2),16)+0.114*parseInt(h.substr(4,2),16);
+}
+function colorDe(k){ return paleta(opt.pal).colores[Math.max(0,Math.min(7,k))]; }
+function tintaSobre(col){ return lum(col)>140 ? '#1f2329' : '#ffffff'; }
+function roundRect(c,x,y,w,h,r){
+  r=Math.min(r, w/2, h/2);
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y);
+  c.closePath();
+}
+/* --- la etiqueta ---------------------------------------------------------
+   Con etiquetas simbólicas el exponente se dibuja aparte y más pequeño. Con
+   el carácter de superíndice de Unicode sale diminuto y mal alineado en la
+   mitad de las fuentes, y aquí es lo que hay que leer. */
+function anchoEtiqueta(c,k,tam){
+  if(!opt.simb || k===0){
+    c.font='700 '+tam+'px '+FF;
+    return c.measureText(opt.simb?'1':String(valorOrden(k))).width;
+  }
+  c.font='700 '+tam+'px '+FF;
+  var w=c.measureText('b').width;
+  if(k===1) return w;
+  c.font='700 '+Math.round(tam*0.62)+'px '+FF;
+  return w + tam*0.04 + c.measureText(String(k)).width;
+}
+function dibujaEtiqueta(c,k,cx,cy,tam){
+  var w=anchoEtiqueta(c,k,tam), x0=cx-w/2;
+  c.textAlign='left'; c.textBaseline='middle';
+  if(!opt.simb || k===0){
+    c.font='700 '+tam+'px '+FF;
+    c.fillText(opt.simb?'1':String(valorOrden(k)), x0, cy);
+    return;
+  }
+  c.font='700 '+tam+'px '+FF;
+  c.fillText('b', x0, cy);
+  var wb=c.measureText('b').width;
+  if(k>1){
+    c.font='700 '+Math.round(tam*0.62)+'px '+FF;
+    c.fillText(String(k), x0+wb+tam*0.04, cy-tam*0.30);
+  }
+}
+/* El tamaño de letra más grande que cabe en un ancho dado */
+function tamQueCabe(c,k,tamIdeal,anchoMax){
+  var w=anchoEtiqueta(c,k,tamIdeal);
+  if(w<=anchoMax || w<=0) return tamIdeal;
+  return Math.max(5, tamIdeal*anchoMax/w);
+}
+
+/* --- lo que va dibujado dentro -------------------------------------------
+   Un billete de orden k son b del orden k−1, y eso es lo que se dibuja: un
+   punto, una barra de b puntos, una placa de b×b, un bloque de b×b×b. Es el
+   material de base diez de toda la vida, y hace visible de dónde sale el
+   valor sin escribirlo. Solo se dibuja mientras se pueda CONTAR: con bases
+   grandes la placa se convierte en una textura y deja de decir nada, así que
+   entonces no se dibuja. */
+function hayGrafico(k){
+  if(!opt.dib) return false;
+  /* Con la base b, el dibujo va sin divisiones, así que no hay ningún límite:
+     lo que se dibuja es la FORMA —punto, barra, placa, bloque— y esa se sabe
+     siempre. Los topes de abajo son para poder contar los trozos. */
+  if(opt.simb) return k<=3;
+  var b=opt.base;
+  if(k===0) return true;
+  if(k===1) return b<=16;
+  if(k===2) return b<=12;
+  if(k===3) return b<=10;
+  return false;
+}
+function cuadrito(c,x,y,u){ c.fillRect(x,y,u,u); }
+function dibujaCubo(c,x,y,w,h,b,tinta){
+  var S=Math.min(w*0.92, h*1.55);
+  var a=S*0.5, q=S*0.25, hh=S*0.50;
+  var cx=x+w/2, cy=y+h/2;
+  var Tx=cx, Ty=cy-(q+hh/2);
+  function P(i,j,l){ return {x:Tx+(i-j)*a, y:Ty+(i+j)*q+l*hh}; }
+  function cara(pts,alfa){
+    c.globalAlpha=alfa; c.beginPath();
+    c.moveTo(pts[0].x,pts[0].y);
+    for(var i=1;i<pts.length;i++) c.lineTo(pts[i].x,pts[i].y);
+    c.closePath(); c.fill();
+  }
+  c.save(); c.fillStyle=tinta; c.strokeStyle=tinta;
+  cara([P(0,0,0),P(1,0,0),P(1,1,0),P(0,1,0)],0.30);
+  cara([P(1,0,0),P(1,1,0),P(1,1,1),P(1,0,1)],0.20);
+  cara([P(0,1,0),P(1,1,0),P(1,1,1),P(0,1,1)],0.12);
+  c.globalAlpha=0.42; c.lineWidth=Math.max(0.35,S*0.010);
+  c.beginPath();
+  var t, i;
+  /* b<2 significa «sin divisiones»: es lo que toca con la base b, donde
+     cuántos trozos tiene el bloque es justo lo que no se sabe. */
+  for(i=1;i<b;i++){
+    t=i/b;
+    var A=P(t,0,0), B=P(t,1,0); c.moveTo(A.x,A.y); c.lineTo(B.x,B.y);
+    var C=P(0,t,0), D=P(1,t,0); c.moveTo(C.x,C.y); c.lineTo(D.x,D.y);
+    var E=P(1,t,0), F=P(1,t,1); c.moveTo(E.x,E.y); c.lineTo(F.x,F.y);
+    var G=P(1,0,t), H=P(1,1,t); c.moveTo(G.x,G.y); c.lineTo(H.x,H.y);
+    var I=P(t,1,0), J=P(t,1,1); c.moveTo(I.x,I.y); c.lineTo(J.x,J.y);
+    var K=P(0,1,t), L=P(1,1,t); c.moveTo(K.x,K.y); c.lineTo(L.x,L.y);
+  }
+  c.stroke();
+  c.globalAlpha=0.85; c.lineWidth=Math.max(0.5,S*0.016);
+  c.beginPath();
+  var v=[P(0,0,0),P(1,0,0),P(1,1,0),P(0,1,0)];
+  c.moveTo(v[0].x,v[0].y); for(i=1;i<4;i++) c.lineTo(v[i].x,v[i].y); c.closePath();
+  var v2=[P(1,0,0),P(1,0,1),P(1,1,1),P(0,1,1),P(0,1,0)];
+  c.moveTo(v2[0].x,v2[0].y); for(i=1;i<5;i++) c.lineTo(v2[i].x,v2[i].y);
+  var m=P(1,1,0), n=P(1,1,1); c.moveTo(m.x,m.y); c.lineTo(n.x,n.y);
+  c.stroke();
+  c.restore();
+}
+/* Las formas lisas de la base b. Un billete de orden k son b del orden
+   anterior, y eso se ve en la forma —el de b es una barra, el de b² una
+   placa, el de b³ un bloque—, pero CUÁNTOS trozos tiene esa barra es
+   exactamente lo que la base b no dice. Dibujar diez puntitos delataría que
+   b vale diez y se acabó la gracia. */
+function formaLisa(c,k,x,y,w,h,tinta){
+  var lado, an, al;
+  c.save();
+  c.fillStyle=tinta; c.strokeStyle=tinta;
+  /* El relleno pesa lo mismo que los cuadraditos de las versiones con
+     divisiones (0,66-0,78): una forma lisa dibujada en gris claro con el
+     borde oscuro se lee como un contorno hueco, y lo que tiene que decir es
+     que es UNA pieza entera. */
+  c.globalAlpha=0.58;
+  if(k===1){
+    an=w*0.94; al=Math.min(h*0.34, w*0.19);
+    c.fillRect(x+(w-an)/2, y+h/2-al/2, an, al);
+    c.globalAlpha=0.88; c.lineWidth=Math.max(0.5,Math.min(w,h)*0.028);
+    c.strokeRect(x+(w-an)/2, y+h/2-al/2, an, al);
+  }else if(k===2){
+    lado=Math.min(w,h)*0.84;
+    c.fillRect(x+w/2-lado/2, y+h/2-lado/2, lado, lado);
+    c.globalAlpha=0.88; c.lineWidth=Math.max(0.5,lado*0.035);
+    c.strokeRect(x+w/2-lado/2, y+h/2-lado/2, lado, lado);
+  }
+  c.restore();
+}
+function dibujaGrafico(c,k,x,y,w,h,tinta){
+  var b=opt.base, i, j, u, pitch, x0, y0;
+  if(opt.simb){
+    if(k===0){
+      c.save(); c.fillStyle=tinta; c.globalAlpha=0.78;
+      u=Math.min(w,h)*0.34; c.fillRect(x+w/2-u/2, y+h/2-u/2, u, u); c.restore();
+    }else if(k===3){
+      dibujaCubo(c,x,y,w,h,0,tinta);
+    }else{
+      formaLisa(c,k,x,y,w,h,tinta);
+    }
+    return;
+  }
+  c.save(); c.fillStyle=tinta;
+  if(k===0){
+    u=Math.min(w,h)*0.34;
+    c.globalAlpha=0.78; cuadrito(c, x+w/2-u/2, y+h/2-u/2, u);
+  }else if(k===1){
+    pitch=w/b; u=Math.min(pitch*0.76, h*0.46);
+    x0=x+w/2-(b*pitch)/2+(pitch-u)/2; y0=y+h/2-u/2;
+    c.globalAlpha=0.72;
+    for(i=0;i<b;i++) cuadrito(c, x0+i*pitch, y0, u);
+  }else if(k===2){
+    pitch=Math.min(w,h)*0.9/b; u=Math.max(0.7,pitch*0.76);
+    x0=x+w/2-(b*pitch)/2+(pitch-u)/2; y0=y+h/2-(b*pitch)/2+(pitch-u)/2;
+    c.globalAlpha=0.66;
+    for(i=0;i<b;i++) for(j=0;j<b;j++) cuadrito(c, x0+i*pitch, y0+j*pitch, u);
+  }else if(k===3){
+    dibujaCubo(c,x,y,w,h,b,tinta);
+  }
+  c.restore();
+}
+/* --- el billete ----------------------------------------------------------
+   Evoca un billete de verdad —marco doble, guilloche, el valor repetido— sin
+   pelearse con lo único que hay que leer, que es el numeral. */
+function dibujaBillete(c,k,x,y,w,h,marcado){
+  if(!isFinite(x)||!isFinite(y)||!isFinite(w)||!isFinite(h)||w<=0||h<=0) return;
+  var col=colorDe(k), tinta=tintaSobre(col), borde=shade(col,-0.45);
+  var s, t, px, py;
+  c.save();
+  roundRect(c,x,y,w,h,Math.max(2,h*0.10)); c.fillStyle=col; c.fill();
+  /* la guilloche */
+  c.save();
+  roundRect(c,x,y,w,h,Math.max(2,h*0.10)); c.clip();
+  c.globalAlpha=0.15; c.strokeStyle=borde; c.lineWidth=Math.max(0.5,h*0.016);
+  for(s=0;s<3;s++){
+    c.beginPath();
+    for(t=0;t<=36;t++){
+      px=x+w*t/36;
+      py=y+h*0.5+h*0.30*Math.sin(t/36*Math.PI*3+s*2.1)+(s-1)*h*0.06;
+      if(t===0) c.moveTo(px,py); else c.lineTo(px,py);
+    }
+    c.stroke();
+  }
+  c.restore();
+  /* el marco interior y el borde */
+  c.globalAlpha=0.45; c.strokeStyle=borde; c.lineWidth=Math.max(0.5,h*0.017);
+  roundRect(c,x+h*0.09,y+h*0.09,w-h*0.18,h-h*0.18,Math.max(1,h*0.05)); c.stroke();
+  c.globalAlpha=1; c.lineWidth=Math.max(1,h*0.030);
+  roundRect(c,x,y,w,h,Math.max(2,h*0.10)); c.stroke();
+
+  var pad=h*0.17, g=hayGrafico(k);
+  var zn = g ? {x:x+pad, y:y+pad, w:w*0.46-pad, h:h-2*pad}
+             : {x:x+pad, y:y+pad, w:w-2*pad,   h:h-2*pad};
+  c.fillStyle=tinta;
+  var tam=tamQueCabe(c,k,h*0.44,zn.w);
+  dibujaEtiqueta(c,k, zn.x+zn.w/2, zn.y+zn.h/2, tam);
+  if(g){
+    dibujaGrafico(c,k, x+w*0.47, y+pad*0.55, w*0.53-pad*0.75, h-1.1*pad, tinta);
+  }else{
+    /* sin dibujo, el valor repetido pequeño en dos esquinas: es lo que llena
+       un billete de verdad y aquí además da algo que leer de un vistazo */
+    var tp=h*0.19, wp=anchoEtiqueta(c,k,tp);
+    c.globalAlpha=0.72;
+    dibujaEtiqueta(c,k, x+h*0.20+wp/2, y+h*0.22, tp);
+    dibujaEtiqueta(c,k, x+w-h*0.20-wp/2, y+h-h*0.22, tp);
+    c.globalAlpha=1;
+  }
+  c.restore();
+  if(marcado){
+    c.save();
+    c.setLineDash([6,4]); c.lineWidth=2; c.strokeStyle='#2f62a8';
+    c.strokeRect(x-3.5, y-3.5, w+7, h+7);
+    c.restore();
+  }
+}
+function drawGrid(c,W,H){
+  var sx=CW*view.z, sy=CH*view.z;
+  if(sx<14||sy<10) return;
+  var x0=((view.x%sx)+sx)%sx, y0=((view.y%sy)+sy)%sy;
+  c.save(); c.strokeStyle='#e9ecf1'; c.lineWidth=1; c.beginPath();
+  for(var x=x0;x<W;x+=sx){ c.moveTo(Math.round(x)+.5,0); c.lineTo(Math.round(x)+.5,H); }
+  for(var y=y0;y<H;y+=sy){ c.moveTo(0,Math.round(y)+.5); c.lineTo(W,Math.round(y)+.5); }
+  c.stroke(); c.restore();
+}
+/* Los carriles: una franja por orden, leídas como se escribe un número. La
+   cabecera se queda pegada arriba del lienzo y no se va con el
+   desplazamiento: en cuanto hay tres filas de billetes, si se fuera dejaría
+   de verse qué carril es cuál, que es lo único que tiene que decir. */
+var HDR=26;
+function dibujaFranjas(c,W,H){
+  var k, a, bx;
+  for(k=opt.ordenes-1;k>=0;k--){
+    a=w2s({x:carril(k)*CW,y:0}).x; bx=w2s({x:(carril(k)+GW)*CW,y:0}).x;
+    if(bx<0||a>W) continue;
+    c.fillStyle=(k%2)?'#f6f8fa':'#fcfdfe';
+    c.fillRect(a,0,bx-a,H);
+    c.strokeStyle='#e0e4ea'; c.lineWidth=1;
+    c.beginPath();
+    c.moveTo(Math.round(a)+.5,0); c.lineTo(Math.round(a)+.5,H);
+    c.moveTo(Math.round(bx)+.5,0); c.lineTo(Math.round(bx)+.5,H);
+    c.stroke();
+  }
+}
+/* La cabecera se dibuja LA ÚLTIMA, encima de la retícula y de los billetes.
+   La primera versión la pintaba con las franjas, antes que la retícula, y las
+   líneas finas de la retícula acababan cruzando las etiquetas por la mitad. */
+function dibujaCabecera(c,W){
+  var k, a, bx;
+  c.fillStyle='#fff'; c.fillRect(0,0,W,HDR);
+  c.strokeStyle='#dfe2e7'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(0,HDR+.5); c.lineTo(W,HDR+.5); c.stroke();
+  for(k=opt.ordenes-1;k>=0;k--){
+    a=w2s({x:carril(k)*CW,y:0}).x; bx=w2s({x:(carril(k)+GW)*CW,y:0}).x;
+    if(bx<0||a>W) continue;
+    c.strokeStyle='#e6eaef'; c.beginPath();
+    c.moveTo(Math.round(a)+.5,0); c.lineTo(Math.round(a)+.5,HDR); c.stroke();
+    c.fillStyle='#5a616c';
+    dibujaEtiqueta(c,k,(a+bx)/2, HDR/2, 14);
+  }
+}
+function pinta(c,txt,x,y){
+  c.save();
+  c.font='600 13px '+FF; c.textAlign='left'; c.textBaseline='middle';
+  var w=c.measureText(txt).width;
+  c.fillStyle='rgba(255,255,255,.92)'; roundRect(c,x,y-13,w+18,26,7); c.fill();
+  c.strokeStyle='#dfe2e7'; c.lineWidth=1; c.stroke();
+  c.fillStyle='#2b2f36'; c.fillText(txt,x+9,y+1);
+  c.restore();
+}
+function escena(c,W,H,paraPNG){
+  c.save();
+  c.fillStyle='#fff'; c.fillRect(0,0,W,H);
+  if(opt.guias) dibujaFranjas(c,W,H);
+  if(opt.grid) drawGrid(c,W,H);
+  var i, p, sp, w=(CW-2*MB)*view.z, h=(CH-2*MB)*view.z;
+  for(i=0;i<pieces.length;i++){
+    p=pieces[i];
+    sp=w2s({x:p.x*CW+MB, y:p.y*CH+MB});
+    if(sp.x>W||sp.y>H||sp.x+w<0||sp.y+h<0) continue;
+    dibujaBillete(c,p.k,sp.x,sp.y,w,h,estaSel(p.id));
+  }
+  if(opt.guias) dibujaCabecera(c,W);
+  /* el rótulo va DENTRO del lienzo: el PNG se descarga sin la barra de
+     herramientas, así que lo que solo dijera la interfaz no saldría */
+  var rot=rotuloTotal();
+  if(rot) pinta(c,rot,10,(opt.guias?HDR:0)+22);
+  if(!paraPNG && marco){
+    c.save();
+    var x0=Math.min(marco.x0,marco.x1), y0=Math.min(marco.y0,marco.y1);
+    var mw=Math.abs(marco.x1-marco.x0), mh=Math.abs(marco.y1-marco.y0);
+    c.fillStyle='rgba(47,98,168,.10)'; c.fillRect(x0,y0,mw,mh);
+    c.strokeStyle='#2f62a8'; c.lineWidth=1; c.setLineDash([5,3]);
+    c.strokeRect(Math.round(x0)+.5,Math.round(y0)+.5,mw,mh);
+    c.restore();
+  }
+  if(!paraPNG && flashMsg && Date.now()-flashT<2000) pinta(c,flashMsg,10,H-52);
+  c.restore();
+}
+function draw(){
+  var r=stage.getBoundingClientRect();
+  if(r.width>0 && r.height>0) escena(ctx,r.width,r.height,false);
+  updateUI();
+}
+
+/* =========================================================================
+   6. INTERACCIÓN
+   ========================================================================= */
+function evPos(e){ var r=cv.getBoundingClientRect(); return {x:e.clientX-r.left, y:e.clientY-r.top}; }
+function billeteEn(g){
+  for(var i=pieces.length-1;i>=0;i--){
+    var p=pieces[i];
+    if(p.x===g.x && p.y===g.y) return p;
+  }
+  return null;
+}
+function alFrente(ps){
+  var ids={}; ps.forEach(function(p){ ids[p.id]=1; });
+  var resto=pieces.filter(function(p){ return !ids[p.id]; });
+  pieces=resto.concat(pieces.filter(function(p){ return ids[p.id]; }));
+}
+/* Qué billetes caen dentro del recuadro. Basta con que la casilla se solape:
+   pedir que quepa entero obligaría a barrer con una precisión que no tiene
+   nada que ver con lo que se está haciendo. */
+function aplicaMarco(base){
+  if(!marco) return;
+  var x0=Math.min(marco.x0,marco.x1), x1=Math.max(marco.x0,marco.x1);
+  var y0=Math.min(marco.y0,marco.y1), y1=Math.max(marco.y0,marco.y1);
+  var a=s2w({x:x0,y:y0}), b=s2w({x:x1,y:y1});
+  var r=base.slice();
+  pieces.forEach(function(p){
+    var px0=p.x*CW, px1=(p.x+1)*CW, py0=p.y*CH, py1=(p.y+1)*CH;
+    if(px1<a.x||px0>b.x||py1<a.y||py0>b.y) return;
+    if(r.indexOf(p.id)<0) r.push(p.id);
+  });
+  selIds=r;
+}
+/* Soltar el grupo. Con los carriles imantados el desplazamiento horizontal no
+   manda: cada billete vuelve al carril de su orden y solo conserva la fila,
+   que es lo que hace del tablero una tabla de valor posicional. */
+function soltarGrupo(ps,orig,dx,dy){
+  var i, j;
+  if(opt.guias!==2) return moverGrupo(ps,dx,dy);
+  var idx=[]; for(i=0;i<ps.length;i++) idx.push(i);
+  idx.sort(function(a,b){
+    return ordenLectura({x:orig[a].x+dx,y:orig[a].y+dy},{x:orig[b].x+dx,y:orig[b].y+dy}); });
+  var excl={}; for(i=0;i<ps.length;i++) excl[ps[i].id]=1;
+  var res=pieces.filter(function(p){ return !excl[p.id]; });
+  for(j=0;j<idx.length;j++){
+    var p=ps[idx[j]], o=orig[idx[j]], c=carril(p.k);
+    var xx=Math.min(c+GW-1, Math.max(c, o.x+dx));
+    var h=hueco(res, xx, o.y+dy, null, [c,c+GW-1]);
+    if(!h){ for(i=0;i<ps.length;i++){ ps[i].x=orig[i].x; ps[i].y=orig[i].y; } return false; }
+    p.x=h.x; p.y=h.y; res.push(p);
+  }
+  return true;
+}
+/* Cada billete al carril de su orden conservando su fila. No es lo mismo que
+   ≡ Ordenar, que además los apila desde arriba: aquí las filas son los
+   sumandos y perderlas sería perder el trabajo. */
+function imantarTodos(){
+  var lista=pieces.slice().sort(ordenLectura), res=[], i;
+  for(i=0;i<lista.length;i++){
+    var p=lista[i], c=carril(p.k);
+    var xx=Math.min(c+GW-1, Math.max(c,p.x));
+    var h=hueco(res, xx, p.y, null, [c,c+GW-1]);
+    if(h){ p.x=h.x; p.y=h.y; }
+    res.push(p);
+  }
+  return pieces.length;
+}
+function onDown(e){
+  /* Capturar el puntero es una comodidad, no un requisito, y lanza
+     NotFoundError con un evento sintético: sin el try, un clic simulado
+     mataría onDown en su primera línea. */
+  try{ cv.setPointerCapture && cv.setPointerCapture(e.pointerId); }catch(err){}
+  var sp=evPos(e), g=celda(s2w(sp)), p=billeteEn(g);
+  var mult=e.shiftKey||e.ctrlKey||e.metaKey;
+  if(tool==='del'){
+    if(p){
+      pushUndo();
+      pieces=pieces.filter(function(q){ return q!==p; });
+      selIds=selIds.filter(function(id){ return id!==p.id; });
+    }
+    draw(); return;
+  }
+  if(p){
+    if(mult || tool==='mark'){
+      if(estaSel(p.id)) selIds=selIds.filter(function(id){ return id!==p.id; });
+      else selIds=selIds.concat([p.id]);
+    }else if(!estaSel(p.id)){
+      selIds=[p.id];
+    }
+    if(estaSel(p.id) && tool==='move'){
+      var ps=selPiezas();
+      alFrente(ps);
+      drag={mode:'move', ps:ps, orig:ps.map(function(q){ return {x:q.x,y:q.y}; }),
+            g0:g, dx:0, dy:0};
+    }
+    draw(); return;
+  }
+  if(tool==='mark' || mult){
+    if(!mult) selIds=[];
+    marco={x0:sp.x,y0:sp.y,x1:sp.x,y1:sp.y};
+    drag={mode:'marco', base:selIds.slice(), sp0:sp};
+  }else{
+    selIds=[];
+    drag={mode:'pan', sp0:sp, v0:{x:view.x,y:view.y}};
+  }
+  draw();
+}
+function onMove(e){
+  if(!drag) return;
+  var sp=evPos(e);
+  if(drag.mode==='pan'){
+    view.x=drag.v0.x+(sp.x-drag.sp0.x); view.y=drag.v0.y+(sp.y-drag.sp0.y); draw(); return;
+  }
+  if(drag.mode==='marco'){
+    marco={x0:drag.sp0.x,y0:drag.sp0.y,x1:sp.x,y1:sp.y};
+    aplicaMarco(drag.base); draw(); return;
+  }
+  if(drag.mode==='move'){
+    var g=celda(s2w(sp)), dx=g.x-drag.g0.x, dy=g.y-drag.g0.y;
+    if(dx!==drag.dx||dy!==drag.dy){
+      drag.dx=dx; drag.dy=dy;
+      for(var i=0;i<drag.ps.length;i++){
+        drag.ps[i].x=drag.orig[i].x+dx; drag.ps[i].y=drag.orig[i].y+dy;
+      }
+      draw();
+    }
+  }
+}
+function onUp(){
+  if(!drag){ return; }
+  if(drag.mode==='move'){
+    var i;
+    for(i=0;i<drag.ps.length;i++){ drag.ps[i].x=drag.orig[i].x; drag.ps[i].y=drag.orig[i].y; }
+    if(drag.dx||drag.dy){
+      pushUndo();
+      if(!soltarGrupo(drag.ps, drag.orig, drag.dx, drag.dy)){
+        undoStack.pop(); flash('Ahí no cabe');
+      }
+    }
+  }
+  drag=null; marco=null; draw();
+}
+cv.addEventListener('pointerdown',onDown);
+cv.addEventListener('pointermove',onMove);
+cv.addEventListener('pointerup',onUp);
+cv.addEventListener('pointercancel',onUp);
+cv.addEventListener('dblclick',function(e){
+  var g=celda(s2w(evPos(e))), p=billeteEn(g);
+  if(!p) return;
+  selIds=[p.id];
+  pedirDesagrupar();
+});
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var sp=evPos(e), b=s2w(sp);
+  view.z=Math.max(0.25,Math.min(3,view.z*(e.deltaY<0?1.12:1/1.12)));
+  var a=s2w(sp);
+  view.x+=(a.x-b.x)*view.z; view.y+=(a.y-b.y)*view.z;
+  draw();
+},{passive:false});
+document.addEventListener('keydown',function(e){
+  var t=e.target;
+  if(t && /INPUT|SELECT|TEXTAREA/.test(t.tagName)) return;
+  var k=e.key;
+  if((e.ctrlKey||e.metaKey) && (k==='z'||k==='Z')){ e.preventDefault(); doUndo(); return; }
+  if((e.ctrlKey||e.metaKey) && (k==='a'||k==='A')){
+    e.preventDefault(); selIds=pieces.map(function(p){ return p.id; }); draw(); return;
+  }
+  if(k==='1'){ setTool('move'); return; }
+  if(k==='2'){ setTool('mark'); return; }
+  if(k==='3'){ setTool('del'); return; }
+  if(k==='Escape'){ selIds=[]; draw(); return; }
+  if(k==='g'||k==='G'){ pedirAgrupar(); return; }
+  if(k==='d'||k==='D'){ pedirDesagrupar(); return; }
+  if(k==='Delete'||k==='Backspace'){ if(quitarSel()) draw(); return; }
+  var dx=0, dy=0;
+  if(k==='ArrowLeft') dx=-1; else if(k==='ArrowRight') dx=1;
+  else if(k==='ArrowUp') dy=-1; else if(k==='ArrowDown') dy=1;
+  if(dx||dy){
+    e.preventDefault();
+    var ps=selPiezas(); if(!ps.length) return;
+    var orig=ps.map(function(q){ return {x:q.x,y:q.y}; });
+    pushUndo();
+    if(!moverGrupo(ps,dx,dy)) undoStack.pop();
+    draw();
+  }
+});
+
+/* =========================================================================
+   7. INTERFAZ
+   ========================================================================= */
+function pedirAgrupar(){
+  var r=agrupar();
+  if(r.ok){ flash(cuantos()+' de '+etiquetaTxt(r.orden)+' → 1 de '+etiquetaTxt(r.orden+1)); }
+  else if(r.razon==='pocos') flash('Para un cambio hacen falta '+cuantos()+' billetes iguales');
+  else if(r.razon==='mezcla') flash('Los marcados tienen que ser todos del mismo billete');
+  else if(r.razon==='tope') flash('No hay billetes por encima de '+etiquetaTxt(MAXK));
+  draw();
+}
+function pedirDesagrupar(){
+  var ps=selPiezas();
+  var r=desagrupar(ps);
+  if(r.ok){ flash('1 de '+etiquetaTxt(ps[0].k)+' → '+cuantos()+' de '+etiquetaTxt(ps[0].k-1)); }
+  else if(r.razon==='unidad') flash('Por debajo del billete de 1 no hay nada');
+  else if(r.razon==='ninguno') flash('Marca antes el billete que quieres cambiar');
+  else if(r.razon==='lleno') flash('No caben tantos billetes');
+  draw();
+}
+/* --- la bandeja ----------------------------------------------------------
+   Un billete de cada orden, de la unidad hacia arriba, y se arrastran al
+   tablero. Se dibujan con la MISMA función que los del tablero, en un lienzo
+   pequeño cada uno: la primera versión los imitaba con CSS y se parecían de
+   lejos, pero al lado del tablero cantaban. Así, además, cualquier cambio en
+   el billete —la guilloche, el marco, los puntos— llega solo a la bandeja.
+
+   Conservan la proporción del billete de verdad y se limitan por el alto, no
+   por el ancho de la columna: con ocho órdenes a lo ancho de la columna la
+   bandeja mediría medio metro y no cabría sin barra de desplazamiento. */
+var ALTOBL=46, anchoCol=0;
+function pintaBandeja(){
+  var cont=document.getElementById('bandeja'), k;
+  anchoCol=cont.clientWidth||150;
+  var H=ALTOBL, W=Math.min(anchoCol, Math.round(H*CW/CH));
+  var dpr=window.devicePixelRatio||1;
+  cont.innerHTML='';
+  for(k=0;k<opt.ordenes;k++){
+    var cn=document.createElement('canvas');
+    cn.className='bl';
+    cn.setAttribute('data-k',k);
+    cn.title='Billete de '+etiquetaTxt(k);
+    cn.width=Math.max(1,Math.round(W*dpr)); cn.height=Math.max(1,Math.round(H*dpr));
+    cn.style.width=W+'px'; cn.style.height=H+'px';
+    var g=cn.getContext('2d');
+    g.setTransform(dpr,0,0,dpr,0,0);
+    dibujaBillete(g,k,1,1,W-2,H-2,false);
+    cont.appendChild(cn);
+  }
+  cont.querySelectorAll('.bl').forEach(function(el){
+    el.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      var k=parseInt(el.getAttribute('data-k'),10);
+      var r=stage.getBoundingClientRect(), sp=evPos(e);
+      var dentro = sp.x>0 && sp.y>0 && sp.x<r.width && sp.y<r.height;
+      var g=celda(s2w(dentro ? sp : {x:r.width/2, y:r.height/2}));
+      pushUndo();
+      var p=ponerEnHueco(k,g.x,g.y);
+      if(!p){ undoStack.pop(); flash('No caben más billetes'); return; }
+      selIds=[p.id]; setTool('move');
+      drag={mode:'move', ps:[p], orig:[{x:p.x,y:p.y}], g0:{x:p.x,y:p.y}, dx:0, dy:0};
+      draw();
+    });
+  });
+}
+function setTool(t){
+  tool=t;
+  document.querySelectorAll('[data-tool]').forEach(function(b){
+    b.classList.toggle('on', b.getAttribute('data-tool')===t); });
+  cv.style.cursor=(t==='del')?'crosshair':'default';
+  draw();
+}
+document.querySelectorAll('[data-tool]').forEach(function(b){
+  b.addEventListener('click',function(){ setTool(b.getAttribute('data-tool')); });
+});
+document.getElementById('agrupar').addEventListener('click',pedirAgrupar);
+document.getElementById('desagrupar').addEventListener('click',pedirDesagrupar);
+document.getElementById('mismoorden').addEventListener('click',function(){
+  var n=marcarMismoOrden(); if(n) flash(n+(n===1?' billete marcado':' billetes marcados')); draw(); });
+document.getElementById('dup').addEventListener('click',function(){ duplicar(); draw(); });
+document.getElementById('borrar').addEventListener('click',function(){ quitarSel(); draw(); });
+document.getElementById('ordenar').addEventListener('click',function(){ ordenar(); fitView(); });
+document.getElementById('revolver').addEventListener('click',function(){ desordenar(); fitView(); });
+document.getElementById('undo').addEventListener('click',doUndo);
+document.getElementById('minimo').addEventListener('click',function(){
+  var n=alMinimo();
+  flash(n? n+(n===1?' cambio hecho':' cambios hechos') : 'No queda ningún cambio por hacer');
+  draw();
+});
+function pedirSacar(){
+  var v=parseInt(document.getElementById('ncant').value,10);
+  var r=sacarCantidad(v);
+  if(r.ok) flash(r.billetes+(r.billetes===1?' billete':' billetes'));
+  else if(r.razon==='cero') flash('El cero no necesita ningún billete');
+  else if(r.razon==='grande') flash('Esa cantidad no cabe con estos billetes');
+  else if(r.razon==='lleno') flash('No caben tantos billetes');
+  else flash('Escribe una cantidad entera');
+  fitView();
+}
+document.getElementById('sacar').addEventListener('click',pedirSacar);
+document.getElementById('ncant').addEventListener('keydown',function(e){
+  if(e.key==='Enter'){ e.preventDefault(); pedirSacar(); } });
+(function(){
+  var s=document.getElementById('basesel'), html='', i;
+  for(i=0;i<BASES.length;i++) html+='<option value="'+BASES[i]+'">'+BASES[i]+'</option>';
+  /* La base b va en el mismo desplegable y no en un control aparte: es una
+     base más, la que no se dice. Los cambios los sigue rigiendo la última
+     base numérica elegida, porque para cambiar hay que contar billetes y
+     hace falta un número; lo que desaparece es el rótulo. */
+  html+='<option value="b">b</option>';
+  s.innerHTML=html; sincronizaBase();
+  var o=document.getElementById('ordsel'), h2='';
+  for(i=2;i<=MAXK+1;i++) h2+='<option value="'+i+'">'+i+'</option>';
+  o.innerHTML=h2; o.value=String(opt.ordenes);
+  var p=document.getElementById('palsel'), h3='';
+  PALETAS.forEach(function(q){ h3+='<option value="'+q.id+'">'+q.nombre+'</option>'; });
+  p.innerHTML=h3; p.value=opt.pal;
+})();
+function sincronizaBase(){
+  document.getElementById('basesel').value = opt.simb ? 'b' : String(opt.base);
+}
+/* Cambiar de base NO toca los billetes: cada uno sigue siendo del orden que
+   era y solo cambia lo que lleva escrito y cuántos hacen un cambio. Es lo que
+   permite leer el mismo tablero en dos bases distintas. Y pasar a la base b
+   tampoco cambia cuántos hacen un cambio: solo deja de decirlo. */
+document.getElementById('basesel').addEventListener('change',function(e){
+  var v=e.target.value;
+  if(v==='b') opt.simb=1;
+  else { opt.simb=0; opt.base=parseInt(v,10); }
+  pintaBandeja(); draw();
+});
+document.getElementById('ordsel').addEventListener('change',function(e){
+  opt.ordenes=parseInt(e.target.value,10);
+  pintaBandeja();
+  if(opt.guias===2 && pieces.length){ pushUndo(); imantarTodos(); }
+  draw();
+});
+/* Todo lo que cambie el ASPECTO del billete tiene que rehacer también la
+   bandeja, porque sus billetes están dibujados con la misma función que los
+   del tablero. Aquí faltaba, y el resultado era una bandeja que seguía
+   enseñando los puntos después de apagarlos. */
+document.getElementById('chkdib').addEventListener('change',function(e){
+  opt.dib=e.target.checked?1:0; pintaBandeja(); draw(); });
+document.getElementById('guisel').addEventListener('change',function(e){
+  opt.guias=parseInt(e.target.value,10);
+  if(opt.guias===2 && pieces.length){ pushUndo(); imantarTodos(); }
+  draw();
+});
+document.getElementById('palsel').addEventListener('change',function(e){
+  opt.pal=paleta(e.target.value).id; pintaBandeja(); draw(); });
+document.getElementById('avz').addEventListener('change',function(e){
+  document.getElementById('avanzado').classList.toggle('show', e.target.checked); draw(); });
+document.getElementById('chktotal').addEventListener('change',function(e){
+  opt.total=e.target.checked?1:0; draw(); });
+document.getElementById('showgrid').addEventListener('change',function(e){
+  opt.grid=e.target.checked?1:0; draw(); });
+document.getElementById('zoomin').addEventListener('click',function(){ zoomAt(1.2); });
+document.getElementById('zoomout').addEventListener('click',function(){ zoomAt(1/1.2); });
+function zoomAt(f){
+  var r=stage.getBoundingClientRect(), c={x:r.width/2,y:r.height/2};
+  var b=s2w(c); view.z=Math.max(0.25,Math.min(3,view.z*f)); var a=s2w(c);
+  view.x+=(a.x-b.x)*view.z; view.y+=(a.y-b.y)*view.z; draw();
+}
+document.getElementById('fit').addEventListener('click',fitView);
+function fitView(){
+  var r=stage.getBoundingClientRect(), b=caja();
+  if(!r.width){ draw(); return; }
+  if(!b){
+    view.z=0.8;
+    view.x = opt.guias ? 24 : r.width/2-CW;
+    view.y = (opt.guias?HDR:0)+18;
+    draw(); return;
+  }
+  var m=44, x0=b.x0, x1=b.x1;
+  if(opt.guias){ x0=Math.min(x0,0); x1=Math.max(x1,opt.ordenes*GW*CW); }
+  var alto=r.height-(opt.guias?HDR:0);
+  var z=Math.min((r.width-2*m)/Math.max(1,x1-x0), (alto-2*m)/Math.max(1,b.y1-b.y0));
+  view.z=Math.max(0.25,Math.min(1.4,z));
+  view.x=r.width/2-((x0+x1)/2)*view.z;
+  view.y=(opt.guias?HDR:0)+m-b.y0*view.z;
+  draw();
+}
+document.getElementById('clear').addEventListener('click',function(){
+  if(!pieces.length) return; pushUndo(); pieces=[]; selIds=[]; draw(); });
+/* El PNG se dibuja en un lienzo aparte moviendo la vista un momento. La vista
+   se restaura PROPIEDAD A PROPIEDAD y nunca reasignando el objeto: `view` lo
+   comparten el dibujo, la interacción y la consola, y cambiarlo por otro
+   objeto deja a todos los que lo tenían cogido mirando a una vista muerta. Ya
+   pasó, y el síntoma es de los malos: todo parece funcionar y los clics caen
+   donde no es. */
+function lienzoPNG(){
+  var b=caja(); if(!b) return null;
+  var m=26, sc=2, x0=b.x0, x1=b.x1;
+  if(opt.guias){ x0=Math.min(x0,0); x1=Math.max(x1,opt.ordenes*GW*CW); }
+  var W=x1-x0+2*m, H=b.y1-b.y0+2*m+(opt.guias?HDR:0);
+  var oc=document.createElement('canvas'); oc.width=Math.round(W*sc); oc.height=Math.round(H*sc);
+  var o=oc.getContext('2d'); o.scale(sc,sc);
+  var gx=view.x, gy=view.y, gz=view.z, mg=marco;
+  marco=null;
+  view.x=-x0+m; view.y=-b.y0+m+(opt.guias?HDR:0); view.z=1;
+  escena(o,W,H,true);
+  view.x=gx; view.y=gy; view.z=gz; marco=mg;
+  draw();
+  return oc;
+}
+document.getElementById('png').addEventListener('click',function(){
+  var oc=lienzoPNG();
+  if(!oc){ flash('No hay nada que exportar'); return; }
+  var a=document.createElement('a'); a.download='billetes.png'; a.href=oc.toDataURL('image/png'); a.click();
+});
+
+/* --- guardar y abrir -----------------------------------------------------
+   El archivo guarda el TABLERO —los billetes y la base, que es lo que decide
+   cuánto vale cada uno—, y no las preferencias de presentación (paleta,
+   dibujo, retícula, comprobaciones). Quien lo abra lo sigue viendo a su
+   manera. */
+function datos(){
+  return {formato:'billetes', version:1, base:opt.base, simbolica:opt.simb, ordenes:opt.ordenes,
+          piezas:pieces.map(function(p){ return {k:p.k, x:p.x, y:p.y}; })};
+}
+document.getElementById('save').addEventListener('click',function(){
+  if(!pieces.length){ flash('No hay billetes que guardar'); return; }
+  var blob=new Blob([JSON.stringify(datos(),null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download='billetes.json'; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+document.getElementById('add').addEventListener('click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leer(f); });
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }catch(err){ flash('No he podido leer ese archivo'); } };
+  r.readAsText(f);
+}
+function entero(v){ return typeof v==='number' && isFinite(v) && v===Math.round(v); }
+/* No fiarse del archivo: se valida billete a billete y se rechaza entero si
+   algo no cuadra, en vez de dejar entrar un orden 99 o una casilla con coma. */
+function limpiaPiezas(lista){
+  if(!lista || typeof lista.length!=='number') return null;
+  var res=[], i;
+  for(i=0;i<lista.length;i++){
+    var q=lista[i];
+    if(!q || typeof q!=='object') return null;
+    if(!entero(q.k) || !entero(q.x) || !entero(q.y)) return null;
+    if(q.k<0 || q.k>MAXK) return null;
+    if(Math.abs(q.x)>1e6 || Math.abs(q.y)>1e6) return null;
+    res.push({k:q.k, x:q.x, y:q.y});
+  }
+  return res;
+}
+function loadData(d){
+  var limpias=limpiaPiezas(d && (d.piezas||d.pieces));
+  if(!limpias){ flash('Ese archivo no tiene billetes que yo entienda'); return false; }
+  if(limpias.length>MAXP){ flash('Ese archivo trae demasiados billetes'); return false; }
+  pushUndo();
+  var base=(importMode==='add') ? pieces.slice() : [];
+  if(importMode==='add' && base.length){
+    var maxy=-1e9; base.forEach(function(p){ maxy=Math.max(maxy,p.y+1); });
+    var miny=1e9;  limpias.forEach(function(q){ miny=Math.min(miny,q.y); });
+    var dy=maxy+1-miny;
+    limpias.forEach(function(q){ q.y+=dy; });
+  }else{
+    if(entero(d.base) && BASES.indexOf(d.base)>=0) opt.base=d.base;
+    if(d.simbolica===0||d.simbolica===1) opt.simb=d.simbolica;
+    sincronizaBase();
+    if(entero(d.ordenes) && d.ordenes>=2 && d.ordenes<=MAXK+1){
+      opt.ordenes=d.ordenes; document.getElementById('ordsel').value=String(d.ordenes);
+    }
+    pintaBandeja();
+  }
+  pieces=base;
+  limpias.forEach(function(q){
+    var h=ocupada(pieces,q.x,q.y,null) ? hueco(pieces,q.x,q.y,null,null) : {x:q.x,y:q.y};
+    if(!h) return;
+    nuevo(q.k,h.x,h.y);
+  });
+  selIds=[];
+  fitView();
+  flash(limpias.length+(limpias.length===1?' billete cargado':' billetes cargados'));
+  return true;
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); }); });
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); }); });
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='add'; leer(f); }
+});
+
+document.getElementById('help').addEventListener('click',function(){ infoEl.classList.toggle('show'); });
+infoEl.innerHTML=
+ '<b>Billetes posicionales</b><br>'+
+ 'Un billete no vale un número: vale un <b>orden</b>. Con base diez hay billetes de 1, de 10, de '+
+ '100… y con base seis, de 1, de 6, de 36… La única regla del material es que '+
+ '<b>b billetes de un orden se cambian por uno del orden siguiente</b>, y el cambio se puede hacer '+
+ 'en los dos sentidos.'+
+ '<div style="margin-top:7px"><b>Sacar y mover</b><br>'+
+ 'Arrastra billetes de la columna izquierda al tablero. Nunca se montan unos encima de otros: si la '+
+ 'casilla está ocupada, el billete se va al hueco libre más cercano, y así siempre se pueden contar '+
+ 'todos.<br>'+
+ 'Con <b>✥ Mover</b> se arrastran los billetes, y arrastrando el fondo se mueve la vista. Con '+
+ '<b>▭ Marcar</b>, arrastrando el fondo se hace un recuadro que marca todos los que toca; también '+
+ 'vale Mayúsculas y arrastrar. Con Mayúsculas o Ctrl y un clic se marca y desmarca de uno en uno. '+
+ 'Los billetes marcados se mueven todos juntos.</div>'+
+ '<div style="margin-top:7px"><b>Los cambios</b><br>'+
+ '<b>⇧ Agrupar</b> se lleva los billetes marcados y trae uno del orden siguiente. Hacen falta '+
+ 'exactamente los que diga la base, y todos del mismo billete.<br>'+
+ '<b>⇩ Desagrupar</b> hace el cambio del revés: se lleva el billete marcado y trae los del orden '+
+ 'anterior. También sale con doble clic encima del billete. Un billete de 1 no se puede desagrupar: '+
+ 'por debajo de la unidad este material no tiene nada.<br>'+
+ '<b>▭ Los de este orden</b> marca de golpe todos los billetes iguales al que esté marcado.</div>'+
+ '<div style="margin-top:7px"><b>La base</b><br>'+
+ '<b>Base</b> decide cuántos billetes hacen un cambio, y cambiarla <b>no toca el tablero</b>: cada '+
+ 'billete sigue siendo del orden que era y solo cambia lo que lleva escrito. El mismo montón, leído '+
+ 'en otra base.<br>'+
+ 'La última opción del desplegable es la base <b>b</b>. Entonces los billetes se rotulan 1, b, b², '+
+ 'b³… y dejan de decir cuánto valen. Se manejan igual que antes, porque para hacer un cambio hay que '+
+ '<b>contar</b> billetes y no leer lo que ponen, y lo que hay en el tablero se lee como un polinomio '+
+ 'en b.<br>'+
+ '<b>Órdenes</b> es cuántos billetes distintos hay en la caja.<br>'+
+ '<b>Puntos y placas</b> dibuja dentro de cada billete los del orden anterior: un punto, una barra de '+
+ 'b puntos, una placa de b×b y un bloque de b×b×b. Con bases grandes deja de dibujarse, porque una '+
+ 'placa que no se puede contar no dice nada. Y con la <b>base b</b> se dibujan la barra, la placa y '+
+ 'el bloque <b>lisos, sin divisiones</b>: la forma se sabe, pero en cuántos trozos se parte es justo '+
+ 'lo que la base b no dice.<br>'+
+ '<b>Carriles</b> pone de fondo una franja por orden, como una tabla de valor posicional. Puestos a '+
+ '«y cada billete al suyo», cada billete cae siempre en el carril que le toca y solo se puede elegir '+
+ 'la fila.</div>'+
+ '<div style="margin-top:7px"><b>Colocación</b><br>'+
+ 'En la casilla de <b>cantidad</b> se escribe un número —siempre en base diez, porque es cuánto '+
+ 'vale— y salen los billetes justos para esa cantidad en la base que esté puesta. '+
+ '<b>≡ Ordenar</b> lleva cada billete a su carril y <b>⁂ Desordenar</b> los reparte por el tablero.<br>'+
+ '<b>⤓ Guardar</b>, <b>⤒ Abrir</b> y <b>＋</b> conservan y recuperan el tablero; <b>⤓ PNG</b> se lleva '+
+ 'la imagen.</div>'+
+ '<div style="margin-top:7px">En <b>Comprobaciones</b> hay una casilla que escribe cuánto hay en el '+
+ 'tablero y un botón que hace todos los cambios de golpe. Vienen apagados, y conviene dejarlos así '+
+ 'mientras esa cuenta sea justo lo que hay que averiguar.</div>'+
+ '<div style="margin-top:7px;color:#8a919c">Atajos: 1, 2 y 3 herramientas · G agrupar · D desagrupar · '+
+ 'flechas mover · Supr quitar · Esc desmarcar · Ctrl+A marcar todos · Ctrl+Z deshacer · '+
+ 'rueda para el zoom.</div>'+
+ '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+
+function updateUI(){
+  var ss=selPiezas(), b=opt.base;
+  var mismoK = ss.length>0;
+  for(var i=1;i<ss.length;i++) if(ss[i].k!==ss[0].k){ mismoK=false; break; }
+  document.getElementById('agrupar').disabled = !(mismoK && ss.length>=b && ss[0].k<MAXK);
+  var puedeBajar = ss.length>0;
+  for(i=0;i<ss.length;i++) if(ss[i].k<=0){ puedeBajar=false; break; }
+  document.getElementById('desagrupar').disabled = !puedeBajar;
+  document.getElementById('mismoorden').disabled = (ss.length!==1);
+  document.getElementById('dup').disabled = !ss.length;
+  document.getElementById('borrar').disabled = !ss.length;
+  document.getElementById('minimo').disabled = !pieces.length;
+
+  var c=recuento(), det=[], k;
+  for(k=MAXK;k>=0;k--) if(c[k]) det.push(c[k]+' × '+etiquetaHTML(k));
+  statsEl.innerHTML='<b>'+pieces.length+'</b>'+(pieces.length===1?' billete':' billetes')+
+    (det.length?'<br>'+det.join('<br>'):'')+
+    (ss.length?'<br><br>Marcados: <b>'+ss.length+'</b>'+(mismoK?' de '+etiquetaHTML(ss[0].k):''):'')+
+    (opt.total&&pieces.length?'<span class="tot">'+expresion().replace(/×/g,' × ')+
+      '<br><b>= '+valorTotal()+'</b>'+(opt.simb?' (con b = '+opt.base+')':'')+'</span>':'');
+
+  var t, bt=cuantos();
+  if(flashMsg && Date.now()-flashT<2000) t=flashMsg;
+  else if(tool==='del') t='Haz clic en un billete para quitarlo del tablero';
+  else if(tool==='mark') t='Arrastra un recuadro por el fondo para marcar billetes · Mayúsculas o Ctrl y clic marca de uno en uno';
+  else if(ss.length>1 && mismoK) t=ss.length+' billetes de '+etiquetaTxt(ss[0].k)+' marcados · '+
+       (ss.length>=b ? 'G los cambia por uno de '+etiquetaTxt(ss[0].k+1)
+                     : 'hacen falta '+bt+' billetes iguales para cambiarlos por uno de '+etiquetaTxt(ss[0].k+1))+
+       ' · se mueven todos juntos';
+  else if(ss.length>1) t=ss.length+' billetes marcados, de órdenes distintos · se mueven todos juntos';
+  else if(ss.length===1) t='Billete de '+etiquetaTxt(ss[0].k)+
+       (ss[0].k>0 ? ' · D o doble clic lo cambia por '+bt+' billetes de '+etiquetaTxt(ss[0].k-1) : ' · por debajo de la unidad no hay nada')+
+       ' · flechas para moverlo · Supr lo quita';
+  else if(!pieces.length) t='Arrastra billetes de la izquierda al tablero · '+bt+' billetes de un orden se cambian por uno del siguiente';
+  else t='Marca billetes para cambiarlos · arrastra el fondo para mover la vista · rueda para el zoom';
+  hintEl.textContent=t;
+}
+
+/* =========================================================================
+   8. ARRANQUE
+   ========================================================================= */
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+pintaBandeja();
+setTool('move');
+(function init(){
+  view.z=0.8; view.x=24; view.y=HDR+18;
+  resize();
+})();
+
+/* =========================================================================
+   9. AUTOCOMPROBACIÓN  ·  añade #test al final de la URL
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){
+    out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':''));
+    if(!c) fails++;
+  }
+  function num(v){ return (Math.round(v*1000)/1000).toString().replace('.',','); }
+  /* Las funciones auxiliares se declaran AQUÍ y no dentro del try: en modo
+     estricto, una función declarada dentro de un bloque solo existe en ese
+     bloque, y desde el catch no se las vería. */
+  function reset(){ pieces=[]; selIds=[]; nid=1; undoStack=[]; }
+  function poner(k,x,y){ return nuevo(k,x,y); }
+  function ponerVarios(k,n,y){ for(var i=0;i<n;i++) poner(k,i,y); }
+  function marcarTodos(){ selIds=pieces.map(function(p){ return p.id; }); }
+  function marcarOrden(k){
+    selIds=pieces.filter(function(p){ return p.k===k; }).map(function(p){ return p.id; });
+  }
+  function hayRepetidas(){
+    var vistas={}, i;
+    for(i=0;i<pieces.length;i++){
+      var c=pieces[i].x+','+pieces[i].y;
+      if(vistas[c]) return true;
+      vistas[c]=1;
+    }
+    return false;
+  }
+  function cuentaCifrasOK(){
+    var c=recuento(), k;
+    for(k=0;k<=MAXK;k++) if(c[k]>=opt.base) return false;
+    return true;
+  }
+  function lienzo(w,h){ var c=document.createElement('canvas'); c.width=w; c.height=h; return c; }
+  /* La tinta de un billete: píxeles del interior que se salen del color del
+     papel. Es lo que caza los NaN de los paths, que no dan error y
+     simplemente no pintan nada. */
+  function tintaBillete(k,W,H){
+    var c=lienzo(W,H), g=c.getContext('2d');
+    g.fillStyle='#ffffff'; g.fillRect(0,0,W,H);
+    dibujaBillete(g,k,4,4,W-8,H-8,false);
+    var col=colorDe(k).replace('#','');
+    var r0=parseInt(col.substr(0,2),16), g0=parseInt(col.substr(2,2),16), b0=parseInt(col.substr(4,2),16);
+    var d=g.getImageData(14,10,W-28,H-20).data, n=0, i;
+    for(i=0;i<d.length;i+=4){
+      if(Math.abs(d[i]-r0)>26 || Math.abs(d[i+1]-g0)>26 || Math.abs(d[i+2]-b0)>26) n++;
+    }
+    return n;
+  }
+  /* Cuántos puntos tiene el dibujo de dentro, contados de verdad: el máximo de
+     manchas seguidas que se encuentran recorriendo una fila, y lo mismo por
+     columnas. Mirar el billete y contar a ojo no vale —ya me dio 7×7 donde
+     había 6×6—, y el recuento total de tinta tampoco distingue una placa de
+     seis de una de siete. */
+  function manchas(datos,W,H,horizontal){
+    var mejor=0, a, b, i, n, dentro;
+    var lim = horizontal ? H : W;
+    var pasos = horizontal ? W : H;
+    for(a=0;a<lim;a++){
+      n=0; dentro=false;
+      for(b=0;b<pasos;b++){
+        i = horizontal ? (a*W+b)*4 : (b*W+a)*4;
+        var osc=(datos[i]+datos[i+1]+datos[i+2])/3 < 150 && datos[i+3]>40;
+        if(osc && !dentro){ n++; dentro=true; }
+        else if(!osc) dentro=false;
+      }
+      if(n>mejor) mejor=n;
+    }
+    return mejor;
+  }
+  function rejilla(k,W,H){
+    var c=lienzo(W,H), g=c.getContext('2d');
+    g.fillStyle='#ffffff'; g.fillRect(0,0,W,H);
+    dibujaGrafico(g,k,0,0,W,H,'#101010');
+    var d=g.getImageData(0,0,W,H).data;
+    return {ancho:manchas(d,W,H,true), alto:manchas(d,W,H,false)};
+  }
+  /* ¿El billete de la bandeja está dibujado exactamente igual que el del
+     tablero? Se redibuja aparte con las mismas medidas y se comparan los dos
+     lienzos píxel a píxel. Comparar recuentos de tinta no valdría: dos
+     dibujos distintos pueden llevar la misma cantidad. */
+  function difBandeja(k){
+    var el=document.querySelectorAll('#bandeja .bl')[k];
+    if(!el) return -1;
+    var W=parseInt(el.style.width,10), H=parseInt(el.style.height,10);
+    var dpr=window.devicePixelRatio||1;
+    var c=lienzo(el.width, el.height), g=c.getContext('2d');
+    g.setTransform(dpr,0,0,dpr,0,0);
+    dibujaBillete(g,k,1,1,W-2,H-2,false);
+    var a=el.getContext('2d').getImageData(0,0,el.width,el.height).data;
+    var b=g.getImageData(0,0,c.width,c.height).data, dif=0, i;
+    for(i=0;i<a.length;i+=4){
+      if(Math.abs(a[i]-b[i])>2 || Math.abs(a[i+1]-b[i+1])>2 ||
+         Math.abs(a[i+2]-b[i+2])>2 || Math.abs(a[i+3]-b[i+3])>2) dif++;
+    }
+    return dif;
+  }
+  function pixelesBandeja(k){
+    var el=document.querySelectorAll('#bandeja .bl')[k];
+    return el ? el.getContext('2d').getImageData(0,0,el.width,el.height).data : null;
+  }
+  function difPixeles(a,b){
+    var d=0, i;
+    if(!a||!b||a.length!==b.length) return -1;
+    for(i=0;i<a.length;i+=4) if(a[i]!==b[i]||a[i+1]!==b[i+1]||a[i+2]!==b[i+2]) d++;
+    return d;
+  }
+  /* La caja que ocupa el dibujo de dentro, y su proporción ancho/alto. Es lo
+     que distingue una barra de una placa cuando las dos son una sola mancha
+     y el recuento no sirve. */
+  function cajaTinta(k,W,H){
+    var c=lienzo(W,H), g=c.getContext('2d');
+    g.fillStyle='#ffffff'; g.fillRect(0,0,W,H);
+    dibujaGrafico(g,k,0,0,W,H,'#101010');
+    var d=g.getImageData(0,0,W,H).data;
+    var x0=1e9,y0=1e9,x1=-1,y1=-1, x, y, i;
+    for(y=0;y<H;y++) for(x=0;x<W;x++){
+      i=(y*W+x)*4;
+      if((d[i]+d[i+1]+d[i+2])/3<200){
+        if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y;
+      }
+    }
+    if(x1<0) return {w:0,h:0,r:0};
+    return {w:x1-x0+1, h:y1-y0+1, r:(x1-x0+1)/Math.max(1,(y1-y0+1))};
+  }
+  function noBlanco(c){
+    var d=c.getContext('2d').getImageData(0,0,c.width,c.height).data, n=0, i;
+    for(i=0;i<d.length;i+=4) if(d[i]<244||d[i+1]<244||d[i+2]<244) n++;
+    return n;
+  }
+  /* El tablero de quien esté usando el manipulativo no se toca: se guarda
+     todo al empezar y se devuelve al final. */
+  var guardado={p:pieces.slice(), n:nid, s:selIds.slice(), u:undoStack.slice(),
+                o:JSON.parse(JSON.stringify(opt)), v:{x:view.x,y:view.y,z:view.z}};
+
+  try{
+    /* --- 1. órdenes, valores y etiquetas --------------------------------- */
+    opt.base=10; opt.simb=0; opt.ordenes=6;
+    ok('en base diez los billetes valen 1, 10, 100, 1000, 10000 y 100000',
+       valorOrden(0)===1 && valorOrden(1)===10 && valorOrden(2)===100 &&
+       valorOrden(3)===1000 && valorOrden(4)===10000 && valorOrden(5)===100000,
+       [0,1,2,3,4,5].map(valorOrden).join(' · '));
+    opt.base=6;
+    ok('en base seis valen 1, 6, 36, 216…',
+       valorOrden(1)===6 && valorOrden(2)===36 && valorOrden(3)===216,
+       [0,1,2,3,4].map(valorOrden).join(' · '));
+    opt.base=2;
+    ok('en base dos el orden 7 vale 128', valorOrden(7)===128, valorOrden(7));
+    opt.base=16;
+    ok('en base dieciséis el orden 3 vale 4096', valorOrden(3)===4096, valorOrden(3));
+
+    opt.base=6; opt.simb=0;
+    ok('con etiquetas de cifras, el orden 3 de base seis se rotula 216',
+       etiquetaTxt(3)==='216', etiquetaTxt(3));
+    opt.simb=1;
+    ok('con etiquetas simbólicas el orden 0 sigue siendo 1', etiquetaTxt(0)==='1', etiquetaTxt(0));
+    ok('el orden 1 se rotula b', etiquetaTxt(1)==='b', etiquetaTxt(1));
+    ok('el orden 2 se rotula b al cuadrado', etiquetaTxt(2)==='b²', etiquetaTxt(2));
+    ok('el orden 5 se rotula b a la quinta', etiquetaTxt(5)==='b⁵', etiquetaTxt(5));
+    ok('la etiqueta simbólica no depende de la base', (function(){
+         var a=etiquetaTxt(3); opt.base=10; var b=etiquetaTxt(3); opt.base=6; return a===b;
+       })(), etiquetaTxt(3));
+    opt.simb=0;
+
+    /* --- 2. la descomposición con el menor número de billetes ------------ */
+    opt.base=10;
+    ok('356 en base diez son 6 unidades, 5 decenas y 3 centenas',
+       cifras(356).join(',')==='6,5,3', cifras(356).join(','));
+    ok('el cero no necesita ningún billete', cifras(0).length===0, cifras(0).length);
+    opt.base=6;
+    ok('100 en base seis son 4 unidades, 4 de seis y 2 de treinta y seis',
+       cifras(100).join(',')==='4,4,2', cifras(100).join(','));
+    opt.base=2;
+    ok('255 en base dos son ocho unos',
+       cifras(255).join(',')==='1,1,1,1,1,1,1,1', cifras(255).join(','));
+    (function(){
+      var malas=0, reconstruye=0, pruebas=0, bs=[2,3,5,6,8,10,12,16], ns=[1,7,36,100,255,1000,4095,9999];
+      bs.forEach(function(b){
+        opt.base=b;
+        ns.forEach(function(n){
+          var cf=cifras(n), s=0, k;
+          for(k=0;k<cf.length;k++){ if(cf[k]>=b) malas++; s+=cf[k]*valorOrden(k); }
+          if(s!==n) reconstruye++;
+          pruebas++;
+        });
+      });
+      ok('ninguna cifra de la descomposición llega a la base', malas===0, malas+' de '+pruebas);
+      ok('la descomposición vuelve a dar el número de partida', reconstruye===0, pruebas+' casos');
+    })();
+
+    /* --- 3. el cambio de agrupar ------------------------------------------ */
+    opt.base=10; opt.guias=1; opt.ordenes=6;
+    reset(); ponerVarios(0,10,0); marcarTodos();
+    var v0=valorTotal(), r=agrupar();
+    ok('diez unidades marcadas se cambian por un billete de diez', r.ok===true);
+    ok('después del cambio queda un solo billete', pieces.length===1, pieces.length);
+    ok('y es del orden siguiente', pieces.length===1 && pieces[0].k===1, pieces.length?pieces[0].k:'—');
+    ok('el cambio no crea ni destruye valor', valorTotal()===v0, v0+' → '+valorTotal());
+    ok('el billete nuevo queda marcado', selIds.length===1 && selIds[0]===pieces[0].id);
+
+    reset(); ponerVarios(0,9,0); marcarTodos();
+    r=agrupar();
+    ok('con nueve unidades no hay cambio que hacer', r.ok===false && r.razon==='pocos', r.razon);
+    ok('y el tablero se queda como estaba', pieces.length===9, pieces.length);
+
+    reset(); ponerVarios(0,9,0); poner(1,9,0); marcarTodos();
+    r=agrupar();
+    ok('no se pueden agrupar billetes de órdenes distintos', r.ok===false && r.razon==='mezcla', r.razon);
+
+    reset(); ponerVarios(MAXK,10,0); marcarTodos();
+    r=agrupar();
+    ok('por encima del billete mayor no hay a dónde subir', r.ok===false && r.razon==='tope', r.razon);
+
+    reset(); ponerVarios(0,14,0); marcarTodos();
+    v0=valorTotal(); r=agrupar();
+    ok('marcando catorce unidades, el cambio se lleva diez y deja cuatro',
+       r.ok===true && pieces.length===5 && recuento()[0]===4 && recuento()[1]===1,
+       recuento()[0]+' unidades y '+recuento()[1]+' de diez');
+    ok('y sigue valiendo lo mismo', valorTotal()===v0, v0+' → '+valorTotal());
+
+    opt.base=6;
+    reset(); ponerVarios(0,6,0); marcarTodos();
+    r=agrupar();
+    ok('en base seis el cambio se hace con seis billetes, no con diez',
+       r.ok===true && pieces.length===1 && pieces[0].k===1, pieces.length);
+    reset(); ponerVarios(0,5,0); marcarTodos();
+    ok('y con cinco todavía no se puede', agrupar().ok===false, pieces.length);
+
+    /* --- 4. el cambio de desagrupar --------------------------------------- */
+    opt.base=10;
+    reset(); poner(3,0,0); selIds=[pieces[0].id];
+    v0=valorTotal(); r=desagrupar(selPiezas());
+    ok('un billete de mil se cambia por diez de cien',
+       r.ok===true && pieces.length===10 && recuento()[2]===10, pieces.length);
+    ok('desagrupar tampoco crea ni destruye valor', valorTotal()===v0, v0+' → '+valorTotal());
+    ok('los diez billetes nuevos quedan marcados', selIds.length===10, selIds.length);
+    ok('y ninguno se ha montado encima de otro', !hayRepetidas());
+
+    reset(); poner(0,0,0); selIds=[pieces[0].id];
+    r=desagrupar(selPiezas());
+    ok('por debajo del billete de 1 no hay nada que desagrupar',
+       r.ok===false && r.razon==='unidad', r.razon);
+    ok('y el billete sigue ahí', pieces.length===1);
+
+    reset(); poner(2,0,0); selIds=[pieces[0].id];
+    desagrupar(selPiezas()); marcarTodos();
+    agrupar();
+    ok('desagrupar y volver a agrupar deja el tablero como estaba',
+       pieces.length===1 && pieces[0].k===2, pieces.length+' billete(s) de orden '+(pieces.length?pieces[0].k:'—'));
+
+    /* --- 5. dejar el menor número de billetes ----------------------------- */
+    opt.base=10;
+    reset(); ponerVarios(0,14,0);
+    v0=valorTotal();
+    var hechos=alMinimo();
+    ok('catorce unidades se quedan en un billete de diez y cuatro de una',
+       recuento()[0]===4 && recuento()[1]===1, recuento()[1]+' de diez y '+recuento()[0]+' de una');
+    ok('y el valor se conserva', valorTotal()===v0, v0+' → '+valorTotal());
+    ok('la segunda pasada ya no encuentra ningún cambio', alMinimo()===0, hechos+' la primera vez');
+
+    /* el ejemplo del hilo: 356 + 878 juntando billetes del mismo tipo */
+    reset();
+    ponerVarios(0,6,0); ponerVarios(1,5,1); ponerVarios(2,3,2);
+    ponerVarios(0,8,3); ponerVarios(1,7,4); ponerVarios(2,8,5);
+    v0=valorTotal();
+    ok('356 y 878 puestos juntos hacen 1234 sin agrupar', v0===1234, v0);
+    ok('y antes de los cambios hay órdenes que pasan de diez',
+       !cuentaCifrasOK(), recuento()[0]+' · '+recuento()[1]+' · '+recuento()[2]);
+    alMinimo();
+    ok('los cambios lo dejan en 1 · 2 · 3 · 4',
+       recuento().slice(0,4).join(',')==='4,3,2,1', recuento().slice(0,5).join(','));
+    ok('que es la descomposición de 1234', recuento().slice(0,4).join(',')===cifras(1234).join(','), cifras(1234).join(','));
+    ok('sin perder valor por el camino', valorTotal()===1234, valorTotal());
+    ok('y sin que ninguna orden llegue a diez', cuentaCifrasOK());
+    ok('y sin montarse unos billetes encima de otros', !hayRepetidas());
+
+    /* --- 6. la base no toca el tablero ------------------------------------ */
+    reset(); poner(2,0,0); poner(2,1,0); poner(2,2,0);
+    opt.base=10; var vDiez=valorTotal();
+    opt.base=6;  var vSeis=valorTotal();
+    ok('tres billetes de orden 2 valen 300 en base diez y 108 en base seis',
+       vDiez===300 && vSeis===108, vDiez+' · '+vSeis);
+    ok('cambiar de base no quita ni pone billetes', pieces.length===3, pieces.length);
+    ok('ni les cambia el orden', pieces[0].k===2 && pieces[2].k===2);
+    opt.base=10;
+
+    /* --- 7. sacar una cantidad -------------------------------------------- */
+    opt.ordenes=6; opt.guias=1;
+    reset(); r=sacarCantidad(356);
+    ok('sacar 356 pone catorce billetes', r.ok===true && pieces.length===14, pieces.length);
+    ok('repartidos en 6 · 5 · 3', recuento().slice(0,3).join(',')==='6,5,3', recuento().slice(0,4).join(','));
+    ok('y suman 356', valorTotal()===356, valorTotal());
+    ok('sin montarse unos encima de otros', !hayRepetidas());
+    ok('sacar 356 ya deja el menor número de billetes posible', alMinimo()===0);
+
+    opt.base=6;
+    reset(); sacarCantidad(100);
+    ok('la misma cantidad en base seis necesita otros billetes',
+       recuento().slice(0,3).join(',')==='4,4,2' && valorTotal()===100, valorTotal());
+    opt.base=10;
+
+    reset();
+    ok('el cero no saca ningún billete', sacarCantidad(0).razon==='cero', pieces.length);
+    ok('una cantidad con coma no vale', sacarCantidad(2.5).razon==='nonumero');
+    ok('una cantidad negativa tampoco', sacarCantidad(-3).razon==='nonumero');
+    ok('y una que no cabe en los billetes que hay avisa',
+       sacarCantidad(1e9).razon==='grande', 'el mayor es '+etiquetaTxt(MAXK));
+    ok('en ninguno de esos casos ha caído nada en el tablero', pieces.length===0, pieces.length);
+
+    /* --- 8. los billetes no se montan ------------------------------------- */
+    opt.guias=0;
+    reset(); poner(0,0,0);
+    var h=hueco(pieces,0,0,null,null);
+    ok('el hueco libre más cercano a una casilla ocupada es el de encima, no el de al lado',
+       h.x===0 && Math.abs(h.y)===1, h.x+','+h.y);
+    ponerEnHueco(0,0,0); ponerEnHueco(0,0,0);
+    ok('tres billetes soltados en la misma casilla acaban en tres casillas',
+       pieces.length===3 && !hayRepetidas(),
+       pieces.map(function(p){ return p.x+','+p.y; }).join(' · '));
+    reset(); poner(1,5,5); selIds=[pieces[0].id];
+    duplicar();
+    ok('duplicar tampoco monta el nuevo encima del viejo',
+       pieces.length===2 && !hayRepetidas(), pieces.length);
+
+    /* --- 9. los carriles --------------------------------------------------- */
+    opt.ordenes=6;
+    ok('con seis órdenes, las unidades ocupan el carril de la derecha',
+       carril(0)===10 && carril(5)===0, carril(0)+' · '+carril(5));
+    ok('cada carril tiene dos casillas de ancho',
+       enCarril(2,carril(2)) && enCarril(2,carril(2)+1) && !enCarril(2,carril(2)+2));
+    opt.guias=2;
+    reset();
+    var d=destino(2,0,3,null);
+    ok('con los carriles imantados, un billete de cien soltado a la izquierda del todo vuelve al suyo',
+       d.x===carril(2) && d.y===3, d.x+','+d.y);
+    var d2=destino(0,0,3,null);
+    ok('y uno de una se va al carril de las unidades',
+       d2.x===carril(0) && d2.y===3, d2.x+','+d2.y);
+    reset(); poner(0,0,0); poner(2,1,0); poner(1,2,0);
+    imantarTodos();
+    var bien=true;
+    pieces.forEach(function(p){ if(!enCarril(p.k,p.x)) bien=false; });
+    ok('imantar lleva cada billete al carril de su orden sin cambiarle la fila',
+       bien && pieces[0].y===0 && pieces[1].y===0 && pieces[2].y===0,
+       pieces.map(function(p){ return etiquetaTxt(p.k)+'→'+p.x; }).join(' · '));
+    opt.guias=1;
+
+    reset(); poner(0,7,3); poner(2,7,4); poner(1,7,5);
+    ordenar();
+    bien=true;
+    pieces.forEach(function(p){ if(!enCarril(p.k,p.x)) bien=false; });
+    ok('≡ Ordenar también deja cada billete en su carril', bien,
+       pieces.map(function(p){ return etiquetaTxt(p.k)+'→'+p.x; }).join(' · '));
+
+    /* --- 10. marcar con el recuadro ---------------------------------------- */
+    reset(); poner(0,0,0); poner(0,1,0); poner(0,6,6);
+    view.x=0; view.y=0; view.z=1;
+    marco={x0:-5, y0:-5, x1:2*CW+5, y1:CH+5};
+    aplicaMarco([]);
+    ok('el recuadro marca los billetes que toca y deja fuera los de fuera',
+       selIds.length===2, selIds.length+' de '+pieces.length);
+    marco={x0:-5,y0:-5,x1:-2,y1:-2};
+    aplicaMarco([]);
+    ok('un recuadro vacío no marca nada', selIds.length===0, selIds.length);
+    marco=null;
+
+    /* --- 11. mover en grupo ------------------------------------------------ */
+    reset(); poner(0,0,0); poner(0,1,0); poner(1,0,1);
+    selIds=[pieces[0].id, pieces[1].id];
+    opt.guias=0;
+    var movido=moverGrupo(selPiezas(),0,-1);
+    ok('dos billetes marcados se mueven juntos',
+       movido && pieces[0].y===-1 && pieces[1].y===-1, pieces[0].y+' · '+pieces[1].y);
+    ok('y ninguno ha caído encima de otro', !hayRepetidas());
+
+    /* --- 12. deshacer ------------------------------------------------------ */
+    reset(); ponerVarios(0,10,0); marcarTodos();
+    agrupar();
+    ok('tras el cambio queda un billete', pieces.length===1, pieces.length);
+    doUndo();
+    ok('deshacer devuelve las diez unidades',
+       pieces.length===10 && recuento()[0]===10, pieces.length);
+
+    reset(); ponerVarios(0,12,0);
+    alMinimo();
+    doUndo();
+    ok('deshacer también devuelve todos los cambios de ⇮ Al mínimo',
+       pieces.length===12 && recuento()[0]===12, pieces.length);
+
+    /* --- 13. guardar y abrir ----------------------------------------------- */
+    opt.base=6; opt.simb=1; opt.ordenes=5;
+    reset(); poner(0,0,0); poner(2,3,1); poner(4,5,2);
+    var copia=JSON.parse(JSON.stringify(datos()));
+    opt.base=10; opt.simb=0; opt.ordenes=6;
+    reset();
+    importMode='replace';
+    var cargado=loadData(copia);
+    ok('el archivo guardado se vuelve a abrir', cargado===true);
+    ok('con los mismos billetes y en el mismo sitio',
+       pieces.length===3 && pieces[0].k===0 && pieces[1].k===2 && pieces[2].k===4 &&
+       pieces[1].x===3 && pieces[1].y===1,
+       pieces.map(function(p){ return p.k+'@'+p.x+','+p.y; }).join(' · '));
+    ok('y recuperando la base y las etiquetas con las que se guardó',
+       opt.base===6 && opt.simb===1 && opt.ordenes===5,
+       'base '+opt.base+' · simb '+opt.simb+' · '+opt.ordenes+' órdenes');
+    opt.base=10; opt.simb=0; opt.ordenes=6;
+
+    ok('un archivo con un orden que no existe se rechaza', limpiaPiezas([{k:99,x:0,y:0}])===null);
+    ok('uno con un orden con decimales, también', limpiaPiezas([{k:1.5,x:0,y:0}])===null);
+    ok('uno con una casilla con coma, también', limpiaPiezas([{k:1,x:0.5,y:0}])===null);
+    ok('uno que no trae lista de billetes, también', limpiaPiezas(null)===null);
+    ok('y una lista vacía sí es válida', limpiaPiezas([]) !== null && limpiaPiezas([]).length===0);
+    reset(); poner(1,0,0);
+    var antes=pieces.length;
+    ok('abrir un archivo corrupto no toca el tablero',
+       loadData({piezas:[{k:99,x:0,y:0}]})===false && pieces.length===antes, pieces.length);
+
+    /* --- 14. lo que hay escrito en el tablero ------------------------------ */
+    opt.base=10; opt.simb=0;
+    reset(); ponerVarios(0,14,0); ponerVarios(1,12,1); ponerVarios(2,11,2);
+    ok('la lectura del tablero enseña las cifras tal como están, aunque pasen de diez',
+       expresion()==='11×100 + 12×10 + 14', expresion());
+    opt.simb=1;
+    ok('con etiquetas simbólicas se lee como un polinomio en b',
+       expresion()==='11b² + 12b + 14', expresion());
+    opt.simb=0;
+
+    /* --- 15. el dibujo del billete ----------------------------------------- */
+    opt.base=10; opt.dib=1; opt.pal='vivos';
+    var tintas=[];
+    for(var kk=0;kk<=5;kk++) tintas.push(tintaBillete(kk,240,116));
+    ok('los seis billetes se dibujan y ninguno sale en blanco',
+       tintas.every(function(t){ return t>200; }), tintas.join(' · '));
+    ok('la placa de cien lleva más tinta que la barra de diez',
+       tintas[2]>tintas[1], tintas[1]+' → '+tintas[2]);
+    ok('la barra de diez lleva más tinta que el punto de la unidad',
+       tintas[1]>tintas[0], tintas[0]+' → '+tintas[1]);
+    ok('el bloque de mil también se dibuja', tintas[3]>400, tintas[3]);
+    ok('los cuatro primeros billetes se distinguen entre sí',
+       tintas[0]!==tintas[1] && tintas[1]!==tintas[2] && tintas[2]!==tintas[3],
+       tintas.slice(0,4).join(' · '));
+    var conDib=tintaBillete(2,240,116);
+    opt.dib=0;
+    var sinDib=tintaBillete(2,240,116);
+    ok('apagando «puntos y placas» el billete lleva bastante menos tinta',
+       sinDib < conDib*0.6, conDib+' → '+sinDib);
+    ok('pero sigue dibujándose y con su valor escrito', sinDib>150, sinDib);
+    opt.dib=1;
+    opt.simb=1;
+    ok('con etiquetas simbólicas los billetes también se dibujan',
+       tintaBillete(3,240,116)>400 && tintaBillete(5,240,116)>150,
+       tintaBillete(3,240,116)+' · '+tintaBillete(5,240,116));
+    opt.simb=0;
+    opt.base=16;
+    ok('en base dieciséis la placa ya no se dibuja, porque no se podría contar',
+       hayGrafico(2)===false && hayGrafico(1)===true, 'placa '+hayGrafico(2)+' · barra '+hayGrafico(1));
+    opt.base=10;
+    ok('en base diez sí se dibujan el punto, la barra, la placa y el bloque',
+       hayGrafico(0) && hayGrafico(1) && hayGrafico(2) && hayGrafico(3) && !hayGrafico(4));
+
+    /* --- 16. la respuesta no se escapa por ningún sitio --------------------- */
+    reset(); poner(2,0,0); poner(1,1,0); poner(0,2,0);
+    opt.total=0;
+    ok('con la casilla de «cuánto hay» apagada no hay rótulo', rotuloTotal()==='', '"'+rotuloTotal()+'"');
+    opt.total=1;
+    ok('encendida, el rótulo dice cuánto hay', rotuloTotal().indexOf('111')>=0, rotuloTotal());
+    opt.total=0;
+    ok('con el tablero vacío no hay rótulo ni con la casilla encendida', (function(){
+        var g2=pieces; pieces=[]; opt.total=1; var s=rotuloTotal(); pieces=g2; opt.total=0; return s===''; })());
+    (function(){
+      var W=340, H=120, c=lienzo(W,H), g=c.getContext('2d');
+      var gx=view.x, gy=view.y, gz=view.z;
+      opt.guias=0; opt.grid=0; view.x=-9000; view.y=-9000; view.z=1;
+      opt.total=0; escena(g,W,H,true); var t0=noBlanco(c);
+      opt.total=1; escena(g,W,H,true); var t1=noBlanco(c);
+      opt.total=0; opt.guias=1; opt.grid=1; view.x=gx; view.y=gy; view.z=gz;
+      ok('el lienzo tampoco escribe el total con la casilla apagada', t0===0, t0+' píxeles');
+      ok('y sí lo escribe cuando se enciende, para que salga también en el PNG', t1>150, t1+' píxeles');
+    })();
+
+    /* --- 16 bis. la base b y la bandeja ------------------------------------ */
+    opt.base=10; opt.simb=0; opt.ordenes=6; opt.pal='vivos'; opt.dib=1;
+    sincronizaBase(); pintaBandeja();
+    (function(){
+      var sel=document.getElementById('basesel');
+      var vals=[].map.call(sel.options,function(o){ return o.value; });
+      ok('el desplegable de base lleva todas las bases y la b al final',
+         vals.length===BASES.length+1 && vals[vals.length-1]==='b', vals.join(' '));
+      ok('no queda ningún desplegable de etiquetas aparte',
+         document.getElementById('simbsel')===null);
+
+      sel.value='b'; sel.dispatchEvent(new Event('change',{bubbles:true}));
+      ok('elegir la base b rotula los billetes 1, b, b²…',
+         opt.simb===1 && etiquetaTxt(0)==='1' && etiquetaTxt(1)==='b' && etiquetaTxt(2)==='b²',
+         etiquetaTxt(0)+' · '+etiquetaTxt(1)+' · '+etiquetaTxt(2));
+      ok('pero no cambia cuántos billetes hacen un cambio', opt.base===10, opt.base);
+      ok('y el material lo dice con la letra, no con el número', cuantos()==='b', cuantos());
+
+      sel.value='6'; sel.dispatchEvent(new Event('change',{bubbles:true}));
+      ok('volver a una base con número quita el rótulo simbólico',
+         opt.simb===0 && opt.base===6 && etiquetaTxt(2)==='36', etiquetaTxt(2));
+      ok('y entonces sí dice cuántos hacen un cambio', cuantos()==='6', cuantos());
+      opt.base=10; opt.simb=0; sincronizaBase(); pintaBandeja();
+    })();
+    (function(){
+      var els=document.querySelectorAll('#bandeja .bl');
+      ok('la bandeja saca un billete por cada orden de la caja',
+         els.length===opt.ordenes, els.length+' de '+opt.ordenes);
+      var todos=true, k;
+      for(k=0;k<opt.ordenes;k++) if(difBandeja(k)!==0) todos=false;
+      ok('y los dibuja exactamente igual que los del tablero, no parecidos',
+         todos, [0,1,2,3,4,5].map(difBandeja).join(' · ')+' píxeles distintos');
+      ok('los de la bandeja llevan tinta, no son recuadros vacíos',
+         noBlanco(els[2])>300, noBlanco(els[2])+' píxeles');
+      opt.ordenes=3; pintaBandeja();
+      ok('bajar los órdenes deja la bandeja con menos billetes',
+         document.querySelectorAll('#bandeja .bl').length===3,
+         document.querySelectorAll('#bandeja .bl').length);
+      /* Contar tinta no distingue una barra de seis de una de diez: el billete
+         entero es de color y mide lo mismo en las dos. Hay que comparar los
+         píxeles. */
+      opt.ordenes=6; opt.base=10; sincronizaBase(); pintaBandeja();
+      var diez=pixelesBandeja(1);
+      var s2=document.getElementById('basesel');
+      s2.value='6'; s2.dispatchEvent(new Event('change',{bubbles:true}));
+      var seis=pixelesBandeja(1);
+      ok('cambiar la base por el desplegable rehace la bandeja sola, y la barra de seis no es la de diez',
+         difPixeles(diez,seis)>50, difPixeles(diez,seis)+' píxeles distintos');
+      ok('y lo que queda dibujado es lo que le toca a la base nueva',
+         difBandeja(1)===0, difBandeja(1));
+      s2.value='b'; s2.dispatchEvent(new Event('change',{bubbles:true}));
+      ok('elegir la base b también rehace la bandeja, con los rótulos nuevos',
+         difPixeles(seis,pixelesBandeja(1))>20 && difBandeja(1)===0,
+         difPixeles(seis,pixelesBandeja(1))+' píxeles distintos');
+      opt.base=10; opt.simb=0; sincronizaBase(); pintaBandeja();
+    })();
+
+    /* Cualquier control que cambie el aspecto del billete tiene que dejar la
+       bandeja al día. Se recorren TODOS de golpe y no uno a uno: el que se
+       quedó sin repintar fue «puntos y placas», y no lo cazó nadie hasta que
+       se usó. Una prueba por control que exista es lo que evita la próxima. */
+    (function(){
+      opt.base=10; opt.simb=0; opt.ordenes=6; opt.pal='vivos'; opt.dib=1;
+      sincronizaBase();
+      document.getElementById('chkdib').checked=true;
+      document.getElementById('palsel').value='vivos';
+      document.getElementById('ordsel').value='6';
+      pintaBandeja();
+      function tras(id,cambia){
+        var e=document.getElementById(id);
+        cambia(e);
+        e.dispatchEvent(new Event('change',{bubbles:true}));
+        var d=0, k;
+        for(k=0;k<opt.ordenes;k++) d+=Math.abs(difBandeja(k));
+        return d;
+      }
+      ok('apagar «puntos y placas» rehace la bandeja',
+         tras('chkdib',function(e){ e.checked=false; })===0);
+      ok('y volver a encenderlo, también',
+         tras('chkdib',function(e){ e.checked=true; })===0);
+      ok('cambiar de paleta rehace la bandeja',
+         tras('palsel',function(e){ e.value='grises'; })===0);
+      ok('cambiar el número de órdenes rehace la bandeja',
+         tras('ordsel',function(e){ e.value='4'; })===0);
+      ok('cambiar la base rehace la bandeja',
+         tras('basesel',function(e){ e.value='6'; })===0);
+      ok('y pasar a la base b, también',
+         tras('basesel',function(e){ e.value='b'; })===0);
+      opt.base=10; opt.simb=0; opt.ordenes=6; opt.pal='vivos'; opt.dib=1;
+      sincronizaBase();
+      document.getElementById('palsel').value='vivos';
+      document.getElementById('ordsel').value='6';
+      document.getElementById('chkdib').checked=true;
+      pintaBandeja();
+    })();
+
+    /* --- 17. cuántos puntos lleva el dibujo de dentro ---------------------- */
+    opt.dib=1;
+    (function(){
+      [2,3,6,10].forEach(function(b){
+        opt.base=b;
+        var barra=rejilla(1,420,180);
+        ok('en base '+b+', la barra lleva '+b+' puntos en una sola fila',
+           barra.ancho===b && barra.alto===1, barra.ancho+' × '+barra.alto);
+      });
+      [2,3,6,10].forEach(function(b){
+        opt.base=b;
+        var placa=rejilla(2,420,420);
+        ok('en base '+b+', la placa lleva '+b+' × '+b+' puntos',
+           placa.ancho===b && placa.alto===b, placa.ancho+' × '+placa.alto);
+      });
+      opt.base=10;
+      var punto=rejilla(0,300,300);
+      ok('el billete de la unidad lleva un punto y solo uno',
+         punto.ancho===1 && punto.alto===1, punto.ancho+' × '+punto.alto);
+      opt.base=6;
+      var p6=rejilla(2,420,420), p10;
+      opt.base=10; p10=rejilla(2,420,420);
+      ok('la placa de base seis y la de base diez no son la misma',
+         p6.ancho!==p10.ancho, p6.ancho+' × '+p6.alto+' frente a '+p10.ancho+' × '+p10.alto);
+      /* dibujaGrafico pinta lo que se le pide: quien consulta la casilla es
+         hayGrafico, y es a esa a la que hay que preguntarle. */
+      /* Con la base b, la forma pero no las divisiones. Contar manchas es lo
+         único que distingue una barra lisa de una barra de diez puntos: la
+         tinta total no, porque puede coincidir. */
+      opt.simb=1; opt.base=10;
+      var bl=rejilla(1,420,180), pl=rejilla(2,420,420), pt=rejilla(0,300,300);
+      ok('con la base b, la barra va de una pieza, sin divisiones',
+         bl.ancho===1 && bl.alto===1, bl.ancho+' × '+bl.alto);
+      ok('y la placa, también', pl.ancho===1 && pl.alto===1, pl.ancho+' × '+pl.alto);
+      ok('el punto de la unidad no cambia', pt.ancho===1 && pt.alto===1, pt.ancho+' × '+pt.alto);
+      ok('la barra lisa es alargada y la placa lisa es cuadrada, para que no se confundan',
+         cajaTinta(1,420,300).r>2.4 && Math.abs(cajaTinta(2,420,300).r-1)<0.18,
+         'barra '+num(cajaTinta(1,420,300).r)+' de ancho por alto · placa '+num(cajaTinta(2,420,300).r));
+      ok('el bloque de b³ se sigue dibujando, también sin divisiones',
+         tintaBillete(3,240,116)>400, tintaBillete(3,240,116));
+      ok('con la base b no hay tope: la placa se dibuja aunque la base sea grande', (function(){
+          opt.base=16; var r=hayGrafico(2) && hayGrafico(3); opt.base=10; return r; })());
+      opt.simb=0;
+      ok('y con cifras vuelven las divisiones: la barra de diez son diez puntos',
+         rejilla(1,420,180).ancho===10, rejilla(1,420,180).ancho);
+
+      opt.dib=0;
+      var ninguno=true, kk;
+      for(kk=0;kk<=MAXK;kk++) if(hayGrafico(kk)) ninguno=false;
+      ok('con «puntos y placas» apagado, ningún billete lleva dibujo dentro', ninguno);
+      opt.dib=1;
+      ok('y al encenderlo vuelven el punto, la barra, la placa y el bloque',
+         hayGrafico(0)&&hayGrafico(1)&&hayGrafico(2)&&hayGrafico(3));
+    })();
+
+    /* --- 18. el PNG ------------------------------------------------------- */
+    (function(){
+      reset(); opt.guias=1; opt.grid=1; opt.total=0;
+      sacarCantidad(356);
+      var refV=view, vx=view.x, vy=view.y, vz=view.z;
+      var oc=lienzoPNG();
+      ok('el PNG se dibuja y no sale en blanco', !!oc && noBlanco(oc)>2000,
+         oc? noBlanco(oc)+' píxeles en '+oc.width+'×'+oc.height : 'no se ha creado');
+      ok('y deja la vista exactamente como estaba',
+         view===refV && view.x===vx && view.y===vy && view.z===vz,
+         'mismo objeto: '+(view===refV));
+      reset();
+      ok('con el tablero vacío no hay PNG que dibujar', lienzoPNG()===null);
+    })();
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+  }
+
+  /* devolver el tablero como estaba */
+  pieces=guardado.p; nid=guardado.n; selIds=guardado.s; undoStack=guardado.u;
+  var kk2;
+  for(kk2 in guardado.o) if(Object.prototype.hasOwnProperty.call(guardado.o,kk2)) opt[kk2]=guardado.o[kk2];
+  view.x=guardado.v.x; view.y=guardado.v.y; view.z=guardado.v.z;
+  marco=null; drag=null;
+  sincronizaBase();
+  document.getElementById('ordsel').value=String(opt.ordenes);
+  document.getElementById('guisel').value=String(opt.guias);
+  pintaBandeja(); draw();
+
+  var texto=out.join('\n');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:9999;overflow:auto;padding:22px 26px;'+
+    'font:12.5px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:#2b2f36';
+  box.innerHTML=
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__billetes={
+  test:runSelfTest,
+  valorOrden:valorOrden, valorTotal:valorTotal, cifras:cifras, recuento:recuento,
+  etiquetaTxt:etiquetaTxt, etiquetaHTML:etiquetaHTML, expresion:expresion, rotuloTotal:rotuloTotal,
+  carril:carril, enCarril:enCarril, hueco:hueco, destino:destino, ocupada:ocupada, caja:caja,
+  nuevo:nuevo, ponerEnHueco:ponerEnHueco, moverGrupo:moverGrupo, soltarGrupo:soltarGrupo,
+  agrupar:agrupar, desagrupar:desagrupar, alMinimo:alMinimo, sacarCantidad:sacarCantidad,
+  ordenar:ordenar, desordenar:desordenar, imantarTodos:imantarTodos, duplicar:duplicar,
+  quitarSel:quitarSel, marcarMismoOrden:marcarMismoOrden, aplicaMarco:aplicaMarco,
+  hayGrafico:hayGrafico, dibujaBillete:dibujaBillete, dibujaGrafico:dibujaGrafico,
+  escena:escena, lienzoPNG:lienzoPNG,
+  limpiaPiezas:limpiaPiezas, load:loadData, datos:datos, doUndo:doUndo,
+  cuantos:cuantos, sincronizaBase:sincronizaBase,
+  setMode:function(m){ importMode=m; },
+  pieces:function(){ return pieces; }, sel:function(ids){ selIds=ids; },
+  selIds:function(){ return selIds; }, opt:opt, view:view, bandeja:pintaBandeja, redraw:draw,
+  reset:function(){ pieces=[]; selIds=[]; nid=1; undoStack=[]; }
+};
+
+})();
+</script>
+</body>
+</html>

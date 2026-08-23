@@ -1,0 +1,2217 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chinchetas</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:#2b2f36;background:#fff;display:flex;height:100%;overflow:hidden}
+  #side{width:238px;flex:0 0 238px;border-right:1px solid #e6e8ec;padding:10px 10px;overflow:auto;
+        background:#fafbfc}
+  #side h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a919c;
+           margin:0 0 6px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;
+           text-overflow:ellipsis;clear:both}
+  #side h2.sep{margin-top:16px}
+  /* rótulo del material: sobrio, peso ligero y una línea fina debajo */
+  #side .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:2px 2px 10px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #e6e8ec;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn.grande{font-weight:600;font-size:13.5px;padding:6px 13px}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .lab{font-size:11.5px;color:#8a919c}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;
+       padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  .act{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:5px;
+       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:6px 8px;font-size:12px;
+       color:#3d4450;cursor:pointer;text-align:left;line-height:1.3}
+  .act:hover{background:#f0f2f5}
+  .act kbd{font:11px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
+  select,input[type=text],input[type=number]{font:12px inherit;border:1px solid #d5d9e0;border-radius:6px;
+       padding:5px 6px;color:#2b2f36;background:#fff;width:100%}
+  input:disabled{background:#f4f5f7;color:#9aa1ab}
+  .fila{display:flex;gap:6px;align-items:center;margin-top:5px}
+  .fila > *{min-width:0}
+  .fila label{flex:0 0 74px;font-size:12px;color:#6b7280}
+  .fila .num{flex:0 0 62px;text-align:center}
+  .rapidos{display:flex;gap:4px;margin-top:5px}
+  .rapidos button{flex:1;border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:4px 0;
+                  font-size:12px;color:#3d4450;cursor:pointer}
+  .rapidos button:hover{background:#f0f2f5}
+  .rapidos button.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .nota{font-size:11px;color:#8a919c;line-height:1.5;margin-top:7px}
+  /* la probabilidad de la chincheta, tapada mientras no se pida verla */
+  #pcaja{margin-top:6px;padding:7px 8px;border-radius:7px;background:#f2f4f7;font-size:11.5px;
+         line-height:1.5;color:#4a515c}
+  #pcaja.oculta{color:#8a919c;font-style:italic}
+  #pcaja b{color:#2b2f36;font-style:normal}
+  #pcustom{display:none}
+  #pcustom.ver{display:block}
+  #pcustom .fila label{flex:0 0 88px}
+
+  #stage{position:relative;flex:1 1 auto;min-height:120px;background:#fbfbfa}
+  canvas#cv{display:block;width:100%;height:100%}
+  #abajo{flex:0 0 auto;display:none;border-top:1px solid #e6e8ec;min-height:0}
+  #abajo.show{display:flex;height:46%}
+  #panelTabla,#panelGraf{display:none;flex-direction:column;min-width:0;min-height:0}
+  #panelTabla.show,#panelGraf.show{display:flex}
+  #panelTabla{flex:0 0 42%;border-right:1px solid #e6e8ec}
+  #panelTabla.solo{flex:1 1 auto;border-right:0}
+  #panelGraf{flex:1 1 auto}
+  .cab{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:5px 8px;background:#fafbfc;
+       border-bottom:1px solid #eef0f3;font-size:11.5px;color:#6b7280}
+  .cab select{width:auto;font-size:11.5px;padding:3px 5px}
+  .cab .tit{font-weight:600;color:#4a515c;margin-right:2px}
+  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:3px 7px;font-size:11.5px;
+        color:#3d4450;cursor:pointer;line-height:1.2}
+  .mini:hover{background:#f0f2f5}
+  #tablaWrap{flex:1 1 auto;overflow:auto}
+  table{border-collapse:collapse;width:100%;font:11.5px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  th,td{padding:2px 7px;text-align:right;white-space:nowrap;border-bottom:1px solid #f1f3f5}
+  th{position:sticky;top:0;background:#fff;color:#8a919c;font-weight:600;font-size:10.5px;
+     border-bottom:1px solid #e6e8ec;text-transform:uppercase;letter-spacing:.03em}
+  td.res{font-weight:700;color:#2f62a8}
+  td.acum{color:#a2a8b2}
+  #pieTabla{padding:4px 8px;font-size:10.5px;color:#a2a8b2;border-top:1px solid #f1f3f5;background:#fafbfc}
+  canvas#gr{display:block;width:100%;flex:1 1 auto;min-height:0;touch-action:none;cursor:crosshair}
+  canvas#gr.arrastrando{cursor:grabbing}
+
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:330px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:176px;flex:0 0 176px;padding:8px 7px}
+    .btn{padding:5px 7px;font-size:12px}
+    #info{width:calc(100% - 20px)}
+    #abajo.show{height:52%;flex-direction:column}
+    #panelTabla{flex:0 0 45%;border-right:0;border-bottom:1px solid #e6e8ec}
+  }
+</style>
+</head>
+<body>
+
+  <aside id="side">
+    <div class="brand"><b>Chinchetas</b></div>
+
+    <h2>El puñado</h2>
+    <div class="fila">
+      <label for="nK">Chinchetas</label>
+      <input type="number" id="nK" class="num" min="1" max="1000" step="1" value="10">
+    </div>
+    <div class="rapidos" id="rapidos">
+      <button data-k="1">1</button>
+      <button data-k="10">10</button>
+      <button data-k="100">100</button>
+      <button data-k="1000">1000</button>
+    </div>
+    <div class="nota">Cada tirada es un puñado entero: se tiran todas a la vez y se cuenta
+      cuántas han caído boca arriba.</div>
+
+    <h2 class="sep">Qué chincheta</h2>
+    <select id="modelo"></select>
+    <div id="pcustom">
+      <div class="fila">
+        <label for="pArriba">Boca arriba</label>
+        <input type="number" id="pArriba" class="num" min="0" max="100" step="0.1" value="70">
+        <span class="lab">%</span>
+      </div>
+      <div class="fila">
+        <label for="pTumbada">Tumbada</label>
+        <input type="number" id="pTumbada" class="num" min="0" max="100" step="0.1" value="30">
+        <span class="lab">%</span>
+      </div>
+    </div>
+    <div id="pcaja"></div>
+    <button class="act" id="otraMisteriosa" style="display:none">Otra chincheta misteriosa</button>
+
+    <h2 class="sep">El azar</h2>
+    <div class="fila">
+      <label for="semilla">Semilla</label>
+      <input type="text" id="semilla" value="1">
+      <button class="mini" id="otraSemilla" title="Otra semilla al azar" style="flex:0 0 auto">↻</button>
+    </div>
+    <label class="chk" style="margin-top:5px"><input type="checkbox" id="anim" checked>Animar la tirada</label>
+    <div class="nota">Con la misma semilla salen las mismas tiradas: sirve para que toda la clase
+      trabaje sobre los mismos datos.</div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn grande" id="tirar" title="Tirar el puñado (barra espaciadora)">🖈 Tirar</button>
+      <span class="lab">repetir</span>
+      <button class="btn" id="r10">×10</button>
+      <button class="btn" id="r100">×100</button>
+      <button class="btn" id="r1000">×1000</button>
+      <button class="btn" id="vaciar" title="Borrar las tiradas, sin tocar la chincheta">Vaciar</button>
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <span class="sep"></span>
+      <label class="chk" title="Abre debajo la lista de tiradas"><input type="checkbox" id="verTabla">Tabla</label>
+      <label class="chk" title="Abre debajo el recuento en un gráfico de barras"><input type="checkbox" id="verGraf">Gráfico</label>
+      <label class="chk" title="Enseña la probabilidad de esta chincheta y la distribución exacta"><input type="checkbox" id="verTeo">Probabilidad teórica</label>
+      <span class="sep"></span>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar la chincheta y las tiradas">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir las tiradas de un archivo a las que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="csv" title="Descargar la tabla de tiradas en CSV">⤓ CSV</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo</div>
+    </div>
+
+    <div id="abajo">
+      <div id="panelTabla">
+        <div class="cab">
+          <span class="tit">Tiradas</span>
+          <button class="mini" id="csvTabla" title="Descargar esta tabla de tiradas en CSV">⤓ CSV</button>
+          <span id="cabTabla"></span>
+        </div>
+        <div id="tablaWrap"><table id="tabla"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+        <div id="pieTabla"></div>
+      </div>
+      <div id="panelGraf">
+        <div class="cab">
+          <span class="tit">Gráfico</span>
+          <select id="vista">
+            <option value="barras">Frecuencias</option>
+            <option value="evol">Evolución de la f. relativa</option>
+            <option value="punado">Cuántas por puñado</option>
+          </select>
+          <select id="escala">
+            <option value="abs">absolutas</option>
+            <option value="rel">relativas</option>
+            <option value="pct">porcentajes</option>
+          </select>
+          <select id="quien" style="display:none"></select>
+          <button class="mini" id="csvGraf" title="Descargar el recuento de cada resultado en CSV">⤓ CSV</button>
+          <span id="cabGraf"></span>
+        </div>
+        <canvas id="gr"></canvas>
+      </div>
+    </div>
+  </main>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LA IDEA
+   Una chincheta no es un dado. La probabilidad de un dado se sabe antes de
+   tirarlo, contando caras; la de una chincheta NO se sabe de antemano por
+   ninguna vía teórica: depende del modelo de chincheta y de la superficie, y
+   el único camino para conocerla es tirarla muchas veces y mirar. Esa es la
+   razón de que este material exista al lado del de los dados.
+
+   Todo lo demás sale de ahí:
+
+   · Cada tirada es un PUÑADO entero, no una chincheta. Se tiran las k a la vez
+     y el resultado de la tirada es cuántas han caído boca arriba, un número
+     entre 0 y k. Con k=1 el resultado vuelve a ser «boca arriba» o «tumbada».
+   · La probabilidad de la chincheta que se está usando está TAPADA mientras no
+     se marque la casilla. Si se ve desde el principio, no hay nada que estimar,
+     y estimarla es justo el trabajo.
+   · Hay una chincheta misteriosa cuyo porcentaje se sortea a partir de la
+     semilla: reproducible para toda la clase y desconocido hasta que se pide
+     verlo.
+
+   Los porcentajes de los modelos son los de esta simulación. Los de una
+   chincheta de verdad hay que medirlos, y no dan siempre lo mismo.
+   ========================================================================= */
+
+var MAXK=1000;             // chinchetas en un puñado
+var TOPE_SERIE=200000;     // tiradas cuyo recuento se recuerda (para la evolución)
+var TOPE_DET=20000;        // tiradas cuyo detalle se recuerda (tabla y CSV)
+var MAXFILAS=300;          // filas de la tabla que se pintan de verdad
+var CORTE_SOP=1e-7;        // por debajo de esta probabilidad, un resultado no ensucia el eje
+
+/* Los modelos. El porcentaje es el de la simulación, no una constante de la
+   naturaleza: una chincheta de verdad depende de cómo sea y de dónde caiga. */
+var MODELOS=[
+  {id:'plana',   n:'Chincheta de culo plano',    p:0.70},
+  {id:'ancha',   n:'Chincheta de cabeza ancha',  p:0.62},
+  {id:'fina',    n:'Chincheta larga y fina',     p:0.38},
+  {id:'custom',  n:'A mi gusto…',                p:0.50},
+  {id:'misterio',n:'Chincheta misteriosa',       p:null}
+];
+function modeloDe(id){
+  for(var i=0;i<MODELOS.length;i++) if(MODELOS[i].id===id) return MODELOS[i];
+  return MODELOS[0];
+}
+
+/* =========================================================================
+   2. ESTADO
+   ========================================================================= */
+var cfg={ k:10, modelo:'plana', p:0.70, misterioN:0, semilla:1 };
+var claves=[], claveId={};         // claves[id] = {k:texto, o:orden, n:recuento}
+var serie=[];                      // cuántas boca arriba en cada tirada
+var detalle=[];                    // {n, a} de las últimas TOPE_DET
+var ntiradas=0, nchinchetas=0, narriba=0, recortadas=0;
+var undoStack=[];
+var view={z:1};                    /* no hay mundo que recorrer: la bandeja se recoloca
+                                      sola, así que el zoom es solo un tamaño */
+var opt={tabla:0, graf:0, teo:0, anim:1, vista:'barras', escala:'abs', quien:'arriba'};
+var cacheTeo=null;
+var anim=null, bandeja=null;
+var flashMsg=null, flashT=0;
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var gr=document.getElementById('gr'), gtx=gr.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop');
+var tbody=document.getElementById('tbody'), thead=document.getElementById('thead');
+
+function flash(m){ flashMsg=m; flashT=Date.now(); updateUI(); setTimeout(updateUI,2400); }
+function r6(x){ return Math.round(x*1e6)/1e6; }
+function coma(s){ return String(s).replace('.',','); }
+function pct1(x){ return coma((100*x).toFixed(1)); }
+
+function snapshot(){
+  return {cfg:JSON.parse(JSON.stringify(cfg)), claves:claves, claveId:claveId,
+          serie:serie, detalle:detalle, nt:ntiradas, nc:nchinchetas, na:narriba, rec:recortadas};
+}
+function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length>20) undoStack.shift(); }
+function registrosNuevos(){
+  claves=[]; claveId={}; serie=[]; detalle=[];
+  ntiradas=0; nchinchetas=0; narriba=0; recortadas=0; bandeja=null;
+}
+function doUndo(){
+  if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var s=undoStack.pop();
+  cfg=s.cfg; claves=s.claves; claveId=s.claveId; serie=s.serie; detalle=s.detalle;
+  ntiradas=s.nt; nchinchetas=s.nc; narriba=s.na; recortadas=s.rec||0;
+  cacheTeo=null; bandeja=null;
+  sincronizaControles(); pintaTabla(); actualizaQuien(); draw();
+}
+
+/* =========================================================================
+   3. LA CHINCHETA
+   Solo hay dos resultados, así que la probabilidad es un único número y la de
+   quedar tumbada es forzosamente su complemento. Aquí sí se puede reajustar el
+   otro campo automáticamente —y se hace— porque no hay ninguna decisión que
+   tomar: con dos casos, el que sobra está determinado. En el manipulativo de
+   los dados no se reajusta nada, y es por eso: allí repartir lo que queda entre
+   las demás caras es una decisión de quien truca el dado, no una consecuencia.
+   ========================================================================= */
+function pDe(){ return cfg.p; }
+function ponP(x){
+  if(!isFinite(x) || x<0 || x>1) return false;
+  cfg.p=Math.round(x*1000)/1000;
+  return true;
+}
+/* La misteriosa se sortea del par (semilla, cuántas van): reproducible para
+   toda la clase y distinta cada vez que se pide otra. El rango se queda lejos
+   del 0 y del 1 para que haya algo que estimar. */
+function pMisteriosa(){
+  var h=hash32(String(cfg.semilla)+'|misterio|'+cfg.misterioN);
+  return Math.round((0.20 + (h/4294967296)*0.65)*1000)/1000;
+}
+function aplicaModelo(){
+  var m=modeloDe(cfg.modelo);
+  if(cfg.modelo==='misterio') cfg.p=pMisteriosa();
+  else if(cfg.modelo!=='custom') cfg.p=m.p;
+  return cfg.p;
+}
+function pSecreta(){ return cfg.modelo==='misterio' && !opt.teo; }
+
+/* =========================================================================
+   4. EL AZAR
+   xorshift de 32 bits escrito a mano, sin Math.imul, que en los navegadores
+   viejos de aula no siempre está. Con la misma semilla, las mismas tiradas.
+   ========================================================================= */
+var s32=1;
+function hash32(s){
+  var h=2166136261, i;
+  s=String(s);
+  for(i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=(h+((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)))>>>0; }
+  return (h>>>0) || 1;
+}
+function reinicia(semilla){ cfg.semilla=semilla; s32=hash32(semilla); }
+function rnd(){
+  s32^=s32<<13; s32>>>=0;
+  s32^=s32>>>17;
+  s32^=s32<<5;  s32>>>=0;
+  return s32/4294967296;
+}
+/* Un puñado son k pruebas independientes; lo que se guarda es cuántas han
+   salido boca arriba, que es todo lo que hay que saber de esa tirada. */
+function tiraPunado(){
+  var a=0, i, p=cfg.p;
+  for(i=0;i<cfg.k;i++) if(rnd()<p) a++;
+  return a;
+}
+
+/* =========================================================================
+   5. EL REGISTRO
+   ========================================================================= */
+function resultadoDe(a){
+  if(cfg.k===1) return a ? {k:'boca arriba', o:1} : {k:'tumbada', o:0};
+  return {k:String(a), o:a};
+}
+function idDeClave(k, o){
+  var id=claveId[k];
+  if(id===undefined){
+    id=claves.length; claveId[k]=id;
+    claves.push({k:k, o:o, n:0});
+  }
+  return id;
+}
+function ordenadas(){
+  var ids=[], i;
+  for(i=0;i<claves.length;i++) ids.push(i);
+  ids.sort(function(x,y){
+    var d=claves[x].o-claves[y].o;
+    if(d) return d;
+    return claves[x].k<claves[y].k ? -1 : claves[x].k>claves[y].k ? 1 : 0;
+  });
+  return ids;
+}
+function registra(a){
+  var r=resultadoDe(a), id=idDeClave(r.k, r.o);
+  claves[id].n++;
+  ntiradas++; nchinchetas+=cfg.k; narriba+=a;
+  if(serie.length<TOPE_SERIE) serie.push(a);
+  detalle.push({n:ntiradas, a:a});
+  while(detalle.length>TOPE_DET){ detalle.shift(); recortadas++; }
+  return id;
+}
+function tiraN(veces){
+  var i;
+  registraSoporte();
+  for(i=0;i<veces;i++) registra(tiraPunado());
+}
+function proporcion(){ return nchinchetas ? narriba/nchinchetas : 0; }
+
+/* =========================================================================
+   6. LA PROBABILIDAD TEÓRICA
+   Con k chinchetas independientes y probabilidad p, cuántas caen boca arriba
+   sigue una binomial. Se calcula convolucionando k veces la distribución de
+   una sola chincheta —[1-p, p]— en vez de con la fórmula de los números
+   combinatorios: con k=1000, C(1000,500) no cabe en un número de coma
+   flotante y la fórmula se va a infinito partido por infinito, mientras que la
+   convolución solo suma y multiplica números entre 0 y 1.
+   Aquí siempre se puede calcular; no hay caso en el que haya que rendirse.
+   ========================================================================= */
+function binomial(k, p){
+  var d=[1], q=1-p, i, j, nd;
+  for(i=0;i<k;i++){
+    nd=new Array(d.length+1);
+    for(j=0;j<=d.length;j++){
+      nd[j]=(j<d.length ? d[j]*q : 0) + (j>0 ? d[j-1]*p : 0);
+    }
+    d=nd;
+  }
+  return d;
+}
+function teorica(){
+  var f=cfg.k+'|'+cfg.p;
+  if(cacheTeo && cacheTeo.firma===f) return cacheTeo;
+  var d=binomial(cfg.k, cfg.p), mapa={}, i, r;
+  for(i=0;i<d.length;i++){
+    r=resultadoDe(i);
+    mapa[r.k]={p:d[i], o:r.o};
+  }
+  cacheTeo={firma:f, mapa:mapa, dist:d};
+  return cacheTeo;
+}
+/* El eje se saca de los resultados posibles, no de los que han salido, para que
+   no baile al aparecer uno nuevo. Con mil chinchetas hay 1001 resultados
+   posibles pero casi todos tienen probabilidad ridícula: los que están por
+   debajo del corte no se registran, o el gráfico saldría vacío a los lados. */
+function registraSoporte(){
+  var t=teorica(), k;
+  for(k in t.mapa) if(t.mapa.hasOwnProperty(k)){
+    if(t.mapa[k].p>=CORTE_SOP) idDeClave(k, t.mapa[k].o);
+  }
+}
+
+/* =========================================================================
+   7. DIBUJO
+   ========================================================================= */
+var FONDO='#fbfbfa', TINTA='#2b2f36', SUAVE='#8a919c', AZUL='#2f62a8', NARANJA='#c2410c';
+
+function h01(i){ return hash32('c'+i)/4294967296; }
+/* La colocación del puñado se saca del número de tirada, no del azar del
+   momento: si no, las chinchetas cambiarían de sitio en cada repintado y la
+   bandeja parecería estar temblando. */
+function preparaBandeja(t){
+  if(bandeja && bandeja.n===t.n && bandeja.k===cfg.k && bandeja.a===t.a) return bandeja;
+  var k=cfg.k, i, idx=[];
+  for(i=0;i<k;i++) idx.push({i:i, r:h01(t.n*104729+i)});
+  idx.sort(function(a,b){ return a.r-b.r; });
+  var arriba=new Array(k);
+  for(i=0;i<k;i++) arriba[idx[i].i]=(i<t.a);
+  var jx=new Array(k), jy=new Array(k), ang=new Array(k);
+  for(i=0;i<k;i++){
+    jx[i]=h01(t.n*7919+i)*2-1;
+    jy[i]=h01(t.n*7907+i+500000)*2-1;
+    ang[i]=h01(t.n*6151+i+900000)*Math.PI*2;
+  }
+  bandeja={n:t.n, k:k, a:t.a, arriba:arriba, jx:jx, jy:jy, ang:ang};
+  return bandeja;
+}
+/* Cada modelo se dibuja distinto, y la diferencia no es decorativa: es la que
+   hace plausible que uno caiga boca arriba más veces que otro. La de culo plano
+   tiene la cabeza ancha y la aguja corta; la larga y fina, al revés. Los tres
+   parámetros son el tamaño de la cabeza, lo que se aplasta vista de canto y lo
+   que sobresale la aguja. Ojo: el dibujo NO puede delatar el porcentaje de la
+   misteriosa, así que esa lleva una silueta corriente y sin señas. */
+var FORMAS={
+  plana:   {cab:1.00, apl:0.60, agu:1.35, aro:0,
+            c:['#fdfdfe','#dadee4','#98a0aa'], can:['#b6bcc4','#e7eaee','#8d949e'], agc:'#7d848e'},
+  /* la de cabeza ancha es una chapa: un ala grande y plana con una cúpula
+     pequeña en medio, y de canto una plancha fina y alta. Antes era la de culo
+     plano un poco más grande y no había quien las distinguiera */
+  ancha:   {cab:1.38, apl:0.26, agu:1.00, aro:0, ala:1,
+            c:['#fbfcfe','#ccd6e2','#7f8d9e'], can:['#a9b4c1','#e0e7f0','#7e8a98'], agc:'#77818d'},
+  fina:    {cab:0.72, apl:0.70, agu:2.30, aro:0,
+            c:['#f7f8fa','#c9ced6','#8b929c'], can:['#a8aeb8','#dde1e6','#82888f'], agc:'#6f757e'},
+  custom:  {cab:0.98, apl:0.58, agu:1.55, aro:1,
+            c:['#fdf7e9','#ecd7a6','#b8935a'], can:['#d9bd88','#f6ecd4','#a8853f'], agc:'#9a8355'},
+  misterio:{cab:0.95, apl:0.58, agu:1.45, aro:0,
+            c:['#f6f7f8','#d2d6dc','#949aa3'], can:['#b2b7bf','#e4e7eb','#8a9099'], agc:'#7b818a'}
+};
+function forma(){ return FORMAS[cfg.modelo] || FORMAS.plana; }
+
+function chinchetaArriba(c,x,y,r,f){
+  /* vista desde arriba: el casquete metálico con la punta apuntando a quien mira */
+  f=f||forma();
+  var R=r*f.cab;
+  if(!(R>0.4)) return;
+  if(R>=6){
+    if(f.ala){
+      /* el ala va con un degradado en diagonal, sin brillo central: así se lee
+         como una chapa plana y no como otro casquete */
+      var gl=c.createLinearGradient(x-R, y-R, x+R, y+R);
+      gl.addColorStop(0,f.c[0]); gl.addColorStop(0.55,f.c[1]); gl.addColorStop(1,f.c[2]);
+      c.fillStyle=gl;
+    } else {
+      var g=c.createRadialGradient(x-R*0.35, y-R*0.4, R*0.08, x, y, R);
+      g.addColorStop(0,f.c[0]); g.addColorStop(0.45,f.c[1]); g.addColorStop(1,f.c[2]);
+      c.fillStyle=g;
+    }
+  } else c.fillStyle=f.c[1];
+  c.beginPath(); c.arc(x,y,R,0,6.2832); c.fill();
+  c.strokeStyle='rgba(70,78,88,.55)'; c.lineWidth=Math.max(0.6, R*0.09); c.stroke();
+  if(f.ala && R>=5){
+    /* la cúpula del centro, bastante más pequeña que el ala: es el anillo que
+       queda entre las dos lo que distingue esta chincheta de un vistazo */
+    var Ri=R*0.55;
+    if(Ri>=5){
+      var gi=c.createRadialGradient(x-Ri*0.35, y-Ri*0.45, Ri*0.08, x, y, Ri);
+      gi.addColorStop(0,'#ffffff'); gi.addColorStop(0.5,f.c[1]); gi.addColorStop(1,f.c[2]);
+      c.fillStyle=gi;
+    } else c.fillStyle=f.c[0];
+    c.beginPath(); c.arc(x,y,Ri,0,6.2832); c.fill();
+    c.strokeStyle='rgba(70,78,88,.42)'; c.lineWidth=Math.max(0.5, R*0.055); c.stroke();
+  } else if(f.aro && R>=7){
+    c.strokeStyle='rgba(70,78,88,.22)'; c.lineWidth=Math.max(0.5, R*0.06);
+    c.beginPath(); c.arc(x,y,R*0.66,0,6.2832); c.stroke();
+  }
+  c.fillStyle='rgba(58,64,72,.8)';
+  c.beginPath(); c.arc(x,y,Math.max(0.7, R*(f.ala?0.12:0.17)),0,6.2832); c.fill();
+}
+function chinchetaTumbada(c,x,y,r,ang,f){
+  /* de canto: se le ve la aguja, que es lo que la distingue de un vistazo */
+  f=f||forma();
+  var R=r*f.cab, L=r*f.agu;
+  if(!(R>0.4)) return;
+  /* el conjunto se centra en el punto que toca, o las de aguja larga tirarían
+     del montón hacia un lado */
+  c.save(); c.translate(x,y); c.rotate(ang); c.translate(-(L-R*f.apl)/2, 0);
+  c.strokeStyle=f.agc; c.lineWidth=Math.max(0.8, r*0.13); c.lineCap='round';
+  /* la aguja arranca del centro de la cabeza y no de su borde: la cabeza se
+     pinta después y la tapa, y así no queda un hueco entre las dos cuando la
+     cabeza es una chapa fina */
+  c.beginPath(); c.moveTo(-R*0.05,0); c.lineTo(L,0); c.stroke();
+  /* la cabeza es un círculo aplastado; se construye el trazo con la escala
+     puesta y se rellena después, para que el borde no salga deformado */
+  c.save(); c.translate(-R*0.12,0); c.scale(f.apl,0.95);
+  c.beginPath(); c.arc(0,0,R,0,6.2832);
+  c.restore();
+  if(R>=6){
+    var g=c.createLinearGradient(-R,0,R*0.4,0);
+    g.addColorStop(0,f.can[0]); g.addColorStop(0.5,f.can[1]); g.addColorStop(1,f.can[2]);
+    c.fillStyle=g;
+  } else c.fillStyle=f.can[0];
+  c.fill();
+  c.strokeStyle='rgba(70,78,88,.5)'; c.lineWidth=Math.max(0.6, R*0.09); c.stroke();
+  c.restore();
+}
+function drawBandeja(c, W, H, paraPNG){
+  c.fillStyle = paraPNG ? '#fff' : FONDO;
+  c.fillRect(0,0,W,H);
+  var t = anim ? anim.falsa : (detalle.length ? detalle[detalle.length-1] : null);
+  var alto=H-34;
+  if(!t){
+    c.fillStyle=SUAVE; c.textAlign='center'; c.textBaseline='middle';
+    c.font='14px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.fillText('Dale a 🖈 Tirar', W/2, alto/2);
+  } else {
+    var b=preparaBandeja(t), k=cfg.k, i;
+    var Wu=Math.max(40, W-30), Hu=Math.max(40, alto-24);
+    var cols=Math.max(1, Math.round(Math.sqrt(k*Wu/Hu)));
+    if(cols>k) cols=k;
+    var filas=Math.ceil(k/cols);
+    var paso=Math.min(Wu/cols, Hu/filas);
+    var r=Math.max(2.2, Math.min(paso*0.33, 34)*view.z);
+    var x0=(W-cols*paso)/2+paso/2, y0=(alto-filas*paso)/2+paso/2;
+    for(i=0;i<k;i++){
+      var col=i%cols, fil=Math.floor(i/cols);
+      var enFila=Math.min(cols, k-fil*cols);
+      var dx=(cols-enFila)*paso/2;
+      var x=x0+dx+col*paso+b.jx[i]*paso*0.16;
+      var y=y0+fil*paso+b.jy[i]*paso*0.16;
+      if(!isFinite(x)||!isFinite(y)) continue;
+      if(b.arriba[i]) chinchetaArriba(c,x,y,r);
+      else chinchetaTumbada(c,x,y,r,b.ang[i]);
+    }
+  }
+  var txt='';
+  if(anim) txt='…';
+  else if(t){
+    txt = (cfg.k===1)
+      ? (t.a ? 'Boca arriba' : 'Tumbada')
+      : t.a+(t.a===1?' boca arriba de ':' boca arriba de ')+cfg.k;
+    if(ntiradas>1) txt+='   ·   en total '+narriba+' de '+nchinchetas+'  ('+pct1(proporcion())+' %)';
+  }
+  if(txt){
+    c.textAlign='center'; c.textBaseline='alphabetic';
+    c.font='600 15px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.fillStyle=AZUL;
+    c.fillText(txt, W/2, H-12);
+  }
+}
+
+/* --- el gráfico ------------------------------------------------------------
+   Lo que se cuenta aquí son CHINCHETAS, no tiradas: el eje tiene dos valores,
+   boca arriba y tumbada, que son los dos resultados del experimento. Cuántas
+   caen de cada manera dentro de un mismo puñado es otra pregunta —una
+   distribución entera— y por eso tiene su propia vista aparte, en vez de
+   colarse en el eje de esta.
+   --------------------------------------------------------------------------- */
+function nabajo(){ return nchinchetas-narriba; }
+
+/* --- la ventana del gráfico ------------------------------------------------
+   Acercarse hace falta de verdad: en «cuántas por puñado» con cien chinchetas
+   hay barras de sobra para no distinguir nada, y en frecuencias la diferencia
+   entre el 69,3 % observado y el 70 % teórico no se ve a escala completa, que
+   es justo la comparación que se quiere hacer.
+   La ventana se guarda en fracciones de 0 a 1 de cada eje, no en unidades de
+   los datos: así vale igual para las tres vistas y no hay que rehacerla cuando
+   cambia la escala o llegan más tiradas.
+   --------------------------------------------------------------------------- */
+var gv={x0:0, x1:1, y0:0, y1:1};
+var gplot=null, gdrag=null;
+var MINVENT=1e-4;     // no se puede acercar más que esto, o se pierde el sitio
+/* Hasta dónde puede estirarse la ventana en cada eje. Normalmente 1, que es el
+   gráfico entero; en la evolución el eje vertical llega más allá, porque ahí el
+   1 es un techo escogido —lo justo por encima de donde acaba la frecuencia— y
+   el arranque de la serie se sale por arriba. Sin esto no había manera de ver
+   esa parte: alejar no pasaba del techo. */
+var gvTope={x:1, y:1};
+var evolCortada=false;   // ¿queda curva por encima de lo que se está viendo?
+function gvReset(){ gv={x0:0, x1:1, y0:0, y1:1}; }
+function gvHayZoom(){ return gv.x0>0 || gv.x1<1 || gv.y0>0 || gv.y1!==1; }
+/* frac es dónde está el cursor dentro de la ventana que se ve (0 a 1); ese
+   punto es el que se queda quieto al acercar, que es lo que hace que la rueda
+   se sienta natural */
+function gvZoom(eje, frac, k){
+  var T=(eje==='y')?gvTope.y:gvTope.x;
+  var a=(eje==='y')?gv.y0:gv.x0, b=(eje==='y')?gv.y1:gv.x1;
+  var p=a+frac*(b-a), w=(b-a)/k;
+  if(w>T) w=T;
+  if(w<MINVENT) w=MINVENT;
+  var na=p-frac*w, nb=na+w;
+  if(na<0){ na=0; nb=w; }
+  if(nb>T){ nb=T; na=T-w; }
+  if(eje==='y'){ gv.y0=na; gv.y1=nb; } else { gv.x0=na; gv.x1=nb; }
+}
+function gvMueve(eje, d){
+  var T=(eje==='y')?gvTope.y:gvTope.x;
+  var a=(eje==='y')?gv.y0:gv.x0, b=(eje==='y')?gv.y1:gv.x1, w=b-a;
+  var na=a+d*w;
+  if(na<0) na=0;
+  if(na+w>T) na=T-w;
+  if(eje==='y'){ gv.y0=na; gv.y1=na+w; } else { gv.x0=na; gv.x1=na+w; }
+}
+/* en frecuencias solo hay dos barras: ahí no hay nada que recorrer en
+   horizontal, así que la rueda a secas acerca en vertical y el gesto nunca
+   se queda sin hacer nada */
+function ejeRueda(conMayus){
+  if(conMayus) return 'y';
+  return (opt.vista==='barras') ? 'y' : 'x';
+}
+
+function escalaCon(n, total){
+  if(opt.escala==='abs') return n;
+  if(!total) return 0;
+  return opt.escala==='pct' ? 100*n/total : n/total;
+}
+function teoEscalaCon(p, total){
+  if(opt.escala==='abs') return p*total;
+  return opt.escala==='pct' ? 100*p : p;
+}
+/* los decimales de la escala se ajustan a lo estrecha que sea la ventana: al
+   acercarse a la zona del 70 % hacen falta más cifras, o las cinco marcas del
+   eje dirían todas «0,7» */
+function etiquetaEje(v, rango){
+  if(opt.escala==='abs') return String(rango<8 ? Math.round(v*10)/10 : Math.round(v));
+  var dec = rango<0.005 ? 4 : rango<0.05 ? 3 : rango<0.5 ? 2 : 1;
+  if(opt.escala==='pct') return coma(v.toFixed(dec));
+  return coma(v.toFixed(dec+2));
+}
+/* armazón común a las dos vistas de barras: ejes, rejilla y escala, ya con la
+   ventana aplicada al eje vertical */
+function ejes(c, W, H, mx, mL, mB){
+  var mR=10, mT=12, an=W-mL-mR, al=H-mT-mB, i;
+  /* en las barras el techo ya cubre la más alta: no hay nada por encima que ver */
+  gvTope.y=1;
+  var v0=mx*gv.y0, v1=mx*gv.y1, rango=v1-v0;
+  c.strokeStyle='#eceef1'; c.lineWidth=1;
+  c.fillStyle=SUAVE; c.font='10px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.textAlign='right'; c.textBaseline='middle';
+  for(i=0;i<=4;i++){
+    var yy=mT+al-al*i/4;
+    c.beginPath(); c.moveTo(mL, yy+0.5); c.lineTo(W-mR, yy+0.5); c.stroke();
+    c.fillText(etiquetaEje(v0+rango*i/4, rango), mL-5, yy);
+  }
+  c.strokeStyle='#d5d9e0'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(mL, mT+al+0.5); c.lineTo(W-mR, mT+al+0.5); c.stroke();
+  gplot={x:mL, y:mT, w:an, h:al};
+  return {mL:mL, mT:mT, an:an, al:al, v0:v0, v1:v1, rango:rango||1};
+}
+function yDe(v, e){ return e.mT + e.al*(1-(v-e.v0)/e.rango); }
+function vacio(c, W, H, txt){
+  c.fillStyle=SUAVE; c.textAlign='center'; c.textBaseline='middle';
+  c.font='13px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.fillText(txt, W/2, H/2);
+}
+function drawBarras(c, W, H){
+  var mL=46, mB=42, i;
+  if(W-mL<60 || H-54<30) return;
+  if(!nchinchetas){ vacio(c,W,H,'Todavía no has tirado'); return; }
+  var datos=[{k:'boca arriba', n:narriba,  p:cfg.p},
+             {k:'tumbada',     n:nabajo(), p:1-cfg.p}];
+  var mx=0;
+  for(i=0;i<2;i++){
+    var v=escalaCon(datos[i].n, nchinchetas);
+    if(v>mx) mx=v;
+    if(opt.teo){
+      var vt=teoEscalaCon(datos[i].p, nchinchetas);
+      if(vt>mx) mx=vt;
+    }
+  }
+  if(!(mx>0)) mx=1;
+  mx*=1.12;
+  var e=ejes(c, W, H, mx, mL, mB);
+  var paso=e.an/2, anchoB=Math.min(paso*0.5, 130);
+  /* las barras se recortan al recuadro: con la ventana acercada, una barra
+     puede empezar por debajo de lo que se ve y no debe salirse por el eje */
+  c.save();
+  c.beginPath(); c.rect(e.mL, e.mT, e.an, e.al); c.clip();
+  for(i=0;i<2;i++){
+    var cx=e.mL+paso*(i+0.5);
+    var yv=yDe(escalaCon(datos[i].n, nchinchetas), e);
+    c.fillStyle=AZUL;
+    c.fillRect(cx-anchoB/2, yv, anchoB, e.mT+e.al-yv+2);
+    if(opt.teo){
+      var yt=yDe(teoEscalaCon(datos[i].p, nchinchetas), e);
+      c.strokeStyle=NARANJA; c.lineWidth=2;
+      c.beginPath();
+      c.moveTo(cx-anchoB/2-6, yt); c.lineTo(cx+anchoB/2+6, yt);
+      c.stroke();
+    }
+  }
+  c.restore();
+  for(i=0;i<2;i++){
+    var cx2=e.mL+paso*(i+0.5);
+    var yv2=yDe(escalaCon(datos[i].n, nchinchetas), e);
+    /* con solo dos barras cabe decir el número encima, que es lo que se lee */
+    c.textAlign='center';
+    if(yv2>e.mT+13 && yv2<e.mT+e.al-4){
+      c.fillStyle=TINTA; c.textBaseline='bottom';
+      c.font='600 12px -apple-system,Segoe UI,Roboto,sans-serif';
+      c.fillText(etiquetaEje(escalaCon(datos[i].n, nchinchetas), e.rango), cx2, yv2-4);
+    }
+    c.fillStyle=SUAVE; c.textBaseline='top';
+    c.font='12px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.fillText(datos[i].k, cx2, e.mT+e.al+6);
+    c.font='10.5px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.fillText(datos[i].n+' de '+nchinchetas, cx2, e.mT+e.al+21);
+  }
+}
+/* la otra pregunta: cuántas caen boca arriba dentro de un mismo puñado */
+function drawPunado(c, W, H){
+  var t=teorica(), ids=ordenadas(), i;
+  var mL=44, mB=34;
+  if(W-mL<60 || H-46<30) return;
+  if(!ids.length){ vacio(c,W,H,'Todavía no has tirado'); return; }
+  var mx=0;
+  for(i=0;i<ids.length;i++){
+    var v=escalaCon(claves[ids[i]].n, ntiradas);
+    if(v>mx) mx=v;
+    if(opt.teo && t.mapa[claves[ids[i]].k]){
+      var vt=teoEscalaCon(t.mapa[claves[ids[i]].k].p, ntiradas);
+      if(vt>mx) mx=vt;
+    }
+  }
+  if(!(mx>0)) mx=1;
+  mx*=1.12;
+  var e=ejes(c, W, H, mx, mL, mB);
+  /* la ventana horizontal se queda con un tramo de la lista de barras */
+  var N=ids.length;
+  var i0=Math.max(0, Math.floor(gv.x0*N)), i1=Math.min(N, Math.ceil(gv.x1*N));
+  if(i1-i0<1){ i1=Math.min(N, i0+1); }
+  var vis=i1-i0;
+  var paso=e.an/vis, anchoB=Math.min(paso*0.78, 58);
+  var salto=Math.ceil(vis/Math.max(1, Math.floor(e.an/38)));
+  c.save();
+  c.beginPath(); c.rect(e.mL, e.mT, e.an, e.al); c.clip();
+  for(i=i0;i<i1;i++){
+    var kk=claves[ids[i]], cx=e.mL+paso*(i-i0+0.5);
+    var yv=yDe(escalaCon(kk.n, ntiradas), e);
+    if(kk.n>0){ c.fillStyle=AZUL; c.fillRect(cx-anchoB/2, yv, anchoB, e.mT+e.al-yv+2); }
+    if(opt.teo && t.mapa[kk.k]){
+      var yt=yDe(teoEscalaCon(t.mapa[kk.k].p, ntiradas), e);
+      c.strokeStyle=NARANJA; c.lineWidth=2;
+      c.beginPath();
+      c.moveTo(cx-anchoB/2-2, yt); c.lineTo(cx+anchoB/2+2, yt);
+      c.stroke();
+    }
+  }
+  c.restore();
+  c.textAlign='center'; c.fillStyle=SUAVE; c.textBaseline='top';
+  c.font='10.5px -apple-system,Segoe UI,Roboto,sans-serif';
+  for(i=i0;i<i1;i++){
+    if((i-i0)%salto) continue;
+    c.fillText(claves[ids[i]].k, e.mL+paso*(i-i0+0.5), e.mT+e.al+5);
+  }
+  c.textBaseline='bottom';
+  c.fillText('cuántas de las '+cfg.k+' caen boca arriba', e.mL+e.an/2, H-2);
+}
+/* Las marcas del eje: números redondos —1, 2, 5, 10, 25…— y como mucho los que
+   quepan. Con tramos cortos se va de una en una y con la serie entera de mil en
+   mil, sin que haya que decidir nada a mano. */
+function marcasEje(a, b, cuantas){
+  var span=b-a;
+  if(span<=0) return [b];
+  var bruto=span/Math.max(1,cuantas);
+  var e=Math.pow(10, Math.floor(Math.log(bruto)/Math.LN10)), m=bruto/e;
+  /* el 2,5 solo cuando la escala lo deja en entero (25, 250, 2500): las
+     chinchetas se cuentan de una en una y una marca en la 502,5 no dice nada */
+  var paso=(m<=1?1:m<=2?2:(m<=2.5 && e>=10)?2.5:m<=5?5:10)*e;
+  paso=Math.max(1, Math.round(paso));
+  var out=[], v=Math.ceil(a/paso)*paso;
+  for(; v<=b && out.length<40; v+=paso) out.push(Math.round(v));
+  /* si el tramo es tan corto que no cae ningún múltiplo dentro, al menos los
+     dos extremos de lo que se ve */
+  if(!out.length) out=(a===b)?[b]:[a,b];
+  return out;
+}
+/* la frecuencia relativa de boca arriba (o de tumbada) según van cayendo
+   chinchetas, que es la estimación mejorando a la vista */
+function drawEvolucion(c, W, H){
+  var mL=46, mR=12, mT=12, mB=26;
+  var an=W-mL-mR, al=H-mT-mB, i;
+  if(an<40 || al<30) return;
+  if(!serie.length){ vacio(c,W,H,'Todavía no has tirado'); return; }
+
+  var esArriba=(opt.quien!=='tumbada');
+  var pt = opt.teo ? (esArriba ? cfg.p : 1-cfg.p) : null;
+  var N=serie.length, acum=0;
+  function aporte(j){ return esArriba ? serie[j] : (cfg.k-serie[j]); }
+  for(i=0;i<N;i++) acum+=aporte(i);
+  var fin=acum/(N*cfg.k);
+  /* techo del eje: lo justo por encima de lo que se va a ver, para que la
+     oscilación del principio no quede aplastada contra el suelo */
+  var techo=Math.max(fin*1.5, (pt!==null?pt*1.6:0), 0.1);
+  if(techo>1) techo=1;
+  /* el techo deja fuera el arranque de la serie, que salta hasta el 100 % y
+     aplastaría todo lo demás; alejando con Mayús se llega hasta ahí */
+  gvTope.y=(techo>0) ? 1/techo : 1;
+  var v0=techo*gv.y0, v1=techo*gv.y1, rango=(v1-v0)||1;
+  function yF(fr){ return mT+al*(1-(fr-v0)/rango); }
+  gplot={x:mL, y:mT, w:an, h:al};
+
+  /* la ventana horizontal recorta qué tramo se ve, pero la frecuencia sigue
+     siendo la acumulada desde la primera tirada: por eso hay que sumar lo de
+     antes del tramo antes de empezar a dibujar. c0 y c1 son la primera y la
+     última tirada que se ven, contando desde 1 */
+  var c0=Math.max(1, Math.floor(gv.x0*N)+1);
+  var c1=Math.min(N, Math.max(c0, Math.ceil(gv.x1*N)));
+  var np=c1-c0+1;
+  /* el eje cuenta CHINCHETAS, no tiradas: cada puñado son k de golpe */
+  function xT(n){ return mL+an*(n-c0+1)/np; }
+  function xCh(nch){ return xT(nch/cfg.k); }
+
+  c.strokeStyle='#eceef1'; c.lineWidth=1;
+  c.fillStyle=SUAVE; c.font='10px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.textAlign='right'; c.textBaseline='middle';
+  var dec = rango<0.005 ? 3 : rango<0.05 ? 2 : 1;
+  for(i=0;i<=4;i++){
+    var yy=mT+al-al*i/4;
+    c.beginPath(); c.moveTo(mL, yy+0.5); c.lineTo(W-mR, yy+0.5); c.stroke();
+    c.fillText(coma((100*(v0+rango*i/4)).toFixed(dec))+' %', mL-5, yy);
+  }
+  /* marcas verticales cada tantas chinchetas: sin ellas no se sabe si la curva
+     se ha calmado a las cien chinchetas o a las mil, que es lo que se mira */
+  var leyenda='chinchetas';
+  c.font='10px -apple-system,Segoe UI,Roboto,sans-serif';
+  var topeX=W-mR-c.measureText(leyenda).width-12;
+  c.textAlign='center'; c.textBaseline='top';
+  if(np>1){
+    var marcas=marcasEje(c0*cfg.k, c1*cfg.k, Math.max(2, Math.floor(an/62)));
+    for(i=0;i<marcas.length;i++){
+      var xm=Math.round(xCh(marcas[i]))+0.5;
+      if(xm<mL+2 || xm>mL+an+1) continue;
+      c.strokeStyle='#f1f3f5';
+      c.beginPath(); c.moveTo(xm, mT); c.lineTo(xm, mT+al); c.stroke();
+      var et=String(marcas[i]);
+      if(xm+c.measureText(et).width/2 < topeX){
+        c.fillStyle=SUAVE; c.fillText(et, xm, mT+al+6);
+      }
+    }
+  } else {
+    /* un solo puñado: el punto va en el centro y su cuenta, debajo */
+    c.fillStyle=SUAVE; c.fillText(String(c1*cfg.k), mL+an/2, mT+al+6);
+  }
+  c.textAlign='right'; c.fillStyle=SUAVE;
+  c.fillText(leyenda, W-mR, mT+al+6);
+  /* qué se está siguiendo, arriba a la derecha: en pantalla ya lo dice el
+     desplegable, pero el PNG que se descarga va sin él */
+  c.textBaseline='top';
+  c.fillText('frecuencia relativa de «'+(esArriba?'boca arriba':'tumbada')+'»', W-mR, mT+3);
+  c.save();
+  /* el recorte va un pelo holgado para que un punto que caiga justo en el 0 %
+     o en el techo se vea entero y no partido por la mitad */
+  c.beginPath(); c.rect(mL, mT-5, an, al+10); c.clip();
+  if(pt!==null){
+    var yt=yF(pt);
+    c.strokeStyle=NARANJA; c.lineWidth=1.5; c.setLineDash([5,4]);
+    c.beginPath(); c.moveTo(mL, yt); c.lineTo(W-mR, yt); c.stroke();
+    c.setLineDash([]);
+  }
+  var j=0, ac=0;
+  while(j<c0-1){ ac+=aporte(j); j++; }
+  var px=Math.max(1, Math.min(Math.floor(an), np));
+  var pts=[], maxFr=0;
+  for(i=0;i<px;i++){
+    var hasta=(c0-1)+Math.max(1, Math.round((i+1)*np/px));
+    while(j<hasta){ ac+=aporte(j); j++; }
+    var frac=ac/(hasta*cfg.k);
+    if(frac>maxFr) maxFr=frac;
+    /* un solo punto se planta en el centro, que pegado al borde no se vería */
+    pts.push([px===1 ? mL+an/2 : xT(hasta), yF(frac)]);
+  }
+  /* si parte de la curva se queda por encima del techo hay que decirlo: si no,
+     parece que la línea desaparece y no se sabe que alejando se ve */
+  evolCortada=(maxFr>v1+1e-12);
+  /* segmentos rectos de punto a punto, sin suavizar nada: la frecuencia relativa
+     salta de un puñado al siguiente y la línea tiene que enseñar el salto */
+  if(pts.length>1){
+    c.strokeStyle=AZUL; c.lineWidth=1.6; c.lineJoin='miter'; c.beginPath();
+    for(i=0;i<pts.length;i++){
+      if(i===0) c.moveTo(pts[i][0], pts[i][1]); else c.lineTo(pts[i][0], pts[i][1]);
+    }
+    c.stroke();
+  }
+  /* los puntos, siempre que quepan separados: son los puñados de uno en uno, y
+     con el primero todavía no hay línea que dibujar */
+  var sep=(pts.length>1) ? an/(pts.length-1) : an;
+  if(sep>=7){
+    c.fillStyle=AZUL;
+    var rp=(pts.length===1) ? 3.5 : Math.min(3, 1.4+sep/14);
+    for(i=0;i<pts.length;i++){
+      c.beginPath(); c.arc(pts[i][0], pts[i][1], rp, 0, 6.2832); c.fill();
+    }
+  }
+  c.restore();
+  c.strokeStyle='#d5d9e0'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(mL, mT+al+0.5); c.lineTo(W-mR, mT+al+0.5); c.stroke();
+}
+function drawGrafico(c, W, H){
+  c.fillStyle='#fff'; c.fillRect(0,0,W,H);
+  evolCortada=false;
+  if(opt.vista==='evol') drawEvolucion(c,W,H);
+  else if(opt.vista==='punado' && cfg.k>1) drawPunado(c,W,H);
+  else drawBarras(c,W,H);
+}
+function draw(){
+  var r=stage.getBoundingClientRect();
+  drawBandeja(ctx, r.width||600, r.height||300, false);
+  if(opt.graf){
+    var g=gr.getBoundingClientRect();
+    drawGrafico(gtx, g.width||600, g.height||200);
+  }
+  updateUI();
+}
+
+/* =========================================================================
+   8. TIRAR
+   Igual que en los dados: la animación sortea con Math.random y no con el
+   generador con semilla, para que encenderla o apagarla no cambie las tiradas.
+   El puñado de verdad se sortea antes de empezar a animar.
+   ========================================================================= */
+function haceTirada(){
+  registraSoporte();
+  var a=tiraPunado();
+  if(opt.anim && cfg.k<=200){
+    anim={t0:Date.now(), dur:520, real:a, tick:0,
+          falsa:{n:-1, a:Math.floor(Math.random()*(cfg.k+1))}};
+    animar();
+  } else {
+    anim=null; anota(a);
+  }
+}
+function animar(){
+  if(!anim) return;
+  if(Date.now()-anim.t0>=anim.dur){
+    var a=anim.real; anim=null; anota(a); return;
+  }
+  anim.tick++;
+  anim.falsa={n:-anim.tick, a:Math.floor(Math.random()*(cfg.k+1))};
+  draw();
+  setTimeout(animar, 55);
+}
+function anota(a){
+  registra(a);
+  pintaTablaIncremental(); actualizaQuien(); draw();
+}
+function haceTiradas(veces){
+  anim=null;
+  var t0=Date.now();
+  tiraN(veces);
+  pintaTablaIncremental(); actualizaQuien(); draw();
+  if(Date.now()-t0>900)
+    flash(veces+' tiradas en '+coma(((Date.now()-t0)/1000).toFixed(1))+' s');
+}
+/* Cambiar el puñado o la chincheta deja sin sentido lo tirado hasta ahora:
+   son de otro experimento. Se borra, se avisa, y Ctrl+Z lo devuelve. */
+function aplicaCambio(f){
+  var habia=ntiradas;
+  pushUndo();
+  f();
+  cacheTeo=null;
+  gvReset();
+  registrosNuevos();
+  sincronizaControles(); pintaTabla(); actualizaQuien(); draw();
+  if(habia) flash(habia===1 ? 'Borrada la tirada anterior: ahora es otro experimento (Ctrl+Z)'
+                            : 'Borradas las '+habia+' tiradas anteriores: ahora es otro experimento (Ctrl+Z)');
+}
+
+/* =========================================================================
+   9. INTERFAZ
+   ========================================================================= */
+function pintaCabecera(){
+  thead.innerHTML = (cfg.k===1)
+    ? '<tr><th>nº</th><th>resultado</th></tr>'
+    : '<tr><th>nº</th><th>boca arriba</th><th>tumbadas</th><th>chinchetas</th></tr>';
+}
+function filaDe(t){
+  var tr=document.createElement('tr'), td;
+  td=document.createElement('td'); td.textContent=t.n; tr.appendChild(td);
+  if(cfg.k===1){
+    td=document.createElement('td'); td.className='res';
+    td.textContent = t.a ? 'boca arriba' : 'tumbada';
+    tr.appendChild(td);
+  } else {
+    td=document.createElement('td'); td.className='res'; td.textContent=t.a; tr.appendChild(td);
+    td=document.createElement('td'); td.textContent=cfg.k-t.a; tr.appendChild(td);
+    /* cuántas chinchetas se llevan tiradas hasta esta fila: es la cuenta que
+       lleva el eje de la evolución, y con un puñado de k no es el número de
+       tirada, que es justo lo que cuesta ver */
+    td=document.createElement('td'); td.className='acum';
+    td.textContent=t.n*cfg.k; tr.appendChild(td);
+  }
+  return tr;
+}
+var pintadasHasta=0;
+function pintaTablaIncremental(){
+  if(!opt.tabla) return;
+  var i, ini=0;
+  for(i=detalle.length-1;i>=0;i--){ if(detalle[i].n<=pintadasHasta){ ini=i+1; break; } }
+  if(detalle.length-ini>MAXFILAS) ini=detalle.length-MAXFILAS;
+  for(i=ini;i<detalle.length;i++) tbody.appendChild(filaDe(detalle[i]));
+  while(tbody.rows.length>MAXFILAS) tbody.deleteRow(0);
+  if(detalle.length) pintadasHasta=detalle[detalle.length-1].n;
+  var wrap=document.getElementById('tablaWrap');
+  wrap.scrollTop=wrap.scrollHeight;
+  pieTabla();
+}
+function pintaTabla(){
+  pintaCabecera();
+  while(tbody.firstChild) tbody.removeChild(tbody.firstChild);
+  pintadasHasta=0;
+  pintaTablaIncremental();
+  pieTabla();
+}
+function pieTabla(){
+  var p=document.getElementById('pieTabla');
+  if(!ntiradas){ p.textContent='Sin tiradas todavía'; return; }
+  var vistas=tbody.rows.length;
+  p.textContent = (vistas<ntiradas)
+    ? 'Últimas '+vistas+' de '+ntiradas+' tiradas · '+narriba+' boca arriba de '+nchinchetas+' chinchetas'
+    : ntiradas+(ntiradas===1?' tirada · ':' tiradas · ')+narriba+' boca arriba de '+nchinchetas+' chinchetas';
+}
+function actualizaQuien(){
+  var sel=document.getElementById('quien');
+  sel.innerHTML='<option value="arriba">boca arriba</option>'+
+                '<option value="tumbada">tumbada</option>';
+  if(opt.quien!=='tumbada') opt.quien='arriba';
+  sel.value=opt.quien;
+}
+function pintaModelos(){
+  var sel=document.getElementById('modelo'), html=[], i;
+  for(i=0;i<MODELOS.length;i++)
+    html.push('<option value="'+MODELOS[i].id+'">'+MODELOS[i].n+'</option>');
+  sel.innerHTML=html.join('');
+  sel.value=cfg.modelo;
+}
+/* El porcentaje de la chincheta va tapado mientras no se pida verlo: si se ve
+   desde el principio no hay nada que estimar, y estimarlo es el trabajo */
+function pintaP(){
+  var caja=document.getElementById('pcaja');
+  document.getElementById('pcustom').className=(cfg.modelo==='custom')?'ver':'';
+  document.getElementById('otraMisteriosa').style.display=(cfg.modelo==='misterio')?'':'none';
+  /* ojo: un input de tipo número rechaza el valor si lleva coma decimal y se
+     queda en blanco sin decir nada. Dentro del campo, punto; en el texto, coma */
+  document.getElementById('pArriba').value=(100*cfg.p).toFixed(1);
+  document.getElementById('pTumbada').value=(100*(1-cfg.p)).toFixed(1);
+  if(cfg.modelo==='custom'){
+    caja.className='';
+    caja.innerHTML='La has puesto tú: cae boca arriba el <b>'+pct1(cfg.p)+' %</b> de las veces.';
+    return;
+  }
+  if(opt.teo){
+    caja.className='';
+    caja.innerHTML='Esta chincheta cae boca arriba el <b>'+pct1(cfg.p)+' %</b> de las veces.';
+    return;
+  }
+  caja.className='oculta';
+  caja.textContent = (cfg.modelo==='misterio')
+    ? 'Su porcentaje se ha sorteado y está tapado. Se destapa con la casilla «Probabilidad teórica» de arriba.'
+    : 'Su porcentaje está tapado. Se destapa con la casilla «Probabilidad teórica» de arriba.';
+}
+function marcaRapidos(){
+  var bs=document.getElementById('rapidos').getElementsByTagName('button'), i;
+  for(i=0;i<bs.length;i++)
+    bs[i].className = (+bs[i].getAttribute('data-k')===cfg.k) ? 'on' : '';
+}
+function sincronizaControles(){
+  document.getElementById('nK').value=cfg.k;
+  marcaRapidos();
+  pintaModelos();
+  pintaP();
+  document.getElementById('semilla').value=cfg.semilla;
+  document.getElementById('anim').checked=!!opt.anim;
+  document.getElementById('verTabla').checked=!!opt.tabla;
+  document.getElementById('verGraf').checked=!!opt.graf;
+  document.getElementById('verTeo').checked=!!opt.teo;
+  /* con un puñado de una chincheta no hay «cuántas por puñado» que valga: el
+     resultado de la tirada es ya el de la chincheta */
+  var opPun=document.getElementById('vista').options[2];
+  opPun.disabled=(cfg.k===1);
+  if(cfg.k===1 && opt.vista==='punado') opt.vista='barras';
+  document.getElementById('vista').value=opt.vista;
+  document.getElementById('escala').value=opt.escala;
+  document.getElementById('quien').style.display=(opt.vista==='evol')?'':'none';
+  document.getElementById('escala').style.display=(opt.vista==='evol')?'none':'';
+  document.getElementById('panelTabla').className=(opt.tabla?'show':'')+(opt.graf?'':' solo');
+  document.getElementById('panelGraf').className=opt.graf?'show':'';
+  document.getElementById('abajo').className=(opt.tabla||opt.graf)?'show':'';
+}
+function updateUI(){
+  var t;
+  /* la barra dice qué hay y qué se puede hacer, y nada más: las preguntas de la
+     investigación las hace quien da la clase cuando toca, no el programa */
+  if(flashMsg && Date.now()-flashT<2300) t=flashMsg;
+  else if(!ntiradas) t='Elige el puñado y dale a Tirar · con ×10, ×100 y ×1000 se repite la tirada';
+  else t=ntiradas+(ntiradas===1?' tirada · ':' tiradas · ')+
+         nchinchetas+' chinchetas · '+narriba+' boca arriba';
+  hintEl.textContent=t;
+
+  var cg=document.getElementById('cabGraf');
+  if(cg){
+    var partes=[];
+    if(opt.teo) partes.push('la línea naranja es la probabilidad teórica');
+    partes.push(gvHayZoom()
+      ? 'acercado · arrastra para moverte, doble clic para volver'
+      : 'rueda para acercar'+(opt.vista==='barras'?'':' · con Mayús, en vertical'));
+    if(opt.vista==='evol' && evolCortada)
+      partes.push('el arranque se sale por arriba · aleja con Mayús para verlo');
+    cg.textContent='· '+partes.join(' · ');
+  }
+  var ct=document.getElementById('cabTabla');
+  if(ct) ct.textContent = recortadas ? '· solo recuerdo el detalle de las últimas '+TOPE_DET : '';
+}
+function ayuda(){
+  return '<div><b>Puñado de chinchetas</b><br>'+
+ 'Una chincheta no es un dado. La probabilidad de un dado se sabe antes de tirarlo, contando '+
+ 'caras; la de una chincheta no se sabe por ningún camino teórico: depende del modelo y de la '+
+ 'superficie, y solo se puede averiguar tirándola.</div>'+
+ '<div style="margin-top:7px"><b>El puñado</b><br>'+
+ 'Cada tirada es un puñado entero, de 1 a 1000 chinchetas: se tiran todas a la vez y se cuenta '+
+ 'cuántas caen boca arriba. Con un puñado de una, el resultado vuelve a ser simplemente boca '+
+ 'arriba o tumbada. Los botones <b>×10</b>, <b>×100</b> y <b>×1000</b> repiten la misma tirada '+
+ 'esas veces.</div>'+
+ '<div style="margin-top:7px"><b>Qué chincheta</b><br>'+
+ 'Hay varios modelos, cada uno con su forma y su porcentaje, uno que se pone a mano y una '+
+ '<b>chincheta misteriosa</b> cuyo porcentaje se sortea a partir de la semilla. '+
+ 'Cada modelo se dibuja distinto —la de culo plano tiene la cabeza ancha y la aguja corta; la '+
+ 'larga y fina, al revés—, y esa diferencia es la que hace plausible que unas caigan boca arriba '+
+ 'más veces que otras. La misteriosa lleva una silueta corriente que no delata nada. '+
+ 'El porcentaje de la chincheta que se está usando <b>está tapado</b>: se destapa con la casilla '+
+ '<b>Probabilidad teórica</b> de la barra, que además dibuja en el gráfico la distribución '+
+ 'exacta. Viene apagada a propósito.</div>'+
+ '<div style="margin-top:7px"><b>Los porcentajes de los modelos son los de la simulación</b><br>'+
+ 'Los de una chincheta de verdad hay que medirlos, y ni siquiera dan siempre lo mismo: cambian '+
+ 'con el modelo de chincheta, con la altura desde la que se tira y con la superficie sobre la '+
+ 'que cae.</div>'+
+ '<div style="margin-top:7px"><b>La tabla y el gráfico</b><br>'+
+ 'Los dos empiezan cerrados y se abren con sus casillas. La tabla apunta cada tirada con cuántas '+
+ 'han caído de cada manera. El gráfico tiene tres vistas: <b>Frecuencias</b> cuenta chinchetas y '+
+ 'tiene dos barras, boca arriba y tumbada, en absolutas, relativas o en porcentaje; '+
+ '<b>Evolución de la f. relativa</b> sigue la frecuencia relativa de una de las dos según van cayendo '+
+ 'chinchetas; y <b>Cuántas por puñado</b> cuenta tiradas en vez de chinchetas, y enseña cuántas '+
+ 'salieron boca arriba en cada puñado, que es otra pregunta distinta. Cada panel tiene su '+
+ '<b>⤓ CSV</b>.</div>'+
+ '<div style="margin-top:7px"><b>Acercarse al gráfico</b><br>'+
+ 'Con la <b>rueda del ratón</b> encima del gráfico. En «cuántas por puñado» y en «evolución de la '+
+ 'f. relativa» acerca a lo ancho, y con <b>Mayús</b> a lo alto; en «frecuencias», donde solo hay '+
+ 'dos barras, acerca directamente a lo alto, que es lo que hace falta para ver si el 69,3 % que '+
+ 'ha salido se parece o no al que tocaba. Acercado, se <b>arrastra</b> para moverse y con '+
+ '<b>doble clic</b> se vuelve al gráfico entero. En la evolución el eje vertical viene recortado '+
+ 'a lo justo por encima de donde acaba la frecuencia, así que el arranque de la serie se sale por '+
+ 'arriba: <b>alejando con Mayús</b> se llega hasta el 100 % y se ve entero.</div>'+
+ '<div style="margin-top:7px"><b>La semilla</b><br>'+
+ 'Con la misma semilla salen exactamente las mismas tiradas, y sale también la misma chincheta '+
+ 'misteriosa. Sirve para que toda la clase trabaje sobre los mismos datos.</div>'+
+ '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+}
+
+/* =========================================================================
+   10. CONTROLES, ARCHIVOS Y ARRANQUE
+   ========================================================================= */
+function enlaza(id, ev, f){ var e=document.getElementById(id); if(e) e.addEventListener(ev,f); }
+
+function ponK(v){
+  v=Math.round(Number(v));
+  if(!(v>=1 && v<=MAXK)){ sincronizaControles(); flash('El puñado va de 1 a '+MAXK+' chinchetas'); return; }
+  if(v===cfg.k){ sincronizaControles(); return; }
+  aplicaCambio(function(){ cfg.k=v; });
+}
+enlaza('nK','change',function(){ ponK(this.value); });
+(function(){
+  var bs=document.getElementById('rapidos').getElementsByTagName('button'), i;
+  for(i=0;i<bs.length;i++) bs[i].addEventListener('click',function(){
+    ponK(this.getAttribute('data-k'));
+  });
+})();
+enlaza('modelo','change',function(){
+  var v=this.value;
+  aplicaCambio(function(){ cfg.modelo=v; aplicaModelo(); });
+});
+enlaza('pArriba','change',function(){
+  var v=parseFloat(String(this.value).replace(',','.'));
+  if(!isFinite(v) || v<0 || v>100){ sincronizaControles(); flash('El porcentaje va de 0 a 100'); return; }
+  aplicaCambio(function(){ cfg.modelo='custom'; ponP(v/100); });
+});
+enlaza('pTumbada','change',function(){
+  var v=parseFloat(String(this.value).replace(',','.'));
+  if(!isFinite(v) || v<0 || v>100){ sincronizaControles(); flash('El porcentaje va de 0 a 100'); return; }
+  aplicaCambio(function(){ cfg.modelo='custom'; ponP((100-v)/100); });
+});
+enlaza('otraMisteriosa','click',function(){
+  aplicaCambio(function(){ cfg.misterioN++; aplicaModelo(); });
+  flash('Otra chincheta misteriosa, con otro porcentaje tapado');
+});
+enlaza('semilla','change',function(){
+  var s=String(this.value||'1');
+  if(cfg.modelo==='misterio'){
+    /* la misteriosa se sortea de la semilla, así que cambiarla cambia la
+       chincheta: eso es otro experimento y no se pueden mezclar las tiradas */
+    aplicaCambio(function(){ reinicia(s); aplicaModelo(); });
+    flash('Semilla «'+cfg.semilla+'»: otra chincheta misteriosa');
+  } else {
+    reinicia(s);
+    flash('Semilla «'+cfg.semilla+'»: a partir de ahora, la misma serie para todos');
+  }
+});
+enlaza('otraSemilla','click',function(){
+  var s=String(Math.floor(Math.random()*100000));
+  if(cfg.modelo==='misterio') aplicaCambio(function(){ reinicia(s); aplicaModelo(); });
+  else { reinicia(s); sincronizaControles(); }
+  flash('Semilla nueva: '+cfg.semilla);
+});
+enlaza('anim','change',function(){ opt.anim=this.checked?1:0; });
+
+enlaza('tirar','click',function(){ haceTirada(); });
+enlaza('r10','click',function(){ haceTiradas(10); });
+enlaza('r100','click',function(){ haceTiradas(100); });
+enlaza('r1000','click',function(){ haceTiradas(1000); });
+enlaza('vaciar','click',function(){
+  if(!ntiradas){ flash('No hay tiradas que borrar'); return; }
+  var n=ntiradas;
+  pushUndo(); registrosNuevos(); anim=null;
+  pintaTabla(); actualizaQuien(); draw();
+  flash(n===1 ? 'Borrada la tirada · la chincheta sigue siendo la misma'
+              : 'Borradas las '+n+' tiradas · la chincheta sigue siendo la misma');
+});
+enlaza('undo','click',doUndo);
+enlaza('verTabla','change',function(){ opt.tabla=this.checked?1:0; sincronizaControles(); pintaTabla(); resize(); });
+enlaza('verGraf','change',function(){ opt.graf=this.checked?1:0; sincronizaControles(); resize(); });
+enlaza('verTeo','change',function(){ opt.teo=this.checked?1:0; pintaP(); draw(); });
+enlaza('vista','change',function(){ opt.vista=this.value; gvReset(); sincronizaControles(); draw(); });
+enlaza('escala','change',function(){ opt.escala=this.value; gvReset(); draw(); });
+enlaza('quien','change',function(){ opt.quien=this.value; draw(); });
+
+/* --- la rueda y el arrastre sobre el gráfico -------------------------------- */
+function fracEnPlot(ev){
+  if(!gplot) return null;
+  var r=gr.getBoundingClientRect();
+  var x=ev.clientX-r.left, y=ev.clientY-r.top;
+  if(x<gplot.x || x>gplot.x+gplot.w || y<gplot.y || y>gplot.y+gplot.h) return null;
+  return {fx:(x-gplot.x)/gplot.w, fy:1-(y-gplot.y)/gplot.h};
+}
+gr.addEventListener('wheel', function(ev){
+  var f=fracEnPlot(ev);
+  if(!f) return;
+  ev.preventDefault();
+  var eje=ejeRueda(ev.shiftKey);
+  var k=(ev.deltaY<0) ? 1.25 : 1/1.25;
+  gvZoom(eje, eje==='y'?f.fy:f.fx, k);
+  draw();
+}, {passive:false});
+gr.addEventListener('pointerdown', function(ev){
+  var f=fracEnPlot(ev);
+  if(!f || !gvHayZoom()) return;
+  gdrag={x:ev.clientX, y:ev.clientY};
+  gr.classList.add('arrastrando');
+  if(gr.setPointerCapture) gr.setPointerCapture(ev.pointerId);
+});
+gr.addEventListener('pointermove', function(ev){
+  if(!gdrag || !gplot) return;
+  /* al arrastrar, el dibujo tiene que seguir al dedo: por eso el signo va al
+     revés en cada eje, que la y de la pantalla crece hacia abajo */
+  gvMueve('x', -(ev.clientX-gdrag.x)/gplot.w);
+  gvMueve('y',  (ev.clientY-gdrag.y)/gplot.h);
+  gdrag={x:ev.clientX, y:ev.clientY};
+  draw();
+});
+['pointerup','pointercancel','pointerleave'].forEach(function(e){
+  gr.addEventListener(e, function(){ gdrag=null; gr.classList.remove('arrastrando'); });
+});
+gr.addEventListener('dblclick', function(){
+  if(!gvHayZoom()) return;
+  gvReset(); draw();
+  flash('Gráfico entero otra vez');
+});
+enlaza('zoomin','click',function(){ view.z=Math.min(3, view.z*1.2); draw(); });
+enlaza('zoomout','click',function(){ view.z=Math.max(0.3, view.z/1.2); draw(); });
+enlaza('fit','click',function(){ view.z=1; gvReset(); draw(); });
+enlaza('help','click',function(){
+  infoEl.classList.toggle('show');
+  if(!infoEl.innerHTML) infoEl.innerHTML=ayuda();
+});
+document.addEventListener('keydown',function(e){
+  if(e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+  var k=(e.key||'').toLowerCase();
+  if((e.ctrlKey||e.metaKey) && k==='z'){ e.preventDefault(); doUndo(); return; }
+  if(e.key===' ' || k==='enter'){ e.preventDefault(); haceTirada(); }
+  else if(k==='t'){ haceTiradas(100); }
+  else if(e.key==='Escape'){ infoEl.classList.remove('show'); }
+});
+
+/* --- guardar y abrir -------------------------------------------------------- */
+function datos(){
+  var i, rec=[];
+  for(i=0;i<claves.length;i++) rec.push({k:claves[i].k, o:claves[i].o, n:claves[i].n});
+  return {formato:'chinchetas', version:1,
+    cfg:{k:cfg.k, modelo:cfg.modelo, p:cfg.p, misterioN:cfg.misterioN, semilla:cfg.semilla},
+    ntiradas:ntiradas, nchinchetas:nchinchetas, narriba:narriba, recortadas:recortadas,
+    claves:rec, serie:serie,
+    detalle:detalle.map(function(t){ return {n:t.n, a:t.a}; })};
+}
+function descarga(nombre, blob){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download=nombre; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+}
+enlaza('save','click',function(){
+  descarga('chinchetas.json', new Blob([JSON.stringify(datos())],{type:'application/json'}));
+});
+var fileIn=document.getElementById('fileIn');
+var importMode='replace';
+enlaza('open','click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+enlaza('add','click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){
+  var f=e.target.files && e.target.files[0];
+  if(f) leer(f);
+});
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){
+    try{ loadData(JSON.parse(r.result)); }
+    catch(err){ flash('No he podido leer ese archivo'); }
+  };
+  r.readAsText(f);
+}
+/* Validar en vez de fiarse: un archivo tocado a mano no puede dejar el puñado
+   en 5000 chinchetas ni la probabilidad en 1,4. */
+function limpiaConfig(c){
+  if(!c) return null;
+  var k=Math.round(Number(c.k)), p=Number(c.p), i, enc=false;
+  if(!(k>=1 && k<=MAXK)) return null;
+  if(!isFinite(p) || p<0 || p>1) return null;
+  var mod=String(c.modelo||'plana');
+  for(i=0;i<MODELOS.length;i++) if(MODELOS[i].id===mod) enc=true;
+  if(!enc) return null;
+  var mn=Math.round(Number(c.misterioN)||0);
+  if(!(mn>=0)) mn=0;
+  return {k:k, modelo:mod, p:Math.round(p*1000)/1000, misterioN:mn,
+          semilla:(c.semilla===undefined?1:String(c.semilla))};
+}
+function firmaCfg(){ return cfg.k+'|'+cfg.modelo+'|'+cfg.p; }
+function loadData(d){
+  if(!d || d.formato!=='chinchetas'){ flash('Ese archivo no es de este manipulativo'); return; }
+  var c=limpiaConfig(d.cfg);
+  if(!c){ flash('La configuración de ese archivo no cuadra, no la cargo'); return; }
+  if(importMode==='add' && firmaCfg()!==(c.k+'|'+c.modelo+'|'+c.p)){
+    flash('Ese archivo es de otra chincheta o de otro puñado: con ＋ solo se añade lo del mismo experimento');
+    return;
+  }
+  pushUndo();
+  var i, mapaId={}, kl=(d.claves||[]);
+  if(importMode!=='add'){
+    cfg=c; registrosNuevos(); reinicia(cfg.semilla);
+  }
+  for(i=0;i<kl.length;i++){
+    var id=idDeClave(String(kl[i].k), Number(kl[i].o)||0);
+    mapaId[i]=id;
+    claves[id].n += Math.max(0, Math.round(Number(kl[i].n)||0));
+  }
+  var ser=d.serie||[];
+  for(i=0;i<ser.length && serie.length<TOPE_SERIE;i++){
+    var a=Math.round(Number(ser[i]));
+    if(a>=0 && a<=cfg.k) serie.push(a);
+  }
+  var det=d.detalle||[], base=ntiradas;
+  for(i=0;i<det.length;i++){
+    var t=det[i];
+    if(!t) continue;
+    var av=Math.round(Number(t.a));
+    if(!(av>=0 && av<=cfg.k)) continue;
+    detalle.push({n:base+Number(t.n||i+1), a:av});
+  }
+  while(detalle.length>TOPE_DET){ detalle.shift(); recortadas++; }
+  var tot=0;
+  for(i=0;i<claves.length;i++) tot+=claves[i].n;
+  ntiradas=tot;
+  nchinchetas += Math.max(0, Math.round(Number(d.nchinchetas)||0));
+  narriba     += Math.max(0, Math.round(Number(d.narriba)||0));
+  recortadas  += Math.max(0, Number(d.recortadas)||0);
+  cacheTeo=null; bandeja=null;
+  sincronizaControles(); pintaTabla(); actualizaQuien(); draw();
+  flash(ntiradas+' tiradas cargadas');
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); });
+});
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='replace'; leer(f); }
+});
+
+/* --- PNG y CSV -------------------------------------------------------------- */
+enlaza('png','click',function(){
+  var W=900, hB=330, hG=opt.graf?330:0, sc=2;
+  var oc=document.createElement('canvas');
+  oc.width=W*sc; oc.height=(hB+hG)*sc;
+  var o=oc.getContext('2d');
+  o.scale(sc,sc);
+  o.fillStyle='#fff'; o.fillRect(0,0,W,hB+hG);
+  var z=view.z; view.z=1;
+  drawBandeja(o, W, hB, true);
+  view.z=z;
+  if(opt.graf){
+    o.save(); o.translate(0,hB);
+    drawGrafico(o, W, hG);
+    o.restore();
+    o.strokeStyle='#e6e8ec'; o.beginPath(); o.moveTo(0,hB+0.5); o.lineTo(W,hB+0.5); o.stroke();
+  }
+  oc.toBlob(function(blob){ descarga('chinchetas.png', blob); });
+});
+/* CSV con punto y coma, coma decimal y marca de orden de bytes delante, que es
+   lo que abre de doble clic una hoja de cálculo en español */
+function bajaCSV(nombre, lineas){
+  descarga(nombre, new Blob(['﻿'+lineas.join('\r\n')],{type:'text/csv;charset=utf-8'}));
+}
+function csvTiradas(){
+  if(!detalle.length){ flash('No hay tiradas que exportar'); return; }
+  var l=[], i;
+  l.push(cfg.k===1 ? 'n;resultado' : 'n;boca arriba;tumbadas;chinchetas');
+  for(i=0;i<detalle.length;i++){
+    var t=detalle[i];
+    l.push(cfg.k===1
+      ? t.n+';'+(t.a?'boca arriba':'tumbada')
+      : t.n+';'+t.a+';'+(cfg.k-t.a)+';'+(t.n*cfg.k));
+  }
+  bajaCSV('chinchetas-tiradas.csv', l);
+  flash(detalle.length+(detalle.length===1?' tirada exportada':' tiradas exportadas'));
+}
+/* el recuento que se baja es el que se está mirando: el de las dos maneras de
+   caer, o el de cuántas caen boca arriba en cada puñado */
+function csvRecuento(){
+  if(!nchinchetas){ flash('No hay nada que contar todavía'); return; }
+  var l=[], i, cab, f;
+  if(opt.vista==='punado' && cfg.k>1){
+    var t=teorica(), ids=ordenadas();
+    cab=['boca arriba en el punado','tiradas','frecuencia relativa','porcentaje'];
+    if(opt.teo) cab.push('probabilidad teorica');
+    l.push(cab.join(';'));
+    for(i=0;i<ids.length;i++){
+      var k=claves[ids[i]];
+      f=[k.k, k.n,
+         coma(ntiradas ? (k.n/ntiradas).toFixed(6) : '0'),
+         coma(ntiradas ? (100*k.n/ntiradas).toFixed(3) : '0')];
+      if(opt.teo) f.push(coma(t.mapa[k.k] ? t.mapa[k.k].p.toFixed(6) : '0'));
+      l.push(f.join(';'));
+    }
+    l.push(['total', ntiradas, coma('1'), coma('100')].join(';'));
+    bajaCSV('chinchetas-por-punado.csv', l);
+    flash('Recuento por puñado exportado');
+    return;
+  }
+  cab=['resultado','chinchetas','frecuencia relativa','porcentaje'];
+  if(opt.teo) cab.push('probabilidad teorica');
+  l.push(cab.join(';'));
+  var filas=[{k:'boca arriba', n:narriba, p:cfg.p}, {k:'tumbada', n:nabajo(), p:1-cfg.p}];
+  for(i=0;i<2;i++){
+    f=[filas[i].k, filas[i].n,
+       coma((filas[i].n/nchinchetas).toFixed(6)),
+       coma((100*filas[i].n/nchinchetas).toFixed(3))];
+    if(opt.teo) f.push(coma(filas[i].p.toFixed(6)));
+    l.push(f.join(';'));
+  }
+  l.push(['total', nchinchetas, coma('1'), coma('100')].join(';'));
+  bajaCSV('chinchetas-recuento.csv', l);
+  flash('Recuento de las '+nchinchetas+' chinchetas exportado');
+}
+enlaza('csv','click',csvTiradas);
+enlaza('csvTabla','click',csvTiradas);
+enlaza('csvGraf','click',csvRecuento);
+
+/* --- arranque --------------------------------------------------------------- */
+function resize(){
+  var dpr=window.devicePixelRatio||1;
+  var r=stage.getBoundingClientRect();
+  cv.width=Math.max(1,Math.round(r.width*dpr));
+  cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  var g=gr.getBoundingClientRect();
+  gr.width=Math.max(1,Math.round(g.width*dpr));
+  gr.height=Math.max(1,Math.round(g.height*dpr));
+  gtx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+window.addEventListener('resize',resize);
+if(window.ResizeObserver){
+  new ResizeObserver(resize).observe(stage);
+  new ResizeObserver(resize).observe(document.getElementById('abajo'));
+}
+(function init(){
+  reinicia(cfg.semilla);
+  aplicaModelo();
+  sincronizaControles();
+  pintaTabla();
+  actualizaQuien();
+  resize();
+})();
+
+/* =========================================================================
+   11. AUTOCOMPROBACIÓN  ·  añade #test al final de la dirección
+   Un simulador no se puede mirar para saber si está bien: cualquier cosa que
+   haga parecerá plausible. La prueba que más vale es la que calcula la
+   binomial por dos caminos que no comparten una línea de código —la
+   convolución que usa el material y el triángulo de Pascal con la fórmula de
+   siempre— y comprueba que dan el mismo número.
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){
+    out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':''));
+    if(!c) fails++;
+  }
+  function num(v){ return (Math.round(v*1000)/1000).toString().replace('.',','); }
+  function cerca(a,b,e){ return isFinite(a) && isFinite(b) && Math.abs(a-b)<(e===undefined?1e-9:e); }
+
+  var antes={cfg:JSON.parse(JSON.stringify(cfg)), claves:claves, claveId:claveId,
+             serie:serie, detalle:detalle, nt:ntiradas, nc:nchinchetas, na:narriba,
+             rec:recortadas, s:s32, opt:JSON.parse(JSON.stringify(opt)),
+             TD:TOPE_DET, TS:TOPE_SERIE, undo:undoStack, anim:anim,
+             gv:{x0:gv.x0, x1:gv.x1, y0:gv.y0, y1:gv.y1}};
+
+  try{
+
+  opt.anim=0;   /* la animación es asíncrona y aquí estorba; opt se restaura al final */
+
+  function pon(k, modelo, p){
+    cfg.k=k; cfg.modelo=modelo||'plana';
+    aplicaModelo();
+    if(p!==undefined){ cfg.modelo='custom'; cfg.p=p; }
+    cacheTeo=null;
+    registrosNuevos();
+  }
+  /* la binomial por el otro camino: triángulo de Pascal y la fórmula de toda la
+     vida. No comparte ni una línea con la convolución del manipulativo */
+  function binomPascal(k,p){
+    var fila=[1], i, j, nueva;
+    for(i=0;i<k;i++){
+      nueva=[1];
+      for(j=1;j<=i;j++) nueva.push(fila[j-1]+fila[j]);
+      nueva.push(1);
+      fila=nueva;
+    }
+    var res=[];
+    for(i=0;i<=k;i++) res.push(fila[i]*Math.pow(p,i)*Math.pow(1-p,k-i));
+    return res;
+  }
+  function suma(a){ var s=0,i; for(i=0;i<a.length;i++) s+=a[i]; return s; }
+  function media(a){ var s=0,i; for(i=0;i<a.length;i++) s+=i*a[i]; return s; }
+  function moda(a){ var m=0,i; for(i=1;i<a.length;i++) if(a[i]>a[m]) m=i; return m; }
+
+  /* --- 1. la chincheta ------------------------------------------------------ */
+  pon(10,'plana');
+  ok('la chincheta de culo plano cae boca arriba el 70 % de las veces', cerca(cfg.p,0.70), pct1(cfg.p)+' %');
+  pon(10,'ancha');
+  ok('la de cabeza ancha, el 62 %', cerca(cfg.p,0.62), pct1(cfg.p)+' %');
+  pon(10,'fina');
+  ok('y la larga y fina, el 38 %', cerca(cfg.p,0.38), pct1(cfg.p)+' %');
+
+  pon(10,'custom');
+  ok('a mano se puede poner cualquier porcentaje', ponP(0.234) && cerca(cfg.p,0.234), cfg.p);
+  ok('y se guarda con una décima de porcentaje', (function(){ ponP(0.23456); return cerca(cfg.p,0.235); })(), cfg.p);
+  ok('un porcentaje imposible se rechaza y no cambia nada',
+     !ponP(1.4) && !ponP(-0.1) && !ponP(NaN) && cerca(cfg.p,0.235), cfg.p);
+  ok('el 0 y el 1 sí valen: una chincheta que nunca o siempre cae boca arriba',
+     ponP(0) && cfg.p===0 && ponP(1) && cfg.p===1);
+  /* esta prueba mira las casillas de verdad: un input de tipo número rechaza el
+     valor si se le mete con coma decimal, se queda en blanco y no avisa */
+  ponP(0.35); pintaP();
+  ok('las casillas de porcentaje se rellenan y enseñan el 35 y el 65',
+     document.getElementById('pArriba').value==='35.0' &&
+     document.getElementById('pTumbada').value==='65.0',
+     '«'+document.getElementById('pArriba').value+'» y «'+
+     document.getElementById('pTumbada').value+'»');
+  ok('y las dos suman siempre 100, porque la tumbada es lo que le falta a la otra',
+     cerca(parseFloat(document.getElementById('pArriba').value)+
+           parseFloat(document.getElementById('pTumbada').value), 100));
+
+  /* la misteriosa */
+  cfg.modelo='misterio'; cfg.misterioN=0;
+  reinicia('clase-A'); var m1=pMisteriosa();
+  reinicia('clase-A'); var m2=pMisteriosa();
+  reinicia('clase-B'); var m3=pMisteriosa();
+  ok('la chincheta misteriosa sale igual con la misma semilla', m1===m2, num(m1));
+  ok('y distinta con otra semilla', m1!==m3, num(m3));
+  reinicia('clase-A'); cfg.misterioN=1; var m4=pMisteriosa();
+  ok('y pedir otra misteriosa da otra, con la misma semilla', m1!==m4, num(m4));
+  var fuera=[], i;
+  for(i=0;i<200;i++){
+    cfg.misterioN=i; reinicia('rango-'+i);
+    var pm=pMisteriosa();
+    if(!(pm>=0.20 && pm<=0.85)) fuera.push(num(pm));
+  }
+  ok('el porcentaje de la misteriosa se queda entre el 20 % y el 85 %, para que haya algo que estimar',
+     fuera.length===0, fuera.length? 'se sale en '+fuera.join(', ') : '200 sorteos dentro');
+  cfg.misterioN=0; opt.teo=0;
+  ok('y está tapado mientras no se pida la probabilidad teórica', pSecreta());
+  opt.teo=1;
+  ok('al pedirla, se destapa', !pSecreta());
+  opt.teo=0;
+  /* y el porcentaje de los modelos con nombre también va tapado: aquí se mira lo
+     que de verdad se lee en el panel, no una variable interna */
+  pon(10,'plana'); pintaP();
+  var tapado=document.getElementById('pcaja').textContent;
+  opt.teo=1; pintaP();
+  var destapado=document.getElementById('pcaja').textContent;
+  opt.teo=0; pintaP();
+  ok('el porcentaje de una chincheta con nombre no se lee en el panel mientras esté tapado',
+     tapado.indexOf('70')<0 && tapado.indexOf('%')<0, tapado.slice(0,42)+'…');
+  ok('y sí se lee en cuanto se destapa', destapado.indexOf('70')>=0, destapado);
+
+  /* --- 2. el azar ----------------------------------------------------------- */
+  pon(10,'plana');
+  function serieDe(sem, n){
+    reinicia(sem);
+    var a=[], j;
+    for(j=0;j<n;j++) a.push(tiraPunado());
+    return a.join(',');
+  }
+  var sA=serieDe('aula', 30), sB=serieDe('aula', 30), sC=serieDe('otra', 30);
+  ok('la misma semilla da exactamente las mismas tiradas', sA===sB, sA.slice(0,20)+'…');
+  ok('y otra semilla da otras', sA!==sC, sC.slice(0,20)+'…');
+
+  pon(20,'custom',0);
+  reinicia('nunca');
+  var malo=false;
+  for(i=0;i<200;i++) if(tiraPunado()!==0) malo=true;
+  ok('una chincheta que nunca cae boca arriba, nunca cae boca arriba', !malo);
+  pon(20,'custom',1);
+  reinicia('siempre'); malo=false;
+  for(i=0;i<200;i++) if(tiraPunado()!==20) malo=true;
+  ok('y una que siempre, siempre', !malo);
+
+  pon(50,'plana'); reinicia('rango');
+  var min=99, max=-1;
+  for(i=0;i<400;i++){ var a=tiraPunado(); if(a<min) min=a; if(a>max) max=a; }
+  ok('un puñado de 50 nunca devuelve menos de 0 ni más de 50', min>=0 && max<=50, min+'…'+max);
+
+  pon(1,'plana'); reinicia('una');
+  var soloDos=true;
+  for(i=0;i<300;i++){ var b=tiraPunado(); if(b!==0 && b!==1) soloDos=false; }
+  ok('un puñado de una chincheta solo puede dar 0 o 1', soloDos);
+
+  pon(100,'plana'); reinicia('proporcion');
+  tiraN(200);
+  ok('con 20 000 chinchetas del 70 %, la proporción observada se acerca mucho al 70 %',
+     proporcion()>0.69 && proporcion()<0.71, pct1(proporcion())+' %');
+  ok('y las cuentas cuadran: chinchetas tiradas y boca arriba',
+     nchinchetas===20000 && narriba<=nchinchetas && narriba>0,
+     narriba+' de '+nchinchetas);
+
+  /* --- 3. el registro ------------------------------------------------------- */
+  pon(10,'plana'); reinicia('registro');
+  tiraN(100);
+  ok('repetir cien veces son exactamente cien tiradas', ntiradas===100, ntiradas);
+  ok('y mil chinchetas, diez por tirada', nchinchetas===1000, nchinchetas);
+  var sumaRec=0;
+  for(i=0;i<claves.length;i++) sumaRec+=claves[i].n;
+  ok('los recuentos suman las cien tiradas', sumaRec===100, sumaRec);
+  var sumaSerie=0;
+  for(i=0;i<serie.length;i++) sumaSerie+=serie[i];
+  ok('las boca arriba apuntadas son las de la serie', sumaSerie===narriba, narriba);
+  ok('y la proporción es lo uno partido por lo otro',
+     cerca(proporcion(), narriba/nchinchetas), num(proporcion()));
+  var relat=0;
+  for(i=0;i<claves.length;i++) relat+=claves[i].n/ntiradas;
+  ok('las frecuencias relativas suman 1', cerca(relat,1), num(relat));
+  var claveFuera=false;
+  for(i=0;i<claves.length;i++){
+    var v=parseFloat(claves[i].k);
+    if(!(v>=0 && v<=10)) claveFuera=true;
+  }
+  ok('todos los resultados están entre 0 y 10', !claveFuera);
+  var celdas=filaDe(detalle[detalle.length-1]).cells, ult=detalle[detalle.length-1];
+  ok('cada fila de la tabla dice cuántas chinchetas se llevan tiradas',
+     celdas.length===4 && celdas[3].textContent===String(ult.n*10),
+     'tirada '+ult.n+' → '+celdas[3].textContent+' chinchetas');
+  ok('y las boca arriba más las tumbadas de la fila son ese puñado de diez',
+     (+celdas[1].textContent)+(+celdas[2].textContent)===10,
+     celdas[1].textContent+' + '+celdas[2].textContent);
+
+  pon(1,'plana'); reinicia('unauna');
+  tiraN(50);
+  ok('con puñados de una, los resultados se llaman «boca arriba» y «tumbada»',
+     claveId['boca arriba']!==undefined && claveId['tumbada']!==undefined &&
+     claveId['1']===undefined,
+     claves.map(function(c){ return c.k; }).join(' / '));
+  ok('y de una en una no hace falta la columna de chinchetas, que sería el nº otra vez',
+     filaDe(detalle[detalle.length-1]).cells.length===2);
+
+  pon(10,'plana'); reinicia('topes');
+  TOPE_DET=40; TOPE_SERIE=25;
+  tiraN(120);
+  ok('el detalle no crece por encima de su tope', detalle.length===40, detalle.length);
+  ok('la serie tampoco', serie.length===25, serie.length);
+  ok('pero el número de tiradas sigue siendo el de verdad', ntiradas===120, ntiradas);
+  ok('y se sabe cuántas se han recortado', recortadas===80, recortadas);
+  TOPE_DET=antes.TD; TOPE_SERIE=antes.TS;
+
+  /* --- 4. la binomial ------------------------------------------------------- */
+  var b1=binomial(1,0.7);
+  ok('con una chincheta del 70 %, la binomial es 30 % y 70 %',
+     b1.length===2 && cerca(b1[0],0.3) && cerca(b1[1],0.7), num(b1[1]));
+  var b2=binomial(2,0.5);
+  ok('con dos al 50 %, sale 1/4, 1/2 y 1/4',
+     cerca(b2[0],0.25) && cerca(b2[1],0.5) && cerca(b2[2],0.25), num(b2[1]));
+  var b3=binomial(3,0.5);
+  ok('con tres al 50 %, 1/8, 3/8, 3/8 y 1/8',
+     cerca(b3[0],1/8) && cerca(b3[1],3/8) && cerca(b3[2],3/8) && cerca(b3[3],1/8));
+  var b10=binomial(10,0.5);
+  ok('con diez al 50 %, que salgan cinco tiene probabilidad 252/1024',
+     cerca(b10[5], 252/1024), num(b10[5]*1024)+'/1024');
+  ok('y la distribución es simétrica',
+     cerca(b10[3],b10[7]) && cerca(b10[0],b10[10]));
+
+  /* la prueba que de verdad vale: dos programas distintos, el mismo número */
+  var malPascal=[];
+  [1,2,3,5,8,13,20].forEach(function(k){
+    [0.1,0.38,0.5,0.7,0.95].forEach(function(p){
+      var a=binomial(k,p), b=binomPascal(k,p), j;
+      for(j=0;j<=k;j++) if(!cerca(a[j],b[j],1e-12)) malPascal.push('k='+k+' p='+p);
+    });
+  });
+  ok('la convolución y la fórmula con el triángulo de Pascal dan lo mismo',
+     malPascal.length===0,
+     malPascal.length? 'falla en '+malPascal.slice(0,4).join(', ') : '35 combinaciones de k y p');
+
+  var malSuma=[], malMedia=[];
+  [1,2,7,25,100,1000].forEach(function(k){
+    [0,0.2,0.5,0.7,1].forEach(function(p){
+      var d=binomial(k,p);
+      if(!cerca(suma(d),1,1e-9)) malSuma.push('k='+k+' p='+p);
+      if(!cerca(media(d), k*p, 1e-6*Math.max(1,k))) malMedia.push('k='+k+' p='+p);
+    });
+  });
+  ok('la binomial siempre suma 1', malSuma.length===0,
+     malSuma.length? 'falla en '+malSuma.join(', ') : '30 combinaciones');
+  ok('y su media vale siempre k·p', malMedia.length===0,
+     malMedia.length? 'falla en '+malMedia.join(', ') : '30 combinaciones');
+
+  var bg=binomial(1000,0.7);
+  ok('con mil chinchetas del 70 % lo más probable es que salgan 700',
+     moda(bg)===700, moda(bg));
+  ok('y eso se puede calcular sin que se desborde ningún número',
+     isFinite(bg[700]) && bg[700]>0 && cerca(suma(bg),1,1e-9), num(bg[700]));
+  var b0=binomial(6,0), b1s=binomial(6,1);
+  ok('una chincheta que nunca cae boca arriba da toda la probabilidad al 0',
+     cerca(b0[0],1) && cerca(b0[6],0));
+  ok('y una que siempre, toda al 6', cerca(b1s[6],1) && cerca(b1s[0],0));
+
+  /* --- 5. lo que cuenta cada gráfico ---------------------------------------- */
+  pon(10,'plana'); reinicia('cuentas');
+  tiraN(50);
+  ok('el gráfico de frecuencias cuenta chinchetas, y las boca arriba más las tumbadas son todas',
+     narriba+nabajo()===nchinchetas && nchinchetas===500,
+     narriba+' + '+nabajo()+' = '+nchinchetas);
+  ok('y las tumbadas son las que no cayeron boca arriba', (function(){
+      var s=0, j;
+      for(j=0;j<serie.length;j++) s+=(10-serie[j]);
+      return s===nabajo(); })(), nabajo());
+  ok('las dos frecuencias relativas suman 1',
+     cerca(narriba/nchinchetas + nabajo()/nchinchetas, 1));
+
+  pon(10,'plana');
+  registraSoporte();
+  ok('el recuento por puñado, en cambio, cuenta tiradas: hay once resultados posibles',
+     claves.length===11 && ntiradas===0, claves.length+' resultados, '+ntiradas+' tiradas');
+  var ids=ordenadas(), ordenado=true;
+  for(i=1;i<ids.length;i++) if(claves[ids[i]].o<claves[ids[i-1]].o) ordenado=false;
+  ok('y sale ordenado de menor a mayor', ordenado);
+  pon(1000,'plana');
+  registraSoporte();
+  ok('con mil chinchetas no se llena ese eje de mil un resultados imposibles',
+     claves.length>0 && claves.length<400, claves.length+' resultados de 1001');
+  ok('y los que quedan son los de alrededor de 700',
+     claveId['700']!==undefined && claveId['0']===undefined && claveId['1000']===undefined);
+
+  /* --- 5c. acercarse al gráfico --------------------------------------------- */
+  gvTope.x=1; gvTope.y=1;
+  gvReset();
+  ok('de entrada se ve el gráfico entero y no hay nada acercado',
+     !gvHayZoom() && gv.x0===0 && gv.x1===1 && gv.y0===0 && gv.y1===1);
+  gvZoom('x', 0.5, 2);
+  ok('acercar al doble por el centro deja media ventana centrada',
+     cerca(gv.x1-gv.x0, 0.5) && cerca(gv.x0, 0.25),
+     num(gv.x0)+'…'+num(gv.x1));
+  ok('y eso ya cuenta como acercado', gvHayZoom());
+  gvReset(); gvZoom('x', 0, 2);
+  ok('acercando pegado al borde izquierdo, la ventana no se sale por la izquierda',
+     gv.x0===0 && cerca(gv.x1,0.5), num(gv.x0)+'…'+num(gv.x1));
+  gvReset(); gvZoom('x', 1, 2);
+  ok('ni por la derecha pegado al borde derecho',
+     cerca(gv.x0,0.5) && gv.x1===1, num(gv.x0)+'…'+num(gv.x1));
+  gvReset(); gvZoom('y', 0.5, 4); gvZoom('y', 0.5, 4);
+  ok('acercar dos veces multiplica, no suma', cerca(gv.y1-gv.y0, 1/16), num(gv.y1-gv.y0));
+  /* el punto donde está el cursor tiene que quedarse quieto, que es lo que hace
+     que la rueda no maree */
+  gvReset(); gvZoom('x', 0.25, 3);
+  ok('el punto que hay bajo el cursor no se mueve al acercar',
+     cerca(gv.x0+0.25*(gv.x1-gv.x0), 0.25), num(gv.x0+0.25*(gv.x1-gv.x0)));
+  gvReset();
+  for(i=0;i<60;i++) gvZoom('x', 0.5, 2);
+  ok('por mucho que se insista, no se puede acercar hasta perder el sitio',
+     gv.x1-gv.x0>0 && gv.x1-gv.x0>=1e-4-1e-12 && gv.x0>=0 && gv.x1<=1,
+     'ventana de '+ (gv.x1-gv.x0).toExponential(1));
+  for(i=0;i<60;i++) gvZoom('x', 0.5, 1/2);
+  ok('y alejando se vuelve al gráfico entero, sin pasarse',
+     !gvHayZoom() && gv.x0===0 && gv.x1===1, num(gv.x0)+'…'+num(gv.x1));
+  gvReset(); gvZoom('x', 0.5, 4);
+  var w0=gv.x1-gv.x0;
+  gvMueve('x', 5);
+  ok('moverse a lo bestia no saca la ventana del gráfico',
+     gv.x1===1 && cerca(gv.x1-gv.x0, w0), num(gv.x0)+'…'+num(gv.x1));
+  gvMueve('x', -5);
+  ok('ni por el otro lado', gv.x0===0 && cerca(gv.x1-gv.x0, w0), num(gv.x0)+'…'+num(gv.x1));
+
+  /* el eje vertical de la evolución llega más arriba del techo de salida: el
+     arranque de la serie se va hasta el 100 % y tiene que poder mirarse */
+  gvTope.y=1/0.1;   /* el techo más bajo que se usa, el 10 % */
+  gvReset();
+  for(i=0;i<40;i++) gvZoom('y', 0.5, 1/1.25);
+  ok('alejando en vertical se llega hasta arriba del todo, hasta el 100 %',
+     cerca(gv.y0,0) && cerca(gv.y1*0.1, 1), 'llega al '+num(100*gv.y1*0.1)+' %');
+  ok('y eso cuenta como estar acercado, para poder volver con doble clic', gvHayZoom());
+  gvReset(); gvZoom('y', 0.5, 1/1.25);
+  ok('un paso de alejar deja la ventana un cuarto más alta, sin salirse del tope',
+     gv.y1>1 && gv.y1<=gvTope.y && cerca(gv.y1-gv.y0, 1.25), num(gv.y1-gv.y0));
+  gvMueve('y', 9);
+  ok('y moverse a lo bestia tampoco pasa del tope', cerca(gv.y1, gvTope.y),
+     num(gv.y0)+'…'+num(gv.y1));
+  gvTope.y=1; gvReset(); gvZoom('y', 0.5, 1/4);
+  ok('en las barras, en cambio, alejar no pasa del gráfico entero',
+     gv.y0===0 && gv.y1===1, num(gv.y0)+'…'+num(gv.y1));
+  gvReset();
+  opt.vista='barras';
+  ok('en frecuencias, donde solo hay dos barras, la rueda a secas acerca en vertical',
+     ejeRueda(false)==='y', ejeRueda(false));
+  opt.vista='punado';
+  ok('y en las otras vistas, a lo ancho', ejeRueda(false)==='x', ejeRueda(false));
+  ok('con Mayús, siempre a lo alto', ejeRueda(true)==='y');
+  opt.vista='barras'; gvReset();
+  /* que las tres vistas sigan dibujando con la ventana acercada: un NaN en un
+     path de canvas no da error, simplemente no pinta */
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=420; oc.height=220;
+    var x=oc.getContext('2d'), malas=[];
+    pon(10,'plana'); reinicia('zoomdibujo'); tiraN(60);
+    ['barras','punado','evol'].forEach(function(v){
+      opt.vista=v;
+      gvReset(); gvZoom('x',0.5,3); gvZoom('y',0.5,3);
+      x.setTransform(1,0,0,1,0,0);
+      drawGrafico(x,420,220);
+      var d=x.getImageData(0,0,420,220).data, n=0, j;
+      for(j=0;j<d.length;j+=4) if(d[j]<250||d[j+1]<250||d[j+2]<250) n++;
+      if(n<400) malas.push(v+' ('+n+' px)');
+    });
+    ok('las tres vistas siguen dibujando algo con el gráfico acercado',
+       malas.length===0, malas.length? 'se queda en blanco '+malas.join(', ') : 'las tres pintan');
+    opt.vista='barras'; gvReset();
+  })();
+
+  /* la evolución tiene que verse desde la primera tirada: con un puñado, un
+     punto; el azul lo distingue del cartelito gris de «todavía no has tirado» */
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=420; oc.height=220;
+    var x=oc.getContext('2d');
+    function azules(){
+      var d=x.getImageData(0,0,420,220).data, n=0, j;
+      for(j=0;j<d.length;j+=4) if(d[j+2]-d[j]>60) n++;
+      return n;
+    }
+    function pinta(){
+      x.setTransform(1,0,0,1,0,0); x.fillStyle='#fff'; x.fillRect(0,0,420,220);
+      drawGrafico(x,420,220);
+      return azules();
+    }
+    opt.vista='evol'; opt.teo=0; gvReset();
+    pon(10,'plana'); reinicia('primerpunto');
+    var vacia=pinta();
+    tiraN(1);
+    var una=pinta();
+    tiraN(1);
+    var dos=pinta();
+    ok('sin tiradas, la evolución no pinta nada de azul', vacia===0, vacia+' px');
+    ok('con un solo puñado ya se ve el punto de la frecuencia relativa',
+       una>10, una+' px azules');
+    ok('y con dos, la línea que los une', dos>una, dos+' px azules');
+    opt.vista='barras'; gvReset();
+  })();
+
+  /* --- 5b bis. las marcas del eje de chinchetas ----------------------------- */
+  (function(){
+    var enteras=true, crecen=true, vacias=false, casos=[
+      [10,120,8],[10,1010,8],[10,10,8],[700,720,8],[1,7,8]
+    ], q, r, z;
+    for(q=0;q<casos.length;q++){
+      r=marcasEje(casos[q][0], casos[q][1], casos[q][2]);
+      if(!r.length) vacias=true;
+      for(z=0;z<r.length;z++){
+        if(r[z]!==Math.round(r[z]) || r[z]<casos[q][0] || r[z]>casos[q][1]) enteras=false;
+        if(z && r[z]<=r[z-1]) crecen=false;
+      }
+    }
+    ok('las marcas del eje son números enteros, crecientes y dentro del tramo',
+       enteras && crecen && !vacias, 'de 10 a 1010: '+marcasEje(10,1010,8).join(' '));
+    ok('con mil chinchetas y sitio para ocho marcas se va de doscientas en doscientas',
+       marcasEje(10,1010,8).join(',')==='200,400,600,800,1000',
+       marcasEje(10,1010,8).join(' '));
+    ok('y si cabe el doble de marcas, de cien en cien',
+       marcasEje(10,1010,14).join(',')==='100,200,300,400,500,600,700,800,900,1000',
+       marcasEje(10,1010,14).join(' '));
+    ok('y con doce puñados de diez, de veinte en veinte',
+       marcasEje(10,120,8).join(',')==='20,40,60,80,100,120', marcasEje(10,120,8).join(' '));
+  })();
+
+  /* el arranque de la serie se sale por arriba del techo: hay que avisar de que
+     hay curva ahí y hay que poder llegar a ella alejando en vertical */
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=420; oc.height=220;
+    var x=oc.getContext('2d'), k;
+    /* una serie a mano: un puñado entero boca arriba de salida —frecuencia 1—
+       y luego ninguna más */
+    pon(10,'plana'); reinicia('cortada'); registrosNuevos();
+    serie=[10]; for(k=0;k<60;k++) serie.push(0);
+    opt.vista='evol'; opt.teo=0; opt.quien='arriba'; gvReset();
+    x.setTransform(1,0,0,1,0,0); drawGrafico(x,420,220);
+    ok('con el arranque fuera del techo, el gráfico lo dice',
+       evolCortada===true && cerca(gvTope.y, 1/0.1), 'tope '+num(gvTope.y));
+    for(k=0;k<40;k++) gvZoom('y', 0.5, 1/1.25);
+    x.setTransform(1,0,0,1,0,0); drawGrafico(x,420,220);
+    ok('y alejando en vertical se llega a verlo entero, hasta el 100 %',
+       evolCortada===false && cerca(gv.y1*0.1, 1), 'se ve hasta el '+num(100*gv.y1*0.1)+' %');
+    gvReset(); gvTope.y=1; opt.vista='barras'; registrosNuevos();
+  })();
+
+  /* --- 5b. cada modelo se dibuja distinto ----------------------------------- */
+  var huellaA={}, huellaT={}, sinPintar=[];
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=140; oc.height=140;
+    var x=oc.getContext('2d');
+    function tinta(){
+      var d=x.getImageData(0,0,140,140).data, n=0, j;
+      for(j=0;j<d.length;j+=4) if(d[j]<250||d[j+1]<250||d[j+2]<250) n++;
+      return n;
+    }
+    function limpia(){ x.setTransform(1,0,0,1,0,0); x.fillStyle='#fff'; x.fillRect(0,0,140,140); }
+    ['plana','ancha','fina','custom','misterio'].forEach(function(m){
+      cfg.modelo=m;
+      limpia(); chinchetaArriba(x,70,70,34); huellaA[m]=tinta();
+      limpia(); chinchetaTumbada(x,70,70,34,0.7); huellaT[m]=tinta();
+      if(huellaA[m]<500 || huellaT[m]<300) sinPintar.push(m);
+    });
+    cfg.modelo='plana';
+  })();
+  ok('las cinco chinchetas se dibujan de verdad, boca arriba y tumbadas',
+     sinPintar.length===0, sinPintar.length? 'no pinta '+sinPintar.join(', ')
+       : 'arriba '+huellaA.plana+' / tumbada '+huellaT.plana+' px');
+  ok('la de cabeza ancha ocupa bastante más que la de culo plano vista desde arriba',
+     huellaA.ancha>huellaA.plana*1.5, huellaA.ancha+' contra '+huellaA.plana);
+  /* que no se distingan solo por el tamaño: la ancha tiene un ala plana con la
+     cúpula pequeña en medio, y eso desde arriba es un escalón oscuro a media
+     cabeza que la de culo plano, que es un casquete liso, no tiene */
+  var esc={};
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=160; oc.height=160;
+    var x=oc.getContext('2d');
+    function escalon(m){
+      cfg.modelo=m;
+      var R=34*FORMAS[m].cab;
+      x.setTransform(1,0,0,1,0,0); x.fillStyle='#fff'; x.fillRect(0,0,160,160);
+      chinchetaArriba(x,80,80,34);
+      var d=x.getImageData(80,80,Math.round(R),1).data;
+      function gris(t){ return d[Math.round(R*t)*4]; }
+      return Math.round((gris(0.42)+gris(0.68))/2 - gris(0.55));
+    }
+    esc.ancha=escalon('ancha');
+    esc.plana=escalon('plana');
+    cfg.modelo='plana';
+  })();
+  ok('la de cabeza ancha se ve como un ala con una cúpula pequeña dentro',
+     esc.ancha>8, 'escalón de '+esc.ancha+' tonos');
+  ok('y la de culo plano sigue siendo un casquete liso, sin anillo',
+     esc.plana<3, 'escalón de '+esc.plana+' tonos');
+  ok('de canto también se distinguen: la ancha es una chapa fina y la plana, gorda',
+     FORMAS.ancha.cab*FORMAS.ancha.apl < FORMAS.plana.cab*FORMAS.plana.apl*0.7,
+     num(FORMAS.ancha.cab*FORMAS.ancha.apl)+' contra '+num(FORMAS.plana.cab*FORMAS.plana.apl));
+  ok('y la larga y fina, menos', huellaA.fina<huellaA.plana*0.75,
+     huellaA.fina+' contra '+huellaA.plana);
+  ok('tumbada, en cambio, la larga y fina es la que más se estira, porque tiene la aguja más larga',
+     FORMAS.fina.agu>FORMAS.plana.agu && FORMAS.fina.agu>FORMAS.ancha.agu,
+     'aguja '+FORMAS.fina.agu+' contra '+FORMAS.plana.agu);
+  ok('y a tamaño de pulga no se rompe ninguna', (function(){
+      var oc=document.createElement('canvas'); oc.width=20; oc.height=20;
+      var x=oc.getContext('2d'), m, bien=true;
+      for(m in FORMAS) if(FORMAS.hasOwnProperty(m)){
+        cfg.modelo=m;
+        x.fillStyle='#fff'; x.fillRect(0,0,20,20);
+        chinchetaArriba(x,10,10,1.2); chinchetaTumbada(x,10,10,1.2,0.3);
+        var d=x.getImageData(0,0,20,20).data, n=0, j;
+        for(j=0;j<d.length;j+=4) if(d[j]<250) n++;
+        if(n===0) bien=false;
+      }
+      cfg.modelo='plana';
+      return bien; })());
+
+  /* --- 6. cambiar de experimento -------------------------------------------- */
+  pon(10,'plana'); reinicia('cambio');
+  tiraN(30); undoStack=[];
+  aplicaCambio(function(){ cfg.k=25; });
+  ok('cambiar el puñado borra las tiradas de antes', ntiradas===0 && nchinchetas===0, ntiradas);
+  ok('y no deja recuentos colgando', claves.length===0, claves.length);
+  doUndo();
+  ok('deshacer devuelve el puñado de antes', cfg.k===10, cfg.k+' chinchetas');
+  ok('y devuelve también las tiradas', ntiradas===30 && nchinchetas===300, ntiradas);
+
+  tiraN(0);
+  var pAntes=cfg.p;
+  aplicaCambio(function(){ cfg.modelo='fina'; aplicaModelo(); });
+  ok('cambiar de chincheta también borra las tiradas', ntiradas===0);
+  ok('y la chincheta es de verdad otra', cfg.p!==pAntes && cerca(cfg.p,0.38), pct1(cfg.p)+' %');
+
+  pon(10,'plana'); reinicia('vaciar');
+  tiraN(15);
+  var cfgAntes=JSON.stringify(cfg);
+  registrosNuevos();
+  ok('vaciar deja las tiradas a cero', ntiradas===0 && narriba===0 && nchinchetas===0);
+  ok('pero no toca la chincheta', JSON.stringify(cfg)===cfgAntes);
+
+  /* --- 7. guardar y abrir --------------------------------------------------- */
+  pon(25,'custom',0.44); reinicia('guardar');
+  tiraN(150);
+  var firma=firmaCfg(), nA=ntiradas, ncA=nchinchetas, naA=narriba;
+  var conteo={};
+  for(i=0;i<claves.length;i++) conteo[claves[i].k]=claves[i].n;
+  var d=JSON.parse(JSON.stringify(datos()));
+  importMode='replace'; loadData(d);
+  var igual=true;
+  for(var kk in conteo) if(conteo.hasOwnProperty(kk)){
+    var idc=claveId[kk];
+    if(idc===undefined || claves[idc].n!==conteo[kk]) igual=false;
+  }
+  ok('guardar y volver a abrir conserva la chincheta y el puñado',
+     firmaCfg()===firma, firmaCfg());
+  ok('y conserva todos los recuentos', igual && ntiradas===nA, ntiradas+' tiradas');
+  ok('y las chinchetas tiradas y las que cayeron boca arriba',
+     nchinchetas===ncA && narriba===naA, narriba+' de '+nchinchetas);
+  importMode='add'; loadData(JSON.parse(JSON.stringify(d)));
+  ok('el botón ＋ suma las tiradas de otro archivo del mismo experimento',
+     ntiradas===nA*2 && nchinchetas===ncA*2, ntiradas);
+  var nn=ntiradas, otro=JSON.parse(JSON.stringify(d));
+  otro.cfg.k=30;
+  importMode='add'; loadData(otro);
+  ok('y se niega a mezclar con otro puñado distinto', ntiradas===nn, ntiradas);
+  importMode='replace';
+
+  var base={k:10, modelo:'plana', p:0.7, misterioN:0, semilla:'1'};
+  function tocado(f){ var c=JSON.parse(JSON.stringify(base)); f(c); return c; }
+  ok('un archivo con un puñado de 0 chinchetas se rechaza',
+     limpiaConfig(tocado(function(c){ c.k=0; }))===null);
+  ok('y uno con 5000', limpiaConfig(tocado(function(c){ c.k=5000; }))===null);
+  ok('y uno con probabilidad 1,4', limpiaConfig(tocado(function(c){ c.p=1.4; }))===null);
+  ok('y uno con probabilidad negativa', limpiaConfig(tocado(function(c){ c.p=-0.1; }))===null);
+  ok('y uno con un modelo que no existe',
+     limpiaConfig(tocado(function(c){ c.modelo='chincheta cuántica'; }))===null);
+  ok('y uno con la probabilidad sin ser número',
+     limpiaConfig(tocado(function(c){ c.p='mucha'; }))===null);
+  ok('en cambio, uno bien hecho se acepta', limpiaConfig(base)!==null);
+  ok('un archivo de otro manipulativo no se carga', (function(){
+      var n0=ntiradas;
+      loadData({formato:'dados-a-medida', cfg:{}});
+      return ntiradas===n0; })());
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+  }
+
+  /* devolver el manipulativo tal y como estaba */
+  try{
+    cfg=antes.cfg; claves=antes.claves; claveId=antes.claveId; serie=antes.serie;
+    detalle=antes.detalle; ntiradas=antes.nt; nchinchetas=antes.nc; narriba=antes.na;
+    recortadas=antes.rec; s32=antes.s; opt=antes.opt; gv=antes.gv;
+    TOPE_DET=antes.TD; TOPE_SERIE=antes.TS; undoStack=antes.undo; anim=antes.anim;
+    importMode='replace'; cacheTeo=null; bandeja=null;
+    gvTope={x:1, y:1}; evolCortada=false;
+    sincronizaControles(); pintaTabla(); actualizaQuien(); draw();
+  }catch(e2){}
+
+  /* --- informe --------------------------------------------------------------- */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length
+                                         : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación del puñado de chinchetas</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__chinchetas={
+  test:runSelfTest, cfg:function(){ return cfg; }, opt:opt, view:view, MODELOS:MODELOS,
+  ponP:ponP, aplicaModelo:aplicaModelo, pMisteriosa:pMisteriosa, pSecreta:pSecreta,
+  reinicia:reinicia, rnd:function(){ return rnd(); }, tiraPunado:tiraPunado,
+  binomial:binomial, teorica:teorica, registraSoporte:registraSoporte,
+  claves:function(){ return claves; }, serie:function(){ return serie; },
+  detalle:function(){ return detalle; }, ntiradas:function(){ return ntiradas; },
+  narriba:function(){ return narriba; }, nchinchetas:function(){ return nchinchetas; },
+  proporcion:proporcion, tiraN:tiraN, limpiaConfig:limpiaConfig, load:loadData,
+  setMode:function(m){ importMode=m; }, datos:datos, redraw:draw,
+  chinchetaArriba:chinchetaArriba, chinchetaTumbada:chinchetaTumbada, FORMAS:FORMAS,
+  narriba_:function(){ return narriba; }, nabajo:nabajo,
+  gv:function(){ return gv; }, gvZoom:gvZoom, gvMueve:gvMueve, gvReset:gvReset,
+  gvHayZoom:gvHayZoom, ejeRueda:ejeRueda, gplot:function(){ return gplot; },
+  gvTope:function(){ return gvTope; }, marcasEje:marcasEje,
+  drawBandeja:drawBandeja, drawGrafico:drawGrafico,
+  csvTiradas:csvTiradas, csvRecuento:csvRecuento
+};
+
+
+})();
+</script>
+</body>
+</html>

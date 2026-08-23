@@ -1,0 +1,2007 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>Cuál sobra · manipulativo virtual</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+       font-size:14px;color:#2b2f36;background:#fff;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+  #app{display:flex;height:100%;width:100%}
+
+  #side{width:198px;flex:0 0 198px;background:#f4f5f7;border-right:1px solid #dfe2e7;
+        overflow-y:auto;padding:10px 10px 24px}
+  #side .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:2px 2px 10px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  #side .brand .sub{display:block;font-size:10.5px;font-weight:500;letter-spacing:.09em;
+                    text-transform:uppercase;color:#9aa1ab;margin-top:4px}
+  #side h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#8a919c;margin:15px 0 7px;font-weight:600}
+  .act{display:block;width:100%;text-align:left;border:1px solid #e3e6eb;background:#fff;border-radius:7px;
+       padding:6px 9px;margin-bottom:4px;font-size:12.5px;color:#3d4450;cursor:pointer}
+  .act:hover:not(:disabled){background:#f0f2f5;border-color:#c8cdd6}
+  .act:disabled{opacity:.42;cursor:default}
+  .act kbd{float:right;font:inherit;font-size:10.5px;color:#9aa1ab}
+  .act.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .par{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-bottom:4px}
+  .par .act{margin-bottom:0;text-align:center;padding:6px 2px}
+  #gen{display:block;width:100%;border:1px solid #2f62a8;background:#2f62a8;color:#fff;border-radius:8px;
+       padding:9px;font-size:13.5px;cursor:pointer;margin-bottom:7px}
+  #gen:hover{background:#2a589a}
+  .fila{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#6b7280;margin-bottom:6px}
+  .fila input[type=number]{width:74px;padding:3px 5px;border:1px solid #d5d9e0;border-radius:6px;
+                           font:inherit;font-size:12px;color:#2b2f36;background:#fff}
+  .fila select{flex:1;padding:3px 4px;border:1px solid #d5d9e0;border-radius:6px;font:inherit;font-size:12px;background:#fff}
+  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:3px 7px;font-size:12px;
+        color:#3d4450;cursor:pointer}
+  .mini:hover{background:#f0f2f5}
+  #props{display:none;margin:0 0 6px;padding:7px 8px;border:1px solid #e3e6eb;background:#fff;border-radius:7px}
+  #props.show{display:block}
+  #props label{display:block;font-size:11.5px;color:#4a515c;margin-bottom:3px;cursor:pointer}
+  #props input{margin:0 5px 0 0;vertical-align:-1px}
+  #swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:6px}
+  .sw{width:100%;aspect-ratio:1;min-height:20px;border-radius:5px;border:1px solid rgba(0,0,0,.18);cursor:pointer;padding:0}
+  .sw.on{outline:2px solid #2f62a8;outline-offset:1px}
+  #texs{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:6px}
+  #texs canvas{width:100%;height:auto;aspect-ratio:1;border:1px solid #d5d9e0;border-radius:5px;
+               background:#fff;cursor:pointer}
+  #texs canvas.on{outline:2px solid #2f62a8;outline-offset:1px;border-color:#2f62a8}
+  #props .ng{margin:6px 0 3px;padding-top:6px;border-top:1px solid #eef0f3;font-size:10px;
+             text-transform:uppercase;letter-spacing:.06em;color:#a8b0bb}
+  #col li{list-style:none;display:flex;align-items:center;gap:6px;padding:3px 0;border-bottom:1px solid #e8eaee}
+  #col{margin:0;padding:0}
+  #col canvas{border:1px solid #dfe2e7;border-radius:4px;background:#fff;cursor:pointer;flex:0 0 auto}
+  #col input.nm{flex:1;min-width:0;border:1px solid transparent;background:none;font:inherit;font-size:11.5px;
+                color:#3d4450;padding:2px 3px;border-radius:4px}
+  #col input.nm:focus{border-color:#d5d9e0;background:#fff;outline:none}
+  #col button{border:none;background:none;color:#a8b0bb;cursor:pointer;font-size:13px;padding:2px 3px}
+  #col button:hover{color:#c2410c}
+  .vacio{font-size:11px;color:#9aa1ab;line-height:1.45;padding:3px 0}
+  .note{font-size:10.5px;line-height:1.45;color:#8a919c;margin-top:12px}
+
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #dfe2e7;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover:not(:disabled){background:#f0f2f5}
+  .btn:disabled{opacity:.42;cursor:default}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn.on:hover{background:#2a589a}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  #stage{position:relative;flex:1;min-height:0;background:#fff;overflow:hidden}
+  canvas#cv{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  .panel{position:absolute;right:10px;top:10px;background:#fff;border:1px solid #dfe2e7;
+         border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+         box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto}
+  .panel.show{display:block}
+  .panel b{color:#2b2f36}
+  .panel a{color:#2f62a8}
+  #info{width:300px}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #cat{width:286px}
+  #cat h3{font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:#8a919c;margin:9px 0 5px;font-weight:600}
+  #cat h3:first-child{margin-top:0}
+  #cat .rej{display:grid;grid-template-columns:repeat(5,1fr);gap:4px}
+  #cat .rej canvas{width:100%;height:auto;aspect-ratio:1;border:1px solid #e3e6eb;border-radius:6px;
+                   background:#fff;cursor:pointer}
+  #cat .rej canvas:hover{border-color:#2f62a8;background:#f4f8fd}
+  #ana{width:352px}
+  #ana table{border-collapse:collapse;width:100%;margin-top:6px;font-size:11px}
+  #ana th,#ana td{border-bottom:1px solid #eef0f3;padding:2px 3px;text-align:center}
+  #ana th:first-child,#ana td:first-child{text-align:left;width:60%}
+  #ana tr.marca{background:#fff7ed}
+  #ana tr.marca td:first-child{color:#9a3412}
+  #ana .si{color:#15803d}
+  #ana .no{color:#c8ccd3}
+  #ana .caja{border:1px solid #eef0f3;border-radius:8px;padding:6px 8px;margin-bottom:5px}
+  #ana .caja b{display:block;color:#2b2f36;margin-bottom:1px}
+  #ana .sinrazon{border-color:#f3d3bd;background:#fdf6f1;color:#9a3412}
+  #ana .comun{margin-top:8px;color:#6b7280}
+  .cerrar{float:right;border:none;background:none;color:#a8b0bb;font-size:15px;cursor:pointer;
+          padding:0 0 0 8px;margin-top:-2px;line-height:1}
+  .cerrar:hover{color:#3d4450}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:700px){
+    #side{width:150px;flex:0 0 150px;padding:8px 6px}
+    .btn{padding:5px 7px;font-size:12px}
+    #ana,#cat,#info{width:calc(100vw - 180px)}
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <div class="brand">Cuál <b>sobra</b><span class="sub">Geometría</span></div>
+
+    <h2>Generar</h2>
+    <button id="gen">🎲 Otro conjunto</button>
+    <div class="fila">semilla <input type="number" id="sem" value="1" min="1" step="1"><button class="mini" id="resem" title="Volver a generar con esta semilla">↻</button></div>
+    <div class="fila" title="Cada nivel incluye las figuras de los anteriores">nivel <select id="niv">
+        <option value="1">Básico</option>
+        <option value="2" selected>Medio</option>
+        <option value="3">Avanzado</option></select></div>
+    <button class="act" id="tprops">Propiedades que puede usar ▾</button>
+    <div id="props"></div>
+
+    <h2>Casilla elegida</h2>
+    <div class="par">
+      <button class="act" id="aRotL" disabled>↺ 15°<kbd>L</kbd></button>
+      <button class="act" id="aRotR" disabled>↻ 15°<kbd>R</kbd></button>
+    </div>
+    <div class="par">
+      <button class="act" id="aMenos" disabled>− tamaño</button>
+      <button class="act" id="aMas" disabled>+ tamaño</button>
+    </div>
+    <button class="act" id="aEnd" disabled>⊾ Apoyar en un lado<kbd>E</kbd></button>
+    <button class="act" id="aCambia" disabled>▦ Cambiar la figura<kbd>C</kbd></button>
+    <div id="swatches"></div>
+    <div id="texs"></div>
+    <button class="act" id="aFijo" disabled>🔒 Fijarla al generar<kbd>F</kbd></button>
+    <button class="act" id="aDel" disabled>✕ Vaciar la casilla<kbd>Supr</kbd></button>
+
+    <h2>Colección</h2>
+    <button class="act" id="aAdd">＋ Guardar este conjunto</button>
+    <ul id="col"></ul>
+
+    <div class="note">La colección se queda guardada en este navegador. Con ⤓ Guardar te la llevas en un archivo.</div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn" id="bcat" title="Catálogo de figuras">▦ Figuras</button>
+      <button class="btn" id="bana" title="Tabla de propiedades y razones para dejar fuera cada figura">⊞ Análisis</button>
+      <span class="sep"></span>
+      <label class="chk" title="Numera las cuatro casillas"><input type="checkbox" id="shownum">Nº</label>
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar la colección en un archivo">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir una colección guardada">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir los conjuntos de un archivo a la colección">＋</button>
+      <button class="btn" id="png" title="Descargar el cartel en PNG">⤓ PNG</button>
+      <button class="btn" id="clear">Limpiar</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div class="panel" id="cat"></div>
+      <div class="panel" id="ana"></div>
+      <div class="panel" id="info"></div>
+      <div id="drop">Suelta aquí el archivo de conjuntos</div>
+    </div>
+  </main>
+</div>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LAS FIGURAS
+   La restricción que lo condiciona todo no es un ángulo: es la tabla de
+   Hunter (2018). Un conjunto WODB solo funciona si CADA UNA de las cuatro
+   figuras tiene alguna propiedad que la deja sola: o es la única que la
+   cumple, o la única que no la cumple. Todo el generador es la búsqueda de
+   cuatro figuras cuya tabla de propiedades cumpla eso.
+
+   Segunda decisión de fondo: todas las figuras se normalizan a ÁREA 1. Así
+   el tamaño no distingue a ninguna salvo que el docente lo cambie a mano, y
+   "es la más grande" no se cuela como razón fácil en todos los conjuntos.
+   ========================================================================= */
+var GR=Math.PI/180;
+
+function areaPol(p){
+  var s=0, n=p.length, i, j;
+  for(i=0;i<n;i++){ j=(i+1)%n; s+=p[i][0]*p[j][1]-p[j][0]*p[i][1]; }
+  return s/2;
+}
+/* centro de vértices al origen (toda simetría de la figura lo deja fijo)
+   y escala para que el área valga exactamente 1 */
+function norma(p){
+  if(areaPol(p)<0) p=p.slice().reverse();
+  var cx=0, cy=0, n=p.length, i;
+  for(i=0;i<n;i++){ cx+=p[i][0]; cy+=p[i][1]; }
+  cx/=n; cy/=n;
+  var q=p.map(function(v){ return [v[0]-cx, v[1]-cy]; });
+  var k=1/Math.sqrt(areaPol(q));
+  return q.map(function(v){ return [v[0]*k, v[1]*k]; });
+}
+function polar(angs,rads){
+  return angs.map(function(a,i){
+    var r=(typeof rads==='number')?rads:rads[i];
+    return [r*Math.cos(a*GR), r*Math.sin(a*GR)];
+  });
+}
+function seq(n,f){ var a=[], i; for(i=0;i<n;i++) a.push(f(i)); return a; }
+/* arco de circunferencia, con los extremos fuera: los pone quien lo llama */
+function arco(cx,cy,rx,ry,a0,a1,n){
+  return seq(n-1,function(i){
+    var t=(a0+(a1-a0)*(i+1)/n)*GR;
+    return [cx+rx*Math.cos(t), cy+ry*Math.sin(t)];
+  });
+}
+
+var R3=Math.sqrt(3);
+var PROTOS=[];
+/* El nivel es INCLUSIVO: el 2 trae también las del 1, y el 3 todas. Marca el
+   vocabulario que hace falta, no lo difícil que sea el cartel —cuatro figuras
+   del nivel 1 pueden dar un WODB más difícil que cuatro del 3—.
+     1 · Básico     se reconocen de un vistazo y tienen nombre propio
+     2 · Medio      aparecen al clasificar: hay que mirarles las propiedades
+     3 · Avanzado   solo compensan cuando las anteriores ya se manejan        */
+function P(id,nom,fam,niv,pts,giros,fijas,rectos){
+  PROTOS.push({id:id, nom:nom, fam:fam, niv:niv, pts:norma(pts),
+               giros:giros||[0,20], fijas:fijas||null, rectos:rectos||null,
+               curva:!!fijas});
+}
+
+/* --- triángulos ---------------------------------------------------------- */
+P('tri-equi','triángulo equilátero','tri',1,[[0,0],[1,0],[0.5,R3/2]],[0,180,25]);
+P('tri-iso','triángulo isósceles','tri',1,[[0,0],[1,0],[0.5,1.1]],[0,180,25]);
+P('tri-rect','triángulo rectángulo','tri',1,[[0,0],[1.4,0],[0,0.9]],[0,20,90]);
+P('tri-rect-iso','triángulo rectángulo isósceles','tri',2,[[0,0],[1,0],[0,1]],[0,20,135]);
+/* los obtusángulos no pueden ser mucho menos alargados que esto: si el ángulo
+   mayor pasa de 90°, la altura es menor que media base, y con área 1 la base
+   se va por encima de 2 unidades. Son ellos los que fijan la escala del cartel. */
+P('tri-obt','triángulo obtusángulo','tri',2,[[0,0],[1.6,0],[1.1,0.6]],[0,20]);
+P('tri-obt-iso','triángulo obtusángulo isósceles','tri',2,[[0,0],[2,0],[1,0.84]],[0,180,20]);
+P('tri-esc','triángulo acutángulo escaleno','tri',2,[[0,0],[1.4,0],[0.5429,0.8398]],[0,20]);
+
+/* --- cuadriláteros ------------------------------------------------------- */
+P('cuadrado','cuadrado','cua',1,[[0,0],[1,0],[1,1],[0,1]],[0,45,20]);
+P('rect','rectángulo','cua',1,[[0,0],[1.7,0],[1.7,1],[0,1]],[0,90,20]);
+P('rect-largo','rectángulo alargado','cua',2,[[0,0],[3,0],[3,1],[0,1]],[0,90,20]);
+P('rombo','rombo','cua',1,[[0,0],[0.9,-0.5],[1.8,0],[0.9,0.5]],[0,-29.0546,90]);
+P('romboide','romboide','cua',1,[[0,0],[1.6,0],[2.05,0.85],[0.45,0.85]],[0,20]);
+P('trap-iso','trapecio isósceles','cua',2,[[0,0],[1.8,0],[1.4,1],[0.4,1]],[0,180,20]);
+P('trap-rect','trapecio rectángulo','cua',2,[[0,0],[1.6,0],[1.6,0.6],[0,1.1]],[0,20,90]);
+P('trap-esc','trapecio escaleno','cua',2,[[0,0],[2,0],[1.5,0.9],[0.75,0.9]],[0,20]);
+P('cometa','cometa','cua',2,[[0,-0.6],[0.7,0],[0,1.4],[-0.7,0]],[0,20,180]);
+P('dardo','dardo (cóncavo)','cua',3,[[0,-0.1],[0.8,-0.5],[0,1.4],[-0.8,-0.5]],[0,20,180]);
+P('cuad-irreg','cuadrilátero irregular','cua',2,[[0,0],[1.8,0],[1.5,1.1],[0.1,0.6]],[0,20]);
+
+/* --- más polígonos ------------------------------------------------------- */
+P('penta-reg','pentágono regular','pol',1,polar(seq(5,function(i){return 90+72*i;}),1),[0,36,20]);
+P('casa','pentágono en casa','pol',1,[[0,0],[1,0],[1,1],[0.5,1.5],[0,1]],[0,180,20]);
+P('penta-irreg','pentágono irregular','pol',2,polar([95,158,212,295,352],[1,0.9,1.05,0.85,1.0]),[0,20]);
+P('penta-conc','pentágono cóncavo','pol',3,[[0,0],[0.8,0.55],[1.6,0],[1.6,1.2],[0,1.2]],[0,180,20]);
+P('hexa-reg','hexágono regular','pol',1,polar(seq(6,function(i){return 60*i;}),1),[0,30]);
+P('hexa-irreg','hexágono irregular','pol',2,polar([20,95,150,205,265,320],[0.78,1,0.82,1.1,0.9,1.05]),[0,20]);
+P('hexa-L','hexágono en L','pol',2,[[0,0],[2,0],[2,0.7],[0.7,0.7],[0.7,2],[0,2]],[0,90,20]);
+P('octo-reg','octógono regular','pol',2,polar(seq(8,function(i){return 22.5+45*i;}),1),[0,22.5]);
+P('cruz','cruz','pol',2,[[1,0],[2,0],[2,1],[3,1],[3,2],[2,2],[2,3],[1,3],[1,2],[0,2],[0,1],[1,1]],[0,45]);
+P('estrella5','estrella de cinco puntas','pol',1,
+  polar(seq(10,function(i){return 90+36*i;}),seq(10,function(i){return i%2?0.382:1;})),[0,36,18]);
+
+/* --- figuras con lados curvos --------------------------------------------
+   Se dibujan como polígonos de muchos lados (así el dibujo, el bbox y el
+   test de dentro/fuera son el mismo código para todas), pero sus propiedades
+   NO se calculan: van escritas a mano en `fijas`. Un círculo dibujado con 96
+   segmentos no es un polígono de 96 lados.                                  */
+var CIR={n:0,curva:1,equil:0,equia:0,recto:0,obt:0,conc:0,par:0,ejes:99,orden:99};
+function fij(o){ var r={}, k; for(k in CIR) r[k]=CIR[k]; for(k in o) r[k]=o[k]; return r; }
+
+P('circulo','círculo','cur',1, seq(96,function(i){ var t=i/96*360*GR; return [Math.cos(t),Math.sin(t)]; }),
+  [0], fij({}), []);
+P('elipse','elipse','cur',1, seq(96,function(i){ var t=i/96*360*GR; return [1.6*Math.cos(t),Math.sin(t)]; }),
+  [0,20,90], fij({ejes:2,orden:2}), []);
+P('semi','semicírculo','cur',2, [[-1,0],[1,0]].concat(arco(0,0,1,1,0,180,64)),
+  [0,180,20], fij({ejes:1,orden:1}), [0]);
+P('cuarto','cuarto de círculo','cur',3, [[0,0],[1,0]].concat(arco(0,0,1,1,0,90,48)).concat([[0,1]]),
+  [0,90,20], fij({ejes:1,orden:1,recto:1}), [0,90]);
+P('estadio','óvalo de pista','cur',3,
+  [[-0.7,-0.5],[0.7,-0.5]].concat(arco(0.7,0,0.5,0.5,-90,90,32)).concat([[0.7,0.5],[-0.7,0.5]]).concat(arco(-0.7,0,0.5,0.5,90,270,32)),
+  [0,90,20], fij({ejes:2,orden:2,par:1}), [0]);
+
+function proto(id){ for(var i=0;i<PROTOS.length;i++) if(PROTOS[i].id===id) return PROTOS[i]; return null; }
+
+/* Diámetro de una figura: la mayor distancia entre dos de sus vértices. Como
+   gire como gire su caja nunca pasa de ese ancho, sirve para elegir de una vez
+   la escala del cartel: la figura más larga del catálogo ocupa el 88 % de la
+   casilla y ninguna se sale. Si algún día se añade otra más larga, todas
+   encogen solas y siguen cabiendo.                                           */
+function diametro(pts){
+  var d=0, i, j;
+  for(i=0;i<pts.length;i++) for(j=i+1;j<pts.length;j++){
+    var dx=pts[i][0]-pts[j][0], dy=pts[i][1]-pts[j][1];
+    d=Math.max(d,Math.sqrt(dx*dx+dy*dy));
+  }
+  return d;
+}
+var DIAM=0;
+PROTOS.forEach(function(pr){ pr.diam=diametro(pr.pts); DIAM=Math.max(DIAM,pr.diam); });
+
+/* --- las propiedades que se miran --------------------------------------- */
+var PRED=[
+ {id:'L3',  fam:'lados', si:'tiene tres lados',              no:'no es un triángulo'},
+ {id:'L4',  fam:'lados', si:'tiene cuatro lados',            no:'no es un cuadrilátero'},
+ {id:'L5',  fam:'lados', si:'tiene cinco lados',             no:'no tiene cinco lados'},
+ {id:'L6',  fam:'lados', si:'tiene seis lados',              no:'no tiene seis lados'},
+ {id:'LM',  fam:'lados', si:'tiene más de seis lados',       no:'no tiene más de seis lados'},
+ {id:'CUR', fam:'lados', si:'tiene alguna línea curva',      no:'no tiene ninguna línea curva'},
+ {id:'EQL', fam:'lados', si:'tiene todos los lados iguales', no:'no tiene todos los lados iguales'},
+ {id:'EQA', fam:'ángulos', si:'tiene todos los ángulos iguales', no:'no tiene todos los ángulos iguales'},
+ {id:'REG', fam:'forma',   si:'es regular',                  no:'no es regular'},
+ {id:'REC', fam:'ángulos', si:'tiene algún ángulo recto',    no:'no tiene ningún ángulo recto'},
+ {id:'TREC',fam:'ángulos', si:'tiene todos los ángulos rectos', no:'no tiene todos los ángulos rectos'},
+ {id:'OBT', fam:'ángulos', si:'tiene algún ángulo obtuso',   no:'no tiene ningún ángulo obtuso'},
+ {id:'CON', fam:'forma',   si:'tiene algún ángulo entrante (es cóncava)', no:'no tiene ningún ángulo entrante'},
+ {id:'PAR', fam:'paralelismo', si:'tiene lados paralelos',   no:'no tiene ningún par de lados paralelos'},
+ {id:'PAR2',fam:'paralelismo', si:'tiene dos pares de lados paralelos', no:'no tiene dos pares de lados paralelos'},
+ {id:'SIM', fam:'simetría', si:'tiene algún eje de simetría',no:'no tiene ningún eje de simetría'},
+ {id:'SIM2',fam:'simetría', si:'tiene más de un eje de simetría', no:'no tiene más de un eje de simetría'},
+ {id:'GIR', fam:'simetría', si:'girándola menos de una vuelta coincide consigo misma',
+                            no:'no coincide consigo misma hasta dar la vuelta entera'},
+ {id:'HOR', fam:'posición', si:'se apoya en un lado horizontal', no:'no tiene ningún lado horizontal'},
+ /* Las de aquí abajo no son propiedades de la figura sino del cartel: no se
+    miran en el prototipo, sino comparando las cuatro casillas entre sí. El
+    tamaño el generador no lo toca nunca. El color y el relleno solo si se
+    marcan en el panel, y entonces no los busca: los reparte él. */
+ /* redactadas para que encajen detrás de «es la única que» */
+ {id:'MAY', fam:'aspecto', rel:1, gen:0, si:'ocupa más superficie que las otras tres', no:'no es la más grande'},
+ {id:'MEN', fam:'aspecto', rel:1, gen:0, si:'ocupa menos superficie que las otras tres', no:'no es la más pequeña'},
+ {id:'COL', fam:'color',   rel:1, si:'lleva un color que no llevan las otras',   no:'comparte el color con otra'},
+ {id:'TEX', fam:'relleno', rel:1, si:'lleva un relleno que no llevan las otras', no:'comparte el relleno con otra'}
+];
+var FAMS=['lados','ángulos','forma','paralelismo','simetría','posición'];
+/* Atributos no geométricos. En infantil y primer ciclo son atributos de pleno
+   derecho —clasificar por color y por relleno es lo mismo que hacen los
+   bloques lógicos—, pero en geometría tapan lo que interesa mirar: por eso
+   vienen apagados y hay que marcarlos a propósito. */
+var FAMSNG=['color','relleno'];
+var TEXTURAS=['liso','rayas','puntos','cuadrícula','sin relleno'];
+
+function valorPred(id,a,i,ctx){
+  switch(id){
+    case 'L3':  return a.n===3;
+    case 'L4':  return a.n===4;
+    case 'L5':  return a.n===5;
+    case 'L6':  return a.n===6;
+    case 'LM':  return a.n>6;
+    case 'CUR': return a.curva===1;
+    case 'EQL': return a.equil===1;
+    case 'EQA': return a.equia===1;
+    case 'REG': return a.equil===1 && a.equia===1;
+    case 'REC': return a.recto>0;
+    case 'TREC':return a.n>0 && a.recto===a.n;
+    case 'OBT': return a.obt>0;
+    case 'CON': return a.conc>0;
+    case 'PAR': return a.par>0;
+    case 'PAR2':return a.par>1;
+    case 'SIM': return a.ejes>0;
+    case 'SIM2':return a.ejes>1;
+    case 'GIR': return a.orden>1;
+    case 'HOR': return a.horiz>0;
+    case 'MAY': return ctx.areas.every(function(v,j){ return j===i || v<ctx.areas[i]-1e-9; });
+    case 'MEN': return ctx.areas.every(function(v,j){ return j===i || v>ctx.areas[i]+1e-9; });
+    case 'COL': return ctx.cols.filter(function(c){ return c===ctx.cols[i]; }).length===1;
+    case 'TEX': return ctx.texs.filter(function(c){ return c===ctx.texs[i]; }).length===1;
+  }
+  return false;
+}
+
+/* =========================================================================
+   2. ESTADO
+   ========================================================================= */
+var CELDA=210;                       // lado de casilla en unidades de mundo
+var UF=0.88/DIAM;                    // una unidad de figura, en fracción de casilla
+var COLORES=['#8fb8dd','#e8a09a','#f2cd60','#9ccf9c','#c3a6dd','#f0b27a',
+             '#a8c4d4','#d9d2c5','#7f9bb5','#ffffff'];
+var COLOR0='#8fb8dd';
+
+var figs=[null,null,null,null];      // {t,ang,esc,col,tex,dx,dy,fijo}
+var sel=-1;
+var semilla=1, nivel=2;
+var permit={};                       // familias que puede usar el generador
+FAMS.forEach(function(f){ permit[f]=1; });
+FAMSNG.forEach(function(f){ permit[f]=0; });
+var opt={num:0};
+var view={x:0,y:0,z:1};
+var coleccion=[], nCol=1;
+var undoStack=[], drag=null, importMode='replace';
+var flashMsg=null, flashT=0;
+var LSK='wodb.coleccion';
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint');
+var infoEl=document.getElementById('info'), catEl=document.getElementById('cat');
+var anaEl=document.getElementById('ana'), dropEl=document.getElementById('drop');
+var colEl=document.getElementById('col');
+
+function flash(m){ flashMsg=m; flashT=Date.now(); dibuja(); setTimeout(dibuja,2200); }
+function snapshot(){ return JSON.stringify({f:figs, s:semilla}); }
+function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length>80) undoStack.shift(); }
+function doUndo(){
+  if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var st=JSON.parse(undoStack.pop());
+  figs=st.f; semilla=st.s; document.getElementById('sem').value=semilla;
+  dibuja();
+}
+
+/* =========================================================================
+   3. GEOMETRÍA: LAS PROPIEDADES DE UNA FIGURA
+   Todo se calcula sobre el prototipo, que no cambia; lo único que depende
+   del giro es si la figura se apoya o no en un lado horizontal.
+   ========================================================================= */
+function analiza(pts){
+  var n=pts.length, i, L=[], D=[], A=[];
+  for(i=0;i<n;i++){
+    var a=pts[i], b=pts[(i+1)%n], c=pts[(i-1+n)%n];
+    L.push(Math.sqrt((b[0]-a[0])*(b[0]-a[0])+(b[1]-a[1])*(b[1]-a[1])));
+    D.push(Math.atan2(b[1]-a[1],b[0]-a[0])/GR);
+    var d1=Math.atan2(a[1]-c[1],a[0]-c[0])/GR;
+    var d2=Math.atan2(b[1]-a[1],b[0]-a[0])/GR;
+    var t=((d2-d1+180)%360+360)%360-180;      // giro exterior en (-180,180]
+    A.push(180-t);
+  }
+  var maxL=Math.max.apply(null,L), minL=Math.min.apply(null,L);
+  var maxA=Math.max.apply(null,A), minA=Math.min.apply(null,A);
+  var recto=0, obt=0, conc=0, j;
+  A.forEach(function(x){
+    if(Math.abs(x-90)<1e-3) recto++;
+    else if(x>90 && x<180-1e-3) obt++;
+    if(x>180+1e-3) conc++;
+  });
+  var par=0;
+  for(i=0;i<n;i++) for(j=i+1;j<n;j++){
+    var d=Math.abs(D[i]-D[j])%180;
+    if(Math.min(d,180-d)<1e-4) par++;
+  }
+  var s=simetrias(pts);
+  return {n:n, curva:0, equil:(maxL-minL<1e-6)?1:0, equia:(maxA-minA<1e-4)?1:0,
+          recto:recto, obt:obt, conc:conc, par:par,
+          ejes:s.ejes, orden:s.orden, dirs:D, angs:A, lados:L};
+}
+
+/* Toda isometría que deja la figura igual deja fijo el centro de sus
+   vértices, que la normalización ha puesto en el origen: basta con probar
+   los giros que llevan un vértice a otro y los ejes que pasan por un vértice
+   o por el punto medio de un lado. */
+function simetrias(pts){
+  var n=pts.length, i;
+  function mismoConjunto(q){
+    var usados=[], k, h;
+    for(i=0;i<n;i++) usados.push(false);
+    for(k=0;k<q.length;k++){
+      h=-1;
+      for(i=0;i<n;i++) if(!usados[i] && Math.abs(q[k][0]-pts[i][0])<1e-6 && Math.abs(q[k][1]-pts[i][1])<1e-6){ h=i; break; }
+      if(h<0) return false;
+      usados[h]=true;
+    }
+    return true;
+  }
+  var orden=0, vistosG=[], j, th, c, s;
+  var a0=Math.atan2(pts[0][1],pts[0][0]);
+  for(j=0;j<n;j++){
+    th=(Math.atan2(pts[j][1],pts[j][0])-a0+2*Math.PI)%(2*Math.PI);
+    if(vistosG.some(function(v){ return Math.abs(v-th)<1e-7; })) continue;
+    vistosG.push(th);
+    c=Math.cos(th); s=Math.sin(th);
+    if(mismoConjunto(pts.map(function(p){ return [p[0]*c-p[1]*s, p[0]*s+p[1]*c]; }))) orden++;
+  }
+  var cand=[], ejes=[];
+  for(j=0;j<n;j++){
+    cand.push(Math.atan2(pts[j][1],pts[j][0]));
+    var m=[(pts[j][0]+pts[(j+1)%n][0])/2, (pts[j][1]+pts[(j+1)%n][1])/2];
+    if(Math.abs(m[0])>1e-9 || Math.abs(m[1])>1e-9) cand.push(Math.atan2(m[1],m[0]));
+  }
+  cand.forEach(function(f){
+    var fm=((f%Math.PI)+Math.PI)%Math.PI;
+    for(var k=0;k<ejes.length;k++){
+      var d=Math.abs(ejes[k]-fm);
+      if(d<1e-7 || Math.abs(d-Math.PI)<1e-7) return;
+    }
+    var c2=Math.cos(2*fm), s2=Math.sin(2*fm);
+    if(mismoConjunto(pts.map(function(p){ return [p[0]*c2+p[1]*s2, p[0]*s2-p[1]*c2]; }))) ejes.push(fm);
+  });
+  return {ejes:ejes.length, orden:orden};
+}
+
+var cacheBase={};
+function base(pr){
+  if(cacheBase[pr.id]) return cacheBase[pr.id];
+  var b;
+  if(pr.fijas){
+    b={}; for(var k in pr.fijas) b[k]=pr.fijas[k];
+    b.dirs=(pr.rectos||[]).slice();
+  } else b=analiza(pr.pts);
+  cacheBase[pr.id]=b;
+  return b;
+}
+function horizontal(pr,ang){
+  var d=base(pr).dirs||[];
+  for(var i=0;i<d.length;i++){
+    var x=((d[i]+ang)%180+180)%180;
+    if(Math.min(x,180-x)<0.25) return 1;
+  }
+  return 0;
+}
+function props(pid,ang){
+  var pr=proto(pid); if(!pr) return null;
+  var b=base(pr), r={}, k;
+  for(k in b) if(k!=='dirs'&&k!=='angs'&&k!=='lados') r[k]=b[k];
+  r.horiz=horizontal(pr,ang);
+  return r;
+}
+function areaDe(f){ return f? f.esc*f.esc : 0; }   // el prototipo tiene área 1
+
+/* la tabla de Hunter: qué propiedad deja sola a cada figura */
+function tabla(fs){
+  var i, k, ctx={areas:[], cols:[], texs:[]};
+  for(i=0;i<4;i++){
+    ctx.areas.push(areaDe(fs[i]));
+    ctx.cols.push(fs[i]?fs[i].col:null);
+    ctx.texs.push(fs[i]?(fs[i].tex||0):null);
+  }
+  var vs=[];
+  for(i=0;i<4;i++) vs.push(fs[i]? props(fs[i].t, fs[i].ang) : null);
+  var filas=[], razones=[[],[],[],[]], comunes=[];
+  for(k=0;k<PRED.length;k++){
+    var col=[], nT=0, nF=0, huecos=0;
+    for(i=0;i<4;i++){
+      if(!vs[i]){ col.push(null); huecos++; continue; }
+      var v=valorPred(PRED[k].id, vs[i], i, ctx)?1:0;
+      col.push(v); if(v) nT++; else nF++;
+    }
+    var marca=0, quien=-1;
+    if(!huecos){
+      if(nT===1){ marca=1; quien=col.indexOf(1); }
+      else if(nF===1){ marca=-1; quien=col.indexOf(0); }
+      if(quien>=0) razones[quien].push({k:k, si:marca===1});
+      if(nT===4 && !PRED[k].rel) comunes.push(k);
+    }
+    if(nT>0) filas.push({k:k, col:col, marca:marca, quien:quien});
+  }
+  return {vs:vs, filas:filas, razones:razones, comunes:comunes,
+          completo:(figsLlenas(fs) && razones.every(function(r){ return r.length>0; }))};
+}
+function figsLlenas(fs){ return fs.every(function(f){ return !!f; }); }
+
+/* =========================================================================
+   4. EL GENERADOR
+   Busca cuatro figuras cuya tabla deje sola a cada una. Con la semilla a la
+   vista, el mismo número da siempre el mismo conjunto: toda la clase puede
+   trabajar sobre el mismo cartel y la autocomprobación puede probarlo.
+   ========================================================================= */
+function azar(s){
+  var x=(s|0)||1, i;
+  for(i=0;i<10;i++){ x^=x<<13; x|=0; x^=x>>>17; x^=x<<5; x|=0; }
+  return function(){ x^=x<<13; x|=0; x^=x>>>17; x^=x<<5; x|=0; return (x>>>0)/4294967296; };
+}
+
+/* Las propiedades de forma de una figura, en un número: cada bit, una
+   propiedad. Las de la familia `rel` no caben aquí porque no se miran en la
+   figura sino comparándola con las otras tres. */
+function mascara(pid,ang){
+  var a=props(pid,ang), m=0, k;
+  for(k=0;k<PRED.length;k++)
+    if(!PRED[k].rel && valorPred(PRED[k].id,a,0,{})) m|=(1<<k);
+  return m;
+}
+/* reserva de candidatos: cada prototipo permitido, en cada uno de sus giros */
+function reserva(niv){
+  var out=[];
+  PROTOS.forEach(function(pr){
+    if(pr.niv>niv) return;
+    pr.giros.forEach(function(g){ out.push({t:pr.id, ang:g, mask:mascara(pr.id,g)}); });
+  });
+  return out;
+}
+function usables(){
+  var m=0, k;
+  for(k=0;k<PRED.length;k++)
+    if(!PRED[k].rel && permit[PRED[k].fam]) m|=(1<<k);
+  return m;
+}
+/* atributos no geométricos marcados: el generador no los busca, los reparte */
+var ASIG=[{fam:'color', ap:'col'},{fam:'relleno', ap:'tex'}];
+function asignables(){
+  return ASIG.filter(function(a){ return !!permit[a.fam]; });
+}
+/* qué figuras quedan solas por su forma */
+function quienSale(ms,uso){
+  var k, i, fam=0, tot=0, tiene=[0,0,0,0];
+  for(k=0;k<PRED.length;k++){
+    if(!(uso&(1<<k))) continue;
+    var bit=1<<k, nT=0, quien=-1;
+    for(i=0;i<4;i++) if(ms[i]&bit){ nT++; quien=i; }
+    if(nT===1){ tiene[quien]=1; tot++; fam|=(1<<FAMS.indexOf(PRED[k].fam)); }
+    else if(nT===3){
+      for(i=0;i<4;i++) if(!(ms[i]&bit)) quien=i;
+      tiene[quien]=1; tot++; fam|=(1<<FAMS.indexOf(PRED[k].fam));
+    }
+  }
+  return {tiene:tiene, fam:fam, tot:tot};
+}
+/* Puntuación de una cuaterna: manda cuántas FAMILIAS distintas intervienen
+   —cuatro razones de la misma familia son cuatro veces la misma pregunta— y
+   luego cuántas razones hay en total. Devuelve -1 si alguna figura se queda
+   sin ninguna razón y no hay atributo no geométrico con el que rescatarla:
+   cada atributo marcado (color, relleno) puede dejar sola a UNA figura, y
+   solo si esa casilla no está fijada, porque a una fijada no se le toca ni
+   el color ni el relleno. */
+function puntua(ms,uso,nAsig,esLibre){
+  var r=quienSale(ms,uso), i, faltan=0;
+  for(i=0;i<4;i++) if(!r.tiene[i]){
+    faltan++;
+    if(esLibre && !esLibre[i]) return -1;
+  }
+  if(faltan>(nAsig||0)) return -1;
+  var nf=0; for(i=0;i<FAMS.length;i++) if(r.fam&(1<<i)) nf++;
+  return nf*10+r.tot-faltan*3;
+}
+
+function genera(sem,niv){
+  var R=azar(sem), pool=reserva(niv), uso=usables();
+  var asig=asignables(), nAsig=asig.length;
+  if(!uso && !nAsig) return {error:'No hay ninguna propiedad marcada: el generador no tiene con qué distinguir las figuras.'};
+  if(pool.length<4) return {error:'No hay suficientes figuras en ese nivel.'};
+
+  var libres=[], esLibre=[false,false,false,false], i, k;
+  for(i=0;i<4;i++) if(!(figs[i] && figs[i].fijo)){ libres.push(i); esLibre[i]=true; }
+  if(!libres.length) return {error:'Las cuatro casillas están fijadas: suelta alguna con 🔒.'};
+  if(nAsig>libres.length) nAsig=libres.length;
+
+  var fijadas=[];
+  for(i=0;i<4;i++) fijadas.push(figs[i] && figs[i].fijo ? figs[i] : null);
+  var maskFijas=fijadas.map(function(f){ return f? mascara(f.t,f.ang) : null; });
+
+  /* si el espacio de búsqueda es pequeño se recorre entero; si no, se muestrea */
+  var combos=Math.pow(pool.length,libres.length);
+  var exhaustivo=combos<=12000;
+  var intentos=exhaustivo?combos:9000;
+  var mejor=-1, buenos=[], idx=[], n=libres.length;
+
+  for(i=0;i<n;i++) idx.push(0);
+  var c;
+  for(c=0;c<intentos;c++){
+    var elec=[], ok=true, j;
+    if(exhaustivo){
+      var v=c;
+      for(j=0;j<n;j++){ elec.push(pool[v%pool.length]); v=Math.floor(v/pool.length); }
+    } else {
+      for(j=0;j<n;j++) elec.push(pool[Math.floor(R()*pool.length)]);
+    }
+    var tipos=[], ms=[];
+    for(i=0;i<4;i++){ ms.push(null); }
+    for(i=0;i<4;i++) if(fijadas[i]){ ms[i]=maskFijas[i]; tipos.push(fijadas[i].t); }
+    for(j=0;j<n;j++){
+      if(tipos.indexOf(elec[j].t)>=0){ ok=false; break; }
+      tipos.push(elec[j].t);
+      ms[libres[j]]=elec[j].mask;
+    }
+    if(!ok) continue;
+    var sc=puntua(ms,uso,nAsig,esLibre);
+    if(sc<0) continue;
+    if(sc>mejor){ mejor=sc; buenos=[elec]; }
+    else if(sc===mejor && buenos.length<400) buenos.push(elec);
+  }
+  if(mejor<0) return {error:'No he encontrado ningún conjunto que deje fuera a las cuatro con esas condiciones. Prueba a soltar alguna figura fijada, a marcar más propiedades o a ampliar el nivel.'};
+
+  var elegido=buenos[Math.floor(R()*buenos.length)];
+  var salida=fijadas.slice();
+  for(j=0;j<n;j++)
+    salida[libres[j]]={t:elegido[j].t, ang:elegido[j].ang, esc:1, col:COLOR0, tex:0, dx:0, dy:0, fijo:false};
+  reparteAtributos(salida,uso,asig,libres,R);
+  return {figs:salida, puntos:mejor};
+}
+/* Reparte los atributos no geométricos marcados. Cada uno va a una casilla
+   distinta, y primero a las que se han quedado sin razón de forma: son las que
+   dependen de él para poder sobrar. Si ninguna lo necesita, va a una cualquiera
+   —tener dos razones no estorba— pero nunca a una casilla fijada, que se
+   respeta tal cual estaba. */
+function reparteAtributos(fs,uso,asig,libres,R){
+  if(!asig.length) return;
+  var ms=fs.map(function(f){ return mascara(f.t,f.ang); });
+  var tiene=quienSale(ms,uso).tiene;
+  var pend=[], i;
+  libres.forEach(function(i2){ if(!tiene[i2]) pend.push(i2); });
+  var usadas=[];
+  asig.forEach(function(a){
+    var destino=-1;
+    for(i=0;i<pend.length;i++) if(usadas.indexOf(pend[i])<0){ destino=pend[i]; break; }
+    if(destino<0){
+      var cand=libres.filter(function(x){ return usadas.indexOf(x)<0; });
+      if(!cand.length) return;
+      destino=cand[Math.floor(R()*cand.length)];
+    }
+    usadas.push(destino);
+    if(a.ap==='col') fs[destino].col=COLORES[1+Math.floor(R()*5)];   // ni el de siempre ni el blanco
+    else fs[destino].tex=1+Math.floor(R()*(TEXTURAS.length-1));
+  });
+}
+
+function generar(sem){
+  var r=genera(sem,nivel);
+  if(r.error){ flash(r.error); return false; }
+  pushUndo();
+  figs=r.figs; semilla=sem;
+  document.getElementById('sem').value=sem;
+  sel=-1; dibuja(); return true;
+}
+
+/* =========================================================================
+   5. DIBUJO
+   pintaTablero sirve para el lienzo, para el PNG y para las miniaturas de la
+   colección: un solo sitio donde se decide cómo se ve un conjunto.
+   ========================================================================= */
+function puntosDe(f,cx,cy,lado){
+  var pr=proto(f.t); if(!pr) return null;
+  var s=f.esc*UF*lado, a=f.ang*GR, c=Math.cos(a), sn=Math.sin(a);
+  var q=pr.pts.map(function(p){
+    return [(p[0]*c-p[1]*sn)*s, -(p[0]*sn+p[1]*c)*s];   // -y: la pantalla crece hacia abajo
+  });
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  q.forEach(function(p){ x0=Math.min(x0,p[0]); y0=Math.min(y0,p[1]);
+                         x1=Math.max(x1,p[0]); y1=Math.max(y1,p[1]); });
+  var ox=cx-(x0+x1)/2, oy=cy-(y0+y1)/2;        // la caja de la figura, centrada en la casilla
+  return q.map(function(p){ return [p[0]+ox, p[1]+oy]; });
+}
+/* ancho y alto que ocupa la figura ya girada, en píxeles */
+function cajaDe(f,lado){
+  var pts=puntosDe(f,0,0,lado);
+  if(!pts) return {w:0,h:0};
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  pts.forEach(function(p){ x0=Math.min(x0,p[0]); y0=Math.min(y0,p[1]);
+                           x1=Math.max(x1,p[0]); y1=Math.max(y1,p[1]); });
+  return {w:x1-x0, h:y1-y0};
+}
+/* cuánto se puede mover dentro de la casilla sin salirse */
+function margen(f,lado){
+  var c=cajaDe(f,lado);
+  return {x:Math.max(0,(lado-c.w)/2-2)/lado, y:Math.max(0,(lado-c.h)/2-2)/lado};
+}
+/* mezcla un color con el gris oscuro del contorno: 0 lo deja igual, 1 lo apaga
+   del todo. Sirve para la trama y para el contorno de las figuras sin relleno,
+   que así siguen teniendo color a la vista.                                   */
+function apaga(hex,f){
+  var r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  return 'rgb('+Math.round(r*(1-f)+60*f)+','+Math.round(g*(1-f)+70*f)+','+Math.round(b*(1-f)+82*f)+')';
+}
+/* La trama se dibuja recortada a la figura y anclada a su caja, para que no
+   se mueva por dentro al arrastrarla, y con el paso proporcional al tamaño
+   del cartel, para que valga igual en el lienzo, en el PNG y en la miniatura. */
+function pintaTrama(o,pts,col,tex,linea){
+  var x0=1e9,y0=1e9,x1=-1e9,y1=-1e9, x, y;
+  pts.forEach(function(p){ x0=Math.min(x0,p[0]); y0=Math.min(y0,p[1]);
+                           x1=Math.max(x1,p[0]); y1=Math.max(y1,p[1]); });
+  var paso=Math.max(4,linea*5.5), alto=y1-y0;
+  o.save(); o.clip();
+  o.strokeStyle=apaga(col,0.55); o.fillStyle=apaga(col,0.55);
+  o.lineWidth=Math.max(1,linea*0.95);
+  o.beginPath();
+  if(tex===1){                                     // rayas en diagonal
+    for(x=x0-alto;x<=x1;x+=paso){ o.moveTo(x,y1); o.lineTo(x+alto,y0); }
+    o.stroke();
+  } else if(tex===2){                              // puntos
+    var r=Math.max(1,linea*1.3);
+    for(y=y0+paso/2;y<=y1;y+=paso) for(x=x0+paso/2;x<=x1;x+=paso){
+      o.moveTo(x+r,y); o.arc(x,y,r,0,2*Math.PI);
+    }
+    o.fill();
+  } else {                                         // cuadrícula
+    for(x=x0+paso/2;x<=x1;x+=paso){ o.moveTo(x,y0); o.lineTo(x,y1); }
+    for(y=y0+paso/2;y<=y1;y+=paso){ o.moveTo(x0,y); o.lineTo(x1,y); }
+    o.stroke();
+  }
+  o.restore();
+}
+function trazo(o,pts){
+  var i;
+  o.beginPath();
+  o.moveTo(pts[0][0],pts[0][1]);
+  for(i=1;i<pts.length;i++) o.lineTo(pts[i][0],pts[i][1]);
+  o.closePath();
+}
+function pintaFigura(o,pts,col,linea,tex){
+  tex=tex||0;
+  trazo(o,pts);
+  o.fillStyle=(tex===4)?'#fff':col; o.fill();
+  if(tex>=1 && tex<=3) pintaTrama(o,pts,col,tex,linea);
+  trazo(o,pts);        // la trama deja su propio trazado: hay que rehacer el de la
+  o.lineWidth=(tex===4)?linea*2.4:linea;                 // figura antes de perfilarla,
+  o.strokeStyle=(tex===4)?apaga(col,0.35):'#3c4652';     // o se repintan las rayas sin
+  o.lineJoin='round'; o.stroke();                        // recortar y se salen fuera
+}
+/* dibuja el cartel de 2x2 de lado S con la esquina en (X,Y) */
+function pintaTablero(o,fs,X,Y,S,op){
+  op=op||{};
+  var celda=S/2, i, col, fil;
+  o.save();
+  o.beginPath(); o.rect(X,Y,S,S); o.fillStyle='#fff'; o.fill();
+  for(i=0;i<4;i++){
+    col=i%2; fil=(i-col)/2;
+    var f=fs[i];
+    if(!f) continue;
+    var cx=X+celda*(col+0.5)+(f.dx||0)*celda, cy=Y+celda*(fil+0.5)+(f.dy||0)*celda;
+    var pts=puntosDe(f,cx,cy,celda);
+    if(!pts) continue;
+    if(!pts.every(function(p){ return isFinite(p[0])&&isFinite(p[1]); })) continue;
+    pintaFigura(o,pts,f.col||COLOR0,Math.max(1,S/460),f.tex||0);
+  }
+  o.beginPath();
+  o.moveTo(X+celda,Y); o.lineTo(X+celda,Y+S);
+  o.moveTo(X,Y+celda); o.lineTo(X+S,Y+celda);
+  o.rect(X,Y,S,S);
+  o.lineWidth=Math.max(1,S/380); o.strokeStyle='#c3c9d2'; o.stroke();
+  if(op.num){
+    o.fillStyle='#9aa1ab'; o.font=Math.round(S/34)+'px -apple-system,Segoe UI,Roboto,sans-serif';
+    o.textBaseline='top';
+    for(i=0;i<4;i++){
+      col=i%2; fil=(i-col)/2;
+      o.fillText(String(i+1), X+celda*col+S/56, Y+celda*fil+S/56);
+    }
+  }
+  o.restore();
+}
+
+function w2s(x,y){ return [view.x+x*view.z, view.y+y*view.z]; }
+function s2w(x,y){ return [(x-view.x)/view.z, (y-view.y)/view.z]; }
+
+function dibuja(){
+  var r=stage.getBoundingClientRect(), W=r.width, H=r.height;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#f7f8fa'; ctx.fillRect(0,0,W,H);
+  var o=w2s(0,0), S=2*CELDA*view.z;
+  ctx.save();
+  ctx.shadowColor='rgba(20,25,35,.10)'; ctx.shadowBlur=18; ctx.shadowOffsetY=3;
+  ctx.fillStyle='#fff'; ctx.fillRect(o[0],o[1],S,S);
+  ctx.restore();
+  pintaTablero(ctx,figs,o[0],o[1],S,opt);
+  if(sel>=0){
+    var c=sel%2, fl=(sel-c)/2, celda=S/2;
+    ctx.strokeStyle='#2f62a8'; ctx.lineWidth=2.5;
+    ctx.strokeRect(o[0]+celda*c+1.5, o[1]+celda*fl+1.5, celda-3, celda-3);
+  }
+  for(var i=0;i<4;i++){
+    if(!(figs[i] && figs[i].fijo)) continue;
+    var cc=i%2, ff=(i-cc)/2, cd=S/2;
+    ctx.fillStyle='#9a3412'; ctx.font=Math.round(Math.max(11,cd/16))+'px -apple-system,Segoe UI,Roboto,sans-serif';
+    ctx.textBaseline='bottom';
+    ctx.fillText('🔒', o[0]+cd*cc+6, o[1]+cd*(ff+1)-5);
+  }
+  actualizaUI();
+}
+
+/* =========================================================================
+   6. INTERACCIÓN
+   ========================================================================= */
+var dpr=1;
+function resize(){
+  var r=stage.getBoundingClientRect();
+  dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr));
+  cv.height=Math.max(1,Math.round(r.height*dpr));
+  dibuja();
+}
+function ajusta(){
+  var r=stage.getBoundingClientRect();
+  var m=34, z=Math.min((r.width-2*m)/(2*CELDA), (r.height-2*m)/(2*CELDA));
+  view.z=Math.max(0.2,Math.min(3,z));
+  view.x=r.width/2-CELDA*view.z; view.y=r.height/2-CELDA*view.z;
+  dibuja();
+}
+function casillaEn(sx,sy){
+  var p=s2w(sx,sy);
+  if(p[0]<0||p[1]<0||p[0]>2*CELDA||p[1]>2*CELDA) return -1;
+  return (p[1]>CELDA?2:0)+(p[0]>CELDA?1:0);
+}
+function dentro(f,i,sx,sy){
+  if(!f) return false;
+  var o=w2s(0,0), S=2*CELDA*view.z, celda=S/2;
+  var c=i%2, fl=(i-c)/2;
+  var cx=o[0]+celda*(c+0.5)+(f.dx||0)*celda, cy=o[1]+celda*(fl+0.5)+(f.dy||0)*celda;
+  var pts=puntosDe(f,cx,cy,celda);
+  if(!pts) return false;
+  var j,k,hit=false;
+  for(j=0,k=pts.length-1;j<pts.length;k=j++){
+    if(((pts[j][1]>sy)!==(pts[k][1]>sy)) &&
+       (sx<(pts[k][0]-pts[j][0])*(sy-pts[j][1])/(pts[k][1]-pts[j][1])+pts[j][0])) hit=!hit;
+  }
+  return hit;
+}
+
+cv.addEventListener('pointerdown',function(e){
+  var r=stage.getBoundingClientRect(), sx=e.clientX-r.left, sy=e.clientY-r.top;
+  var i=casillaEn(sx,sy);
+  if(i<0){ drag={modo:'pan', x:sx, y:sy, vx:view.x, vy:view.y}; cv.setPointerCapture(e.pointerId); return; }
+  sel=i;
+  if(dentro(figs[i],i,sx,sy)){
+    pushUndo();
+    drag={modo:'fig', i:i, x:sx, y:sy, dx:figs[i].dx, dy:figs[i].dy};
+    cv.setPointerCapture(e.pointerId);
+  }
+  dibuja();
+});
+cv.addEventListener('pointermove',function(e){
+  if(!drag) return;
+  var r=stage.getBoundingClientRect(), sx=e.clientX-r.left, sy=e.clientY-r.top;
+  if(drag.modo==='pan'){ view.x=drag.vx+(sx-drag.x); view.y=drag.vy+(sy-drag.y); dibuja(); return; }
+  var celda=CELDA*view.z;
+  var f=figs[drag.i]; if(!f) return;
+  var m=margen(f,celda);
+  f.dx=Math.max(-m.x,Math.min(m.x, drag.dx+(sx-drag.x)/celda));
+  f.dy=Math.max(-m.y,Math.min(m.y, drag.dy+(sy-drag.y)/celda));
+  dibuja();
+});
+function finDrag(e){ if(drag){ drag=null; try{ cv.releasePointerCapture(e.pointerId); }catch(err){} } }
+cv.addEventListener('pointerup',finDrag);
+cv.addEventListener('pointercancel',finDrag);
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var r=stage.getBoundingClientRect(), sx=e.clientX-r.left, sy=e.clientY-r.top;
+  var a=s2w(sx,sy);
+  view.z=Math.max(0.2,Math.min(3, view.z*(e.deltaY<0?1.12:1/1.12)));
+  var b=w2s(a[0],a[1]);
+  view.x+=sx-b[0]; view.y+=sy-b[1];
+  dibuja();
+},{passive:false});
+
+function conFigura(fn){
+  if(sel<0){ flash('Elige antes una casilla'); return; }
+  if(!figs[sel]){ flash('Esa casilla está vacía: ▦ Figuras para poner una'); return; }
+  pushUndo(); fn(figs[sel]); dibuja();
+}
+function gira(d){ conFigura(function(f){ f.ang=((f.ang+d)%360+360)%360; f.fijo=f.fijo; }); }
+function escala(k){ conFigura(function(f){ f.esc=Math.max(0.45,Math.min(1.9, f.esc*k)); }); }
+function endereza(){
+  conFigura(function(f){
+    var pr=proto(f.t), d=base(pr).dirs||[];
+    if(!d.length){ f.ang=0; return; }
+    var mejor=0, dist=1e9;
+    d.forEach(function(x){
+      var t=((x+f.ang)%180+180)%180;
+      var giro=(t<=90)? -t : (180-t);
+      if(Math.abs(giro)<dist){ dist=Math.abs(giro); mejor=giro; }
+    });
+    f.ang=((f.ang+mejor)%360+360)%360;
+  });
+}
+
+document.addEventListener('keydown',function(e){
+  var t=e.target.tagName;
+  if(t==='INPUT'||t==='SELECT'||t==='TEXTAREA') return;
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='z'){ e.preventDefault(); doUndo(); return; }
+  var k=e.key.toLowerCase();
+  if(k==='r'){ gira(15); e.preventDefault(); }
+  else if(k==='l'){ gira(-15); e.preventDefault(); }
+  else if(k==='e'){ endereza(); e.preventDefault(); }
+  else if(k==='c'){ togglePanel(catEl); e.preventDefault(); }
+  else if(k==='f'){ fijar(); e.preventDefault(); }
+  else if(k==='+'||k==='='){ escala(1.12); e.preventDefault(); }
+  else if(k==='-'){ escala(1/1.12); e.preventDefault(); }
+  else if(k==='delete'||k==='backspace'){ vaciar(); e.preventDefault(); }
+  else if(k>='1'&&k<='4'){ sel=parseInt(k,10)-1; dibuja(); }
+});
+
+function fijar(){
+  if(sel<0||!figs[sel]){ flash('Elige antes una casilla con figura'); return; }
+  pushUndo(); figs[sel].fijo=!figs[sel].fijo; dibuja();
+}
+function vaciar(){
+  if(sel<0){ flash('Elige antes una casilla'); return; }
+  if(!figs[sel]) return;
+  pushUndo(); figs[sel]=null; dibuja();
+}
+
+/* =========================================================================
+   7. INTERFAZ
+   ========================================================================= */
+function togglePanel(p){
+  [catEl,anaEl,infoEl].forEach(function(q){ if(q!==p) q.classList.remove('show'); });
+  p.classList.toggle('show');
+  if(p===anaEl && p.classList.contains('show')) pintaAnalisis();
+  actualizaUI();
+}
+document.getElementById('bcat').addEventListener('click',function(){ togglePanel(catEl); });
+document.getElementById('bana').addEventListener('click',function(){ togglePanel(anaEl); });
+document.getElementById('help').addEventListener('click',function(){ togglePanel(infoEl); });
+
+/* --- catálogo ------------------------------------------------------------ */
+var GRUPOS=[['tri','Triángulos'],['cua','Cuadriláteros'],['pol','Más polígonos'],['cur','Con lados curvos']];
+function pintaCatalogo(){
+  var h='<button class="cerrar" id="xcat">✕</button><b>Catálogo de figuras</b><br>'+
+        'Elige una casilla del cartel y haz clic en una figura para ponerla ahí.';
+  GRUPOS.forEach(function(g){
+    h+='<h3>'+g[1]+'</h3><div class="rej">';
+    PROTOS.forEach(function(pr){
+      if(pr.fam!==g[0]) return;
+      h+='<canvas width="96" height="96" data-p="'+pr.id+'" title="'+pr.nom+'"></canvas>';
+    });
+    h+='</div>';
+  });
+  catEl.innerHTML=h;
+  catEl.querySelectorAll('canvas[data-p]').forEach(function(c){
+    var o=c.getContext('2d'), pr=proto(c.dataset.p);
+    o.fillStyle='#fff'; o.fillRect(0,0,96,96);
+    var pts=puntosDe({t:pr.id,ang:0,esc:1,dx:0,dy:0},48,48,96);
+    if(pts) pintaFigura(o,pts,COLOR0,1.6);
+    c.addEventListener('click',function(){
+      if(sel<0){ flash('Elige antes una casilla del cartel'); return; }
+      pushUndo();
+      var antes=figs[sel];
+      figs[sel]={t:pr.id, ang:0, esc:antes?antes.esc:1, col:antes?antes.col:COLOR0,
+                 tex:antes?(antes.tex||0):0, dx:0, dy:0, fijo:antes?antes.fijo:false};
+      dibuja();
+      if(anaEl.classList.contains('show')) pintaAnalisis();
+    });
+  });
+  document.getElementById('xcat').addEventListener('click',function(){ catEl.classList.remove('show'); actualizaUI(); });
+}
+
+/* --- análisis: la tabla de Hunter ---------------------------------------- */
+var POS=['↖ arriba izquierda','↗ arriba derecha','↙ abajo izquierda','↘ abajo derecha'];
+var POSC=['↖','↗','↙','↘'];
+function textoRazon(r){ return PRED[r.k][r.si?'si':'no']; }
+function fraseRazones(rs){
+  if(!rs.length) return '';
+  if(rs.length===1) return 'es la única que '+textoRazon(rs[0])+'.';
+  return 'es la única que: '+rs.map(textoRazon).join('; ')+'.';
+}
+function pintaAnalisis(){
+  var t=tabla(figs), h='<button class="cerrar" id="xana">✕</button><b>Análisis del conjunto</b><br>'+
+        '<span style="color:#8a919c">Esto es la respuesta: tenlo cerrado mientras la clase mira el cartel.</span>';
+  var i;
+  if(!figsLlenas(figs)){
+    h+='<div style="margin-top:8px">Faltan figuras: el análisis necesita las cuatro casillas llenas.</div>';
+  } else {
+    for(i=0;i<4;i++){
+      var rs=t.razones[i];
+      h+='<div class="caja'+(rs.length?'':' sinrazon')+'"><b>'+POS[i]+'</b>'+
+         (rs.length? 'puede sobrar porque '+fraseRazones(rs)
+           : 'no hay ninguna propiedad de la lista que la deje sola.')+'</div>';
+    }
+    if(t.comunes.length)
+      h+='<div class="comun"><b>Las cuatro:</b> '+t.comunes.map(function(k){ return PRED[k].si; }).join(' · ')+'.</div>';
+    h+='<table><tr><th>propiedad</th>'+POSC.map(function(p){ return '<th>'+p+'</th>'; }).join('')+'</tr>';
+    t.filas.forEach(function(f){
+      h+='<tr class="'+(f.marca?'marca':'')+'"><td>'+PRED[f.k].si+'</td>'+
+         f.col.map(function(v){ return '<td class="'+(v?'si':'no')+'">'+(v?'✓':'✗')+'</td>'; }).join('')+'</tr>';
+    });
+    h+='</table><div style="margin-top:7px;color:#8a919c">Solo salen las propiedades que cumple alguna de las cuatro. '+
+       'Las filas naranjas son las que dejan sola a una figura. Las cuatro últimas no son propiedades de la figura '+
+       'sino del cartel: el tamaño el generador no lo toca, y el color y el relleno solo si los marcas en '+
+       '«Propiedades que puede usar».</div>'+
+       '<button class="mini" id="cpana" style="margin-top:8px">Copiar el análisis</button>';
+  }
+  anaEl.innerHTML=h;
+  document.getElementById('xana').addEventListener('click',function(){ anaEl.classList.remove('show'); actualizaUI(); });
+  var cp=document.getElementById('cpana');
+  if(cp) cp.addEventListener('click',function(){
+    var txt='WODB · semilla '+semilla+'\n\n';
+    for(var i=0;i<4;i++){
+      var rs=t.razones[i];
+      txt+=POS[i]+': '+proto(figs[i].t).nom+'\n  '+
+        (rs.length? fraseRazones(rs) : 'sin razón de forma que la deje sola.')+'\n';
+    }
+    txt+='\n';
+    t.filas.forEach(function(f){
+      txt+=(f.marca?'* ':'  ')+PRED[f.k].si+'   '+f.col.map(function(v){ return v?'si':'no'; }).join('  ')+'\n';
+    });
+    var ta=document.createElement('textarea'); ta.value=txt; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+}
+
+/* --- panel de propiedades permitidas ------------------------------------- */
+function pintaProps(){
+  var el=document.getElementById('props'), h='';
+  FAMS.forEach(function(f){
+    h+='<label><input type="checkbox" data-f="'+f+'"'+(permit[f]?' checked':'')+'>'+f+'</label>';
+  });
+  h+='<div class="ng">no geométricos</div>';
+  FAMSNG.forEach(function(f){
+    h+='<label><input type="checkbox" data-f="'+f+'"'+(permit[f]?' checked':'')+'>'+f+'</label>';
+  });
+  el.innerHTML=h;
+  el.querySelectorAll('input').forEach(function(c){
+    c.addEventListener('change',function(){ permit[c.dataset.f]=c.checked?1:0; });
+  });
+}
+document.getElementById('tprops').addEventListener('click',function(){
+  document.getElementById('props').classList.toggle('show');
+});
+
+/* --- colores y rellenos --------------------------------------------------- */
+(function(){
+  var h='';
+  COLORES.forEach(function(c){ h+='<button class="sw" data-c="'+c+'" style="background:'+c+'"></button>'; });
+  document.getElementById('swatches').innerHTML=h;
+  document.querySelectorAll('.sw').forEach(function(b){
+    b.addEventListener('click',function(){
+      conFigura(function(f){ f.col=b.dataset.c; });
+      if(anaEl.classList.contains('show')) pintaAnalisis();
+    });
+  });
+  h='';
+  TEXTURAS.forEach(function(t,i){ h+='<canvas width="60" height="60" data-t="'+i+'" title="'+t+'"></canvas>'; });
+  document.getElementById('texs').innerHTML=h;
+  document.querySelectorAll('#texs canvas').forEach(function(c){
+    var o=c.getContext('2d'), t=parseInt(c.dataset.t,10);
+    o.fillStyle='#fff'; o.fillRect(0,0,60,60);
+    pintaFigura(o,[[8,8],[52,8],[52,52],[8,52]],COLOR0,1.6,t);
+    c.addEventListener('click',function(){
+      conFigura(function(f){ f.tex=t; });
+      if(anaEl.classList.contains('show')) pintaAnalisis();
+    });
+  });
+})();
+
+/* --- colección ----------------------------------------------------------- */
+function guardaLS(){
+  try{ localStorage.setItem(LSK, JSON.stringify({v:1, n:nCol, c:coleccion})); }catch(e){}
+}
+function leeLS(){
+  try{
+    var d=JSON.parse(localStorage.getItem(LSK)||'null');
+    if(d && d.c && d.c.length){
+      coleccion=d.c.map(function(x){ return {nombre:String(x.nombre||'WODB'), semilla:x.semilla|0, figs:limpiaFiguras(x.figs)}; });
+      nCol=d.n|0 || coleccion.length+1;
+    }
+  }catch(e){}
+}
+function mismoConjunto(a,b){ return JSON.stringify(a)===JSON.stringify(b); }
+function addColeccion(){
+  if(!figsLlenas(figs)){ flash('Guarda conjuntos con las cuatro casillas llenas'); return; }
+  for(var i=0;i<coleccion.length;i++)
+    if(mismoConjunto(coleccion[i].figs,figs)){ flash('Ese conjunto ya está en la colección'); return; }
+  coleccion.push({nombre:'WODB '+(nCol++), semilla:semilla, figs:JSON.parse(JSON.stringify(figs))});
+  guardaLS(); pintaColeccion();
+  flash('Guardado · '+coleccion.length+' conjunto'+(coleccion.length===1?'':'s')+' en la colección');
+}
+function pintaColeccion(){
+  if(!coleccion.length){
+    colEl.innerHTML='<div class="vacio">Todavía no has guardado ninguno. Con ＋ se guarda el que está en pantalla.</div>';
+    return;
+  }
+  var h='';
+  coleccion.forEach(function(c,i){
+    h+='<li><canvas width="80" height="80" style="width:40px;height:40px" data-i="'+i+'"></canvas>'+
+       '<input class="nm" data-i="'+i+'" value="'+String(c.nombre).replace(/"/g,'&quot;')+'">'+
+       '<button data-x="'+i+'" title="Quitar de la colección">✕</button></li>';
+  });
+  colEl.innerHTML=h;
+  colEl.querySelectorAll('canvas').forEach(function(cn){
+    var o=cn.getContext('2d'), c=coleccion[cn.dataset.i|0];
+    o.fillStyle='#fff'; o.fillRect(0,0,80,80);
+    pintaTablero(o,c.figs,1,1,78,{});
+    cn.addEventListener('click',function(){
+      pushUndo();
+      figs=JSON.parse(JSON.stringify(c.figs)); semilla=c.semilla||semilla;
+      document.getElementById('sem').value=semilla;
+      sel=-1; dibuja();
+      if(anaEl.classList.contains('show')) pintaAnalisis();
+    });
+  });
+  /* los nombres se actualizan sin volver a pintar la lista: si no, al
+     escribir una letra el cursor se sale de la casilla */
+  colEl.querySelectorAll('input.nm').forEach(function(inp){
+    inp.addEventListener('input',function(){ coleccion[inp.dataset.i|0].nombre=inp.value; guardaLS(); });
+  });
+  colEl.querySelectorAll('button[data-x]').forEach(function(b){
+    b.addEventListener('click',function(){
+      coleccion.splice(b.dataset.x|0,1); guardaLS(); pintaColeccion();
+    });
+  });
+}
+document.getElementById('aAdd').addEventListener('click',addColeccion);
+
+/* --- guardar y abrir ----------------------------------------------------- */
+function limpiaFiguras(lista){
+  var out=[null,null,null,null];
+  if(!Array.isArray(lista)) return out;
+  for(var i=0;i<4 && i<lista.length;i++){
+    var f=lista[i];
+    if(!f || !proto(f.t)) continue;
+    var ang=parseFloat(f.ang), esc=parseFloat(f.esc), dx=parseFloat(f.dx), dy=parseFloat(f.dy);
+    var tex=parseInt(f.tex,10);
+    var g={t:f.t,
+           ang:isFinite(ang)?((ang%360)+360)%360:0,
+           esc:isFinite(esc)?Math.max(0.3,Math.min(2.5,esc)):1,
+           col:(typeof f.col==='string' && /^#[0-9a-fA-F]{6}$/.test(f.col))?f.col:COLOR0,
+           tex:(tex>=0 && tex<TEXTURAS.length)?tex:0,
+           dx:0, dy:0, fijo:!!f.fijo};
+    var m=margen(g,1000);                         // que no venga corrida fuera de su casilla
+    g.dx=isFinite(dx)?Math.max(-m.x,Math.min(m.x,dx)):0;
+    g.dy=isFinite(dy)?Math.max(-m.y,Math.min(m.y,dy)):0;
+    out[i]=g;
+  }
+  return out;
+}
+function dl(name,href){ var a=document.createElement('a'); a.download=name; a.href=href; a.click(); }
+document.getElementById('save').addEventListener('click',function(){
+  if(figsLlenas(figs)){
+    var esta=false;
+    coleccion.forEach(function(c){ if(mismoConjunto(c.figs,figs)) esta=true; });
+    if(!esta){ coleccion.push({nombre:'WODB '+(nCol++), semilla:semilla, figs:JSON.parse(JSON.stringify(figs))});
+               guardaLS(); pintaColeccion(); }
+  }
+  if(!coleccion.length){ flash('No hay ningún conjunto que guardar'); return; }
+  var data={formato:'wodb', version:1,
+            conjuntos:coleccion.map(function(c){ return {nombre:c.nombre, semilla:c.semilla, figuras:c.figs}; })};
+  var blob=new Blob([JSON.stringify(data,null,1)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  dl('wodb.json',url); setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+  flash(coleccion.length+' conjunto'+(coleccion.length===1?'':'s')+' en el archivo');
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+document.getElementById('add').addEventListener('click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leeArchivo(f); });
+function leeArchivo(f){
+  var r=new FileReader();
+  r.onload=function(){
+    try{ cargaDatos(JSON.parse(r.result)); }
+    catch(err){ flash('Ese archivo no tiene el formato esperado'); }
+  };
+  r.readAsText(f);
+}
+function cargaDatos(d){
+  var lista=d && d.conjuntos;
+  if(!Array.isArray(lista) || !lista.length){ flash('El archivo no contiene ningún conjunto'); return; }
+  var nuevos=lista.map(function(c){
+    return {nombre:String((c&&c.nombre)||'WODB'), semilla:(c&&c.semilla|0)||1, figs:limpiaFiguras(c&&c.figuras)};
+  }).filter(function(c){ return c.figs.some(function(f){ return !!f; }); });
+  if(!nuevos.length){ flash('El archivo no contiene ninguna figura reconocible'); return; }
+  pushUndo();
+  coleccion = (importMode==='replace') ? nuevos : coleccion.concat(nuevos);
+  nCol=coleccion.length+1;
+  guardaLS(); pintaColeccion();
+  figs=JSON.parse(JSON.stringify(nuevos[0].figs)); semilla=nuevos[0].semilla;
+  document.getElementById('sem').value=semilla;
+  sel=-1; dibuja();
+  flash(nuevos.length+' conjunto'+(nuevos.length===1?'':'s')+' cargado'+(nuevos.length===1?'':'s'));
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); });
+});
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='add'; leeArchivo(f); }
+});
+document.getElementById('png').addEventListener('click',function(){
+  if(!figs.some(function(f){ return !!f; })){ flash('No hay nada que exportar'); return; }
+  var S=1000, m=18;
+  var oc=document.createElement('canvas'); oc.width=S+2*m; oc.height=S+2*m;
+  var o=oc.getContext('2d');
+  o.fillStyle='#fff'; o.fillRect(0,0,oc.width,oc.height);
+  pintaTablero(o,figs,m,m,S,opt);
+  dl('wodb.png', oc.toDataURL('image/png'));
+});
+
+/* --- botones y estado ---------------------------------------------------- */
+document.getElementById('gen').addEventListener('click',function(){
+  generar(1+Math.floor(Math.random()*99999));
+  if(anaEl.classList.contains('show')) pintaAnalisis();
+});
+document.getElementById('resem').addEventListener('click',function(){
+  var s=parseInt(document.getElementById('sem').value,10);
+  if(!isFinite(s)||s<1){ flash('La semilla es un número entero mayor que cero'); return; }
+  generar(s);
+  if(anaEl.classList.contains('show')) pintaAnalisis();
+});
+document.getElementById('niv').addEventListener('change',function(e){ nivel=parseInt(e.target.value,10)||2; });
+document.getElementById('shownum').addEventListener('change',function(e){ opt.num=e.target.checked?1:0; dibuja(); });
+document.getElementById('undo').addEventListener('click',doUndo);
+document.getElementById('zoomin').addEventListener('click',function(){ view.z=Math.min(3,view.z*1.15); dibuja(); });
+document.getElementById('zoomout').addEventListener('click',function(){ view.z=Math.max(0.2,view.z/1.15); dibuja(); });
+document.getElementById('fit').addEventListener('click',ajusta);
+document.getElementById('clear').addEventListener('click',function(){
+  if(!figs.some(function(f){ return !!f; })) return;
+  pushUndo(); figs=[null,null,null,null]; sel=-1; dibuja();
+  if(anaEl.classList.contains('show')) pintaAnalisis();
+});
+document.getElementById('aRotL').addEventListener('click',function(){ gira(-15); });
+document.getElementById('aRotR').addEventListener('click',function(){ gira(15); });
+document.getElementById('aMenos').addEventListener('click',function(){ escala(1/1.12); });
+document.getElementById('aMas').addEventListener('click',function(){ escala(1.12); });
+document.getElementById('aEnd').addEventListener('click',endereza);
+document.getElementById('aCambia').addEventListener('click',function(){ togglePanel(catEl); });
+document.getElementById('aFijo').addEventListener('click',fijar);
+document.getElementById('aDel').addEventListener('click',vaciar);
+
+function actualizaUI(){
+  var hay = sel>=0 && !!figs[sel];
+  ['aRotL','aRotR','aMenos','aMas','aEnd','aFijo','aDel'].forEach(function(id){
+    document.getElementById(id).disabled=!hay;
+  });
+  document.getElementById('aCambia').disabled = sel<0;
+  var bf=document.getElementById('aFijo');
+  bf.textContent = (hay && figs[sel].fijo) ? '🔓 Soltarla al generar' : '🔒 Fijarla al generar';
+  document.getElementById('bcat').classList.toggle('on',catEl.classList.contains('show'));
+  document.getElementById('bana').classList.toggle('on',anaEl.classList.contains('show'));
+  document.querySelectorAll('.sw').forEach(function(b){
+    b.classList.toggle('on', hay && figs[sel].col===b.dataset.c);
+  });
+  document.querySelectorAll('#texs canvas').forEach(function(b){
+    b.classList.toggle('on', hay && (figs[sel].tex||0)===parseInt(b.dataset.t,10));
+  });
+
+  var t;
+  if(flashMsg && Date.now()-flashT<2100) t=flashMsg;
+  else if(sel<0) t='🎲 genera un conjunto nuevo · haz clic en una casilla para cambiar lo que hay dentro';
+  else if(!figs[sel]) t='Casilla '+POS[sel]+' vacía · ▦ Figuras para poner una';
+  else t='Casilla '+POS[sel]+': '+proto(figs[sel].t).nom+' · arrástrala para moverla · R y L la giran, + y − la cambian de tamaño, C cambia la figura';
+  hintEl.textContent=t;
+}
+
+infoEl.innerHTML=
+ '<button class="cerrar" id="xinfo">✕</button><b>Cuál sobra</b><br>'+
+ 'Se enseñan cuatro figuras y se hacen siempre las dos mismas preguntas: <b>¿cuál sobra?</b> y <b>¿por qué?</b> '+
+ 'Cualquiera de las cuatro puede ser la respuesta; lo que cuenta es la justificación.'+
+ '<div style="margin-top:7px"><b>🎲 Otro conjunto</b> busca cuatro figuras tales que cada una de ellas tenga alguna '+
+ 'propiedad que la deja sola: es la única que la cumple, o la única que no. Con la misma <b>semilla</b> sale siempre '+
+ 'el mismo conjunto, así que puedes apuntarla y recuperarlo, o repartirla para que toda la clase trabaje el mismo cartel.</div>'+
+ '<div style="margin-top:7px">El <b>nivel</b> dice de qué figuras puede tirar: <b>Básico</b>, las que se reconocen de '+
+ 'un vistazo; <b>Medio</b> añade las que hay que mirar por dentro para distinguirlas —trapecios, obtusángulos, '+
+ 'irregulares—; <b>Avanzado</b>, todas. Cada nivel incluye las figuras de los anteriores.</div>'+
+ '<div style="margin-top:7px"><b>Retocar el cartel.</b> Haz clic en una casilla y luego: <b>▦ Figuras</b> para cambiar '+
+ 'la figura, <b>R</b> y <b>L</b> para girarla, <b>+</b> y <b>−</b> para el tamaño, <b>E</b> para apoyarla en un lado, '+
+ 'los colores y los rellenos del panel para pintarla, y arrastrar para moverla dentro de su casilla. Con <b>🔒</b> la '+
+ 'casilla se queda como está y el generador busca las otras tres alrededor de ella.</div>'+
+ '<div style="margin-top:7px">Todas las figuras se dibujan con la <b>misma área</b>, así que el tamaño no distingue a '+
+ 'ninguna mientras no lo cambies tú a mano.</div>'+
+ '<div style="margin-top:7px"><b>El color y el relleno</b> son atributos no geométricos: vienen apagados en '+
+ '«Propiedades que puede usar» y el generador deja las cuatro figuras iguales. Si los marcas, se los reparte a dos '+
+ 'casillas distintas, empezando por las que se han quedado sin razón de forma. Con figuras sencillas —infantil y '+
+ 'primer ciclo— es justo lo que hace falta; en geometría suelen tapar lo que se quiere mirar.</div>'+
+ '<div style="margin-top:7px"><b>⊞ Análisis</b> enseña la tabla de propiedades y por qué puede sobrar cada figura. '+
+ 'Es la respuesta: está cerrado de entrada y conviene mirarlo antes de la clase, no durante.</div>'+
+ '<div style="margin-top:7px"><b>Colección.</b> Con <b>＋ Guardar este conjunto</b> se va formando un banco de carteles '+
+ 'que se queda en este navegador. <b>⤓ Guardar</b> se lo lleva todo a un archivo, <b>⤒ Abrir</b> lo recupera y '+
+ '<b>＋</b> añade los de otro archivo a los que ya tienes. <b>⤓ PNG</b> descarga el cartel para proyectarlo o imprimirlo.</div>'+
+ '<div style="margin-top:7px;color:#8a919c">Este material está basado en el libro de Christopher Danielson '+
+ '<b><i>Which One Doesn\'t Belong?</i></b> (Stenhouse, 2016) y en la página que lo acompaña, '+
+ '<a href="https://talkingmathwithkids.com/wodb/" target="_blank" rel="noopener">talkingmathwithkids.com/wodb</a>, '+
+ 'de donde sale la rutina. La forma de construir los conjuntos con una tabla de propiedades está tomada de '+
+ 'Chris Hunter, <i>Alike and different: Which One Doesn\'t Belong? and more</i> (Vector, 2018).</div>'+
+ '<div class="lic">Cuál sobra · Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+document.getElementById('xinfo').addEventListener('click',function(){ infoEl.classList.remove('show'); actualizaUI(); });
+
+/* =========================================================================
+   8. ARRANQUE
+   ========================================================================= */
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+(function init(){
+  pintaProps(); pintaCatalogo(); leeLS(); pintaColeccion();
+  resize(); ajusta();
+  if(!generar(1+Math.floor(Math.random()*99999))) dibuja();
+})();
+
+/* =========================================================================
+   9. AUTOCOMPROBACIÓN · abre el archivo añadiendo #test al final de la URL
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){
+    out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':''));
+    if(!c) fails++;
+  }
+  function num(v){ return (Math.round(v*1000)/1000).toString().replace('.',','); }
+
+  var lsAntes=null;
+  try{ lsAntes=localStorage.getItem(LSK); }catch(e){}
+  var figsAntes=JSON.stringify(figs), semAntes=semilla, colAntes=JSON.stringify(coleccion), nivAntes=nivel;
+
+  try{
+
+  /* --- 9.1 el catálogo está bien construido ------------------------------ */
+  ok('hay al menos 30 figuras en el catálogo', PROTOS.length>=30, PROTOS.length);
+  var ids={}, repes=0;
+  PROTOS.forEach(function(pr){ if(ids[pr.id]) repes++; ids[pr.id]=1; });
+  ok('no hay dos figuras con el mismo identificador', repes===0, repes);
+  var malArea=[], malCentro=[], malFinito=[];
+  PROTOS.forEach(function(pr){
+    if(Math.abs(areaPol(pr.pts)-1)>1e-9) malArea.push(pr.id);
+    var cx=0, cy=0;
+    pr.pts.forEach(function(p){ cx+=p[0]; cy+=p[1]; });
+    if(Math.abs(cx/pr.pts.length)>1e-9 || Math.abs(cy/pr.pts.length)>1e-9) malCentro.push(pr.id);
+    if(!pr.pts.every(function(p){ return isFinite(p[0])&&isFinite(p[1]); })) malFinito.push(pr.id);
+  });
+  ok('todas las figuras tienen área 1 (así el tamaño no distingue a ninguna)', malArea.length===0, malArea.join(' '));
+  /* un obtusángulo de área 1 mide más de dos unidades de largo: si la escala
+     del cartel no cuenta con ello, se sale de su casilla y pisa a la vecina */
+  var salen=[], anchoMax=0;
+  PROTOS.forEach(function(pr){
+    pr.giros.concat([0,15,33,45,90,137]).forEach(function(g){
+      var c=cajaDe({t:pr.id,ang:g,esc:1,dx:0,dy:0},1000);
+      anchoMax=Math.max(anchoMax,c.w,c.h);
+      if(c.w>1000||c.h>1000) salen.push(pr.id+'@'+g);
+    });
+  });
+  ok('ninguna figura se sale de su casilla, la gires como la gires',
+     salen.length===0, salen.slice(0,4).join(' '));
+  ok('y la más larga aprovecha casi toda la casilla',
+     anchoMax>820 && anchoMax<=900, Math.round(anchoMax)+' de 1000');
+  ok('a tamaño máximo tampoco se sale del cartel',
+     cajaDe({t:'tri-obt',ang:0,esc:1.9,dx:0,dy:0},1000).w<2000,
+     Math.round(cajaDe({t:'tri-obt',ang:0,esc:1.9,dx:0,dy:0},1000).w));
+  ok('todas tienen el centro de sus vértices en el origen', malCentro.length===0, malCentro.join(' '));
+  ok('ninguna figura tiene coordenadas NaN o infinitas', malFinito.length===0, malFinito.join(' '));
+
+  /* --- 9.2 las propiedades que calcula son las que son ------------------- */
+  /* [n, equilátero, equiángulo, rectos, obtusos, entrantes, pares paralelos,
+      ejes, orden de giro, se apoya en horizontal sin girar]                 */
+  var ESP={
+   'tri-equi':     [3,1,1,0,0,0,0,3,3,1],
+   'tri-iso':      [3,0,0,0,0,0,0,1,1,1],
+   'tri-rect':     [3,0,0,1,0,0,0,0,1,1],
+   'tri-rect-iso': [3,0,0,1,0,0,0,1,1,1],
+   'tri-obt':      [3,0,0,0,1,0,0,0,1,1],
+   'tri-obt-iso':  [3,0,0,0,1,0,0,1,1,1],
+   'tri-esc':      [3,0,0,0,0,0,0,0,1,1],
+   'cuadrado':     [4,1,1,4,0,0,2,4,4,1],
+   'rect':         [4,0,1,4,0,0,2,2,2,1],
+   'rect-largo':   [4,0,1,4,0,0,2,2,2,1],
+   'rombo':        [4,1,0,0,2,0,2,2,2,0],
+   'romboide':     [4,0,0,0,2,0,2,0,2,1],
+   'trap-iso':     [4,0,0,0,2,0,1,1,1,1],
+   'trap-rect':    [4,0,0,2,1,0,1,0,1,1],
+   'trap-esc':     [4,0,0,0,2,0,1,0,1,1],
+   'cometa':       [4,0,0,0,3,0,0,1,1,0],
+   'dardo':        [4,0,0,0,0,1,0,1,1,0],
+   'cuad-irreg':   [4,0,0,0,1,0,0,0,1,1],
+   'penta-reg':    [5,1,1,0,5,0,0,5,5,1],
+   'casa':         [5,0,0,3,2,0,1,1,1,1],
+   'penta-irreg':  [5,0,0,0,5,0,0,0,1,0],
+   'penta-conc':   [5,0,0,2,0,1,1,1,1,1],
+   'hexa-reg':     [6,1,1,0,6,0,3,6,6,1],
+   'hexa-irreg':   [6,0,0,0,6,0,0,0,1,0],
+   'hexa-L':       [6,0,0,5,0,1,6,1,1,1],
+   'octo-reg':     [8,1,1,0,8,0,4,8,8,1],
+   'cruz':         [12,1,0,8,0,4,30,4,4,1],
+   'estrella5':    [10,1,0,0,0,5,0,5,5,1]
+  };
+  var k, i;
+  for(k in ESP){
+    (function(id,e){
+      var pr=proto(id), b=base(pr);
+      var got=[b.n,b.equil,b.equia,b.recto,b.obt,b.conc,b.par,b.ejes,b.orden,horizontal(pr,0)];
+      ok('las propiedades del '+pr.nom+' son las esperadas',
+         got.join(',')===e.join(','), got.join(',')+' esperaba '+e.join(','));
+      var suma=0;
+      b.angs.forEach(function(a){ suma+=a; });
+      ok('los ángulos del '+pr.nom+' suman '+((b.n-2)*180)+'°',
+         Math.abs(suma-(b.n-2)*180)<1e-6, num(suma)+'°');
+    })(k,ESP[k]);
+  }
+
+  /* --- 9.3 lo que NO debe pasar ------------------------------------------ */
+  ok('el romboide no tiene ningún eje de simetría, aunque sí simetría de giro',
+     base(proto('romboide')).ejes===0 && base(proto('romboide')).orden===2);
+  ok('la L no coincide consigo misma al girarla, aunque tenga un eje',
+     base(proto('hexa-L')).orden===1 && base(proto('hexa-L')).ejes===1);
+  ok('el cuadrilátero irregular no tiene ángulos rectos por casualidad',
+     base(proto('cuad-irreg')).recto===0);
+  ok('el pentágono irregular no tiene ejes de simetría', base(proto('penta-irreg')).ejes===0);
+  ok('el hexágono irregular no tiene lados paralelos', base(proto('hexa-irreg')).par===0);
+  ok('la estrella tiene lados iguales pero no ángulos iguales',
+     base(proto('estrella5')).equil===1 && base(proto('estrella5')).equia===0);
+  ok('el rombo tiene lados iguales pero no es regular',
+     valorPred('EQL',props('rombo',0),0,{}) && !valorPred('REG',props('rombo',0),0,{}));
+  ok('un círculo no cuenta como polígono de 96 lados',
+     props('circulo',0).n===0 && props('circulo',0).curva===1);
+  ok('el círculo tiene más de un eje de simetría', valorPred('SIM2',props('circulo',0),0,{}));
+  ok('el semicírculo tiene uno solo',
+     valorPred('SIM',props('semi',0),0,{}) && !valorPred('SIM2',props('semi',0),0,{}));
+
+  /* --- 9.4 el giro solo cambia si se apoya en un lado horizontal --------- */
+  var camb=[];
+  PROTOS.forEach(function(pr){
+    [0,15,20,37,90,180].forEach(function(g){
+      var a=props(pr.id,0), b2=props(pr.id,g), key;
+      for(key in a) if(key!=='horiz' && a[key]!==b2[key]) camb.push(pr.id+'@'+g+':'+key);
+    });
+  });
+  ok('girar una figura no cambia ninguna propiedad salvo la de apoyarse en horizontal',
+     camb.length===0, camb.slice(0,4).join(' '));
+  ok('el cuadrado se apoya en un lado horizontal y girado 45° no',
+     horizontal(proto('cuadrado'),0)===1 && horizontal(proto('cuadrado'),45)===0);
+  ok('el triángulo equilátero girado 180° sigue apoyado', horizontal(proto('tri-equi'),180)===1);
+  ok('y girado 30° ya no', horizontal(proto('tri-equi'),30)===0);
+  ok('el rombo no se apoya en ningún lado, y girado -29,05° sí',
+     horizontal(proto('rombo'),0)===0 && horizontal(proto('rombo'),-29.0546)===1);
+  ok('el círculo no se apoya en ningún lado horizontal, lo gires como lo gires',
+     horizontal(proto('circulo'),0)===0 && horizontal(proto('circulo'),33)===0);
+  ok('el semicírculo sí, y girado 20° no',
+     horizontal(proto('semi'),0)===1 && horizontal(proto('semi'),20)===0);
+
+  /* --- 9.5 la tabla: quién queda fuera ----------------------------------- */
+  function conj(a,b,c,d){
+    return [a,b,c,d].map(function(x){
+      return x? {t:x[0], ang:x[1]||0, esc:x[2]||1, col:x[3]||COLOR0, tex:x[4]||0,
+                 dx:0, dy:0, fijo:false} : null;
+    });
+  }
+  var T1=tabla(conj(['cuadrado'],['cuadrado'],['cuadrado'],['cuadrado']));
+  ok('con cuatro cuadrados iguales no se puede dejar fuera a ninguna',
+     T1.razones.every(function(r){ return r.length===0; }) && !T1.completo);
+  var T2=tabla(conj(['cuadrado'],['cuadrado'],['cuadrado'],['tri-equi']));
+  ok('con tres cuadrados y un triángulo solo se puede dejar fuera al triángulo',
+     T2.razones[3].length>0 && T2.razones[0].length===0 &&
+     T2.razones[1].length===0 && T2.razones[2].length===0);
+  ok('y ese conjunto no vale como WODB', T2.completo===false);
+  ok('la razón del triángulo está bien dicha',
+     T2.razones[3].some(function(r){ return PRED[r.k].id==='L3' && r.si===true; }));
+  ok('y también se dice que es la única que no tiene cuatro lados',
+     T2.razones[3].some(function(r){ return PRED[r.k].id==='L4' && r.si===false; }));
+  var T3=tabla(conj(['cuadrado'],['tri-equi'],['circulo'],null));
+  ok('con una casilla vacía no se da por bueno ningún conjunto', T3.completo===false);
+  ok('y ninguna propiedad deja sola a nadie mientras falte una figura',
+     T3.razones.every(function(r){ return r.length===0; }));
+
+  /* el ejemplo del artículo de Hunter: cada figura, una razón distinta */
+  var T4=tabla(conj(['tri-equi'],['tri-iso'],['rect'],['romboide']));
+  ok('el conjunto triángulo equilátero + isósceles + rectángulo + romboide deja fuera a las cuatro',
+     T4.completo===true,
+     T4.razones.map(function(r){ return r.length; }).join('-'));
+  var fams={};
+  T4.razones.forEach(function(r){ if(r.length) fams[PRED[r[0].k].fam]=1; });
+  ok('y las razones no son todas de la misma familia', Object.keys(fams).length>=3, Object.keys(fams).join(' '));
+
+  /* --- 9.6 propiedades que dependen del dibujo --------------------------- */
+  var T5=tabla(conj(['cuadrado'],['rect'],['rombo'],['tri-equi',0,1.6]));
+  ok('la figura agrandada es la única más grande que las otras tres',
+     T5.razones[3].some(function(r){ return PRED[r.k].id==='MAY'; }));
+  var T6=tabla(conj(['cuadrado'],['rect'],['rombo'],['tri-equi']));
+  ok('si las cuatro están al mismo tamaño, ninguna es la más grande',
+     !T6.filas.some(function(f){ return PRED[f.k].id==='MAY' && f.marca; }));
+  var T7=tabla(conj(['cuadrado',0,1,'#e8a09a'],['rect'],['rombo'],['tri-equi']));
+  ok('la figura de otro color es la única de su color',
+     T7.razones[0].some(function(r){ return PRED[r.k].id==='COL' && r.si===true; }));
+  var T8=tabla(conj(['cuadrado'],['rect',0,1,COLOR0,2],['rombo'],['tri-equi']));
+  ok('la figura con otro relleno es la única con ese relleno',
+     T8.razones[1].some(function(r){ return PRED[r.k].id==='TEX' && r.si===true; }));
+  ok('si las cuatro van lisas, el relleno no deja sola a ninguna',
+     !T6.filas.some(function(f){ return PRED[f.k].id==='TEX' && f.marca; }));
+  var T9=tabla(conj(['cuadrado',0,1,'#e8a09a'],['rect',0,1,'#e8a09a'],['rombo'],['tri-equi']));
+  ok('con dos figuras de cada color, el color no deja sola a ninguna',
+     !T9.filas.some(function(f){ return PRED[f.k].id==='COL' && f.marca; }));
+  ok('el generador no toca nunca el tamaño',
+     PRED.filter(function(p){ return p.gen===0; }).length===2);
+  ok('el color y el relleno no se miran en la figura sino comparando las cuatro',
+     PRED.filter(function(p){ return p.rel; }).map(function(p){ return p.id; }).join(' ')==='MAY MEN COL TEX');
+  ok('y no entran en la máscara de propiedades de forma', (function(){
+      var m=mascara('cuadrado',0), k2;
+      for(k2=0;k2<PRED.length;k2++) if(PRED[k2].rel && (m&(1<<k2))) return false;
+      return true; })());
+
+  /* --- 9.7 el generador -------------------------------------------------- */
+  var figsGuardadas=figs, semGuardada=semilla;
+  figs=[null,null,null,null];
+  var conjuntos={}, fallos=0, sinRazon=0, repetidas=0;
+  for(k=1;k<=30;k++){
+    var g=genera(k*37,2);
+    if(g.error){ fallos++; continue; }
+    var T=tabla(g.figs);
+    if(!T.completo) sinRazon++;
+    var tt=g.figs.map(function(f){ return f.t; });
+    if(tt.filter(function(x,i2){ return tt.indexOf(x)!==i2; }).length) repetidas++;
+    conjuntos[tt.slice().sort().join('+')]=1;
+  }
+  ok('el generador encuentra conjunto en las 30 semillas probadas', fallos===0, fallos+' fallos');
+  ok('en los 30 conjuntos generados se puede dejar fuera a las cuatro figuras', sinRazon===0, sinRazon+' malos');
+  ok('ningún conjunto repite figura', repetidas===0, repetidas);
+  ok('30 semillas distintas dan al menos 15 conjuntos distintos',
+     Object.keys(conjuntos).length>=15, Object.keys(conjuntos).length);
+  var g1=genera(4242,2), g2=genera(4242,2);
+  ok('la misma semilla da el mismo conjunto', JSON.stringify(g1.figs)===JSON.stringify(g2.figs));
+  var g3=genera(4243,2);
+  ok('y una semilla distinta, otro', JSON.stringify(g1.figs)!==JSON.stringify(g3.figs));
+
+  var pool1=reserva(1), pool2=reserva(2), pool3=reserva(3);
+  ok('el nivel básico usa menos figuras que el avanzado',
+     pool1.length<pool2.length && pool2.length<pool3.length,
+     pool1.length+' < '+pool2.length+' < '+pool3.length);
+  var fuera=[];
+  pool1.forEach(function(c){ if(proto(c.t).niv>1) fuera.push(c.t); });
+  ok('y en el nivel básico no se cuela ninguna figura de los otros', fuera.length===0, fuera.join(' '));
+  /* los niveles son inclusivos: cada uno se lleva todo lo del anterior */
+  function contiene(grande,chico){
+    var hay={};
+    grande.forEach(function(c){ hay[c.t+'@'+c.ang]=1; });
+    return chico.every(function(c){ return hay[c.t+'@'+c.ang]; });
+  }
+  ok('el nivel medio contiene todas las figuras del básico, con sus mismos giros',
+     contiene(pool2,pool1), pool1.length+' de '+pool1.length);
+  ok('y el avanzado contiene todas las del medio', contiene(pool3,pool2));
+  ok('el avanzado es el catálogo entero',
+     pool3.length===PROTOS.reduce(function(a,p){ return a+p.giros.length; },0), pool3.length);
+  var repartoNiv=[0,0,0,0];
+  PROTOS.forEach(function(p){ repartoNiv[p.niv]++; });
+  ok('las 33 figuras están repartidas en los tres niveles',
+     repartoNiv[1]+repartoNiv[2]+repartoNiv[3]===PROTOS.length && repartoNiv[1]>0 && repartoNiv[2]>0 && repartoNiv[3]>0,
+     repartoNiv[1]+' básicas, '+repartoNiv[2]+' medias, '+repartoNiv[3]+' avanzadas');
+
+  var nivGuardado=nivel;
+  for(k=1;k<=12;k++){
+    var gg=genera(k*911,1);
+    if(gg.error){ fallos++; continue; }
+    if(!tabla(gg.figs).completo) sinRazon++;
+  }
+  ok('con solo las figuras básicas también encuentra conjuntos válidos', fallos===0 && sinRazon===0,
+     fallos+' fallos, '+sinRazon+' malos');
+  nivel=nivGuardado;
+
+  /* con casillas fijadas */
+  figs=conj(['cuadrado'],['tri-equi'],null,null);
+  figs[0].fijo=true; figs[1].fijo=true;
+  var gf=genera(777,2);
+  ok('fijando dos casillas, el generador respeta las dos',
+     !gf.error && gf.figs[0].t==='cuadrado' && gf.figs[1].t==='tri-equi',
+     gf.error||gf.figs.map(function(f){ return f.t; }).join(' '));
+  ok('y busca las otras dos para que las cuatro se puedan dejar fuera',
+     !gf.error && tabla(gf.figs).completo===true);
+  figs=[null,null,null,null];
+  for(k=0;k<4;k++) figs[k]={t:['cuadrado','rect','rect-largo','romboide'][k],ang:0,esc:1,col:COLOR0,dx:0,dy:0,fijo:true};
+  var gt=genera(5,2);
+  ok('con las cuatro casillas fijadas avisa en vez de inventarse un conjunto',
+     !!gt.error, gt.error?'avisa':'no avisa');
+
+  var permAntes={}; FAMS.forEach(function(f){ permAntes[f]=permit[f]; });
+  FAMS.forEach(function(f){ permit[f]=0; });
+  figs=[null,null,null,null];
+  var gsin=genera(9,2);
+  ok('sin ninguna propiedad marcada no genera nada y lo dice', !!gsin.error);
+  FAMS.forEach(function(f){ permit[f]=permAntes[f]; });
+
+  /* solo con propiedades de lados: sigue exigiendo que las cuatro salgan */
+  FAMS.forEach(function(f){ permit[f]=(f==='lados')?1:0; });
+  figs=[null,null,null,null];
+  var gl=genera(31,3), malL=0;
+  if(!gl.error && puntua(gl.figs.map(function(f){ return mascara(f.t,f.ang); }),usables(),0)<0) malL=1;
+  ok('marcando solo «lados», el conjunto se distingue solo por propiedades de lados',
+     !gl.error && malL===0, gl.error||'bien');
+  FAMS.forEach(function(f){ permit[f]=permAntes[f]; });
+
+  /* --- 9.7 bis: los atributos no geométricos ----------------------------- */
+  var ngAntes={}; FAMSNG.forEach(function(f){ ngAntes[f]=permit[f]; });
+  function cuantosDistintos(fs,ap){
+    var n=0, i2, j2;
+    for(i2=0;i2<4;i2++){
+      var solo=true;
+      for(j2=0;j2<4;j2++) if(j2!==i2 && (fs[j2][ap]||0)===(fs[i2][ap]||0)) solo=false;
+      if(solo) n++;
+    }
+    return n;
+  }
+  FAMSNG.forEach(function(f){ permit[f]=0; });
+  figs=[null,null,null,null];
+  var gsc=genera(101,2);
+  ok('con el color y el relleno apagados, las cuatro figuras salen iguales de aspecto',
+     !gsc.error && gsc.figs.every(function(f){ return f.col===COLOR0 && f.tex===0; }));
+
+  permit['color']=1;
+  var conCol=0, colBien=0, colSola=0;
+  for(k=1;k<=15;k++){
+    figs=[null,null,null,null];
+    var gc=genera(k*53,2);
+    if(gc.error) continue;
+    conCol++;
+    if(tabla(gc.figs).completo) colBien++;
+    if(cuantosDistintos(gc.figs,'col')===1 && gc.figs.filter(function(f){ return f.col!==COLOR0; }).length===1) colSola++;
+  }
+  ok('marcando el color, sale siempre una figura de otro color y solo una', colSola===conCol,
+     colSola+' de '+conCol);
+  ok('y las cuatro se siguen pudiendo dejar fuera', colBien===conCol, colBien+' de '+conCol);
+  ok('el relleno sigue igual en las cuatro mientras no se marque', (function(){
+      figs=[null,null,null,null];
+      var g2=genera(303,2);
+      return !g2.error && g2.figs.every(function(f){ return f.tex===0; }); })());
+
+  permit['relleno']=1;
+  var dos=0, dosDistintas=0;
+  for(k=1;k<=15;k++){
+    figs=[null,null,null,null];
+    var gd=genera(k*67,2);
+    if(gd.error) continue;
+    dos++;
+    var qc=-1, qt=-1, i3;
+    for(i3=0;i3<4;i3++){ if(gd.figs[i3].col!==COLOR0) qc=i3; if(gd.figs[i3].tex!==0) qt=i3; }
+    if(qc>=0 && qt>=0 && qc!==qt) dosDistintas++;
+  }
+  ok('marcando los dos, el color y el relleno van a casillas distintas',
+     dosDistintas===dos, dosDistintas+' de '+dos);
+
+  /* El atributo va antes que nada a quien se ha quedado sin razón de forma.
+     Para que eso llegue a pasar hay que apretar: con las seis familias
+     marcadas casi siempre hay conjuntos en los que las cuatro se distinguen
+     solas, y el rescate no se probaría nunca. Dejando solo la simetría, en
+     cambio, las propiedades no dan para las cuatro. */
+  FAMS.forEach(function(f){ permit[f]=(f==='simetría')?1:0; });
+  var rescates=0, rescatadas=0;
+  for(k=1;k<=15;k++){
+    figs=[null,null,null,null];
+    var gr=genera(k*71,3);
+    if(gr.error) continue;
+    var t2=quienSale(gr.figs.map(function(f){ return mascara(f.t,f.ang); }),usables());
+    var sin=[]; for(i=0;i<4;i++) if(!t2.tiene[i]) sin.push(i);
+    if(sin.length){
+      rescates++;
+      if(sin.every(function(x){ return gr.figs[x].col!==COLOR0 || gr.figs[x].tex!==0; })) rescatadas++;
+    }
+    if(sin.length>2) rescates=-99;                 // nunca más de los atributos que hay
+  }
+  ok('con solo la simetría marcada hay conjuntos que necesitan el rescate', rescates>0,
+     rescates+' de 15');
+  ok('y en todos ellos la figura sin razón de forma recibe el color o el relleno',
+     rescates>0 && rescatadas===rescates, rescatadas+' de '+rescates);
+  ok('nunca se queda sin razón más de una figura por cada atributo marcado', rescates>=0);
+  FAMS.forEach(function(f){ permit[f]=permAntes[f]; });
+
+  /* una casilla fijada no se repinta */
+  figs=conj(['cuadrado',0,1,'#f2cd60',3]);
+  figs[0].fijo=true;
+  var gfj=genera(808,2);
+  ok('el generador no cambia el color ni el relleno de una casilla fijada',
+     !gfj.error && gfj.figs[0].col==='#f2cd60' && gfj.figs[0].tex===3,
+     gfj.error||gfj.figs[0].col+'/'+gfj.figs[0].tex);
+  FAMSNG.forEach(function(f){ permit[f]=ngAntes[f]; });
+
+  /* --- 9.8 guardar y volver a abrir -------------------------------------- */
+  figs=conj(['cuadrado',45,1.3,'#e8a09a'],['tri-equi',0,1,'#9ccf9c'],['circulo'],['hexa-L',20]);
+  figs[2].dx=0.2; figs[2].dy=-0.1;
+  var antes=JSON.stringify(figs), razonesAntes=JSON.stringify(tabla(figs).razones);
+  var copia=limpiaFiguras(JSON.parse(JSON.stringify(figs)));
+  ok('guardar y volver a abrir conserva figuras, giros, tamaños y colores',
+     JSON.stringify(copia)===antes);
+  ok('y las razones del conjunto salen igual', JSON.stringify(tabla(copia).razones)===razonesAntes);
+  var sucio=limpiaFiguras([{t:'no-existe'},{t:'cuadrado',ang:'x',esc:99,col:'rojo'},null,{t:'circulo',dx:9}]);
+  ok('una figura que no existe se descarta en vez de romper el archivo', sucio[0]===null);
+  ok('un giro que no es número se queda en 0', sucio[1].ang===0, sucio[1].ang);
+  ok('un tamaño desmedido se recorta', sucio[1].esc===2.5, sucio[1].esc);
+  ok('un color que no es color vuelve al de siempre', sucio[1].col===COLOR0, sucio[1].col);
+  ok('un desplazamiento fuera de la casilla se recorta a lo que cabe',
+     Math.abs(sucio[3].dx-margen(sucio[3],1000).x)<1e-9, num(sucio[3].dx));
+  ok('un archivo sin conjuntos no rompe nada', (function(){
+      var n=coleccion.length; cargaDatos({formato:'wodb',conjuntos:[]}); return coleccion.length===n; })());
+  ok('y un archivo con basura tampoco', (function(){
+      var n=coleccion.length; cargaDatos({conjuntos:[{figuras:[{t:'nada'}]}]}); return coleccion.length===n; })());
+
+  var colGuardada=coleccion;
+  coleccion=[];
+  importMode='replace';
+  cargaDatos({formato:'wodb', version:1, conjuntos:[
+    {nombre:'uno', semilla:7, figuras:JSON.parse(antes)},
+    {nombre:'dos', semilla:8, figuras:JSON.parse(antes)}]});
+  ok('un archivo con dos conjuntos carga los dos', coleccion.length===2, coleccion.length);
+  ok('y respeta los nombres', coleccion[0].nombre==='uno' && coleccion[1].nombre==='dos');
+  importMode='add';
+  cargaDatos({formato:'wodb', conjuntos:[{nombre:'tres', semilla:9, figuras:JSON.parse(antes)}]});
+  ok('＋ añade a la colección en vez de sustituirla', coleccion.length===3, coleccion.length);
+  ok('la colección guardada conserva las figuras',
+     JSON.stringify(coleccion[2].figs)===antes);
+  coleccion=colGuardada;
+
+  /* --- 9.9 deshacer ------------------------------------------------------ */
+  var pilaAntes=undoStack.length;
+  figs=conj(['cuadrado'],['rect'],['rombo'],['tri-equi']);
+  sel=0;
+  var estado0=JSON.stringify(figs);
+  gira(15);
+  ok('girar cambia la figura', JSON.stringify(figs)!==estado0);
+  doUndo();
+  ok('y deshacer la devuelve a su sitio', JSON.stringify(figs)===estado0);
+  escala(1.12); escala(1.12); doUndo(); doUndo();
+  ok('deshacer dos veces también', JSON.stringify(figs)===estado0);
+  undoStack.length=pilaAntes;
+
+  /* --- 9.10 apoyar en un lado -------------------------------------------- */
+  figs=conj(['cuadrado',37]); sel=0;
+  endereza();
+  ok('«apoyar en un lado» pone un lado horizontal', horizontal(proto('cuadrado'),figs[0].ang)===1,
+     num(figs[0].ang)+'°');
+  ok('y gira lo menos posible: 37° se corrige a 0°, no a 45°', Math.abs(figs[0].ang)<1e-6, num(figs[0].ang)+'°');
+  figs=conj(['cuadrado',100]); sel=0;
+  endereza();
+  ok('un cuadrado a 100° se endereza a 90°, girando 10° y no 80°',
+     Math.abs(figs[0].ang-90)<1e-6, num(figs[0].ang)+'°');
+  figs=conj(['tri-equi',50]); sel=0;
+  endereza();
+  ok('el triángulo equilátero a 50° se apoya girando 10°',
+     horizontal(proto('tri-equi'),figs[0].ang)===1 && Math.abs(figs[0].ang-60)<1e-6, num(figs[0].ang)+'°');
+  figs=conj(['circulo',33]); sel=0;
+  endereza();
+  ok('en el círculo, que no tiene lados, lo deja sin girar', figs[0].ang===0);
+
+  /* --- 9.11 el dibujo pinta de verdad ------------------------------------ */
+  /* El relleno es azul (#8fb8dd, azul−rojo = 78) y las líneas del cartel son
+     grises: contando solo los píxeles azules se mide la figura y no el marco.
+     Contar tinta a secas daba el mismo número para todas.                    */
+  var oc=document.createElement('canvas'); oc.width=140; oc.height=140;
+  var o2=oc.getContext('2d');
+  function pintaSola(id,ang){
+    o2.fillStyle='#fff'; o2.fillRect(0,0,140,140);
+    pintaTablero(o2,[{t:id,ang:ang||0,esc:1,col:COLOR0,dx:0,dy:0},null,null,null],0,0,280,{});
+    return o2.getImageData(0,0,140,140).data;
+  }
+  function azules(d){
+    var n=0, i2;
+    for(i2=0;i2<d.length;i2+=4) if(d[i2+2]-d[i2]>60) n++;
+    return n;
+  }
+  var vacias=[], area={}, minA=1e9, maxA=0;
+  PROTOS.forEach(function(pr){
+    var a=azules(pintaSola(pr.id,0));
+    area[pr.id]=a;
+    if(a<600) vacias.push(pr.id+':'+a);
+    minA=Math.min(minA,a); maxA=Math.max(maxA,a);
+  });
+  ok('todas las figuras del catálogo se pintan de verdad', vacias.length===0, vacias.join(' '));
+  /* el prototipo tiene área 1, así que en pantalla ocupa (UF·lado)² píxeles,
+     menos la mitad del trazo del contorno */
+  var esperado=Math.round(Math.pow(UF*140,2));
+  ok('el cuadrado ocupa los píxeles que le tocan por su área',
+     area['cuadrado']<=esperado && area['cuadrado']>esperado*0.9, area['cuadrado']+' de '+esperado);
+  ok('todas las figuras pintan casi la misma superficie, porque todas tienen área 1',
+     maxA/minA<1.2, minA+' … '+maxA+' píxeles');
+  /* y sin embargo se distinguen: la silueta no tiene la misma anchura.
+     Se mide la caja entera y no una fila: la estrella es más ancha por
+     los picos laterales, que no caen a la altura del centro de la caja. */
+  function anchoSilueta(id){
+    var d=pintaSola(id,0), x0=140, x1=-1, fx, fy;
+    for(fy=0;fy<140;fy++) for(fx=0;fx<140;fx++){
+      var q=(fy*140+fx)*4;
+      if(d[q+2]-d[q]>60){ x0=Math.min(x0,fx); x1=Math.max(x1,fx); }
+    }
+    return x1-x0;
+  }
+  var aC=anchoSilueta('cuadrado'), aR=anchoSilueta('rect-largo'), aE=anchoSilueta('estrella5');
+  ok('el rectángulo alargado es mucho más ancho que el cuadrado', aR>aC*1.5, aR+' vs '+aC+' px');
+  ok('la estrella, con la misma área, también es más ancha', aE>aC*1.3, aE+' vs '+aC+' px');
+  /* los rellenos: cada uno tiene que verse distinto de los demás */
+  function pintaTex(tex,col){
+    o2.fillStyle='#fff'; o2.fillRect(0,0,140,140);
+    pintaTablero(o2,[{t:'cuadrado',ang:0,esc:1,col:col||COLOR0,tex:tex,dx:0,dy:0},null,null,null],0,0,280,{});
+    return o2.getImageData(0,0,140,140).data;
+  }
+  function tinta(d){
+    var n=0, i5;
+    for(i5=0;i5<d.length;i5+=4) if(d[i5]<248||d[i5+1]<248||d[i5+2]<248) n++;
+    return n;
+  }
+  var tintas=TEXTURAS.map(function(t,i5){ return tinta(pintaTex(i5)); });
+  ok('los cinco rellenos se pintan', tintas.every(function(v){ return v>200; }), tintas.join(' '));
+  ok('el liso y las tres tramas cubren la misma superficie',
+     Math.max(tintas[0],tintas[1],tintas[2],tintas[3])/Math.min(tintas[0],tintas[1],tintas[2],tintas[3])<1.04,
+     tintas.slice(0,4).join(' '));
+  ok('el «sin relleno» deja mucha menos tinta que los demás',
+     tintas[4]<tintas[0]*0.5, tintas[4]+' frente a '+tintas[0]);
+  ok('las rayas, los puntos y la cuadrícula dejan menos azul que el liso, pero no lo vacían',
+     [1,2,3].every(function(i5){
+       var a=azules(pintaTex(i5));
+       return a>azules(pintaTex(0))*0.4 && a<azules(pintaTex(0))*0.99; }),
+     [1,2,3].map(function(i5){ return azules(pintaTex(i5)); }).join(' ')+' de '+azules(pintaTex(0)));
+  /* dos rellenos se distinguen si difieren en bastante más que un contorno:
+     el cuadrado de la prueba ocupa unos 2850 píxeles, así que 200 es un 7 % */
+  var difMin=1e9, difPar='';
+  (function(){
+    var i5, j5;
+    for(i5=0;i5<TEXTURAS.length;i5++) for(j5=i5+1;j5<TEXTURAS.length;j5++){
+      var a=pintaTex(i5), b=pintaTex(j5), dif=0, q;
+      for(q=0;q<a.length;q+=4) if(Math.abs(a[q]-b[q])>25||Math.abs(a[q+2]-b[q+2])>25) dif++;
+      if(dif<difMin){ difMin=dif; difPar=TEXTURAS[i5]+'/'+TEXTURAS[j5]; }
+    }
+  })();
+  ok('cada relleno se distingue de los otros cuatro a simple vista', difMin>200,
+     'el par que menos: '+difPar+', '+difMin+' píxeles');
+  ok('una figura sin relleno conserva su color en el contorno', (function(){
+      var d=pintaTex(4,'#e8a09a'), n=0, q;
+      for(q=0;q<d.length;q+=4) if(d[q]-d[q+2]>35) n++;
+      return n>60; })(), (function(){
+      var d=pintaTex(4,'#e8a09a'), n=0, q;
+      for(q=0;q<d.length;q+=4) if(d[q]-d[q+2]>35) n++;
+      return n+' píxeles rojizos'; })());
+  /* la franja mirada empieza en 3 para no tropezar con el borde del cartel */
+  ok('la trama no se sale de la figura', (function(){
+      var d=pintaTex(1), q, fila, col2;
+      for(fila=3;fila<137;fila++) for(col2=3;col2<40;col2++){
+        q=(fila*140+col2)*4;
+        if(d[q]<248||d[q+1]<248||d[q+2]<248) return false;
+      }
+      return true; })());
+
+  ok('el cuadrado girado 45° se dibuja distinto del cuadrado sin girar', (function(){
+      var d0=pintaSola('cuadrado',0), d45=pintaSola('cuadrado',45), dif=0, i4;
+      for(i4=0;i4<d0.length;i4+=4) if((d0[i4+2]-d0[i4]>60)!==(d45[i4+2]-d45[i4]>60)) dif++;
+      return dif>800; })());
+
+  o2.fillStyle='#fff'; o2.fillRect(0,0,140,140);
+  pintaTablero(o2,[null,null,null,null],0,0,140,{});
+  var dv=o2.getImageData(4,4,60,60).data, sucia=0;
+  for(k=0;k<dv.length;k+=4) if(dv[k]<250) sucia++;
+  ok('un cartel vacío no pinta ninguna figura', sucia===0, sucia);
+
+  /* --- 9.12 el análisis no se escapa al PNG ------------------------------ */
+  ok('el análisis empieza cerrado', !anaEl.classList.contains('show'));
+  ok('el PNG se dibuja con la misma función que el cartel, sin la tabla',
+     String(document.getElementById('png').onclick||'').indexOf('tabla')<0);
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+  }
+
+  /* --- se deja todo como estaba ------------------------------------------ */
+  figs=JSON.parse(figsAntes); semilla=semAntes; nivel=nivAntes;
+  coleccion=JSON.parse(colAntes); sel=-1; importMode='replace';
+  document.getElementById('sem').value=semilla;
+  try{
+    if(lsAntes===null) localStorage.removeItem(LSK); else localStorage.setItem(LSK,lsAntes);
+  }catch(e){}
+  pintaColeccion(); dibuja();
+
+  /* --- informe en pantalla ----------------------------------------------- */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación de Cuál sobra</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__wodb={
+  test:runSelfTest,
+  protos:PROTOS, proto:proto, pred:PRED, base:base, props:props, horizontal:horizontal,
+  simetrias:simetrias, analiza:analiza, norma:norma, areaPol:areaPol,
+  tabla:tabla, genera:genera, generar:generar, reserva:reserva, puntua:puntua, usables:usables,
+  figs:function(){ return figs; }, setFigs:function(f){ figs=f; dibuja(); },
+  sel:function(i){ sel=i; dibuja(); }, semilla:function(){ return semilla; },
+  coleccion:function(){ return coleccion; }, limpia:limpiaFiguras, carga:cargaDatos,
+  pinta:pintaTablero, redibuja:dibuja, deshacer:doUndo, permit:permit,
+  nivel:function(n){ nivel=n; }
+};
+
+})();
+</script>
+</body>
+</html>

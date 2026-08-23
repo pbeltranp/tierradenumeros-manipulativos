@@ -1,0 +1,3036 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dados a medida</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:#2b2f36;background:#fff;display:flex;height:100%;overflow:hidden}
+  #side{width:240px;flex:0 0 240px;border-right:1px solid #e6e8ec;padding:10px 10px;overflow:auto;
+        background:#fafbfc}
+  /* una sola línea siempre: si el título parte en dos, se come lo de abajo */
+  #side h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a919c;
+           margin:0 0 6px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;
+           text-overflow:ellipsis;clear:both}
+  #side h2.sep{margin-top:16px}
+  /* rótulo del material: sobrio, peso ligero y una línea fina debajo */
+  #side .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:2px 2px 10px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #e6e8ec;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn.grande{font-weight:600;font-size:13.5px;padding:6px 13px}
+  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;
+       padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  /* con flex en vez de float: un float suelto dentro del botón se escapaba y
+     acababa pisando el título siguiente */
+  .act{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:5px;
+       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:6px 8px;font-size:12px;
+       color:#3d4450;cursor:pointer;text-align:left;line-height:1.3}
+  .act:hover:not(:disabled){background:#f0f2f5}
+  /* apagado de verdad: con los dados sorpresa, equilibrar no tiene sentido y
+     tiene que verse que no lo tiene, no solo no hacer nada al pulsarlo */
+  .act:disabled{opacity:.45;background:#f6f7f9;color:#a2a8b2;cursor:default}
+  .act kbd{font:11px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
+  select,input[type=text],input[type=number]{font:12px inherit;border:1px solid #d5d9e0;border-radius:6px;
+       padding:5px 6px;color:#2b2f36;background:#fff;width:100%}
+  input:disabled{background:#f4f5f7;color:#9aa1ab}
+  .fila{display:flex;gap:6px;align-items:center;margin-top:5px}
+  .fila > *{min-width:0}
+  .fila label{flex:0 0 46px;font-size:12px;color:#6b7280}
+  .fila input[type=range]{flex:1;padding:0;margin:0;height:18px}
+  .fila .num{flex:0 0 48px;text-align:center}
+  .nota{font-size:11px;color:#8a919c;line-height:1.5;margin-top:7px}
+  .err{font-size:11px;color:#c2410c;line-height:1.45;margin-top:5px;min-height:1px}
+  /* el marcador de la suma de porcentajes: gris cuando cuadra y naranja cuando no,
+     que es el único aviso que hace falta para saber por qué no se puede tirar */
+  #sumaPct{display:none;font-size:11.5px;line-height:1.4;margin-top:6px;padding:5px 7px;
+           border-radius:6px;background:#f2f4f7;color:#6b7280}
+  #sumaPct.ver{display:block}
+  #sumaPct.mal{background:#fdf0e7;color:#c2410c;font-weight:600}
+  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:3px 7px;font-size:11.5px;
+        color:#3d4450;cursor:pointer;line-height:1.2}
+  .mini:hover{background:#f0f2f5}
+
+  /* editor de caras: cabecera y filas comparten la misma rejilla, si no bailan */
+  .caras-cab,.cara{display:grid;grid-template-columns:18px 1fr 40px 54px;gap:4px;align-items:center}
+  .caras-cab{font-size:9.5px;text-transform:uppercase;letter-spacing:.04em;color:#a2a8b2;
+             margin:2px 0 3px;text-align:center}
+  .caras-cab span:nth-child(2){text-align:left}
+  #caras{max-height:240px;overflow:auto;padding-right:2px}
+  .cara{margin-bottom:3px}
+  .cara .ci{font-size:10.5px;color:#a2a8b2;text-align:right}
+  .cara input{padding:3px 4px;font-size:11.5px}
+  .cara .vl,.cara .pc{text-align:center}
+  .cara .et{display:flex;align-items:center;gap:4px}
+  .cara .sw{width:12px;height:12px;border-radius:3px;flex:0 0 12px;box-shadow:0 0 0 1px #c9ced6}
+
+  #stage{position:relative;flex:1 1 auto;min-height:120px;background:#fbfbfa}
+  canvas#cv{display:block;width:100%;height:100%}
+  #abajo{flex:0 0 auto;display:none;border-top:1px solid #e6e8ec;min-height:0}
+  #abajo.show{display:flex;height:46%}
+  #panelTabla,#panelGraf{display:none;flex-direction:column;min-width:0;min-height:0}
+  #panelTabla.show,#panelGraf.show{display:flex}
+  #panelTabla{flex:0 0 42%;border-right:1px solid #e6e8ec}
+  #panelTabla.solo{flex:1 1 auto;border-right:0}
+  #panelGraf{flex:1 1 auto}
+  .cab{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:5px 8px;background:#fafbfc;
+       border-bottom:1px solid #eef0f3;font-size:11.5px;color:#6b7280}
+  .cab select{width:auto;font-size:11.5px;padding:3px 5px}
+  .cab .tit{font-weight:600;color:#4a515c;margin-right:2px}
+  #tablaWrap{flex:1 1 auto;overflow:auto}
+  table{border-collapse:collapse;width:100%;font:11.5px/1.35 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+  th,td{padding:2px 7px;text-align:right;white-space:nowrap;border-bottom:1px solid #f1f3f5}
+  th{position:sticky;top:0;background:#fff;color:#8a919c;font-weight:600;font-size:10.5px;
+     border-bottom:1px solid #e6e8ec;text-transform:uppercase;letter-spacing:.03em}
+  td.res{font-weight:700;color:#2f62a8}
+  #pieTabla{padding:4px 8px;font-size:10.5px;color:#a2a8b2;border-top:1px solid #f1f3f5;background:#fafbfc}
+  canvas#gr{display:block;width:100%;flex:1 1 auto;min-height:0;touch-action:none;cursor:crosshair}
+  canvas#gr.arrastrando{cursor:grabbing}
+
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:330px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info code{font:11px ui-monospace,Menlo,Consolas,monospace;background:#f2f4f7;padding:1px 4px;border-radius:4px}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:176px;flex:0 0 176px;padding:8px 7px}
+    .btn{padding:5px 7px;font-size:12px}
+    #info{width:calc(100% - 20px)}
+    .caras-cab,.cara{grid-template-columns:14px 1fr 34px 46px}
+    #abajo.show{height:52%;flex-direction:column}
+    #panelTabla{flex:0 0 45%;border-right:0;border-bottom:1px solid #e6e8ec}
+  }
+</style>
+</head>
+<body>
+
+  <aside id="side">
+    <div class="brand">Dados a <b>medida</b></div>
+
+    <h2>El dado</h2>
+    <div class="fila">
+      <label for="rgCaras">Caras</label>
+      <input type="range" id="rgCaras" min="4" max="20" step="1" value="6">
+      <input type="number" id="nCaras" class="num" min="4" max="20" step="1" value="6">
+    </div>
+    <div class="fila">
+      <label for="rgDados">Dados</label>
+      <input type="range" id="rgDados" min="1" max="10" step="1" value="2">
+      <input type="number" id="nDados" class="num" min="1" max="10" step="1" value="2">
+    </div>
+
+    <h2 class="sep">Las caras</h2>
+    <select id="juego" title="Qué pone en cada cara">
+      <option value="num">Números 1, 2, 3…</option>
+      <option value="letras">Letras A, B, C…</option>
+      <option value="colores">Colores</option>
+      <option value="libre">Lo que yo escriba</option>
+    </select>
+    <div class="caras-cab"><span>#</span><span>etiqueta</span><span>valor</span><span>%</span></div>
+    <div id="caras"></div>
+    <label class="chk" style="margin-top:5px" title="Abre la columna de porcentajes para cargar el dado"><input type="checkbox" id="trucado">Dado trucado</label>
+    <label class="chk" style="margin-top:3px" title="Truca los dados en secreto, cada uno a su manera"><input type="checkbox" id="sorpresa">Dados trucados sorpresa</label>
+    <div class="fila" id="filaDadoVer" style="display:none;margin-top:5px">
+      <label for="dadoVer">Ver</label>
+      <select id="dadoVer" title="De qué dado se enseña la columna de porcentajes"></select>
+    </div>
+    <div id="sumaPct"></div>
+    <button class="act" id="equilibrar">Equilibrar<kbd>=</kbd></button>
+    <button class="act" id="otrosSorpresa" style="display:none">Otros dados sorpresa</button>
+    <div class="nota">El <b>valor</b> es el número con el que cuenta esa cara al operar; la
+      <b>etiqueta</b> es lo que se ve. Los porcentajes se escriben a mano y se quedan donde
+      los pongas: mientras no sumen 100 %, el dado no se puede tirar.</div>
+
+    <h2 class="sep">Qué se mira</h2>
+    <select id="op"></select>
+    <input type="text" id="formula" placeholder="d1 + 2*d2" style="margin-top:5px;display:none">
+    <div class="err" id="errFormula"></div>
+
+    <h2 class="sep">El azar</h2>
+    <div class="fila">
+      <label for="semilla">Semilla</label>
+      <input type="text" id="semilla" value="1">
+      <button class="mini btn" id="otraSemilla" title="Otra semilla al azar" style="flex:0 0 auto">↻</button>
+    </div>
+    <label class="chk" style="margin-top:5px"><input type="checkbox" id="anim" checked>Animar la tirada</label>
+    <div class="nota">Con la misma semilla salen las mismas tiradas: sirve para que toda la clase
+      compare la misma serie.</div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn grande" id="tirar" title="Una tirada (barra espaciadora)">🎲 Tirar</button>
+      <button class="btn" id="t10">+10</button>
+      <button class="btn" id="t100">+100</button>
+      <button class="btn" id="t1000">+1000</button>
+      <button class="btn" id="vaciar" title="Borrar las tiradas, sin tocar la configuración">Vaciar</button>
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <span class="sep"></span>
+      <label class="chk" title="Abre debajo la lista de tiradas"><input type="checkbox" id="verTabla">Tabla</label>
+      <label class="chk" title="Abre debajo el recuento en un gráfico de barras"><input type="checkbox" id="verGraf">Gráfico</label>
+      <label class="chk" title="Superpone la probabilidad exacta, calculada, no simulada · también destapa los dados trucados sorpresa"><input type="checkbox" id="verTeo">Probabilidad teórica</label>
+      <span class="sep"></span>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar la configuración y las tiradas">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir las tiradas de un archivo a las que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="csv" title="Descargar la tabla de tiradas en CSV, para la hoja de cálculo">⤓ CSV</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo</div>
+    </div>
+
+    <div id="abajo">
+      <div id="panelTabla">
+        <div class="cab">
+          <span class="tit">Tiradas</span>
+          <button class="mini" id="csvTabla" title="Descargar esta tabla de tiradas en CSV">⤓ CSV</button>
+          <span id="cabTabla"></span>
+        </div>
+        <div id="tablaWrap"><table id="tabla"><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
+        <div id="pieTabla"></div>
+      </div>
+      <div id="panelGraf">
+        <div class="cab">
+          <span class="tit">Gráfico</span>
+          <select id="vista">
+            <option value="barras">Frecuencias</option>
+            <option value="evol">Evolución de la f. relativa</option>
+          </select>
+          <select id="escala">
+            <option value="abs">absolutas</option>
+            <option value="rel">relativas</option>
+            <option value="pct">porcentajes</option>
+          </select>
+          <select id="quien" style="display:none"></select>
+          <button class="mini" id="csvGraf" title="Descargar el recuento de cada resultado en CSV">⤓ CSV</button>
+          <span id="cabGraf"></span>
+        </div>
+        <canvas id="gr"></canvas>
+      </div>
+    </div>
+  </main>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LA IDEA
+   La probabilidad se configura y la frecuencia se obtiene. Son dos cosas
+   distintas y en clase se confunden todo el rato, así que aquí van separadas
+   dentro del propio programa: por un lado la distribución de las caras, que
+   se fija a mano; por otro los recuentos, que solo crecen tirando.
+   De ahí salen dos decisiones que condicionan todo lo demás:
+
+   · Las probabilidades no se guardan como porcentajes sino como PESOS
+     positivos, y la probabilidad es peso/suma. Así suman 1 por construcción
+     y no existe el estado inválido «los porcentajes suman 98 %»; el 100 % es
+     una consecuencia, no una restricción que haya que vigilar.
+   · La probabilidad teórica está apagada de oficio. En una actividad de aula
+     conviene que el alumnado se moje antes de ver la respuesta.
+
+   Y una tercera, más pequeña: hay semilla a la vista. Con la misma semilla
+   salen las mismas tiradas, que sirve para comparar en clase y, sobre todo,
+   para que la autocomprobación de aquí abajo pueda probar un simulador.
+   ========================================================================= */
+
+var MINCARAS=4, MAXCARAS=20, MAXDADOS=10;
+var TOPE_SERIE=200000;     // tiradas cuyo resultado se recuerda (para la evolución)
+var TOPE_DET=5000;         // tiradas cuyo detalle dado a dado se recuerda (tabla y CSV)
+var MAXFILAS=300;          // filas de la tabla que se pintan de verdad
+var CAP_ENUM=400000;       // combinaciones que acepto enumerar para la teórica
+var CAP_DP=200000;         // estados que acepto arrastrar en la dinámica
+
+/* 20 colores bien distinguibles, uno por cara como mucho. El orden importa:
+   los primeros son los que se ven en un dado de 4 o de 6 caras. */
+var COLORES=[
+  {n:'rojo',     h:'#d1495b'}, {n:'azul',     h:'#3d6db3'},
+  {n:'verde',    h:'#4c9a52'}, {n:'amarillo', h:'#e8b32a'},
+  {n:'naranja',  h:'#e2732f'}, {n:'morado',   h:'#8c5bb0'},
+  {n:'marrón',   h:'#8d6e63'}, {n:'gris',     h:'#8a919c'},
+  {n:'rosa',     h:'#d97fae'}, {n:'turquesa', h:'#3fa3a5'},
+  {n:'lima',     h:'#8fbf3f'}, {n:'negro',    h:'#33383f'},
+  {n:'crema',    h:'#efe0b8'}, {n:'celeste',  h:'#7fc4e8'},
+  {n:'granate',  h:'#8e2f3f'}, {n:'oliva',    h:'#7a7f3a'},
+  {n:'añil',     h:'#4c4fa0'}, {n:'coral',    h:'#ef8a7a'},
+  {n:'menta',    h:'#8fd7bb'}, {n:'violeta',  h:'#b06fd4'}
+];
+var LETRAS='ABCDEFGHIJKLMNOPQRST';
+
+/* Las operaciones. min y max son cuántos dados hacen falta para que la
+   pregunta signifique algo: la diferencia de tres dados no quiere decir nada,
+   y «el mayor» de un dado solo es el dado. */
+var OPS=[
+  {id:'cara',      n:'La cara que sale',                 min:1, max:1},
+  {id:'suma',      n:'La suma',                          min:2, max:10},
+  {id:'dif',       n:'La diferencia (1.º − 2.º)',        min:2, max:2},
+  {id:'difabs',    n:'La diferencia, sin signo',         min:2, max:2},
+  {id:'prod',      n:'El producto',                      min:2, max:10},
+  {id:'max',       n:'El mayor',                         min:2, max:10},
+  {id:'min',       n:'El menor',                         min:2, max:10},
+  {id:'rec',       n:'El recorrido (mayor − menor)',     min:2, max:10},
+  {id:'media',     n:'La media',                         min:2, max:10},
+  {id:'pares',     n:'Cuántos salen pares',              min:1, max:10},
+  {id:'impares',   n:'Cuántos salen impares',            min:1, max:10},
+  {id:'distintos', n:'Cuántos valores distintos',        min:2, max:10},
+  {id:'repes',     n:'Cuántos dados iguales, como mucho',min:2, max:10},
+  {id:'comb',      n:'La combinación que sale',          min:1, max:10},
+  {id:'formula',   n:'Una fórmula mía…',                 min:1, max:10}
+];
+function opDe(id){ for(var i=0;i<OPS.length;i++) if(OPS[i].id===id) return OPS[i]; return OPS[1]; }
+function nombreOp(){ return opDe(cfg.op).n; }
+
+/* =========================================================================
+   2. ESTADO
+   ========================================================================= */
+var cfg={
+  caras:6, ndados:2, juego:'num', trucado:0,
+  sorpresa:0,          // dados trucados en secreto, cada uno a su manera
+  misterioN:0,         // cuántas veces se han pedido otros dados sorpresa
+  op:'suma', formula:'d1 + d2',
+  etiqs:[],            // {t:etiqueta visible, v:valor numérico, c:color o null}
+  pesos:[],            // pesos ≥ 0; la probabilidad es peso/suma
+  semilla:1
+};
+var dadoVer=0;                     // de qué dado se enseña la columna de porcentajes
+var ast=null, astErr='';           // la fórmula ya compilada
+var claves=[], claveId={};         // claves[id] = {k:texto, o:orden, n:recuento}
+var serie=[];                      // id del resultado de cada tirada
+var detalle=[];                    // {n, c:[caras]} de las últimas TOPE_DET
+var ntiradas=0, recortadas=0;
+var undoStack=[];
+var view={z:1};                    /* aquí no hay mundo que recorrer: la bandeja se
+                                      recoloca sola, así que el zoom es solo un tamaño */
+/* la tabla y el gráfico empiezan cerrados. En clase se tira primero y se cuenta
+   después, y el gráfico abierto de entrada contesta antes de que nadie pregunte;
+   además así la bandeja de dados ocupa toda la pantalla, que es como se proyecta */
+var opt={tabla:0, graf:0, teo:0, anim:1, vista:'barras', escala:'abs', quien:''};
+var cacheTeo=null;
+var anim=null;
+var flashMsg=null, flashT=0;
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var gr=document.getElementById('gr'), gtx=gr.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop');
+var tbody=document.getElementById('tbody'), thead=document.getElementById('thead');
+
+function flash(m){ flashMsg=m; flashT=Date.now(); updateUI(); setTimeout(updateUI,2400); }
+function r6(x){ return Math.round(x*1e6)/1e6; }
+function fmt(v){ return String(r6(v)); }
+function coma(s){ return String(s).replace('.',','); }
+function esEntero(v){ return isFinite(v) && Math.abs(v-Math.round(v))<1e-9; }
+
+/* Snapshot por referencia, no por copia: las operaciones que borran crean
+   registros NUEVOS en vez de vaciar los de antes, así que guardar el puntero
+   basta y deshacer no cuesta nada aunque haya 200 000 tiradas. */
+function snapshot(){
+  return {cfg:JSON.parse(JSON.stringify(cfg)), claves:claves, claveId:claveId,
+          serie:serie, detalle:detalle, nt:ntiradas, rec:recortadas};
+}
+function pushUndo(){ undoStack.push(snapshot()); if(undoStack.length>20) undoStack.shift(); }
+function registrosNuevos(){ claves=[]; claveId={}; serie=[]; detalle=[]; ntiradas=0; recortadas=0; }
+function doUndo(){
+  if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var s=undoStack.pop();
+  cfg=s.cfg; claves=s.claves; claveId=s.claveId; serie=s.serie; detalle=s.detalle;
+  ntiradas=s.nt; recortadas=s.rec||0;
+  cacheTeo=null; compilaFormula(); sincronizaControles(); pintaCaras(); pintaTabla(); draw();
+}
+
+/* =========================================================================
+   3. PROBABILIDADES
+   Pesos dentro, porcentajes fuera. La conversión de vuelta —de porcentaje a
+   pesos— es la única parte delicada: al fijar una cara hay que repartir lo
+   que queda entre las demás RESPETANDO las razones que tenían, o cambiar un
+   número desbarata la distribución entera.
+   ========================================================================= */
+function sumaPesos(){
+  var s=0; for(var i=0;i<cfg.pesos.length;i++) s+=cfg.pesos[i]; return s;
+}
+/* Los pesos del dado d. Sin sorpresa todos los dados son el mismo y la
+   distribución es una sola; con sorpresa cada dado lleva la suya, sorteada de
+   la semilla y tapada. Todo lo demás —tirar, la teórica, el panel— pregunta
+   siempre por aquí y no toca cfg.pesos directamente. */
+function pesosDe(d){
+  if(!cfg.sorpresa) return cfg.pesos;
+  var f=cfg.semilla+'|'+cfg.misterioN+'|'+cfg.ndados+'|'+cfg.caras;
+  if(secretos.firma!==f) generaSecretos(f);
+  return secretos.lista[d] || secretos.lista[0];
+}
+function probsDe(d){
+  var w=pesosDe(d), n=w.length, s=0, out=[], i;
+  for(i=0;i<n;i++) s+=w[i];
+  if(!(s>0)){ for(i=0;i<n;i++) out.push(1/n); return out; }
+  for(i=0;i<n;i++) out.push(w[i]/s);
+  return out;
+}
+function probs(){ return probsDe(0); }
+/* --- los dados trucados sorpresa -------------------------------------------
+   Se sortean de la semilla, como la chincheta misteriosa: reproducibles para
+   toda la clase y tapados hasta que se pide la probabilidad teórica. Con varios
+   dados, CADA UNO se sortea por su cuenta, así que en la bandeja puede haber un
+   dado cargado a una cara, otro cargado a dos y otro sano; distinguirlos mirando
+   la tabla dado a dado es justo el trabajo.
+   El sorteo va con su propio generador y no gasta números de la serie de
+   tiradas: si no, encender la sorpresa cambiaría las tiradas de la semilla. */
+var secretos={firma:'', lista:[]};
+function azarDe(txt){
+  var e=semillaDe(txt);
+  return function(){
+    e^=e<<13; e>>>=0;
+    e^=e>>>17;
+    e^=e<<5;  e>>>=0;
+    return e/4294967296;
+  };
+}
+/* Tres maneras de trucar un dado, que son las tres que se reconocen mirando el
+   gráfico: una cara que sale de más, dos que salen de más, o una que casi no
+   sale nunca. Y la cuarta posibilidad es que ese dado esté sano. */
+function pesosSorpresa(sem, cargadoSeguro){
+  var r=azarDe(cfg.semilla+'|sorpresa|'+cfg.misterioN+'|'+sem);
+  var n=cfg.caras, w=[], i;
+  for(i=0;i<n;i++) w.push(1);
+  var u=r();
+  if(cargadoSeguro) u=0.22+u*0.78;
+  if(u<0.22) return w;
+  var a=Math.floor(r()*n);
+  if(u<0.58){ w[a]=2.5+r()*3.5; }
+  else if(u<0.82){
+    var b=(a+1+Math.floor(r()*(n-1)))%n;
+    w[a]=1.8+r()*1.7; w[b]=1.8+r()*1.7;
+  } else { w[a]=0.12; }
+  return w;
+}
+function esSano(w){
+  for(var i=1;i<w.length;i++) if(w[i]!==w[0]) return false;
+  return true;
+}
+function generaSecretos(f){
+  var lista=[], i, todosSanos=true;
+  for(i=0;i<cfg.ndados;i++){
+    lista.push(pesosSorpresa(i));
+    if(!esSano(lista[i])) todosSanos=false;
+  }
+  /* si el sorteo deja todos los dados sanos no hay nada que descubrir, así que
+     el primero se truca a la fuerza: el reto existe siempre */
+  if(todosSanos) lista[0]=pesosSorpresa('0!', true);
+  secretos={firma:f, lista:lista};
+}
+function haySorpresaTapada(){ return !!cfg.sorpresa && !opt.teo; }
+
+/* Reparto por mayor resto: si se redondea cada uno por su cuenta, la columna
+   que ve el alumnado suma 99,9 % y la pregunta deja de tener gracia. */
+function porcentajes(dec, d){
+  dec=(dec===undefined)?1:dec;
+  var p=probsDe(d||0), f=Math.pow(10,dec), total=Math.round(100*f);
+  var base=[], rest=[], s=0, i;
+  for(i=0;i<p.length;i++){
+    var x=p[i]*total, b=Math.floor(x);
+    base.push(b); rest.push({i:i, r:x-b}); s+=b;
+  }
+  var falta=total-s;
+  rest.sort(function(a,b){ return (b.r-a.r) || (a.i-b.i); });
+  for(i=0;i<falta && rest.length;i++) base[rest[i%rest.length].i]++;
+  var out=[]; for(i=0;i<base.length;i++) out.push(base[i]/f);
+  return out;
+}
+/* Con el dado trucado, los pesos SON los porcentajes y se escriben uno a uno:
+   el número que se pone se queda donde se ha puesto y no se toca ninguno de los
+   demás. La primera versión los reajustaba sola para que sumaran 100 y era
+   insufrible: al ir a retocar la segunda cara se movía la primera. El precio de
+   no reajustar es que el dado puede quedar sin sumar 100, y entonces no está
+   listo: se avisa y no se deja tirar hasta que cuadre. Que cuadre es trabajo de
+   quien lo trucó, que es justo lo que se quiere que piense. */
+function ponPorcentaje(i, pct){
+  if(!isFinite(pct) || pct<0 || pct>100) return false;
+  cfg.pesos[i]=Math.round(pct*10)/10;
+  return true;
+}
+/* en décimas y con enteros, que sumar veinte números con un decimal en coma
+   flotante da 99,99999999 y aquí la pregunta es justo si suma 100 o no */
+function decimas(){
+  var t=0, i;
+  for(i=0;i<cfg.pesos.length;i++) t+=Math.round(cfg.pesos[i]*10);
+  return t;
+}
+function dadoListo(){ return !cfg.trucado || decimas()===1000; }
+function equilibra(){
+  var n=cfg.caras, out=[], i;
+  for(i=0;i<n;i++) out.push(1);
+  cfg.pesos=out;
+  /* trucado, «equilibrar» tiene que dejar porcentajes que sumen 100 exactos,
+     y eso es justo lo que hace el reparto por mayor resto */
+  if(cfg.trucado) cfg.pesos=porcentajes(1);
+}
+function pesosValidos(arr, n){
+  if(!arr || arr.length!==n) return false;
+  var s=0;
+  for(var i=0;i<n;i++){
+    var v=Number(arr[i]);
+    if(!isFinite(v) || v<0) return false;
+    s+=v;
+  }
+  return s>0;
+}
+
+/* --- las etiquetas de las caras ------------------------------------------- */
+function etiquetaPorDefecto(i, juego){
+  if(juego==='letras') return LETRAS.charAt(i%LETRAS.length);
+  if(juego==='colores') return COLORES[i%COLORES.length].n;
+  return String(i+1);
+}
+function rehazEtiquetas(juego){
+  var out=[], i;
+  for(i=0;i<cfg.caras;i++){
+    out.push({t:etiquetaPorDefecto(i,juego), v:i+1,
+              c:(juego==='colores'? COLORES[i%COLORES.length].h : null)});
+  }
+  cfg.etiqs=out;
+  cfg.juego=juego;
+}
+/* Al cambiar el número de caras se conserva lo que ya estaba escrito en las
+   caras que siguen existiendo, y se estrenan solo las nuevas. */
+function ajustaCaras(n){
+  var i, cambio=(cfg.etiqs.length!==n);
+  for(i=cfg.etiqs.length;i<n;i++){
+    cfg.etiqs.push({t:etiquetaPorDefecto(i,cfg.juego), v:i+1,
+                    c:(cfg.juego==='colores'? COLORES[i%COLORES.length].h : null)});
+    cfg.pesos.push(1);
+  }
+  cfg.etiqs.length=n; cfg.pesos.length=n;
+  if(!pesosValidos(cfg.pesos,n)) equilibra();
+  /* solo al cambiar el número de caras se rehacen los porcentajes, y en la misma
+     proporción que tenían; si no, retocar una cara movería las demás */
+  else if(cambio && cfg.trucado) cfg.pesos=porcentajes(1);
+}
+function valoresNumericos(){
+  for(var i=0;i<cfg.etiqs.length;i++) if(!isFinite(cfg.etiqs[i].v)) return false;
+  return true;
+}
+
+/* =========================================================================
+   4. EL AZAR
+   xorshift de 32 bits, escrito a mano. No uso Math.imul aposta: no está en
+   los navegadores viejos que uno se encuentra en las aulas, y aquí no hace
+   falta un generador criptográfico, hace falta uno reproducible.
+   ========================================================================= */
+var s32=1;
+function semillaDe(txt){
+  var s=String(txt), h=2166136261, i;
+  for(i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=(h+((h<<1)+(h<<4)+(h<<7)+(h<<8)+(h<<24)))>>>0; }
+  return (h>>>0) || 1;
+}
+function reinicia(semilla){ cfg.semilla=semilla; s32=semillaDe(semilla); }
+function rnd(){
+  s32^=s32<<13; s32>>>=0;
+  s32^=s32>>>17;
+  s32^=s32<<5;  s32>>>=0;
+  return s32/4294967296;
+}
+/* Sumas acumuladas, con la última cara protegida: si el redondeo deja el
+   acumulado en 0,9999999 y sale un 0,99999995, hay que devolver algo. */
+function tiraDado(d){
+  var p=probsDe(d||0), u=rnd(), a=0, i;
+  for(i=0;i<p.length;i++){ a+=p[i]; if(u<a) return i; }
+  for(i=p.length-1;i>=0;i--) if(p[i]>0) return i;
+  return 0;
+}
+function tirada(){
+  var out=[], i;
+  for(i=0;i<cfg.ndados;i++) out.push(tiraDado(i));
+  return out;
+}
+
+/* =========================================================================
+   5. EL RESULTADO DE UNA TIRADA
+   Un resultado es siempre un par {k, o}: k es la clave, el texto con el que
+   se agrupa y se cuenta, y o es el número que lo ordena en el eje. Van
+   separados porque hay resultados que no son números —«rojo», «A · C»— y aun
+   así tienen que salir en un orden que se entienda.
+   ========================================================================= */
+function valoresDe(idx){
+  var out=[], i;
+  for(i=0;i<idx.length;i++) out.push(cfg.etiqs[idx[i]].v);
+  return out;
+}
+function agregados(vs){
+  var n=vs.length, s=0, pr=1, mx=-Infinity, mn=Infinity, pa=0, im=0;
+  var cnt={}, dis=0, rep=0, i, v, k;
+  for(i=0;i<n;i++){
+    v=vs[i]; s+=v; pr*=v;
+    if(v>mx) mx=v;
+    if(v<mn) mn=v;
+    /* par e impar solo tienen sentido con enteros: un valor 2,5 no es ni una
+       cosa ni la otra, y contarlo como par sería mentir */
+    if(esEntero(v)){ if(Math.round(v)%2===0) pa++; else im++; }
+    k=String(r6(v));
+    if(cnt[k]===undefined){ cnt[k]=0; dis++; }
+    cnt[k]++;
+    if(cnt[k]>rep) rep=cnt[k];
+  }
+  return {n:n, suma:r6(s), prod:r6(pr), max:mx, min:mn, rec:r6(mx-mn), media:r6(s/n),
+          pares:pa, impares:im, distintos:dis, repes:rep};
+}
+function numRes(v){
+  if(!isFinite(v)) return {k:'(no vale)', o:1e18};
+  return {k:fmt(v), o:v};
+}
+function resultadoDe(idx){
+  var vs=valoresDe(idx), a, i, s, o;
+  switch(cfg.op){
+    case 'cara':
+      return {k:cfg.etiqs[idx[0]].t, o:cfg.etiqs[idx[0]].v};
+    case 'comb':
+      /* la combinación no distingue el orden en que han caído los dados, así
+         que se ordena; el número de orden es esa lista leída en base «caras»,
+         que da un orden estable y con sentido */
+      s=idx.slice().sort(function(x,y){ return x-y; });
+      o=0;
+      for(i=0;i<s.length;i++) o=o*cfg.caras+s[i];
+      var ts=[];
+      for(i=0;i<s.length;i++) ts.push(cfg.etiqs[s[i]].t);
+      return {k:ts.join(' · '), o:o};
+    case 'dif':    return numRes(r6(vs[0]-vs[1]));
+    case 'difabs': return numRes(r6(Math.abs(vs[0]-vs[1])));
+    case 'formula':
+      if(!ast) return {k:'(no vale)', o:1e18};
+      return numRes(evalua(ast, entorno(vs)));
+  }
+  a=agregados(vs);
+  if(a[cfg.op]!==undefined) return numRes(a[cfg.op]);
+  return numRes(a.suma);
+}
+function entorno(vs){ return {d:vs, a:agregados(vs)}; }
+
+/* --- qué operaciones caben con los dados que hay --------------------------- */
+function opAplicable(id){
+  var o=opDe(id);
+  return cfg.ndados>=o.min && cfg.ndados<=o.max;
+}
+function normalizaOp(){
+  if(opAplicable(cfg.op)) return;
+  cfg.op = (cfg.ndados===1) ? 'cara' : 'suma';
+}
+
+/* =========================================================================
+   5b. LA FÓRMULA
+   Intérprete propio, de descenso recursivo, SIN eval. No es purismo: eval se
+   traga cualquier cosa y aquí lo que hace falta es justo lo contrario, decir
+   con palabras qué es lo que no se entiende. Se compila una vez al escribirla
+   y se evalúa en cada tirada, que con 1000 tiradas se nota.
+
+   Gramática:
+     expr  := cmp
+     cmp   := suma (('='|'<>'|'<'|'>'|'<='|'>=') suma)?      devuelve 1 ó 0
+     suma  := prod (('+'|'-') prod)*
+     prod  := pot (('*'|'/') pot)*
+     pot   := unario ('^' pot)?                              asocia por la derecha
+     unario:= ('-'|'+')? atomo
+     atomo := numero | nombre | nombre '(' args ')' | '(' expr ')'
+   Los argumentos van separados por punto y coma, para dejar la coma libre
+   como separador decimal: quien escribe esto escribe 0,5.
+   ========================================================================= */
+var VARS={suma:1, producto:1, max:1, min:1, rec:1, media:1,
+          pares:1, impares:1, distintos:1, repes:1, n:1};
+var FNS={abs:1, ent:1, raiz:1, max:1, min:1, si:1, resto:1};
+
+function tokeniza(s){
+  var t=[], i=0, n=s.length, c, j, dos;
+  while(i<n){
+    c=s.charAt(i);
+    if(c===' '||c==='\t'||c==='\n'){ i++; continue; }
+    if(/[0-9]/.test(c) || ((c==='.'||c===',') && /[0-9]/.test(s.charAt(i+1)))){
+      j=i; while(j<n && /[0-9.,]/.test(s.charAt(j))) j++;
+      var txt=s.slice(i,j).replace(',','.');
+      var v=parseFloat(txt);
+      if(!isFinite(v)) throw {msg:'«'+s.slice(i,j)+'» no me parece un número'};
+      t.push({t:'num', v:v}); i=j; continue;
+    }
+    if(/[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ_]/.test(c)){
+      j=i; while(j<n && /[a-zA-Z0-9áéíóúüñÁÉÍÓÚÜÑ_]/.test(s.charAt(j))) j++;
+      t.push({t:'id', v:s.slice(i,j).toLowerCase(), bruto:s.slice(i,j)}); i=j; continue;
+    }
+    dos=s.substr(i,2);
+    if(dos==='<='||dos==='>='||dos==='<>'||dos==='!='){
+      t.push({t:'op', v:(dos==='!='?'<>':dos)}); i+=2; continue;
+    }
+    if('≤≥≠'.indexOf(c)>=0){
+      t.push({t:'op', v:(c==='≤'?'<=':c==='≥'?'>=':'<>')}); i++; continue;
+    }
+    if('+-*/^();='.indexOf(c)>=0 || c==='<' || c==='>' || c==='×' || c==='·' || c==='÷'){
+      var v2=c;
+      if(c==='×'||c==='·') v2='*';
+      if(c==='÷') v2='/';
+      t.push({t:'op', v:v2}); i++; continue;
+    }
+    throw {msg:'no entiendo el símbolo «'+c+'»'};
+  }
+  return t;
+}
+function compila(txt, nd){
+  try{
+    var tk=tokeniza(String(txt||'')), pos=0;
+    if(!tk.length) throw {msg:'la fórmula está vacía'};
+
+    function fin(){ return pos>=tk.length; }
+    function mira(){ return tk[pos]; }
+    function esOp(v){ var t=tk[pos]; return !!t && t.t==='op' && t.v===v; }
+    function come(v){ if(esOp(v)){ pos++; return true; } return false; }
+    function exige(v, donde){
+      if(!come(v)) throw {msg:'aquí falta un «'+v+'»'+(donde?' '+donde:'')};
+    }
+    function expr(){
+      var a=sumaN(), t=mira();
+      if(t && t.t==='op' && ['=','<>','<','>','<=','>='].indexOf(t.v)>=0){
+        pos++;
+        return {t:'cmp', o:t.v, a:a, b:sumaN()};
+      }
+      return a;
+    }
+    function sumaN(){
+      var a=prodN(), t;
+      while((t=mira()) && t.t==='op' && (t.v==='+'||t.v==='-')){ pos++; a={t:'bin', o:t.v, a:a, b:prodN()}; }
+      return a;
+    }
+    function prodN(){
+      var a=potN(), t;
+      while((t=mira()) && t.t==='op' && (t.v==='*'||t.v==='/')){ pos++; a={t:'bin', o:t.v, a:a, b:potN()}; }
+      return a;
+    }
+    function potN(){
+      var a=unario();
+      if(come('^')) return {t:'bin', o:'^', a:a, b:potN()};
+      return a;
+    }
+    function unario(){
+      if(come('-')) return {t:'neg', a:unario()};
+      if(come('+')) return unario();
+      return atomo();
+    }
+    function atomo(){
+      var t=mira();
+      if(!t) throw {msg:'la fórmula se corta antes de tiempo'};
+      if(t.t==='num'){ pos++; return {t:'num', v:t.v}; }
+      if(t.t==='op' && t.v==='('){ pos++; var e=expr(); exige(')','para cerrar el paréntesis'); return e; }
+      if(t.t==='id'){
+        pos++;
+        var nom=t.v;
+        if(esOp('(')){
+          if(!FNS[nom]) throw {msg:'no conozco la función «'+t.bruto+'»'};
+          pos++;
+          var args=[];
+          if(!esOp(')')){
+            args.push(expr());
+            while(come(';')) args.push(expr());
+          }
+          exige(')','para cerrar «'+t.bruto+'»');
+          compruebaArgs(nom, args.length, t.bruto);
+          return {t:'fn', f:nom, args:args};
+        }
+        var m=nom.match(/^d(\d+)$/);
+        if(m){
+          var k=parseInt(m[1],10);
+          if(k<1) throw {msg:'los dados se numeran desde d1'};
+          if(k>nd) throw {msg:'no conozco «'+t.bruto+'»: solo has puesto '+nd+(nd===1?' dado':' dados')};
+          return {t:'d', i:k-1};
+        }
+        if(VARS[nom]) return {t:'var', v:nom};
+        throw {msg:'no sé qué es «'+t.bruto+'»'};
+      }
+      throw {msg:'aquí sobra un «'+t.v+'»'};
+    }
+    function compruebaArgs(nom, k, bruto){
+      if(nom==='si' && k!==3) throw {msg:'si(…) necesita tres cosas: si(condición; sí; no)'};
+      if((nom==='abs'||nom==='ent'||nom==='raiz') && k!==1)
+        throw {msg:bruto+'(…) necesita exactamente un número'};
+      if(nom==='resto' && k!==2) throw {msg:'resto(…) necesita dos números'};
+      if((nom==='max'||nom==='min') && k<1) throw {msg:bruto+'(…) necesita al menos un número'};
+    }
+
+    var a=expr();
+    if(!fin()) throw {msg:'no sé qué hacer con lo que hay a partir de aquí'};
+    return {ast:a, err:''};
+  }catch(e){
+    return {ast:null, err:(e && e.msg) || String(e)};
+  }
+}
+function evalua(a, env){
+  switch(a.t){
+    case 'num': return a.v;
+    case 'd':   return env.d[a.i];
+    case 'var': return (a.v==='producto') ? env.a.prod : env.a[a.v];
+    case 'neg': return -evalua(a.a, env);
+    case 'cmp':
+      var x=evalua(a.a,env), y=evalua(a.b,env);
+      if(!isFinite(x)||!isFinite(y)) return NaN;
+      x=r6(x); y=r6(y);
+      switch(a.o){
+        case '=':  return x===y?1:0;
+        case '<>': return x!==y?1:0;
+        case '<':  return x<y?1:0;
+        case '>':  return x>y?1:0;
+        case '<=': return x<=y?1:0;
+        default:   return x>=y?1:0;
+      }
+    case 'bin':
+      var p=evalua(a.a,env), q=evalua(a.b,env);
+      if(!isFinite(p)||!isFinite(q)) return NaN;
+      switch(a.o){
+        case '+': return p+q;
+        case '-': return p-q;
+        case '*': return p*q;
+        /* dividir entre cero no da infinito ni da error: da «no vale», que es
+           lo que hay que ver en la tabla */
+        case '/': return q===0 ? NaN : p/q;
+        default:  return Math.pow(p,q);
+      }
+    case 'fn':
+      var v=[], i;
+      for(i=0;i<a.args.length;i++) v.push(evalua(a.args[i],env));
+      switch(a.f){
+        case 'abs':   return Math.abs(v[0]);
+        case 'ent':   return Math.floor(v[0]);
+        case 'raiz':  return v[0]<0 ? NaN : Math.sqrt(v[0]);
+        case 'resto': return v[1]===0 ? NaN : v[0]-v[1]*Math.floor(v[0]/v[1]);
+        case 'si':    return isFinite(v[0]) ? (v[0]?v[1]:v[2]) : NaN;
+        case 'max':   return Math.max.apply(null, v);
+        default:      return Math.min.apply(null, v);
+      }
+  }
+  return NaN;
+}
+function compilaFormula(){
+  var r=compila(cfg.formula, cfg.ndados);
+  ast=r.ast; astErr=r.err;
+  var el=document.getElementById('errFormula');
+  if(el) el.textContent = (cfg.op==='formula' && astErr) ? astErr : '';
+  return !astErr;
+}
+
+/* =========================================================================
+   6. LA PROBABILIDAD TEÓRICA
+   Calculada, no simulada: es la que se compara con las frecuencias. Hay dos
+   caminos y los dos son exactos.
+
+   · ENUMERAR todas las combinaciones. Vale para cualquier cosa —incluida una
+     fórmula inventada— pero cuesta caras^dados, así que solo hasta el tope.
+   · ARRASTRAR UNA DINÁMICA dado a dado, guardando no la combinación entera
+     sino lo poco que hace falta recordar de ella: para la suma, la suma
+     parcial; para el mayor, el mayor de momento; para la combinación, la
+     lista ordenada de caras. Diez dados de veinte caras son 10^13
+     combinaciones y solo 191 sumas posibles.
+
+   Cuando no cabe ninguno de los dos, no se dibuja nada y se dice por qué.
+   Inventarse una curva aproximada aquí sería justo el error que el material
+   intenta evitar.
+   ========================================================================= */
+/* la firma identifica el experimento entero. Con la sorpresa encendida los
+   dados salen de la semilla, así que la semilla forma parte de la identidad:
+   cambiarla es cambiar de dados y las tiradas de antes ya no valen */
+function firmaDe(c){
+  return c.caras+'|'+c.ndados+'|'+c.op+'|'+c.formula+'|'+
+         c.pesos.join(',')+'|'+
+         (c.sorpresa ? 's'+(c.misterioN||0)+':'+c.semilla : '')+'|'+
+         c.etiqs.map(function(e){ return e.t+':'+e.v; }).join(',');
+}
+function firmaCfg(){ return firmaDe(cfg); }
+function carasActivas(d){
+  var p=probsDe(d||0), n=0, i;
+  for(i=0;i<p.length;i++) if(p[i]>0) n++;
+  return n;
+}
+/* cuántas combinaciones habría que enumerar de verdad: con dados distintos no
+   es una potencia, es el producto de las caras vivas de cada uno */
+function combinaciones(){
+  var t=1, d;
+  for(d=0; d<cfg.ndados; d++){
+    t*=carasActivas(d);
+    if(t>1e12) return t;
+  }
+  return t;
+}
+function enumTeorica(cap){
+  if(combinaciones()>cap) return null;
+  var mapa={}, idx=new Array(cfg.ndados);
+  function rec(d, pr){
+    if(d===cfg.ndados){
+      var r=resultadoDe(idx);
+      if(!mapa[r.k]) mapa[r.k]={p:0, o:r.o};
+      mapa[r.k].p+=pr;
+      return;
+    }
+    var p=probsDe(d);
+    for(var i=0;i<cfg.caras;i++){
+      if(p[i]<=0) continue;
+      idx[d]=i; rec(d+1, pr*p[i]);
+    }
+  }
+  rec(0,1);
+  return mapa;
+}
+/* La dinámica genérica: estados serializados con JSON, que es lento pero
+   sobra —cientos de estados, no millones— y evita escribir una clave a mano
+   para cada operación. */
+function dpGenerico(ini, paso, salida, cap){
+  var i, j, d, lista=[{e:ini, p:1}];
+  for(d=0; d<cfg.ndados; d++){
+    /* la dinámica ya va dado a dado, así que dados distintos solo significa
+       preguntar por los pesos de este dado en cada vuelta */
+    var p=probsDe(d), acc={}, nueva=[];
+    for(i=0;i<lista.length;i++){
+      for(j=0;j<cfg.caras;j++){
+        if(p[j]<=0) continue;
+        var e2=paso(lista[i].e, j);
+        var k=JSON.stringify(e2);
+        if(acc[k]===undefined){ acc[k]=nueva.length; nueva.push({e:e2, p:0}); }
+        nueva[acc[k]].p += lista[i].p*p[j];
+      }
+    }
+    if(nueva.length>cap) return null;
+    lista=nueva;
+  }
+  var mapa={};
+  for(i=0;i<lista.length;i++){
+    var r=salida(lista[i].e);
+    if(!mapa[r.k]) mapa[r.k]={p:0, o:r.o};
+    mapa[r.k].p += lista[i].p;
+  }
+  return mapa;
+}
+function dpDe(op, cap){
+  var V=cfg.etiqs, n=cfg.ndados;
+  switch(op){
+    case 'suma': case 'media':
+      return dpGenerico(0,
+        function(e,j){ return r6(e+V[j].v); },
+        function(e){ return numRes(op==='media' ? r6(e/n) : e); }, cap);
+    case 'prod':
+      return dpGenerico(1,
+        function(e,j){ return r6(e*V[j].v); },
+        function(e){ return numRes(e); }, cap);
+    case 'max':
+      return dpGenerico(null,
+        function(e,j){ return (e===null || V[j].v>e) ? V[j].v : e; },
+        function(e){ return numRes(e); }, cap);
+    case 'min':
+      return dpGenerico(null,
+        function(e,j){ return (e===null || V[j].v<e) ? V[j].v : e; },
+        function(e){ return numRes(e); }, cap);
+    case 'rec':
+      return dpGenerico(null,
+        function(e,j){
+          var v=V[j].v;
+          if(e===null) return {a:v, b:v};
+          return {a:Math.min(e.a,v), b:Math.max(e.b,v)};
+        },
+        function(e){ return numRes(r6(e.b-e.a)); }, cap);
+    case 'pares': case 'impares':
+      return dpGenerico(0,
+        function(e,j){
+          var v=V[j].v;
+          if(!esEntero(v)) return e;
+          var par=(Math.round(v)%2===0);
+          return e + ((op==='pares') === par ? 1 : 0);
+        },
+        function(e){ return numRes(e); }, cap);
+    /* combinación, valores distintos y repetición máxima comparten estado:
+       la lista ordenada de caras que han salido, que es justo lo que ninguna
+       de las tres necesita más allá de */
+    case 'comb': case 'distintos': case 'repes':
+      return dpGenerico([],
+        function(e,j){
+          var a=e.slice(), k=a.length;
+          while(k>0 && a[k-1]>j){ a[k]=a[k-1]; k--; }
+          a[k]=j;
+          return a;
+        },
+        function(e){ return resultadoDe(e); }, cap);
+  }
+  return null;
+}
+function teorica(){
+  var f=firmaCfg();
+  if(cacheTeo && cacheTeo.firma===f) return cacheTeo;
+  var m=null, modo=null, motivo='';
+  if(cfg.op!=='formula' || ast){
+    /* la dinámica primero: cuando existe es muchísimo más barata que
+       enumerar, y las dos dan lo mismo (hay una prueba que lo comprueba) */
+    m=dpDe(cfg.op, CAP_DP);
+    if(m) modo='dp';
+    if(!m){ m=enumTeorica(CAP_ENUM); if(m) modo='enum'; }
+  }
+  if(!m){
+    motivo = (cfg.op==='formula' && !ast)
+      ? 'La fórmula no está bien escrita, así que no hay nada que calcular.'
+      : 'Con '+cfg.ndados+' dados de '+cfg.caras+' caras hay demasiadas combinaciones '+
+        'para calcular «'+nombreOp().toLowerCase()+'» de forma exacta.';
+  }
+  cacheTeo={firma:f, mapa:m, modo:modo, motivo:motivo};
+  return cacheTeo;
+}
+/* El eje del gráfico se saca del conjunto de resultados posibles, no de los
+   que han salido: así no baila cada vez que aparece uno nuevo, y se ven desde
+   el principio los huecos de lo que todavía no ha salido. */
+function registraSoporte(){
+  var t=teorica();
+  if(!t.mapa) return;
+  for(var k in t.mapa) if(t.mapa.hasOwnProperty(k)) idDeClave(k, t.mapa[k].o);
+}
+
+/* =========================================================================
+   6b. EL REGISTRO DE TIRADAS
+   ========================================================================= */
+function idDeClave(k, o){
+  var id=claveId[k];
+  if(id===undefined){
+    id=claves.length; claveId[k]=id;
+    claves.push({k:k, o:o, n:0});
+  }
+  return id;
+}
+function ordenadas(){
+  var ids=[], i;
+  for(i=0;i<claves.length;i++) ids.push(i);
+  ids.sort(function(a,b){
+    var d=claves[a].o-claves[b].o;
+    if(d) return d;
+    return claves[a].k<claves[b].k ? -1 : claves[a].k>claves[b].k ? 1 : 0;
+  });
+  return ids;
+}
+function registra(idx){
+  var r=resultadoDe(idx), id=idDeClave(r.k, r.o);
+  claves[id].n++;
+  ntiradas++;
+  if(serie.length<TOPE_SERIE) serie.push(id);
+  detalle.push({n:ntiradas, c:idx, id:id});
+  while(detalle.length>TOPE_DET){ detalle.shift(); recortadas++; }
+  return id;
+}
+function tiraN(n){
+  var i, desde=detalle.length;
+  registraSoporte();
+  for(i=0;i<n;i++) registra(tirada());
+  return desde;
+}
+
+/* =========================================================================
+   7. DIBUJO
+   Dos lienzos: la bandeja de dados arriba y el gráfico abajo. Los dos se
+   repintan enteros siempre; con veinte barras y diez dados sobra de largo y
+   se evita todo el género de errores del dibujado incremental.
+   ========================================================================= */
+var FONDO='#fbfbfa', TINTA='#2b2f36', SUAVE='#8a919c', AZUL='#2f62a8';
+var CARA_F='#f7f4ec', CARA_B='#cdc6b4';
+
+function claro(hex){
+  /* luminancia a ojo para decidir si el texto va en blanco o en negro */
+  var r=parseInt(hex.substr(1,2),16), g=parseInt(hex.substr(3,2),16), b=parseInt(hex.substr(5,2),16);
+  return (0.299*r+0.587*g+0.114*b) > 150;
+}
+function rectRedondo(c,x,y,w,h,r){
+  c.beginPath();
+  c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  c.lineTo(x+r,y+h); c.quadraticCurveTo(x,y+h,x,y+h-r);
+  c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y);
+  c.closePath();
+}
+function poligono(c,cx,cy,r,lados,giro){
+  var i, a;
+  c.beginPath();
+  for(i=0;i<lados;i++){
+    a=giro + i*2*Math.PI/lados;
+    if(i===0) c.moveTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
+    else c.lineTo(cx+r*Math.cos(a), cy+r*Math.sin(a));
+  }
+  c.closePath();
+}
+/* La silueta imita el dado de verdad cuando existe —el d4 es un triángulo, el
+   d20 se dibuja como un hexágono porque es su contorno— y para los números de
+   caras que no tienen dado en el cajón se usa una ficha, que no engaña. */
+function silueta(c, caras, cx, cy, r){
+  var q=-Math.PI/2;
+  switch(caras){
+    case 4:  poligono(c,cx,cy+r*0.18,r*1.12,3,q); return {dy:r*0.30, k:0.55};
+    case 6:  rectRedondo(c,cx-r*0.86,cy-r*0.86,r*1.72,r*1.72,r*0.22); return {dy:0, k:0.9};
+    case 8:  poligono(c,cx,cy,r*1.12,4,q); return {dy:0, k:0.62};
+    case 10: c.beginPath();
+             c.moveTo(cx, cy-r*1.05); c.lineTo(cx+r*0.85, cy-r*0.12);
+             c.lineTo(cx, cy+r*1.05); c.lineTo(cx-r*0.85, cy-r*0.12);
+             c.closePath(); return {dy:-r*0.06, k:0.66};
+    case 12: poligono(c,cx,cy,r*1.02,5,q); return {dy:r*0.06, k:0.72};
+    case 20: poligono(c,cx,cy,r*0.98,6,q); return {dy:0, k:0.78};
+    default: rectRedondo(c,cx-r*0.82,cy-r*0.82,r*1.64,r*1.64,r*0.34); return {dy:0, k:0.86};
+  }
+}
+var PIPS={
+  1:[[0,0]], 2:[[-1,-1],[1,1]], 3:[[-1,-1],[0,0],[1,1]],
+  4:[[-1,-1],[1,-1],[-1,1],[1,1]], 5:[[-1,-1],[1,-1],[0,0],[-1,1],[1,1]],
+  6:[[-1,-1],[1,-1],[-1,0],[1,0],[-1,1],[1,1]]
+};
+function pintaCara(c, i, cx, cy, r){
+  var e=cfg.etiqs[i], s=silueta(c, cfg.caras, cx, cy, r);
+  c.fillStyle = e.c || CARA_F;
+  c.fill();
+  c.lineWidth=Math.max(1, r*0.045);
+  c.strokeStyle = e.c ? 'rgba(0,0,0,.28)' : CARA_B;
+  c.stroke();
+  var tinta = e.c ? (claro(e.c)?'#26292e':'#fff') : TINTA;
+
+  /* los puntos solo en el dado de seis con los números de siempre: son el
+     dibujo que todo el mundo reconoce, y en cualquier otro caso estorban */
+  if(cfg.caras===6 && cfg.juego==='num' && e.t===String(i+1) && PIPS[i+1]){
+    var d=r*0.36, rr=r*0.135, p=PIPS[i+1], j;
+    c.fillStyle=tinta;
+    for(j=0;j<p.length;j++){
+      c.beginPath(); c.arc(cx+p[j][0]*d, cy+p[j][1]*d, rr, 0, 6.2832); c.fill();
+    }
+    return;
+  }
+  var txt=String(e.t), lim=r*1.5*s.k;
+  var fs=r*0.9*s.k;
+  c.textAlign='center'; c.textBaseline='middle'; c.fillStyle=tinta;
+  do{
+    c.font='600 '+fs.toFixed(1)+'px -apple-system,Segoe UI,Roboto,sans-serif';
+    if(c.measureText(txt).width<=lim || fs<7) break;
+    fs*=0.88;
+  }while(true);
+  c.fillText(txt, cx, cy+s.dy);
+}
+function disposicion(W,H,n){
+  var mejor=null, c, f, s;
+  for(c=1;c<=n;c++){
+    f=Math.ceil(n/c);
+    s=Math.min(W/c, H/f);
+    if(!mejor || s>mejor.s) mejor={c:c, f:f, s:s};
+  }
+  return mejor;
+}
+function carasVisibles(){
+  var u=detalle.length ? detalle[detalle.length-1] : null;
+  if(anim) return anim.caras;
+  return u ? u.c : null;
+}
+function drawDados(c, W, H, paraPNG){
+  c.fillStyle = paraPNG ? '#fff' : FONDO;
+  c.fillRect(0,0,W,H);
+  var idx=carasVisibles(), n=cfg.ndados, i;
+  var alto=H-34;
+  var d=disposicion(W-24, alto-24, n);
+  var r=Math.min(d.s*0.40, 92)*view.z;
+  r=Math.max(9, r);
+  var anchoFila=d.c*r*2.5, x0=(W-anchoFila)/2+r*1.25;
+  var altoTot=d.f*r*2.5, y0=(alto-altoTot)/2+r*1.25+8;
+
+  if(!idx){
+    c.fillStyle=SUAVE; c.textAlign='center'; c.textBaseline='middle';
+    c.font='14px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.fillText('Dale a 🎲 Tirar', W/2, alto/2);
+  } else {
+    /* con la sorpresa cada dado es distinto, así que hay que poder decir cuál
+       es cuál: el rótulo empareja la bandeja con las columnas de la tabla */
+    var rotula=(cfg.sorpresa && n>1 && r>=16);
+    for(i=0;i<n;i++){
+      var col=i%d.c, fil=Math.floor(i/d.c);
+      var enFila=Math.min(d.c, n-fil*d.c);
+      var dx=(d.c-enFila)*r*1.25, cx=x0+dx+col*r*2.5, cy=y0+fil*r*2.5;
+      pintaCara(c, idx[i], cx, cy, r);
+      if(rotula){
+        c.textAlign='center'; c.textBaseline='top'; c.fillStyle=SUAVE;
+        c.font='11px -apple-system,Segoe UI,Roboto,sans-serif';
+        c.fillText('d'+(i+1), cx, cy+r*1.12);
+      }
+    }
+  }
+  /* el resultado, grande y abajo: es lo que se mira en clase desde el fondo */
+  var txt='';
+  if(idx && !anim){
+    var res=resultadoDe(idx);
+    txt=nombreOp()+': '+coma(res.k);
+  } else if(anim){ txt='…'; }
+  if(txt){
+    c.textAlign='center'; c.textBaseline='alphabetic';
+    c.font='600 15px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.fillStyle=AZUL;
+    c.fillText(txt, W/2, H-12);
+  }
+}
+
+/* --- el gráfico ------------------------------------------------------------
+   La ventana del gráfico. Acercarse hace falta de verdad: con diez dados de
+   veinte caras la suma tiene 191 resultados y las barras no se distinguen, y
+   la diferencia entre la frecuencia que ha salido y la probabilidad que tocaba
+   —que es la comparación de todo esto— no se ve a escala completa.
+   Se guarda en fracciones de 0 a 1 de cada eje, no en unidades de los datos,
+   para que valga igual en las dos vistas y no haya que rehacerla cuando cambia
+   la escala o llegan más tiradas.
+   --------------------------------------------------------------------------- */
+var gv={x0:0, x1:1, y0:0, y1:1};
+var gplot=null, gdrag=null;
+var MINVENT=1e-4;
+/* Hasta dónde puede estirarse la ventana en cada eje. Normalmente 1, que es el
+   gráfico entero; en la evolución el eje vertical llega más allá, porque ahí el
+   1 es un techo escogido —lo justo por encima de donde acaba la frecuencia— y
+   el principio de la serie se sale por arriba. Sin esto, la parte alta de la
+   curva no había manera de verla: alejar no pasaba del techo. */
+var gvTope={x:1, y:1};
+var evolCortada=false;      // ¿queda curva por encima de lo que se está viendo?
+function gvReset(){ gv={x0:0, x1:1, y0:0, y1:1}; }
+function gvHayZoom(){ return gv.x0>0 || gv.x1<1 || gv.y0>0 || gv.y1!==1; }
+/* frac es dónde está el cursor dentro de la ventana que se ve (0 a 1); ese
+   punto se queda quieto al acercar, que es lo que hace que la rueda se sienta
+   natural en vez de mareante */
+function gvZoom(eje, frac, k){
+  var T=(eje==='y')?gvTope.y:gvTope.x;
+  var a=(eje==='y')?gv.y0:gv.x0, b=(eje==='y')?gv.y1:gv.x1;
+  var p=a+frac*(b-a), w=(b-a)/k;
+  if(w>T) w=T;
+  if(w<MINVENT) w=MINVENT;
+  var na=p-frac*w, nb=na+w;
+  if(na<0){ na=0; nb=w; }
+  if(nb>T){ nb=T; na=T-w; }
+  if(eje==='y'){ gv.y0=na; gv.y1=nb; } else { gv.x0=na; gv.x1=nb; }
+}
+function gvMueve(eje, d){
+  var T=(eje==='y')?gvTope.y:gvTope.x;
+  var a=(eje==='y')?gv.y0:gv.x0, b=(eje==='y')?gv.y1:gv.x1, w=b-a;
+  var na=a+d*w;
+  if(na<0) na=0;
+  if(na+w>T) na=T-w;
+  if(eje==='y'){ gv.y0=na; gv.y1=na+w; } else { gv.x0=na; gv.x1=na+w; }
+}
+/* con dos barras no hay nada que recorrer a lo ancho: ahí la rueda a secas
+   acerca en vertical y el gesto nunca se queda sin hacer nada */
+function ejeRueda(conMayus){
+  if(conMayus) return 'y';
+  return (opt.vista==='evol' || claves.length>2) ? 'x' : 'y';
+}
+
+function unidad(){
+  return opt.escala==='abs' ? '' : opt.escala==='pct' ? ' %' : '';
+}
+function valorEscala(nn){
+  if(opt.escala==='abs') return nn;
+  if(!ntiradas) return 0;
+  return opt.escala==='pct' ? 100*nn/ntiradas : nn/ntiradas;
+}
+function teoEscala(p){
+  if(opt.escala==='abs') return p*ntiradas;
+  return opt.escala==='pct' ? 100*p : p;
+}
+/* los decimales se ajustan a lo estrecha que sea la ventana, o las cinco marcas
+   del eje dirían todas lo mismo al acercarse */
+function etiquetaEje(v, rango){
+  if(opt.escala==='abs') return String(rango<8 ? Math.round(v*10)/10 : Math.round(v));
+  var dec = rango<0.005 ? 4 : rango<0.05 ? 3 : rango<0.5 ? 2 : 1;
+  if(opt.escala==='pct') return coma(v.toFixed(dec));
+  return coma(v.toFixed(dec+2));
+}
+function drawBarras(c, W, H){
+  var t=teorica(), ids=ordenadas(), i;
+  var mL=44, mR=10, mT=12, mB=34;
+  var an=W-mL-mR, al=H-mT-mB;
+  if(an<40 || al<30) return;
+  if(!ids.length){
+    c.fillStyle=SUAVE; c.textAlign='center'; c.textBaseline='middle';
+    c.font='13px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.fillText('Todavía no has tirado', W/2, H/2);
+    return;
+  }
+  var mx=0;
+  for(i=0;i<ids.length;i++){
+    var v=valorEscala(claves[ids[i]].n);
+    if(v>mx) mx=v;
+    if(opt.teo && t.mapa && t.mapa[claves[ids[i]].k]){
+      var vt=teoEscala(t.mapa[claves[ids[i]].k].p);
+      if(vt>mx) mx=vt;
+    }
+  }
+  if(!(mx>0)) mx=1;
+  mx*=1.12;
+  /* aquí el techo ya cubre la barra más alta: no hay nada por encima que ver */
+  gvTope.y=1;
+  var v0=mx*gv.y0, v1=mx*gv.y1, rango=(v1-v0)||1;
+  function yDe(val){ return mT+al*(1-(val-v0)/rango); }
+  gplot={x:mL, y:mT, w:an, h:al};
+
+  /* eje de la izquierda */
+  c.strokeStyle='#eceef1'; c.lineWidth=1;
+  c.fillStyle=SUAVE; c.font='10px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.textAlign='right'; c.textBaseline='middle';
+  for(i=0;i<=4;i++){
+    var yy=mT+al-al*i/4;
+    c.beginPath(); c.moveTo(mL, yy+0.5); c.lineTo(W-mR, yy+0.5); c.stroke();
+    c.fillText(etiquetaEje(v0+rango*i/4, rango)+unidad(), mL-5, yy);
+  }
+
+  /* la ventana horizontal se queda con un tramo de la lista de barras */
+  var N=ids.length;
+  var i0=Math.max(0, Math.floor(gv.x0*N)), i1=Math.min(N, Math.ceil(gv.x1*N));
+  if(i1-i0<1) i1=Math.min(N, i0+1);
+  var vis=i1-i0;
+  var paso=an/vis, anchoB=Math.min(paso*0.78, 58);
+  var salto=Math.ceil(vis/Math.max(1,Math.floor(an/38)));
+  /* recortado al recuadro: acercado, una barra puede empezar por debajo de lo
+     que se ve y no debe salirse por el eje */
+  c.save();
+  c.beginPath(); c.rect(mL, mT, an, al); c.clip();
+  for(i=i0;i<i1;i++){
+    var k=claves[ids[i]], cx=mL+paso*(i-i0+0.5);
+    var yv=yDe(valorEscala(k.n));
+    if(k.n>0){ c.fillStyle=AZUL; c.fillRect(cx-anchoB/2, yv, anchoB, mT+al-yv+2); }
+    if(opt.teo && t.mapa && t.mapa[k.k]){
+      /* la teórica se dibuja como una tapa hueca encima de la barra: se ve a
+         la vez lo que ha salido y lo que tendría que salir */
+      var yt=yDe(teoEscala(t.mapa[k.k].p));
+      c.strokeStyle='#c2410c'; c.lineWidth=2;
+      c.beginPath();
+      c.moveTo(cx-anchoB/2-2, yt); c.lineTo(cx+anchoB/2+2, yt);
+      c.stroke();
+    }
+  }
+  c.restore();
+  c.textAlign='center'; c.fillStyle=SUAVE; c.textBaseline='top';
+  c.font='10.5px -apple-system,Segoe UI,Roboto,sans-serif';
+  for(i=i0;i<i1;i++){
+    if((i-i0)%salto) continue;
+    var et=coma(claves[ids[i]].k);
+    if(et.length>9) et=et.slice(0,8)+'…';
+    c.fillText(et, mL+paso*(i-i0+0.5), mT+al+5);
+  }
+  c.strokeStyle='#d5d9e0'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(mL, mT+al+0.5); c.lineTo(W-mR, mT+al+0.5); c.stroke();
+}
+/* Las marcas del eje de tiradas: números redondos —1, 2, 5, 10, 25…— y como
+   mucho los que quepan. Con tramos cortos se va de una en una y con la serie
+   entera de mil en mil, sin que haya que decidir nada a mano. */
+function marcasEje(a, b, cuantas){
+  var span=b-a;
+  if(span<=0) return [b];
+  var bruto=span/Math.max(1,cuantas);
+  var e=Math.pow(10, Math.floor(Math.log(bruto)/Math.LN10)), m=bruto/e;
+  /* el 2,5 solo cuando la escala lo deja en entero (25, 250, 2500): las tiradas
+     se cuentan de una en una y una marca en la tirada 502,5 no significa nada */
+  var paso=(m<=1?1:m<=2?2:(m<=2.5 && e>=10)?2.5:m<=5?5:10)*e;
+  paso=Math.max(1, Math.round(paso));
+  var out=[], v=Math.ceil(a/paso)*paso;
+  for(; v<=b && out.length<40; v+=paso) out.push(Math.round(v));
+  /* si el tramo es tan corto que no cae ningún múltiplo dentro, al menos la
+     primera y la última tirada que se ven */
+  if(!out.length) out=(a===b)?[b]:[a,b];
+  return out;
+}
+function drawEvolucion(c, W, H){
+  var mL=44, mR=12, mT=12, mB=26;
+  var an=W-mL-mR, al=H-mT-mB, i;
+  if(an<40 || al<30) return;
+  var id=claveId[opt.quien];
+  c.fillStyle=SUAVE; c.textAlign='center'; c.textBaseline='middle';
+  c.font='13px -apple-system,Segoe UI,Roboto,sans-serif';
+  if(id===undefined){ c.fillText('Elige arriba qué resultado quieres seguir', W/2, H/2); return; }
+  if(!serie.length){ c.fillText('Todavía no has tirado', W/2, H/2); return; }
+
+  /* la teórica solo si se ha pedido, igual que en las barras: aquí también es
+     la respuesta, y con los dados sorpresa sería destapar el truco sin querer */
+  var t=teorica();
+  var pt=(opt.teo && t.mapa && t.mapa[opt.quien]) ? t.mapa[opt.quien].p : null;
+  /* techo del eje: lo justo por encima de lo que va a verse, o el 1 si la
+     probabilidad es alta; así la oscilación del principio no queda aplastada */
+  var techo=0.05, acum=0, j, fr;
+  for(i=0;i<serie.length;i++){ if(serie[i]===id) acum++; }
+  var pFinal=acum/serie.length;
+  techo=Math.max(pFinal*1.6, pt?pt*1.8:0, 0.08);
+  if(techo>1) techo=1;
+  /* el techo deja fuera el arranque de la serie, que salta hasta el 100 % y
+     aplastaría todo lo demás; alejando con Mayús se llega hasta ahí */
+  gvTope.y=(techo>0) ? 1/techo : 1;
+  var v0=techo*gv.y0, v1=techo*gv.y1, rango=(v1-v0)||1;
+  function yF(f){ return mT+al*(1-(f-v0)/rango); }
+  gplot={x:mL, y:mT, w:an, h:al};
+
+  /* la ventana horizontal recorta qué tramo se ve, pero la frecuencia sigue
+     siendo la acumulada desde la primera tirada: hay que sumar lo de antes del
+     tramo antes de empezar a dibujar. c0 y c1 son la primera y la última tirada
+     que se ven, contando desde 1 */
+  var N=serie.length;
+  var c0=Math.max(1, Math.floor(gv.x0*N)+1);
+  var c1=Math.min(N, Math.max(c0, Math.ceil(gv.x1*N)));
+  var np=c1-c0+1;
+  /* dónde cae la tirada n: el borde derecho es siempre la última que se ve */
+  function xT(n){ return mL+an*(n-c0+1)/np; }
+
+  c.strokeStyle='#eceef1'; c.lineWidth=1;
+  c.fillStyle=SUAVE; c.font='10px -apple-system,Segoe UI,Roboto,sans-serif';
+  c.textAlign='right'; c.textBaseline='middle';
+  var dec = rango<0.005 ? 5 : rango<0.05 ? 4 : 3;
+  for(i=0;i<=4;i++){
+    var yy=mT+al-al*i/4;
+    c.beginPath(); c.moveTo(mL, yy+0.5); c.lineTo(W-mR, yy+0.5); c.stroke();
+    c.fillText(coma((v0+rango*i/4).toFixed(dec)), mL-5, yy);
+  }
+  /* marcas verticales cada tantas tiradas: sin ellas no se sabe si la curva se
+     ha calmado a las cien tiradas o a las mil, que es justo lo que se mira */
+  var leyenda='nº de tiradas';
+  c.font='10px -apple-system,Segoe UI,Roboto,sans-serif';
+  var topeX=W-mR-c.measureText(leyenda).width-12;
+  c.textAlign='center'; c.textBaseline='top';
+  if(np>1){
+    var marcas=marcasEje(c0, c1, Math.max(2, Math.floor(an/62)));
+    for(i=0;i<marcas.length;i++){
+      var xm=Math.round(xT(marcas[i]))+0.5;
+      if(xm<mL+2 || xm>mL+an) continue;
+      c.strokeStyle='#f1f3f5';
+      c.beginPath(); c.moveTo(xm, mT); c.lineTo(xm, mT+al); c.stroke();
+      var et=String(marcas[i]);
+      if(xm+c.measureText(et).width/2 < topeX){
+        c.fillStyle=SUAVE; c.fillText(et, xm, mT+al+6);
+      }
+    }
+  } else {
+    /* una sola tirada: el punto va en el centro y su número, debajo */
+    c.fillStyle=SUAVE; c.fillText(String(c1), mL+an/2, mT+al+6);
+  }
+  c.textAlign='right'; c.fillStyle=SUAVE;
+  c.fillText(leyenda, W-mR, mT+al+6);
+  c.save();
+  /* el recorte va un pelo holgado para que un punto que caiga justo en el suelo
+     o en el techo se vea entero y no partido por la mitad */
+  c.beginPath(); c.rect(mL, mT-5, an, al+10); c.clip();
+  if(pt!==null){
+    var yt=yF(pt);
+    c.strokeStyle='#c2410c'; c.lineWidth=1.5; c.setLineDash([5,4]);
+    c.beginPath(); c.moveTo(mL, yt); c.lineTo(W-mR, yt); c.stroke();
+    c.setLineDash([]);
+  }
+  acum=0; j=0;
+  while(j<c0-1){ if(serie[j]===id) acum++; j++; }
+  /* un punto por píxel: con 200 000 tiradas no tiene sentido dibujar más */
+  var px=Math.max(1, Math.min(Math.floor(an), np));
+  var pts=[], maxFr=0;
+  for(i=0;i<px;i++){
+    var hasta=(c0-1)+Math.max(1, Math.round((i+1)*np/px));
+    while(j<hasta){ if(serie[j]===id) acum++; j++; }
+    fr=acum/hasta;
+    if(fr>maxFr) maxFr=fr;
+    /* un solo punto se planta en el centro, que pegado al borde no se vería */
+    pts.push([px===1 ? mL+an/2 : xT(hasta), yF(fr)]);
+  }
+  /* si parte de la curva se queda por encima del techo hay que decirlo: si no,
+     parece que la línea desaparece y no se sabe que alejando se ve */
+  evolCortada=(maxFr>v1+1e-12);
+  /* segmentos rectos de punto a punto, sin suavizar nada: la frecuencia relativa
+     salta de una tirada a la siguiente y la línea tiene que enseñar el salto */
+  if(pts.length>1){
+    c.strokeStyle=AZUL; c.lineWidth=1.6; c.lineJoin='miter'; c.beginPath();
+    for(i=0;i<pts.length;i++){
+      if(i===0) c.moveTo(pts[i][0], pts[i][1]); else c.lineTo(pts[i][0], pts[i][1]);
+    }
+    c.stroke();
+  }
+  /* los puntos, siempre que quepan separados: son las tiradas de una en una, y
+     con la primera todavía no hay línea que dibujar */
+  var sep=(pts.length>1) ? an/(pts.length-1) : an;
+  if(sep>=7){
+    c.fillStyle=AZUL;
+    var rp=(pts.length===1) ? 3.5 : Math.min(3, 1.4+sep/14);
+    for(i=0;i<pts.length;i++){
+      c.beginPath(); c.arc(pts[i][0], pts[i][1], rp, 0, 6.2832); c.fill();
+    }
+  }
+  c.restore();
+  c.strokeStyle='#d5d9e0'; c.lineWidth=1;
+  c.beginPath(); c.moveTo(mL, mT+al+0.5); c.lineTo(W-mR, mT+al+0.5); c.stroke();
+}
+function drawGrafico(c, W, H, paraPNG){
+  c.fillStyle=paraPNG?'#fff':'#fff';
+  c.fillRect(0,0,W,H);
+  evolCortada=false;
+  if(opt.vista==='evol') drawEvolucion(c,W,H);
+  else drawBarras(c,W,H);
+}
+function draw(){
+  var r=stage.getBoundingClientRect();
+  drawDados(ctx, r.width||600, r.height||300, false);
+  if(opt.graf){
+    var g=gr.getBoundingClientRect();
+    drawGrafico(gtx, g.width||600, g.height||200, false);
+  }
+  updateUI();
+}
+
+/* =========================================================================
+   8. TIRAR
+   La animación sortea caras con Math.random y NO con el generador con
+   semilla: si gastara números de la serie, dos sesiones con la misma semilla
+   dejarían de coincidir según se encendiera o se apagara la animación, que es
+   justo lo que la semilla promete que no pasa. La tirada de verdad se sortea
+   antes de empezar a animar.
+   ========================================================================= */
+function avisaNoListo(){
+  var s=decimas()/10;
+  flash('Los porcentajes suman '+coma(s.toFixed(1))+' %: tienen que sumar 100 para poder tirar');
+}
+function haceTirada(){
+  if(!dadoListo()){ avisaNoListo(); return; }
+  registraSoporte();
+  var idx=tirada();
+  if(opt.anim){
+    anim={t0:Date.now(), dur:520, caras:idx.slice(), real:idx};
+    animar();
+  } else {
+    anim=null; anota(idx);
+  }
+}
+function animar(){
+  if(!anim) return;
+  if(Date.now()-anim.t0>=anim.dur){
+    var idx=anim.real; anim=null; anota(idx); return;
+  }
+  for(var i=0;i<anim.caras.length;i++) anim.caras[i]=Math.floor(Math.random()*cfg.caras);
+  draw();
+  setTimeout(animar, 55);
+}
+function anota(idx){
+  registra(idx);
+  pintaTablaIncremental(); actualizaQuien(); draw();
+}
+function haceTiradas(n){
+  if(!dadoListo()){ avisaNoListo(); return; }
+  anim=null;
+  var t0=Date.now();
+  tiraN(n);
+  pintaTablaIncremental(); actualizaQuien(); draw();
+  if(Date.now()-t0>900) flash(n+' tiradas en '+((Date.now()-t0)/1000).toFixed(1).replace('.',',')+' s');
+}
+
+/* Cualquier cambio en el dado, en el número de dados o en lo que se mira
+   deja las tiradas anteriores sin sentido: son de otro experimento. Se
+   borran, se avisa, y Ctrl+Z las devuelve. */
+/* repintaCaras se pone a false al editar una etiqueta, un valor o un porcentaje:
+   rehacer el panel entero en cada tecleo deja el cursor fuera de la casilla y
+   editar seis porcentajes seguidos se vuelve imposible */
+function aplicaCambio(f, repintaCaras){
+  var habia=ntiradas;
+  pushUndo();
+  f();
+  ajustaCaras(cfg.caras);
+  normalizaOp();
+  compilaFormula();
+  registrosNuevos();
+  cacheTeo=null;
+  gvReset();
+  sincronizaControles();
+  if(repintaCaras!==false) pintaCaras();
+  pintaTabla(); actualizaQuien(); draw();
+  if(habia) flash(habia===1 ? 'Borrada la tirada anterior: ahora es otro experimento (Ctrl+Z)'
+                            : 'Borradas las '+habia+' tiradas anteriores: ahora es otro experimento (Ctrl+Z)');
+}
+
+/* =========================================================================
+   9. INTERFAZ
+   ========================================================================= */
+function pintaCaras(){
+  var cont=document.getElementById('caras');
+  /* con la sorpresa encendida la columna de porcentajes es del dado que se esté
+     mirando, y está en blanco —con su interrogante— mientras siga tapada */
+  var tapado=haySorpresaTapada();
+  var pc=porcentajes(1, dadoVer), i, html=[];
+  for(i=0;i<cfg.caras;i++){
+    var e=cfg.etiqs[i];
+    html.push('<div class="cara">'+
+      '<span class="ci">'+(i+1)+'</span>'+
+      '<span class="et">'+
+        (e.c? '<span class="sw" style="background:'+e.c+'"></span>' : '')+
+        '<input type="text" data-i="'+i+'" class="e-et" value="'+String(e.t).replace(/"/g,'&quot;')+'">'+
+      '</span>'+
+      '<input type="number" step="any" data-i="'+i+'" class="vl e-vl" value="'+e.v+'">'+
+      '<input type="number" step="0.1" min="0" max="100" data-i="'+i+'" class="pc e-pc" '+
+        (tapado ? 'value="" placeholder="?"' : 'value="'+pc[i].toFixed(1)+'"')+
+        (cfg.trucado?'':' disabled')+'>'+
+    '</div>');
+  }
+  cont.innerHTML=html.join('');
+  var j;
+  var ets=cont.getElementsByClassName('e-et');
+  for(j=0;j<ets.length;j++) ets[j].addEventListener('change', function(){
+    var i=+this.getAttribute('data-i'), v=this.value;
+    aplicaCambio(function(){
+      cfg.etiqs[i].t=String(v).slice(0,14) || String(i+1);
+      cfg.juego='libre';
+    }, false);
+  });
+  var vls=cont.getElementsByClassName('e-vl');
+  for(j=0;j<vls.length;j++) vls[j].addEventListener('change', function(){
+    var i=+this.getAttribute('data-i'), v=parseFloat(String(this.value).replace(',','.'));
+    if(!isFinite(v)){
+      this.value=cfg.etiqs[i].v;
+      flash('El valor de una cara tiene que ser un número');
+      return;
+    }
+    aplicaCambio(function(){ cfg.etiqs[i].v=r6(v); }, false);
+  });
+  var pcs=cont.getElementsByClassName('e-pc');
+  for(j=0;j<pcs.length;j++) pcs[j].addEventListener('change', function(){
+    var i=+this.getAttribute('data-i'), v=parseFloat(String(this.value).replace(',','.'));
+    if(!isFinite(v) || v<0 || v>100){
+      this.value=Number(cfg.pesos[i]).toFixed(1);
+      flash('El porcentaje va de 0 a 100');
+      return;
+    }
+    aplicaCambio(function(){ ponPorcentaje(i, v); }, false);
+    this.value=Number(cfg.pesos[i]).toFixed(1);
+  });
+}
+function pintaSuma(){
+  var el=document.getElementById('sumaPct');
+  if(!el) return;
+  if(cfg.sorpresa){
+    var quien=(cfg.ndados>1 ? 'El dado '+(dadoVer+1) : 'El dado');
+    el.className='ver';
+    el.textContent = haySorpresaTapada()
+      ? 'Trucado en secreto. Los porcentajes se destapan con la casilla «Probabilidad teórica».'
+      : quien+(esSano(pesosDe(dadoVer)) ? ' no estaba trucado.' : ' sí estaba trucado.');
+    return;
+  }
+  if(!cfg.trucado){ el.className=''; el.textContent=''; return; }
+  var d=decimas(), falta=1000-d;
+  if(falta===0){ el.className='ver'; el.textContent='Suman 100 % · el dado está listo'; return; }
+  el.className='ver mal';
+  el.textContent='Suman '+coma((d/10).toFixed(1))+' % · '+
+    (falta>0 ? 'faltan '+coma((falta/10).toFixed(1)) : 'sobran '+coma((-falta/10).toFixed(1)))+
+    ' para llegar a 100. Así no se puede tirar.';
+}
+/* el selector de qué dado se mira solo tiene sentido con la sorpresa y con más
+   de un dado: con uno solo, la columna de porcentajes ya es la suya */
+function pintaDadoVer(){
+  var fila=document.getElementById('filaDadoVer'), sel=document.getElementById('dadoVer');
+  if(!fila || !sel) return;
+  var hace=(cfg.sorpresa && cfg.ndados>1);
+  fila.style.display=hace?'':'none';
+  if(dadoVer>=cfg.ndados) dadoVer=0;
+  if(!hace){ if(!cfg.sorpresa) dadoVer=0; return; }
+  var html=[], i;
+  for(i=0;i<cfg.ndados;i++) html.push('<option value="'+i+'">Dado '+(i+1)+'</option>');
+  sel.innerHTML=html.join('');
+  sel.value=String(dadoVer);
+}
+function pintaCabecera(){
+  var h=['<tr><th>nº</th>'], i;
+  for(i=0;i<cfg.ndados;i++) h.push('<th>'+(cfg.ndados===1?'dado':'d'+(i+1))+'</th>');
+  h.push('<th>'+(cfg.op==='formula'?'fórmula':nombreOp().replace(/^(La|El|Cuántos|Cuántas) /,''))+'</th></tr>');
+  thead.innerHTML=h.join('');
+}
+function filaDe(t){
+  var tr=document.createElement('tr'), i, td;
+  td=document.createElement('td'); td.textContent=t.n; tr.appendChild(td);
+  for(i=0;i<t.c.length;i++){
+    td=document.createElement('td');
+    td.textContent=cfg.etiqs[t.c[i]] ? cfg.etiqs[t.c[i]].t : '?';
+    tr.appendChild(td);
+  }
+  td=document.createElement('td'); td.className='res';
+  td.textContent=coma(claves[t.id] ? claves[t.id].k : '?');
+  tr.appendChild(td);
+  return tr;
+}
+var pintadasHasta=0;
+function pintaTablaIncremental(){
+  if(!opt.tabla) return;
+  var i, ini=0;
+  for(i=detalle.length-1;i>=0;i--){ if(detalle[i].n<=pintadasHasta){ ini=i+1; break; } }
+  if(detalle.length-ini>MAXFILAS) ini=detalle.length-MAXFILAS;
+  for(i=ini;i<detalle.length;i++) tbody.appendChild(filaDe(detalle[i]));
+  while(tbody.rows.length>MAXFILAS) tbody.deleteRow(0);
+  if(detalle.length) pintadasHasta=detalle[detalle.length-1].n;
+  var wrap=document.getElementById('tablaWrap');
+  wrap.scrollTop=wrap.scrollHeight;
+  pieTabla();
+}
+function pintaTabla(){
+  pintaCabecera();
+  while(tbody.firstChild) tbody.removeChild(tbody.firstChild);
+  pintadasHasta=0;
+  pintaTablaIncremental();
+  pieTabla();
+}
+function pieTabla(){
+  var p=document.getElementById('pieTabla');
+  if(!ntiradas){ p.textContent='Sin tiradas todavía'; return; }
+  var vistas=tbody.rows.length;
+  p.textContent = (vistas<ntiradas)
+    ? 'Últimas '+vistas+' de '+ntiradas+' tiradas · el CSV se lleva las '+detalle.length+' que recuerdo'
+    : ntiradas+(ntiradas===1?' tirada':' tiradas');
+}
+function actualizaQuien(){
+  var sel=document.getElementById('quien'), ids=ordenadas(), i, html=[];
+  for(i=0;i<ids.length;i++){
+    var k=claves[ids[i]].k;
+    html.push('<option value="'+k.replace(/"/g,'&quot;')+'">'+coma(k)+'</option>');
+  }
+  sel.innerHTML=html.join('');
+  if(claveId[opt.quien]===undefined) opt.quien = ids.length ? claves[ids[0]].k : '';
+  sel.value=opt.quien;
+}
+function pintaOps(){
+  var sel=document.getElementById('op'), html=[], i;
+  for(i=0;i<OPS.length;i++){
+    if(!opAplicable(OPS[i].id)) continue;
+    html.push('<option value="'+OPS[i].id+'">'+OPS[i].n+'</option>');
+  }
+  sel.innerHTML=html.join('');
+  sel.value=cfg.op;
+}
+function sincronizaControles(){
+  document.getElementById('rgCaras').value=cfg.caras;
+  document.getElementById('nCaras').value=cfg.caras;
+  document.getElementById('rgDados').value=cfg.ndados;
+  document.getElementById('nDados').value=cfg.ndados;
+  document.getElementById('juego').value=cfg.juego;
+  document.getElementById('trucado').checked=!!cfg.trucado;
+  document.getElementById('sorpresa').checked=!!cfg.sorpresa;
+  document.getElementById('trucado').disabled=!!cfg.sorpresa;
+  document.getElementById('equilibrar').disabled=!!cfg.sorpresa;
+  document.getElementById('otrosSorpresa').style.display=cfg.sorpresa?'':'none';
+  pintaDadoVer();
+  document.getElementById('semilla').value=cfg.semilla;
+  document.getElementById('anim').checked=!!opt.anim;
+  pintaOps();
+  var fm=document.getElementById('formula');
+  fm.style.display = (cfg.op==='formula') ? 'block' : 'none';
+  fm.value=cfg.formula;
+  document.getElementById('errFormula').textContent=(cfg.op==='formula' && astErr)?astErr:'';
+  document.getElementById('verTabla').checked=!!opt.tabla;
+  document.getElementById('verGraf').checked=!!opt.graf;
+  document.getElementById('verTeo').checked=!!opt.teo;
+  document.getElementById('vista').value=opt.vista;
+  document.getElementById('escala').value=opt.escala;
+  document.getElementById('quien').style.display=(opt.vista==='evol')?'':'none';
+  document.getElementById('escala').style.display=(opt.vista==='evol')?'none':'';
+  document.getElementById('panelTabla').className=(opt.tabla?'show':'')+(opt.graf?'':' solo');
+  document.getElementById('panelGraf').className=opt.graf?'show':'';
+  document.getElementById('abajo').className=(opt.tabla||opt.graf)?'show':'';
+  pintaSuma();
+}
+function updateUI(){
+  var t, teo=cacheTeo, listo=dadoListo();
+  ['tirar','t10','t100','t1000'].forEach(function(id){
+    var e=document.getElementById(id);
+    if(e) e.disabled=!listo;
+  });
+  if(flashMsg && Date.now()-flashT<2300) t=flashMsg;
+  else if(!listo) t='Los porcentajes suman '+coma((decimas()/10).toFixed(1))+
+                    ' %: ajústalos hasta 100 y ya se podrá tirar';
+  else if(!ntiradas) t='Configura el dado a la izquierda y dale a Tirar · +10, +100 y +1000 van de golpe';
+  /* la barra dice qué hay y qué se puede hacer, y nada más. Las preguntas del
+     tipo «¿te fías de lo que ves?» las tiene que hacer quien da la clase cuando
+     toque, no el programa por su cuenta: destriparlas aquí es un spoiler */
+  else t=ntiradas+(ntiradas===1?' tirada · ':' tiradas · ')+nombreOp().toLowerCase();
+  hintEl.textContent=t;
+
+  var cg=document.getElementById('cabGraf');
+  if(cg){
+    var partes=[];
+    if(opt.teo && teo && !teo.mapa) partes.push(teo.motivo);
+    else if(opt.teo && teo && teo.mapa) partes.push('la línea naranja es la probabilidad teórica');
+    partes.push(gvHayZoom()
+      ? 'acercado · arrastra para moverte, doble clic para volver'
+      : 'rueda para acercar · con Mayús, en vertical');
+    if(opt.vista==='evol' && evolCortada)
+      partes.push('el arranque se sale por arriba · aleja con Mayús para verlo');
+    cg.textContent='· '+partes.join(' · ');
+  }
+  var ct=document.getElementById('cabTabla');
+  if(ct) ct.textContent = recortadas ? '· solo recuerdo el detalle de las últimas '+TOPE_DET : '';
+}
+function ayuda(){
+  return '<div><b>Dados a medida</b><br>'+
+ 'Un dado que se configura entero: cuántas caras tiene, qué pone en cada una, cuánto vale cada '+
+ 'cara y con qué probabilidad sale. Se tira una vez, o mil de golpe, y se va viendo qué pasa.</div>'+
+ '<div style="margin-top:7px"><b>El dado</b><br>'+
+ 'De 4 a 20 caras y hasta 10 dados a la vez. Cada cara tiene una <b>etiqueta</b>, que es lo que se '+
+ 've, y un <b>valor</b>, que es el número con el que cuenta al operar. Por eso un dado de colores '+
+ 'se puede seguir sumando, y por eso se puede montar un dado con las caras 1, 1, 2, 3, 3, 5.</div>'+
+ '<div style="margin-top:7px"><b>Trucarlo</b><br>'+
+ 'Marca <b>Dado trucado</b> y escribe el porcentaje de cada cara. Cada número se queda donde lo '+
+ 'pongas: el manipulativo no reajusta los demás por su cuenta. Debajo va diciendo cuánto suman y '+
+ 'cuánto falta, y <b>mientras no sumen 100 % no se puede tirar</b>. Cuadrar la distribución es '+
+ 'parte del trabajo. <b>Equilibrar</b> devuelve todas las caras al mismo porcentaje.</div>'+
+ '<div style="margin-top:7px"><b>Dados trucados sorpresa</b><br>'+
+ 'La otra casilla truca los dados en secreto y deja los porcentajes tapados: lo que hay que '+
+ 'hacer es tirar y averiguar de qué van. Con varios dados <b>cada uno se truca por su cuenta</b>, '+
+ 'así que puede haber uno cargado a una cara, otro cargado a dos y otro sano; la tabla apunta '+
+ 'cada dado por separado y en la bandeja van rotulados <b>d1</b>, <b>d2</b>… para saber cuál es '+
+ 'cuál. Se destapan marcando <b>Probabilidad teórica</b>, y la columna de porcentajes es la del '+
+ 'dado que se elija en <b>Ver</b>. Los dados salen de la <b>semilla</b>, así que con la misma '+
+ 'semilla toda la clase tiene los mismos, y <b>Otros dados sorpresa</b> reparte otro juego.</div>'+
+ '<div style="margin-top:7px"><b>Qué se mira</b><br>'+
+ 'Con varios dados hay que decir qué es «el resultado»: la suma, la diferencia, el mayor, el '+
+ 'recorrido, cuántos salen pares, cuántos valores distintos… o una <b>fórmula</b> propia. En la '+
+ 'fórmula valen <code>d1</code>, <code>d2</code>… para cada dado y <code>suma</code>, '+
+ '<code>max</code>, <code>min</code>, <code>rec</code>, <code>media</code>, <code>pares</code>, '+
+ '<code>impares</code>, <code>distintos</code>, <code>repes</code> y <code>n</code>. Hay '+
+ '<code>abs</code>, <code>ent</code>, <code>raiz</code>, <code>resto</code> y '+
+ '<code>si(condición; sí; no)</code>, y las comparaciones valen 1 o 0. Los argumentos se separan '+
+ 'con punto y coma, para dejar la coma libre como decimal. Por ejemplo: '+
+ '<code>si(d1=d2; 1; 0)</code> o <code>max - min</code>.</div>'+
+ '<div style="margin-top:7px"><b>La tabla y el gráfico</b><br>'+
+ 'Los dos empiezan cerrados y se abren con sus casillas de la barra, por separado: se puede '+
+ 'tener solo la tabla, para que el recuento lo hagan ellos. '+
+ 'La tabla apunta cada tirada, dado a dado, y se descarga en CSV con el botón de su cabecera; '+
+ 'el gráfico tiene otro que descarga el recuento. El gráfico cuenta, en frecuencias absolutas, '+
+ 'relativas o en porcentaje, y con <b>Evolución de la f. relativa</b> enseña la frecuencia '+
+ 'relativa de un resultado según van creciendo las tiradas. La casilla <b>Probabilidad teórica</b> superpone la '+
+ 'probabilidad calculada —no simulada—; viene apagada a propósito, porque muchas veces conviene '+
+ 'preguntar antes de enseñarla. <b>Ojo:</b> esa misma casilla es la que destapa los dados '+
+ 'trucados sorpresa, así que marcarla enseña la respuesta entera.</div>'+
+ '<div style="margin-top:7px"><b>Acercarse al gráfico</b><br>'+
+ 'Con la <b>rueda del ratón</b> encima del gráfico se acerca a lo ancho, y con <b>Mayús</b> a lo '+
+ 'alto. Lo primero hace falta cuando hay muchas barras; lo segundo, para ver si la frecuencia que '+
+ 'ha salido se parece o no a la probabilidad, que a escala completa se quedan pegadas. Acercado, '+
+ 'se <b>arrastra</b> para moverse y con <b>doble clic</b> se vuelve al gráfico entero. En la '+
+ 'evolución el eje vertical viene recortado a lo justo por encima de donde acaba la frecuencia, '+
+ 'así que el arranque de la serie se sale por arriba: <b>alejando con Mayús</b> se llega hasta el '+
+ '100 % y se ve entero.</div>'+
+ '<div style="margin-top:7px"><b>La semilla</b><br>'+
+ 'Con la misma semilla salen exactamente las mismas tiradas. Sirve para que toda la clase trabaje '+
+ 'sobre la misma serie, o para repetir mañana lo de hoy.</div>'+
+ /* aquí NO va un apartado de «para pensar». Este panel explica cómo funciona el
+    material y nada más: las preguntas son cosa de quien monta la clase, y puestas
+    aquí se las encuentra el alumnado antes de haberse hecho ninguna */
+ '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+}
+
+/* =========================================================================
+   10. CONTROLES, ARCHIVOS Y ARRANQUE
+   Los deslizadores aplican al soltar («change») y no mientras se arrastran:
+   con «input» cada píxel del recorrido sería un cambio de configuración, un
+   borrado de tiradas y una entrada en la pila de deshacer.
+   ========================================================================= */
+function enlaza(id, ev, f){ var e=document.getElementById(id); if(e) e.addEventListener(ev,f); }
+
+enlaza('rgCaras','input',function(){ document.getElementById('nCaras').value=this.value; });
+enlaza('rgDados','input',function(){ document.getElementById('nDados').value=this.value; });
+function ponCaras(v){
+  v=Math.round(Number(v));
+  if(!(v>=MINCARAS && v<=MAXCARAS)){ sincronizaControles(); return; }
+  if(v===cfg.caras){ sincronizaControles(); return; }
+  aplicaCambio(function(){
+    cfg.caras=v;
+    if(cfg.juego!=='libre') rehazEtiquetas(cfg.juego);
+  });
+}
+function ponDados(v){
+  v=Math.round(Number(v));
+  if(!(v>=1 && v<=MAXDADOS)){ sincronizaControles(); return; }
+  if(v===cfg.ndados){ sincronizaControles(); return; }
+  aplicaCambio(function(){ cfg.ndados=v; });
+}
+enlaza('rgCaras','change',function(){ ponCaras(this.value); });
+enlaza('nCaras','change',function(){ ponCaras(this.value); });
+enlaza('rgDados','change',function(){ ponDados(this.value); });
+enlaza('nDados','change',function(){ ponDados(this.value); });
+enlaza('juego','change',function(){
+  var j=this.value;
+  aplicaCambio(function(){ rehazEtiquetas(j); });
+});
+enlaza('trucado','change',function(){
+  var v=this.checked?1:0;
+  aplicaCambio(function(){
+    /* al encenderlo se parte de los porcentajes que ya tenía el dado, repartidos
+       por mayor resto para que sumen 100 exactos desde el primer momento */
+    var pc=porcentajes(1);
+    cfg.trucado=v;
+    if(v) cfg.pesos=pc; else equilibra();
+  });
+  flash(v ? 'Escribe el porcentaje de cada cara: se quedan donde los pongas y tienen que sumar 100 %'
+          : 'Dado equilibrado otra vez');
+});
+enlaza('sorpresa','change',function(){
+  var v=this.checked?1:0;
+  aplicaCambio(function(){
+    cfg.sorpresa=v;
+    /* trucar a mano y trucar en secreto son incompatibles: los porcentajes
+       escritos dejarían de ser los del dado y el panel mentiría */
+    if(v){ cfg.trucado=0; equilibra(); }
+    dadoVer=0;
+  });
+  flash(v ? (cfg.ndados>1
+              ? 'Dados trucados en secreto, cada uno a su manera: tira y averigua cómo'
+              : 'Dado trucado en secreto: tira y averigua cómo')
+          : 'Dados normales otra vez');
+});
+enlaza('otrosSorpresa','click',function(){
+  aplicaCambio(function(){ cfg.misterioN++; });
+  flash('Otros dados sorpresa, con la misma semilla y otro truco');
+});
+enlaza('dadoVer','change',function(){
+  dadoVer=Math.max(0, Math.min(cfg.ndados-1, Math.round(Number(this.value))||0));
+  pintaCaras(); pintaSuma();
+});
+enlaza('equilibrar','click',function(){ aplicaCambio(function(){ equilibra(); }); });
+enlaza('op','change',function(){
+  var v=this.value;
+  aplicaCambio(function(){ cfg.op=v; });
+});
+enlaza('formula','change',function(){
+  var v=this.value;
+  aplicaCambio(function(){ cfg.formula=v; });
+  if(astErr) flash('La fórmula no vale: '+astErr);
+});
+enlaza('semilla','change',function(){
+  var s=String(this.value||'1');
+  if(cfg.sorpresa){
+    /* los dados sorpresa se sortean de la semilla: cambiarla es cambiar de
+       dados, y las tiradas de antes son de otro experimento */
+    aplicaCambio(function(){ reinicia(s); });
+    flash('Semilla «'+cfg.semilla+'»: otros dados sorpresa');
+  } else {
+    reinicia(s);
+    flash('Semilla «'+cfg.semilla+'»: a partir de ahora, la misma serie para todos');
+  }
+});
+enlaza('otraSemilla','click',function(){
+  var s=String(Math.floor(Math.random()*100000));
+  if(cfg.sorpresa) aplicaCambio(function(){ reinicia(s); });
+  else { reinicia(s); sincronizaControles(); }
+  flash('Semilla nueva: '+cfg.semilla);
+});
+enlaza('anim','change',function(){ opt.anim=this.checked?1:0; });
+
+enlaza('tirar','click',function(){ haceTirada(); });
+enlaza('t10','click',function(){ haceTiradas(10); });
+enlaza('t100','click',function(){ haceTiradas(100); });
+enlaza('t1000','click',function(){ haceTiradas(1000); });
+enlaza('vaciar','click',function(){
+  if(!ntiradas){ flash('No hay tiradas que borrar'); return; }
+  var n=ntiradas;
+  pushUndo(); registrosNuevos(); anim=null;
+  pintaTabla(); actualizaQuien(); draw();
+  flash(n===1 ? 'Borrada la tirada · la configuración sigue igual'
+              : 'Borradas las '+n+' tiradas · la configuración sigue igual');
+});
+enlaza('undo','click',doUndo);
+enlaza('verTabla','change',function(){ opt.tabla=this.checked?1:0; sincronizaControles(); pintaTabla(); resize(); });
+enlaza('verGraf','change',function(){ opt.graf=this.checked?1:0; sincronizaControles(); resize(); });
+enlaza('verTeo','change',function(){
+  opt.teo=this.checked?1:0;
+  var t=teorica();
+  if(opt.teo && !t.mapa) flash(t.motivo);
+  /* con la sorpresa, esta casilla es además la que destapa los porcentajes */
+  if(cfg.sorpresa){ pintaCaras(); pintaSuma(); }
+  draw();
+});
+enlaza('vista','change',function(){ opt.vista=this.value; gvReset(); sincronizaControles(); draw(); });
+enlaza('escala','change',function(){ opt.escala=this.value; gvReset(); draw(); });
+enlaza('quien','change',function(){ opt.quien=this.value; draw(); });
+
+/* --- la rueda y el arrastre sobre el gráfico -------------------------------- */
+function fracEnPlot(ev){
+  if(!gplot) return null;
+  var r=gr.getBoundingClientRect();
+  var x=ev.clientX-r.left, y=ev.clientY-r.top;
+  if(x<gplot.x || x>gplot.x+gplot.w || y<gplot.y || y>gplot.y+gplot.h) return null;
+  return {fx:(x-gplot.x)/gplot.w, fy:1-(y-gplot.y)/gplot.h};
+}
+gr.addEventListener('wheel', function(ev){
+  var f=fracEnPlot(ev);
+  if(!f) return;
+  ev.preventDefault();
+  var eje=ejeRueda(ev.shiftKey);
+  gvZoom(eje, eje==='y'?f.fy:f.fx, (ev.deltaY<0)?1.25:1/1.25);
+  draw();
+}, {passive:false});
+gr.addEventListener('pointerdown', function(ev){
+  var f=fracEnPlot(ev);
+  if(!f || !gvHayZoom()) return;
+  gdrag={x:ev.clientX, y:ev.clientY};
+  gr.classList.add('arrastrando');
+  if(gr.setPointerCapture) gr.setPointerCapture(ev.pointerId);
+});
+gr.addEventListener('pointermove', function(ev){
+  if(!gdrag || !gplot) return;
+  /* al arrastrar, el dibujo sigue al dedo: por eso el signo va al revés en cada
+     eje, que la y de la pantalla crece hacia abajo */
+  gvMueve('x', -(ev.clientX-gdrag.x)/gplot.w);
+  gvMueve('y',  (ev.clientY-gdrag.y)/gplot.h);
+  gdrag={x:ev.clientX, y:ev.clientY};
+  draw();
+});
+['pointerup','pointercancel','pointerleave'].forEach(function(e){
+  gr.addEventListener(e, function(){ gdrag=null; gr.classList.remove('arrastrando'); });
+});
+gr.addEventListener('dblclick', function(){
+  if(!gvHayZoom()) return;
+  gvReset(); draw();
+  flash('Gráfico entero otra vez');
+});
+enlaza('zoomin','click',function(){ view.z=Math.min(3, view.z*1.2); draw(); });
+enlaza('zoomout','click',function(){ view.z=Math.max(0.3, view.z/1.2); draw(); });
+enlaza('fit','click',function(){ view.z=1; gvReset(); draw(); });
+enlaza('help','click',function(){
+  infoEl.classList.toggle('show');
+  if(!infoEl.innerHTML) infoEl.innerHTML=ayuda();
+});
+document.addEventListener('keydown',function(e){
+  if(e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+  var k=(e.key||'').toLowerCase();
+  if((e.ctrlKey||e.metaKey) && k==='z'){ e.preventDefault(); doUndo(); return; }
+  if(e.key===' ' || k==='enter'){ e.preventDefault(); haceTirada(); }
+  else if(k==='='){ document.getElementById('equilibrar').click(); }
+  else if(k==='t'){ haceTiradas(100); }
+  else if(e.key==='Escape'){ infoEl.classList.remove('show'); }
+});
+
+/* --- guardar y abrir -------------------------------------------------------- */
+function datos(){
+  var i, rec=[];
+  for(i=0;i<claves.length;i++) rec.push({k:claves[i].k, o:claves[i].o, n:claves[i].n});
+  return {formato:'dados-a-medida', version:1,
+    cfg:{caras:cfg.caras, ndados:cfg.ndados, juego:cfg.juego, trucado:cfg.trucado,
+         sorpresa:cfg.sorpresa, misterioN:cfg.misterioN,
+         op:cfg.op, formula:cfg.formula, semilla:cfg.semilla,
+         etiqs:cfg.etiqs, pesos:cfg.pesos},
+    ntiradas:ntiradas, recortadas:recortadas,
+    claves:rec, serie:serie,
+    detalle:detalle.map(function(t){ return {n:t.n, c:t.c, id:t.id}; })};
+}
+function descarga(nombre, blob){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download=nombre; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+}
+enlaza('save','click',function(){
+  descarga('dados-a-medida.json',
+    new Blob([JSON.stringify(datos())],{type:'application/json'}));
+});
+var fileIn=document.getElementById('fileIn');
+var importMode='replace';
+enlaza('open','click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+enlaza('add','click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){
+  var f=e.target.files && e.target.files[0];
+  if(f) leer(f);
+});
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){
+    try{ loadData(JSON.parse(r.result)); }
+    catch(err){ flash('No he podido leer ese archivo'); }
+  };
+  r.readAsText(f);
+}
+/* Validar en vez de fiarse: un archivo tocado a mano no puede dejar el
+   manipulativo con 25 caras, con pesos negativos o con una fórmula que no
+   compila. Si algo no cuadra, se rechaza entero. */
+function limpiaConfig(c){
+  if(!c) return null;
+  var caras=Math.round(Number(c.caras)), nd=Math.round(Number(c.ndados)), i;
+  if(!(caras>=MINCARAS && caras<=MAXCARAS)) return null;
+  if(!(nd>=1 && nd<=MAXDADOS)) return null;
+  if(!c.etiqs || c.etiqs.length!==caras) return null;
+  var etiqs=[];
+  for(i=0;i<caras;i++){
+    var e=c.etiqs[i]||{}, v=Number(e.v);
+    if(!isFinite(v)) return null;
+    var col=(typeof e.c==='string' && /^#[0-9a-fA-F]{6}$/.test(e.c)) ? e.c : null;
+    var t=(e.t===undefined||e.t===null) ? String(i+1) : String(e.t).slice(0,14);
+    if(!t) t=String(i+1);
+    etiqs.push({t:t, v:r6(v), c:col});
+  }
+  if(!pesosValidos(c.pesos, caras)) return null;
+  var pesos=[];
+  for(i=0;i<caras;i++) pesos.push(Number(c.pesos[i]));
+  var op=String(c.op||'suma'), enc=false;
+  for(i=0;i<OPS.length;i++) if(OPS[i].id===op) enc=true;
+  if(!enc) return null;
+  if(!(nd>=opDe(op).min && nd<=opDe(op).max)) return null;
+  var formula=String(c.formula===undefined?'d1':c.formula);
+  if(op==='formula' && compila(formula, nd).err) return null;
+  var juego=['num','letras','colores','libre'];
+  /* los dados sorpresa no se guardan: se vuelven a sortear de la semilla y del
+     contador, que es lo único que hace falta para que salgan exactamente los
+     mismos. Así el archivo tampoco los delata de un vistazo */
+  var mn=Math.round(Number(c.misterioN));
+  if(!(mn>=0 && mn<1e6)) mn=0;
+  return {caras:caras, ndados:nd, juego:(juego.indexOf(c.juego)>=0?c.juego:'libre'),
+          trucado:c.trucado?1:0, sorpresa:c.sorpresa?1:0, misterioN:mn,
+          op:op, formula:formula,
+          semilla:(c.semilla===undefined?1:String(c.semilla)), etiqs:etiqs, pesos:pesos};
+}
+function loadData(d){
+  if(!d || d.formato!=='dados-a-medida'){ flash('Ese archivo no es de este manipulativo'); return; }
+  var c=limpiaConfig(d.cfg);
+  if(!c){ flash('La configuración de ese archivo no cuadra, no la cargo'); return; }
+  var mismo = (importMode==='add') && (firmaCfg()===firmaDe(c));
+  if(importMode==='add' && !mismo){
+    flash('Ese archivo es de otro dado: con ＋ solo se añaden tiradas del mismo experimento');
+    return;
+  }
+  pushUndo();
+  var i, mapaId={}, kl=(d.claves||[]);
+  if(importMode!=='add'){
+    cfg=c; registrosNuevos();
+    ajustaCaras(cfg.caras); compilaFormula(); reinicia(cfg.semilla);
+  }
+  for(i=0;i<kl.length;i++){
+    var id=idDeClave(String(kl[i].k), Number(kl[i].o)||0);
+    mapaId[i]=id;
+    claves[id].n += Math.max(0, Math.round(Number(kl[i].n)||0));
+  }
+  var ser=d.serie||[];
+  for(i=0;i<ser.length && serie.length<TOPE_SERIE;i++){
+    var s=mapaId[ser[i]];
+    if(s!==undefined) serie.push(s);
+  }
+  var det=d.detalle||[], base=ntiradas;
+  for(i=0;i<det.length;i++){
+    var t=det[i];
+    if(!t || !t.c || t.c.length!==cfg.ndados) continue;
+    var ok=true, j;
+    for(j=0;j<t.c.length;j++) if(!(t.c[j]>=0 && t.c[j]<cfg.caras)) ok=false;
+    if(!ok) continue;
+    var idr=mapaId[t.id];
+    if(idr===undefined) continue;
+    detalle.push({n:base+Number(t.n||i+1), c:t.c, id:idr});
+  }
+  while(detalle.length>TOPE_DET){ detalle.shift(); recortadas++; }
+  var tot=0;
+  for(i=0;i<claves.length;i++) tot+=claves[i].n;
+  ntiradas=tot;
+  recortadas += Math.max(0, Number(d.recortadas)||0);
+  cacheTeo=null;
+  sincronizaControles(); pintaCaras(); pintaTabla(); actualizaQuien(); draw();
+  flash(ntiradas+' tiradas cargadas');
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); });
+});
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='replace'; leer(f); }
+});
+
+/* --- PNG y CSV -------------------------------------------------------------- */
+enlaza('png','click',function(){
+  var W=900, hD=300, hG=opt.graf?330:0, sc=2;
+  var oc=document.createElement('canvas');
+  oc.width=W*sc; oc.height=(hD+hG)*sc;
+  var o=oc.getContext('2d');
+  o.scale(sc,sc);
+  o.fillStyle='#fff'; o.fillRect(0,0,W,hD+hG);
+  var z=view.z; view.z=1;
+  drawDados(o, W, hD, true);
+  view.z=z;
+  if(opt.graf){
+    o.save(); o.translate(0,hD);
+    drawGrafico(o, W, hG, true);
+    o.restore();
+    o.strokeStyle='#e6e8ec'; o.beginPath(); o.moveTo(0,hD+0.5); o.lineTo(W,hD+0.5); o.stroke();
+  }
+  oc.toBlob(function(blob){ descarga('dados-a-medida.png', blob); });
+});
+/* CSV con punto y coma y coma decimal, que es lo que espera una hoja de cálculo
+   en español, y con marca de orden de bytes delante para que no se coma las
+   tildes al abrirlo con doble clic */
+function bajaCSV(nombre, lineas){
+  descarga(nombre, new Blob(['﻿'+lineas.join('\r\n')],{type:'text/csv;charset=utf-8'}));
+}
+function csvTiradas(){
+  if(!detalle.length){ flash('No hay tiradas que exportar'); return; }
+  var l=[], i, j, cab=['n'];
+  for(i=0;i<cfg.ndados;i++) cab.push(cfg.ndados===1?'dado':'dado'+(i+1));
+  cab.push('resultado');
+  l.push(cab.join(';'));
+  for(i=0;i<detalle.length;i++){
+    var t=detalle[i], f=[t.n];
+    for(j=0;j<t.c.length;j++) f.push(cfg.etiqs[t.c[j]].t);
+    f.push(coma(claves[t.id].k));
+    l.push(f.join(';'));
+  }
+  bajaCSV('dados-a-medida-tiradas.csv', l);
+  flash(detalle.length+(detalle.length===1?' tirada exportada':' tiradas exportadas'));
+}
+/* el recuento es otra tabla y va aparte: la lista de tiradas es el dato en bruto
+   y esta es ya un resumen, que muchas veces es justo lo que no se quiere dar */
+function csvRecuento(){
+  var ids=ordenadas();
+  if(!ids.length){ flash('No hay nada que contar todavía'); return; }
+  var t=teorica(), l=[], i;
+  /* con los dados sorpresa todavía tapados, la teórica no viaja en el CSV: la
+     respuesta se destapa en el manipulativo, no abriendo el archivo */
+  var conTeo=!!t.mapa && !haySorpresaTapada();
+  var cab=['resultado','frecuencia absoluta','frecuencia relativa','porcentaje'];
+  if(conTeo) cab.push('probabilidad teorica');
+  l.push(cab.join(';'));
+  for(i=0;i<ids.length;i++){
+    var k=claves[ids[i]];
+    var f=[coma(k.k), k.n,
+           coma(ntiradas ? (k.n/ntiradas).toFixed(6) : '0'),
+           coma(ntiradas ? (100*k.n/ntiradas).toFixed(3) : '0')];
+    if(conTeo) f.push(coma(t.mapa[k.k] ? t.mapa[k.k].p.toFixed(6) : '0'));
+    l.push(f.join(';'));
+  }
+  l.push(['total', ntiradas, coma('1'), coma('100')].join(';'));
+  bajaCSV('dados-a-medida-recuento.csv', l);
+  flash('Recuento de '+ids.length+' resultados exportado');
+}
+enlaza('csv','click',csvTiradas);
+enlaza('csvTabla','click',csvTiradas);
+enlaza('csvGraf','click',csvRecuento);
+
+/* --- arranque --------------------------------------------------------------- */
+function resize(){
+  var dpr=window.devicePixelRatio||1;
+  var r=stage.getBoundingClientRect();
+  cv.width=Math.max(1,Math.round(r.width*dpr));
+  cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  var g=gr.getBoundingClientRect();
+  gr.width=Math.max(1,Math.round(g.width*dpr));
+  gr.height=Math.max(1,Math.round(g.height*dpr));
+  gtx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+window.addEventListener('resize',resize);
+if(window.ResizeObserver){
+  new ResizeObserver(resize).observe(stage);
+  new ResizeObserver(resize).observe(document.getElementById('abajo'));
+}
+(function init(){
+  rehazEtiquetas('num');
+  equilibra();
+  reinicia(cfg.semilla);
+  compilaFormula();
+  sincronizaControles();
+  pintaCaras();
+  pintaTabla();
+  actualizaQuien();
+  resize();
+})();
+
+/* =========================================================================
+   11. AUTOCOMPROBACIÓN  ·  añade #test al final de la dirección
+   Un simulador no se puede mirar para saber si está bien: cualquier cosa que
+   haga parecerá plausible. Por eso el generador tiene semilla y por eso estas
+   pruebas son largas. La que más vale es la que compara los dos caminos de la
+   probabilidad teórica —enumerar todas las combinaciones y arrastrar la
+   dinámica—: son dos programas distintos que tienen que dar el mismo número.
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){
+    out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':''));
+    if(!c) fails++;
+  }
+  function num(v){ return (Math.round(v*1000)/1000).toString().replace('.',','); }
+  function cerca(a,b,e){ return isFinite(a) && isFinite(b) && Math.abs(a-b)<(e===undefined?1e-9:e); }
+
+  var antes={cfg:JSON.parse(JSON.stringify(cfg)), claves:claves, claveId:claveId,
+             serie:serie, detalle:detalle, nt:ntiradas, rec:recortadas, s:s32,
+             opt:JSON.parse(JSON.stringify(opt)), TD:TOPE_DET, TS:TOPE_SERIE,
+             undo:undoStack, anim:anim, gv:{x0:gv.x0, x1:gv.x1, y0:gv.y0, y1:gv.y1}};
+
+  try{
+
+  opt.anim=0;   /* la animación es asíncrona y aquí estorba; opt se restaura al final */
+
+  /* --- preparar una configuración concreta -------------------------------- */
+  function pon(caras, nd, op, formula, pesos){
+    cfg.caras=caras; cfg.ndados=nd; cfg.trucado=0; cfg.sorpresa=0;
+    rehazEtiquetas('num');
+    equilibra();
+    if(pesos) cfg.pesos=pesos.slice();
+    cfg.op=op;
+    if(formula!==undefined) cfg.formula=formula;
+    compilaFormula();
+    cacheTeo=null;
+    registrosNuevos();
+  }
+  function sumaMapa(m){ var s=0,k; for(k in m) if(m.hasOwnProperty(k)) s+=m[k].p; return s; }
+  function mismoMapa(a,b){
+    if(!a||!b) return false;
+    var k, n1=0, n2=0;
+    for(k in a) if(a.hasOwnProperty(k)){ n1++; if(!b[k] || !cerca(a[k].p,b[k].p,1e-9)) return false; }
+    for(k in b) if(b.hasOwnProperty(k)) n2++;
+    return n1===n2;
+  }
+  function frecuencia(k){ var id=claveId[k]; return id===undefined?0:claves[id].n; }
+
+  /* --- 1. probabilidades ---------------------------------------------------- */
+  pon(6,1,'cara');
+  var p=probs();
+  ok('un dado equilibrado de 6 caras da 1/6 en todas', cerca(p[0],1/6) && cerca(p[5],1/6), num(p[0]));
+  ok('y las seis probabilidades suman 1', cerca(p[0]+p[1]+p[2]+p[3]+p[4]+p[5],1));
+
+  cfg.pesos=[1,2,3,4,5,6];
+  p=probs();
+  ok('un dado cargado 1-2-3-4-5-6 da 1/21 en la primera cara y 6/21 en la última',
+     cerca(p[0],1/21) && cerca(p[5],6/21), num(p[5]));
+
+  var todos100=true, cuales=[];
+  [4,6,7,11,13,17,20].forEach(function(nc){
+    cfg.caras=nc; rehazEtiquetas('num'); equilibra();
+    var pc=porcentajes(1), s=0, i, mal=false;
+    for(i=0;i<pc.length;i++){ s+=pc[i]; if(pc[i]<0||pc[i]>100) mal=true; }
+    if(Math.abs(Math.round(s*10)/10-100)>1e-9 || mal){ todos100=false; cuales.push(nc); }
+  });
+  ok('los porcentajes redondeados suman exactamente 100 con 4, 6, 7, 11, 13, 17 y 20 caras',
+     todos100, cuales.length? 'fallan con '+cuales.join(', ') : 'todos');
+
+  /* --- 1b. el dado trucado: los porcentajes se escriben a mano --------------- */
+  pon(6,1,'cara');
+  cfg.trucado=1; cfg.pesos=porcentajes(1);
+  ok('encender el dado trucado parte de porcentajes que ya suman 100 exactos',
+     decimas()===1000, coma((decimas()/10).toFixed(1))+' %');
+  ok('y por eso el dado está listo para tirar desde el primer momento', dadoListo());
+  var copia=cfg.pesos.slice();
+  ponPorcentaje(0, 50);
+  ok('poner un 50 % en una cara no mueve ni una de las demás',
+     cfg.pesos[0]===50 && cfg.pesos.slice(1).join(',')===copia.slice(1).join(','),
+     cfg.pesos.join(' '));
+  ok('pero entonces ya no suman 100, así que el dado no está listo',
+     !dadoListo(), coma((decimas()/10).toFixed(1))+' %');
+  var antesT=ntiradas;
+  haceTirada(); haceTiradas(100);
+  ok('y mientras no sume 100 no deja tirar, ni de una en una ni de cien en cien',
+     ntiradas===antesT, ntiradas+' tiradas');
+  ponPorcentaje(1,10); ponPorcentaje(2,10); ponPorcentaje(3,10);
+  ponPorcentaje(4,10); ponPorcentaje(5,10);
+  ok('al cuadrarlo a mano hasta 100 vuelve a estar listo',
+     dadoListo() && decimas()===1000, coma((decimas()/10).toFixed(1))+' %');
+  reinicia('trucado-a-mano'); registrosNuevos();
+  haceTiradas(2000);
+  ok('y ya deja tirar', ntiradas===2000, ntiradas);
+  ok('y sale lo que se ha trucado: la cara del 50 %, alrededor de la mitad de las veces',
+     (function(){ var id=claveId['1'], f=(id===undefined?0:claves[id].n)/2000;
+                  return f>0.46 && f<0.54; })(),
+     (function(){ var id=claveId['1']; return num((id===undefined?0:claves[id].n)/2000); })());
+  ok('un porcentaje fuera de 0 a 100 se rechaza y no cambia nada',
+     !ponPorcentaje(0,120) && !ponPorcentaje(0,-1) && !ponPorcentaje(0,NaN) && cfg.pesos[0]===50,
+     cfg.pesos[0]);
+  ponPorcentaje(0, 33.333);
+  ok('los porcentajes se guardan con un decimal', cfg.pesos[0]===33.3, cfg.pesos[0]);
+  cfg.caras=9; ajustaCaras(9);
+  ok('cambiar el número de caras con el dado trucado deja porcentajes que vuelven a sumar 100',
+     decimas()===1000 && dadoListo() && cfg.pesos.length===9,
+     coma((decimas()/10).toFixed(1))+' % repartido en 9 caras');
+  equilibra();
+  ok('«equilibrar» con el dado trucado deja porcentajes que suman 100 exactos',
+     decimas()===1000 && dadoListo(), cfg.pesos.join(' '));
+  cfg.trucado=0; cfg.caras=6; ajustaCaras(6); equilibra();
+  ok('y con el dado normal no hay nada que cuadrar: siempre está listo',
+     dadoListo() && !cfg.trucado);
+
+  ok('un peso negativo se rechaza', !pesosValidos([1,1,-1,1,1,1],6));
+  ok('y todos los pesos a cero, también', !pesosValidos([0,0,0,0,0,0],6));
+  ok('y una lista con menos pesos que caras', !pesosValidos([1,1,1],6));
+  ok('un peso que no es un número se rechaza', !pesosValidos([1,1,'x',1,1,1],6));
+
+  /* --- 1c. los dados trucados sorpresa -------------------------------------- */
+  pon(6,3,'suma');
+  cfg.sorpresa=1; cfg.misterioN=0; reinicia('sorpresa-1');
+  var s1=[pesosDe(0).join(','), pesosDe(1).join(','), pesosDe(2).join(',')];
+  ok('con la sorpresa, cada dado lleva su propia distribución',
+     s1[0]!==s1[1] || s1[1]!==s1[2] || s1[0]!==s1[2],
+     s1.join('  /  '));
+  reinicia('sorpresa-1');
+  ok('y con la misma semilla salen exactamente los mismos dados',
+     pesosDe(0).join(',')===s1[0] && pesosDe(2).join(',')===s1[2]);
+  reinicia('sorpresa-2');
+  ok('con otra semilla, otros dados',
+     pesosDe(0).join(',')!==s1[0] || pesosDe(1).join(',')!==s1[1] ||
+     pesosDe(2).join(',')!==s1[2]);
+  reinicia('sorpresa-1'); cfg.misterioN=1;
+  ok('y «otros dados sorpresa» reparte otro juego sin tocar la semilla',
+     pesosDe(0).join(',')!==s1[0] || pesosDe(1).join(',')!==s1[1] ||
+     pesosDe(2).join(',')!==s1[2]);
+  cfg.misterioN=0;
+  var malSuma=[], malPeso=[], todoSano=[], sem;
+  for(sem=0; sem<60; sem++){
+    reinicia('reto-'+sem);
+    var sanos=0, d;
+    for(d=0; d<cfg.ndados; d++){
+      var w=pesosDe(d), pp=probsDe(d), sp=0, k;
+      for(k=0;k<w.length;k++){
+        if(!(w[k]>0) || !isFinite(w[k])) malPeso.push(sem+':'+d);
+        sp+=pp[k];
+      }
+      if(!cerca(sp,1)) malSuma.push(sem+':'+d);
+      if(esSano(w)) sanos++;
+    }
+    if(sanos===cfg.ndados) todoSano.push(sem);
+  }
+  ok('los pesos sorteados son siempre positivos y finitos', malPeso.length===0,
+     malPeso.length? 'fallan '+malPeso.slice(0,4).join(', ') : '60 semillas × 3 dados');
+  ok('y cada dado sorteado es una distribución que suma 1', malSuma.length===0,
+     malSuma.length? 'fallan '+malSuma.slice(0,4).join(', ') : '180 dados');
+  ok('nunca salen los tres dados sanos: siempre hay algo que descubrir',
+     todoSano.length===0, todoSano.length? 'pasa con '+todoSano.join(', ') : '60 semillas');
+  /* que un dado pueda estar sano es parte de la gracia, y tiene que pasar */
+  var haySano=false;
+  for(sem=0; sem<60 && !haySano; sem++){
+    reinicia('reto-'+sem);
+    for(var dd=0; dd<3; dd++) if(esSano(pesosDe(dd))) haySano=true;
+  }
+  ok('pero alguno sí puede estar sano, que descubrirlo también es trabajo', haySano);
+
+  /* lo que de verdad importa: que los dados distintos lleguen a las tiradas */
+  pon(6,1,'cara');
+  cfg.sorpresa=1; reinicia('carga-1');
+  var pDado=probsDe(0), gordo=0, kk2;
+  for(kk2=1;kk2<6;kk2++) if(pDado[kk2]>pDado[gordo]) gordo=kk2;
+  registrosNuevos(); reinicia('carga-1'); tiraN(20000);
+  var idG=claveId[cfg.etiqs[gordo].t], fG=(idG===undefined?0:claves[idG].n)/20000;
+  ok('la cara más cargada del dado sorpresa sale con la frecuencia que le toca',
+     Math.abs(fG-pDado[gordo])<0.02, num(fG)+' contra '+num(pDado[gordo]));
+  ok('y los porcentajes tapados no salen en el panel mientras no se pida la teórica',
+     (function(){ opt.teo=0; pintaCaras();
+        var e=document.getElementsByClassName('e-pc');
+        return e.length===6 && e[0].value==='' && e[0].placeholder==='?'; })());
+  ok('al marcar la probabilidad teórica se destapan',
+     (function(){ opt.teo=1; pintaCaras();
+        var e=document.getElementsByClassName('e-pc');
+        opt.teo=0;
+        return e.length===6 && e[0].value!=='' && parseFloat(e[0].value)>0; })());
+  cfg.sorpresa=0; pon(6,2,'suma'); pintaCaras();
+
+  /* --- 2. el azar ----------------------------------------------------------- */
+  pon(6,1,'cara');
+  function serieDe(sem, n){
+    reinicia(sem);
+    var a=[], i;
+    for(i=0;i<n;i++) a.push(tiraDado());
+    return a.join('');
+  }
+  var sA=serieDe('clase-1', 40), sB=serieDe('clase-1', 40), sC=serieDe('clase-2', 40);
+  ok('la misma semilla da exactamente las mismas tiradas', sA===sB, sA.slice(0,14)+'…');
+  ok('y otra semilla da otras', sA!==sC, sC.slice(0,14)+'…');
+
+  reinicia('reparto');
+  var vistas={}, cuantas=0, i;
+  for(i=0;i<600;i++){ var c1=tiraDado(); if(!vistas[c1]){ vistas[c1]=1; cuantas++; } }
+  ok('en 600 tiradas de un dado de 6 salen las seis caras', cuantas===6, cuantas+' caras distintas');
+
+  cfg.pesos=[90,2,2,2,2,2];
+  reinicia('trucado');
+  var unos=0;
+  for(i=0;i<10000;i++) if(tiraDado()===0) unos++;
+  ok('un dado trucado al 90 % saca esa cara alrededor del 90 % de las veces',
+     unos/10000>0.88 && unos/10000<0.92, num(unos/10000));
+
+  cfg.pesos=[1,0,1,0,1,0];
+  reinicia('ceros');
+  var salioCero=false, fuera=false;
+  for(i=0;i<800;i++){
+    var c2=tiraDado();
+    if(c2<0 || c2>=cfg.caras) fuera=true;
+    if(c2%2===1) salioCero=true;
+  }
+  ok('una cara con probabilidad 0 no sale nunca', !salioCero);
+  ok('y el muestreo nunca se sale del número de caras', !fuera);
+
+  /* --- 3. lo que se mira ---------------------------------------------------- */
+  var a3=agregados([1,2,3]);
+  ok('los agregados de 1, 2 y 3 salen bien',
+     a3.suma===6 && a3.max===3 && a3.min===1 && a3.rec===2 && cerca(a3.media,2) &&
+     a3.pares===1 && a3.impares===2 && a3.distintos===3 && a3.repes===1,
+     'suma '+a3.suma+', pares '+a3.pares+', distintos '+a3.distintos);
+  var a4=agregados([2,2,5]);
+  ok('con dos dados iguales, la repetición máxima es 2 y hay 2 valores distintos',
+     a4.repes===2 && a4.distintos===2, 'repes '+a4.repes+', distintos '+a4.distintos);
+  var a5=agregados([1.5, 2]);
+  ok('un valor con decimales no cuenta ni como par ni como impar',
+     a5.pares===1 && a5.impares===0, 'pares '+a5.pares+', impares '+a5.impares);
+
+  pon(6,2,'comb');
+  ok('la combinación no distingue el orden en que caen los dados',
+     resultadoDe([0,3]).k===resultadoDe([3,0]).k, resultadoDe([0,3]).k);
+  pon(6,2,'difabs');
+  ok('la diferencia sin signo nunca es negativa',
+     resultadoDe([0,5]).k==='5' && resultadoDe([5,0]).k==='5');
+  pon(6,2,'dif');
+  /* ojo con las caras y los valores: la cara 0 vale 1 y la cara 5 vale 6, así
+     que la diferencia es 5, no 4 */
+  ok('y la diferencia con signo sí lo es',
+     resultadoDe([0,5]).k==='-5' && resultadoDe([5,0]).k==='5',
+     resultadoDe([0,5]).k+' / '+resultadoDe([5,0]).k);
+
+  pon(6,1,'cara');
+  rehazEtiquetas('colores');
+  ok('con etiquetas de colores, el resultado de una tirada es el color',
+     resultadoDe([0]).k===COLORES[0].n, resultadoDe([0]).k);
+  cfg.ndados=2; cfg.op='suma'; cacheTeo=null;
+  ok('y aun así se puede sumar, porque debajo de la etiqueta hay un valor',
+     resultadoDe([0,1]).k==='3', resultadoDe([0,1]).k);
+  ok('todas las caras tienen valor numérico', valoresNumericos());
+  rehazEtiquetas('num');
+
+  /* --- 4. la fórmula -------------------------------------------------------- */
+  function ev(txt, ds){
+    var r=compila(txt, ds.length);
+    if(r.err) return {e:r.err};
+    return {v:evalua(r.ast, entorno(ds))};
+  }
+  ok('«2*d1+3» con un 4 en el primer dado da 11', ev('2*d1+3',[4,1]).v===11, ev('2*d1+3',[4,1]).v);
+  ok('la multiplicación va antes que la suma', ev('2+3*4',[1,1]).v===14, ev('2+3*4',[1,1]).v);
+  ok('y los paréntesis mandan sobre eso', ev('(2+3)*4',[1,1]).v===20, ev('(2+3)*4',[1,1]).v);
+  ok('la potencia asocia por la derecha: 2^3^2 son 512',
+     ev('2^3^2',[1,1]).v===512, ev('2^3^2',[1,1]).v);
+  ok('el menos delante funciona', ev('-d1+10',[3,1]).v===7, ev('-d1+10',[3,1]).v);
+  ok('«max - min» con un 1 y un 5 da 4', ev('max - min',[1,5]).v===4, ev('max - min',[1,5]).v);
+  ok('«suma» vale lo mismo que sumar los dados a mano',
+     ev('suma',[2,3,4]).v===9 && ev('d1+d2+d3',[2,3,4]).v===9);
+  ok('«si(d1=d2; 1; 0)» distingue la pareja',
+     ev('si(d1=d2; 1; 0)',[3,3]).v===1 && ev('si(d1=d2; 1; 0)',[3,4]).v===0);
+  ok('una comparación suelta ya vale 1 o 0',
+     ev('d1>d2',[5,2]).v===1 && ev('d1>d2',[2,5]).v===0);
+  ok('«abs(3-7)» da 4', ev('abs(3-7)',[1,1]).v===4, ev('abs(3-7)',[1,1]).v);
+  ok('«ent(2,7)» da 2 y la coma sirve de decimal', ev('ent(2,7)',[1,1]).v===2, ev('ent(2,7)',[1,1]).v);
+  ok('«0,5*d1» con un 4 da 2', ev('0,5*d1',[4,1]).v===2, ev('0,5*d1',[4,1]).v);
+  ok('«resto(7;3)» da 1', ev('resto(7;3)',[1,1]).v===1, ev('resto(7;3)',[1,1]).v);
+  ok('«max(d1;d2;10)» coge el mayor de los tres',
+     ev('max(d1;d2;10)',[3,4]).v===10, ev('max(d1;d2;10)',[3,4]).v);
+  ok('dividir entre cero no da un número', !isFinite(ev('d1/0',[4,1]).v), String(ev('d1/0',[4,1]).v));
+
+  ok('«d3» con dos dados avisa, y dice cuántos hay',
+     !!ev('d3',[1,1]).e && ev('d3',[1,1]).e.indexOf('2')>=0, ev('d3',[1,1]).e);
+  ok('un nombre que no existe avisa', !!ev('pepito+1',[1,1]).e, ev('pepito+1',[1,1]).e);
+  ok('una función que no existe avisa', !!ev('raizcubica(8)',[1,1]).e, ev('raizcubica(8)',[1,1]).e);
+  ok('un paréntesis sin cerrar avisa', !!ev('(2+3',[1,1]).e, ev('(2+3',[1,1]).e);
+  ok('un símbolo raro avisa', !!ev('d1 & d2',[1,1]).e, ev('d1 & d2',[1,1]).e);
+  ok('la fórmula vacía avisa', !!ev('   ',[1,1]).e, ev('   ',[1,1]).e);
+  ok('«si» con dos argumentos avisa de que hacen falta tres',
+     !!ev('si(d1=1; 5)',[1,1]).e, ev('si(d1=1; 5)',[1,1]).e);
+  ok('y nada de esto lanza una excepción: siempre devuelve un mensaje',
+     typeof ev('((((',[1,1]).e === 'string');
+
+  pon(6, 2, 'formula', 'd1/0');
+  ok('una tirada cuya fórmula no da número se apunta como «(no vale)»',
+     resultadoDe([0,0]).k==='(no vale)', resultadoDe([0,0]).k);
+
+  /* --- 5. la probabilidad teórica ------------------------------------------- */
+  pon(6,2,'suma');
+  var T=teorica();
+  ok('la suma de dos dados de 6 tiene 11 resultados posibles',
+     Object.keys(T.mapa).length===11, Object.keys(T.mapa).length);
+  ok('el 7 sale 6 veces de 36', cerca(T.mapa['7'].p, 6/36), num(T.mapa['7'].p*36)+'/36');
+  ok('el 2 y el 12, una vez de 36 cada uno',
+     cerca(T.mapa['2'].p,1/36) && cerca(T.mapa['12'].p,1/36));
+  ok('y toda la distribución suma 1', cerca(sumaMapa(T.mapa),1), num(sumaMapa(T.mapa)));
+  var mediaTeo=0, kk;
+  for(kk in T.mapa) if(T.mapa.hasOwnProperty(kk)) mediaTeo+=parseFloat(kk)*T.mapa[kk].p;
+  ok('la media de la suma de 2 dados de 6 es 7', cerca(mediaTeo,7), num(mediaTeo));
+
+  pon(6,3,'suma');
+  mediaTeo=0;
+  var T3=teorica();
+  for(kk in T3.mapa) if(T3.mapa.hasOwnProperty(kk)) mediaTeo+=parseFloat(kk)*T3.mapa[kk].p;
+  ok('la de 3 dados de 6 es 10,5, que es n(c+1)/2', cerca(mediaTeo,10.5), num(mediaTeo));
+
+  pon(6,2,'max');
+  ok('con dos dados de 6, el mayor es un 6 en 11 de las 36 veces',
+     cerca(teorica().mapa['6'].p, 11/36), num(teorica().mapa['6'].p*36)+'/36');
+  pon(6,2,'difabs');
+  ok('y los dos dados salen iguales 6 veces de 36',
+     cerca(teorica().mapa['0'].p, 6/36), num(teorica().mapa['0'].p*36)+'/36');
+  pon(6,3,'pares');
+  var Tp=teorica().mapa;
+  ok('cuántos pares salen con 3 dados de 6 es una binomial de 3 y un medio',
+     cerca(Tp['0'].p,1/8) && cerca(Tp['1'].p,3/8) && cerca(Tp['2'].p,3/8) && cerca(Tp['3'].p,1/8),
+     num(Tp['1'].p*8)+'/8');
+
+  /* la prueba que de verdad vale: dos programas distintos, el mismo número */
+  var opsDP=['suma','media','prod','max','min','rec','pares','impares','comb','distintos','repes'];
+  var malDP=[], malDPt=[];
+  opsDP.forEach(function(o){
+    pon(4,3,o);
+    if(!mismoMapa(enumTeorica(CAP_ENUM), dpDe(o, CAP_DP))) malDP.push(o);
+    pon(4,3,o,undefined,[4,3,2,1]);
+    if(!mismoMapa(enumTeorica(CAP_ENUM), dpDe(o, CAP_DP))) malDPt.push(o);
+  });
+  ok('enumerar y arrastrar la dinámica dan lo mismo, con 3 dados de 4 caras',
+     malDP.length===0, malDP.length? 'falla en '+malDP.join(', ') : opsDP.length+' operaciones');
+  ok('y también con el dado trucado 4-3-2-1',
+     malDPt.length===0, malDPt.length? 'falla en '+malDPt.join(', ') : opsDP.length+' operaciones');
+  /* y con tres dados DISTINTOS, que es donde de verdad se podrían separar los
+     dos caminos: la dinámica va dado a dado y enumerar va combinación a
+     combinación, y cada dado tiene sus propias probabilidades */
+  var malDPs=[];
+  opsDP.forEach(function(o){
+    pon(4,3,o);
+    cfg.sorpresa=1; cacheTeo=null; reinicia('enum-dp');
+    if(!mismoMapa(enumTeorica(CAP_ENUM), dpDe(o, CAP_DP))) malDPs.push(o);
+  });
+  ok('y con dados sorpresa, que son distintos entre sí',
+     malDPs.length===0, malDPs.length? 'falla en '+malDPs.join(', ') : opsDP.length+' operaciones');
+  /* con dados distintos ya no vale la distribución del dado equilibrado */
+  pon(6,2,'suma');
+  var Tjusto=teorica().mapa;
+  cfg.sorpresa=1; cacheTeo=null; reinicia('asimetrica');
+  var Ts=teorica().mapa, sumaTs=0, kt;
+  for(kt in Ts) if(Ts.hasOwnProperty(kt)) sumaTs+=Ts[kt].p;
+  ok('la teórica de dos dados sorpresa sigue sumando 1', cerca(sumaTs,1), num(sumaTs));
+  ok('y no es la de dos dados equilibrados', !mismoMapa(Tjusto, Ts),
+     num(Ts['2'].p)+' contra '+num(Tjusto['2'].p)+' para el 2');
+  /* la diferencia d1−d2 con dos dados distintos deja de ser simétrica, y eso
+     solo sale bien si cada dado entra en su sitio y no se cambian de orden */
+  pon(6,2,'dif'); cfg.sorpresa=1; cacheTeo=null; reinicia('asimetrica');
+  var Td=teorica().mapa, asim=false, kd;
+  for(kd=1; kd<=5; kd++){
+    if(Td[String(kd)] && Td['-'+kd] &&
+       Math.abs(Td[String(kd)].p - Td['-'+kd].p)>1e-6) asim=true;
+  }
+  ok('y la diferencia entre dos dados sorpresa ya no es simétrica', asim);
+  pon(6,2,'suma');
+
+  var maltot=[];
+  opsDP.forEach(function(o){
+    pon(5,3,o,undefined,[5,1,1,1,2]);
+    var m=teorica().mapa;
+    if(!m || !cerca(sumaMapa(m),1,1e-9)) maltot.push(o);
+  });
+  ok('la distribución teórica siempre suma 1', maltot.length===0,
+     maltot.length? 'falla en '+maltot.join(', ') : 'las '+opsDP.length+' operaciones');
+
+  pon(20,10,'suma');
+  var Tg=teorica();
+  ok('con 10 dados de 20 caras todavía hay teórica de la suma, por la dinámica',
+     !!Tg.mapa && Tg.modo==='dp' && Object.keys(Tg.mapa).length===191,
+     Tg.mapa? Tg.modo+', '+Object.keys(Tg.mapa).length+' resultados' : 'no hay');
+  ok('y va del 10 al 200', !!Tg.mapa && !!Tg.mapa['10'] && !!Tg.mapa['200'] && !Tg.mapa['9']);
+  pon(20,10,'formula','d1*d2+d3');
+  var Tf=teorica();
+  ok('pero de una fórmula con 10 dados de 20 caras no hay manera, y se dice',
+     !Tf.mapa && Tf.motivo.length>10, Tf.motivo);
+  pon(6,2,'formula','d1+');
+  ok('si la fórmula está mal escrita, tampoco hay teórica, y también se dice',
+     !teorica().mapa && teorica().motivo.indexOf('fórmula')>=0, teorica().motivo);
+
+  /* --- 6. registrar tiradas ------------------------------------------------- */
+  pon(6,2,'suma');
+  reinicia('mil');
+  tiraN(1000);
+  var suman=0;
+  for(i=0;i<claves.length;i++) suman+=claves[i].n;
+  ok('mil tiradas de golpe son exactamente mil', ntiradas===1000, ntiradas);
+  ok('y los recuentos suman esas mil', suman===1000, suman);
+  ok('la serie guarda una entrada por tirada', serie.length===1000, serie.length);
+  var rel=0;
+  for(i=0;i<claves.length;i++) rel+=claves[i].n/ntiradas;
+  ok('las frecuencias relativas suman 1', cerca(rel,1), num(rel));
+  ok('todos los resultados que han salido están entre 2 y 12', (function(){
+      for(var j=0;j<claves.length;j++){
+        if(claves[j].n===0) continue;
+        var v=parseFloat(claves[j].k);
+        if(!(v>=2 && v<=12)) return false;
+      }
+      return true; })());
+  ok('la media observada de mil sumas anda cerca de 7', (function(){
+      var s=0;
+      for(var j=0;j<claves.length;j++) s+=parseFloat(claves[j].k)*claves[j].n;
+      return Math.abs(s/1000-7)<0.4;
+    })(), (function(){
+      var s=0;
+      for(var j=0;j<claves.length;j++) s+=parseFloat(claves[j].k)*claves[j].n;
+      return num(s/1000); })());
+
+  pon(6,2,'suma');
+  TOPE_DET=50; TOPE_SERIE=30;
+  tiraN(120);
+  ok('el detalle no crece por encima de su tope', detalle.length===50, detalle.length);
+  ok('la serie tampoco', serie.length===30, serie.length);
+  ok('pero el número de tiradas sigue siendo el de verdad', ntiradas===120, ntiradas);
+  ok('y se sabe cuántas se han recortado', recortadas===70, recortadas);
+  ok('los recuentos son exactos aunque el detalle se haya recortado', (function(){
+      var s=0; for(var j=0;j<claves.length;j++) s+=claves[j].n; return s===120; })());
+  TOPE_DET=antes.TD; TOPE_SERIE=antes.TS;
+
+  /* --- 7. cambiar de experimento -------------------------------------------- */
+  pon(6,2,'suma');
+  tiraN(20);
+  undoStack=[];
+  aplicaCambio(function(){ cfg.caras=10; rehazEtiquetas('num'); });
+  ok('cambiar el número de caras borra las tiradas de antes', ntiradas===0, ntiradas);
+  ok('y no deja ningún recuento colgando de las caras viejas', claves.length===0, claves.length);
+  ok('el dado tiene ahora las caras nuevas', cfg.caras===10 && cfg.etiqs.length===10 &&
+     cfg.pesos.length===10, cfg.caras+' caras');
+  doUndo();
+  ok('deshacer devuelve el dado de antes', cfg.caras===6, cfg.caras+' caras');
+  ok('y devuelve también las tiradas', ntiradas===20, ntiradas);
+
+  pon(6,1,'cara');
+  cfg.ndados=8; normalizaOp();
+  ok('si se ponen 8 dados, «la cara que sale» deja de valer y se cambia sola',
+     cfg.op==='suma', cfg.op);
+  cfg.ndados=1; normalizaOp();
+  ok('y con un solo dado no se queda «la suma»', cfg.op==='cara', cfg.op);
+
+  pon(6,2,'suma');
+  tiraN(15);
+  var cfgAntes=JSON.stringify(cfg);
+  registrosNuevos();
+  ok('vaciar deja las tiradas a cero', ntiradas===0 && claves.length===0);
+  ok('pero no toca la configuración', JSON.stringify(cfg)===cfgAntes);
+
+  /* --- 8. guardar y abrir --------------------------------------------------- */
+  pon(8,3,'max',undefined,[5,4,3,2,1,1,1,1]);
+  cfg.etiqs[0].t='cero'; cfg.etiqs[0].v=0;
+  cacheTeo=null;
+  reinicia('guardar');
+  tiraN(200);
+  var firma=firmaCfg(), nAntes=ntiradas;
+  var conteo={};
+  for(i=0;i<claves.length;i++) conteo[claves[i].k]=claves[i].n;
+  var d=JSON.parse(JSON.stringify(datos()));
+  importMode='replace';
+  loadData(d);
+  var igual=true;
+  for(kk in conteo) if(conteo.hasOwnProperty(kk)) if(frecuencia(kk)!==conteo[kk]) igual=false;
+  ok('guardar y volver a abrir conserva la configuración', firmaCfg()===firma, firmaCfg().slice(0,40)+'…');
+  ok('y conserva todos los recuentos', igual && ntiradas===nAntes, ntiradas+' tiradas');
+  ok('y conserva las etiquetas y los valores que se hayan tocado',
+     cfg.etiqs[0].t==='cero' && cfg.etiqs[0].v===0, cfg.etiqs[0].t+' = '+cfg.etiqs[0].v);
+
+  /* los dados sorpresa no viajan en el archivo: se vuelven a sortear de la
+     semilla y del contador, y tienen que salir exactamente los mismos */
+  pon(6,2,'suma');
+  cfg.sorpresa=1; cfg.misterioN=2; reinicia('guardar-sorpresa');
+  var wS=[pesosDe(0).join(','), pesosDe(1).join(',')];
+  var dS=JSON.parse(JSON.stringify(datos()));
+  ok('el archivo guardado no lleva escritos los dados sorpresa, solo la semilla',
+     dS.cfg.pesos.join(',')==='1,1,1,1,1,1' && dS.cfg.misterioN===2 &&
+     (wS[0]!=='1,1,1,1,1,1' || wS[1]!=='1,1,1,1,1,1'),
+     'guarda «'+dS.cfg.pesos.join(',')+'» y el dado 1 es «'+wS[0]+'»');
+  pon(4,1,'cara');
+  importMode='replace'; loadData(dS);
+  ok('y al abrirlo vuelven a salir los mismos dados sorpresa',
+     cfg.sorpresa===1 && cfg.misterioN===2 &&
+     pesosDe(0).join(',')===wS[0] && pesosDe(1).join(',')===wS[1],
+     pesosDe(0).slice(0,3).map(function(v){ return num(v); }).join(' '));
+  pon(8,3,'max',undefined,[5,4,3,2,1,1,1,1]);
+  cfg.etiqs[0].t='cero'; cfg.etiqs[0].v=0;
+  cacheTeo=null; reinicia('guardar'); tiraN(200);
+
+  importMode='add';
+  loadData(JSON.parse(JSON.stringify(d)));
+  ok('el botón ＋ suma las tiradas de otro archivo del mismo dado',
+     ntiradas===nAntes*2, ntiradas);
+  importMode='add';
+  var nn=ntiradas;
+  var otro=JSON.parse(JSON.stringify(d));
+  otro.cfg.ndados=2; otro.cfg.op='suma';
+  loadData(otro);
+  ok('y se niega a mezclar tiradas de otro experimento distinto', ntiradas===nn, ntiradas);
+  importMode='replace';
+
+  var base={caras:6, ndados:2, juego:'num', op:'suma', formula:'d1',
+            etiqs:[{t:'1',v:1},{t:'2',v:2},{t:'3',v:3},{t:'4',v:4},{t:'5',v:5},{t:'6',v:6}],
+            pesos:[1,1,1,1,1,1]};
+  function tocado(f){ var c=JSON.parse(JSON.stringify(base)); f(c); return c; }
+  ok('un archivo con 25 caras se rechaza', limpiaConfig(tocado(function(c){ c.caras=25; }))===null);
+  ok('y uno con 3 caras, también', limpiaConfig(tocado(function(c){ c.caras=3; }))===null);
+  ok('y uno con 12 dados', limpiaConfig(tocado(function(c){ c.ndados=12; }))===null);
+  ok('y uno con un peso negativo',
+     limpiaConfig(tocado(function(c){ c.pesos[2]=-1; }))===null);
+  ok('y uno con todos los pesos a cero',
+     limpiaConfig(tocado(function(c){ c.pesos=[0,0,0,0,0,0]; }))===null);
+  ok('y uno con menos etiquetas que caras',
+     limpiaConfig(tocado(function(c){ c.etiqs.pop(); }))===null);
+  ok('y uno con el valor de una cara sin ser número',
+     limpiaConfig(tocado(function(c){ c.etiqs[1].v='dos'; }))===null);
+  ok('y uno con una operación que no existe',
+     limpiaConfig(tocado(function(c){ c.op='raiz cuadrada del dado'; }))===null);
+  ok('y uno que pide la diferencia de tres dados',
+     limpiaConfig(tocado(function(c){ c.ndados=3; c.op='dif'; }))===null);
+  ok('y uno con una fórmula que no compila',
+     limpiaConfig(tocado(function(c){ c.op='formula'; c.formula='d1 +'; }))===null);
+  ok('en cambio, uno bien hecho se acepta', limpiaConfig(base)!==null);
+  ok('un archivo de otro manipulativo no se carga', (function(){
+      var n0=ntiradas;
+      loadData({formato:'tiras-de-papel', tiras:[]});
+      return ntiradas===n0; })());
+
+  /* --- 8b. acercarse al gráfico --------------------------------------------- */
+  gvTope.x=1; gvTope.y=1;
+  gvReset();
+  ok('de entrada se ve el gráfico entero y no hay nada acercado',
+     !gvHayZoom() && gv.x0===0 && gv.x1===1 && gv.y0===0 && gv.y1===1);
+  gvZoom('x', 0.5, 2);
+  ok('acercar al doble por el centro deja media ventana centrada',
+     cerca(gv.x1-gv.x0, 0.5) && cerca(gv.x0, 0.25), num(gv.x0)+'…'+num(gv.x1));
+  gvReset(); gvZoom('x', 0, 2);
+  ok('pegado al borde izquierdo, la ventana no se sale por la izquierda',
+     gv.x0===0 && cerca(gv.x1,0.5), num(gv.x0)+'…'+num(gv.x1));
+  gvReset(); gvZoom('x', 1, 2);
+  ok('ni por la derecha', cerca(gv.x0,0.5) && gv.x1===1, num(gv.x0)+'…'+num(gv.x1));
+  gvReset(); gvZoom('y', 0.5, 4); gvZoom('y', 0.5, 4);
+  ok('acercar dos veces multiplica, no suma', cerca(gv.y1-gv.y0, 1/16), num(gv.y1-gv.y0));
+  gvReset(); gvZoom('x', 0.25, 3);
+  ok('el punto que hay bajo el cursor no se mueve al acercar',
+     cerca(gv.x0+0.25*(gv.x1-gv.x0), 0.25), num(gv.x0+0.25*(gv.x1-gv.x0)));
+  gvReset();
+  for(i=0;i<60;i++) gvZoom('x', 0.5, 2);
+  ok('por mucho que se insista, no se puede acercar hasta perder el sitio',
+     gv.x1-gv.x0>=1e-4-1e-12 && gv.x0>=0 && gv.x1<=1,
+     'ventana de '+(gv.x1-gv.x0).toExponential(1));
+  for(i=0;i<60;i++) gvZoom('x', 0.5, 1/2);
+  ok('y alejando se vuelve al gráfico entero, sin pasarse',
+     !gvHayZoom(), num(gv.x0)+'…'+num(gv.x1));
+  gvReset(); gvZoom('x', 0.5, 4);
+  var anchoV=gv.x1-gv.x0;
+  gvMueve('x', 5);
+  ok('moverse a lo bestia no saca la ventana del gráfico',
+     gv.x1===1 && cerca(gv.x1-gv.x0, anchoV), num(gv.x0)+'…'+num(gv.x1));
+  gvMueve('x', -5);
+  ok('ni por el otro lado', gv.x0===0 && cerca(gv.x1-gv.x0, anchoV), num(gv.x0)+'…'+num(gv.x1));
+
+  /* el eje vertical de la evolución llega más arriba del techo de salida: el
+     arranque de la serie se va hasta el 100 % y tiene que poder mirarse */
+  gvTope.y=1/0.08;   /* el techo más bajo que se usa, el 8 % */
+  gvReset();
+  for(i=0;i<40;i++) gvZoom('y', 0.5, 1/1.25);
+  ok('alejando en vertical se llega hasta arriba del todo, hasta el 100 %',
+     cerca(gv.y0,0) && cerca(gv.y1*0.08, 1), 'llega al '+num(100*gv.y1*0.08)+' %');
+  ok('y eso cuenta como estar acercado, para poder volver con doble clic',
+     gvHayZoom());
+  gvReset(); gvZoom('y', 0.5, 1/1.25);
+  ok('un paso de alejar deja la ventana un cuarto más alta, sin salirse del tope',
+     gv.y1>1 && gv.y1<=gvTope.y && cerca(gv.y1-gv.y0, 1.25), num(gv.y1-gv.y0));
+  gvMueve('y', 9);
+  ok('y moverse a lo bestia tampoco pasa del tope',
+     cerca(gv.y1, gvTope.y), num(gv.y0)+'…'+num(gv.y1));
+  gvReset();
+  for(i=0;i<40;i++) gvZoom('y', 0.5, 1.25);
+  ok('acercando se vuelve a bajar hasta el mínimo de siempre',
+     gv.y1-gv.y0>=1e-4-1e-12 && gv.y1<=gvTope.y,
+     'ventana de '+(gv.y1-gv.y0).toExponential(1));
+  gvTope.y=1; gvReset();
+  gvZoom('y', 0.5, 1/4);
+  ok('en las barras, en cambio, alejar no pasa del gráfico entero',
+     gv.y0===0 && gv.y1===1, num(gv.y0)+'…'+num(gv.y1));
+
+  pon(6,2,'suma'); registraSoporte();
+  opt.vista='barras';
+  ok('con once barras, la rueda a secas acerca a lo ancho', ejeRueda(false)==='x', ejeRueda(false));
+  ok('y con Mayús, a lo alto', ejeRueda(true)==='y');
+  registrosNuevos(); idDeClave('cara',1); idDeClave('cruz',0);
+  ok('pero con solo dos barras acerca directamente a lo alto, que es lo único que da algo',
+     ejeRueda(false)==='y', ejeRueda(false));
+  /* que las dos vistas sigan dibujando con la ventana acercada: un NaN en un
+     path de canvas no da error, simplemente no pinta */
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=420; oc.height=220;
+    var x=oc.getContext('2d'), malas=[];
+    pon(6,2,'suma'); reinicia('zoomdibujo'); tiraN(80);
+    opt.quien='7';
+    ['barras','evol'].forEach(function(v){
+      opt.vista=v;
+      gvReset(); gvZoom('x',0.5,3); gvZoom('y',0.5,3);
+      x.setTransform(1,0,0,1,0,0);
+      drawGrafico(x,420,220,false);
+      var d=x.getImageData(0,0,420,220).data, n=0, j;
+      for(j=0;j<d.length;j+=4) if(d[j]<250||d[j+1]<250||d[j+2]<250) n++;
+      if(n<400) malas.push(v+' ('+n+' px)');
+    });
+    ok('las dos vistas siguen dibujando algo con el gráfico acercado',
+       malas.length===0, malas.length? 'se queda en blanco '+malas.join(', ') : 'las dos pintan');
+    opt.vista='barras'; gvReset();
+  })();
+
+  /* --- 8b. las marcas del eje de tiradas ------------------------------------ */
+  (function(){
+    var enteras=true, crecen=true, pocas=false, casos=[
+      [1,12,8],[1,50,8],[1,2000,8],[1,200000,8],[1,7,8],[900,1000,8],[1,1,8],[5,6,8]
+    ], i, r, j;
+    for(i=0;i<casos.length;i++){
+      r=marcasEje(casos[i][0], casos[i][1], casos[i][2]);
+      if(!r.length || r.length>casos[i][2]*2.5) pocas=true;
+      for(j=0;j<r.length;j++){
+        if(r[j]!==Math.round(r[j]) || r[j]<casos[i][0] || r[j]>casos[i][1]) enteras=false;
+        if(j && r[j]<=r[j-1]) crecen=false;
+      }
+    }
+    ok('las marcas del eje de tiradas son números enteros y dentro del tramo', enteras,
+       'de 1 a 2000: '+marcasEje(1,2000,8).join(' '));
+    ok('y van creciendo, ni repetidas ni desordenadas', crecen);
+    ok('y siempre hay unas cuantas, ni ninguna ni cuarenta', !pocas,
+       'de 1 a 12: '+marcasEje(1,12,8).join(' '));
+    ok('con la serie entera se va de doscientas cincuenta en doscientas cincuenta',
+       marcasEje(1,2000,8).join(',')==='250,500,750,1000,1250,1500,1750,2000',
+       marcasEje(1,2000,8).join(' '));
+    ok('y con una docena de tiradas, de dos en dos',
+       marcasEje(1,12,8).join(',')==='2,4,6,8,10,12', marcasEje(1,12,8).join(' '));
+    ok('y si solo se ve una tirada, esa', marcasEje(7,7,8).join(',')==='7');
+  })();
+
+  /* la evolución tiene que verse desde la primera tirada: un punto ya dice algo.
+     El azul lo distingue del cartel gris de «todavía no has tirado» */
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=420; oc.height=220;
+    var x=oc.getContext('2d');
+    function pinta(){
+      x.setTransform(1,0,0,1,0,0); x.fillStyle='#fff'; x.fillRect(0,0,420,220);
+      drawGrafico(x,420,220,false);
+      var d=x.getImageData(0,0,420,220).data, n=0, j;
+      for(j=0;j<d.length;j+=4) if(d[j+2]-d[j]>60) n++;
+      return n;
+    }
+    pon(6,2,'suma'); reinicia('primerpunto'); registraSoporte();
+    opt.vista='evol'; opt.teo=0; opt.quien='7'; gvReset();
+    var vacia=pinta();
+    tiraN(1); actualizaQuien(); opt.quien='7';
+    var una=pinta();
+    tiraN(1); actualizaQuien(); opt.quien='7';
+    var dos=pinta();
+    ok('sin tiradas, la evolución no pinta nada de azul', vacia===0, vacia+' px');
+    ok('con una sola tirada ya se ve el punto de la frecuencia relativa',
+       una>10, una+' px azules');
+    ok('y con dos, la línea que los une', dos>una, dos+' px azules');
+    opt.vista='barras'; gvReset();
+  })();
+
+  /* el arranque de la serie se sale por arriba del techo: hay que avisar de que
+     hay curva ahí y hay que poder llegar a ella alejando en vertical */
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=420; oc.height=220;
+    var x=oc.getContext('2d'), k;
+    pon(6,2,'suma'); registraSoporte();
+    opt.vista='evol'; opt.teo=0; opt.quien='7'; gvReset();
+    /* una serie a mano: un 7 de salida —frecuencia 1— y luego nunca más */
+    serie=[claveId['7']];
+    for(k=0;k<60;k++) serie.push(claveId['2']);
+    x.setTransform(1,0,0,1,0,0); drawGrafico(x,420,220,false);
+    ok('con el arranque fuera del techo, el gráfico lo dice',
+       evolCortada===true && cerca(gvTope.y, 1/0.08), 'tope '+num(gvTope.y));
+    for(k=0;k<40;k++) gvZoom('y', 0.5, 1/1.25);
+    x.setTransform(1,0,0,1,0,0); drawGrafico(x,420,220,false);
+    ok('y alejando en vertical se llega a verlo entero, hasta el 100 %',
+       evolCortada===false && cerca(gv.y1*0.08, 1), 'se ve hasta el '+num(100*gv.y1*0.08)+' %');
+    gvReset(); gvTope.y=1; opt.vista='barras'; registrosNuevos();
+  })();
+
+  /* --- 9. el orden del eje -------------------------------------------------- */
+  pon(6,2,'suma');
+  registraSoporte();
+  var ids=ordenadas(), bien=true;
+  for(i=1;i<ids.length;i++) if(claves[ids[i]].o < claves[ids[i-1]].o) bien=false;
+  ok('el eje del gráfico sale ordenado de menor a mayor', bien && ids.length===11, ids.length+' resultados');
+  ok('y están todos desde el principio, aunque no haya salido ninguno todavía',
+     claves.length===11 && ntiradas===0, claves.length+' resultados, '+ntiradas+' tiradas');
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+  }
+
+  /* devolver el manipulativo tal y como estaba */
+  try{
+    cfg=antes.cfg; claves=antes.claves; claveId=antes.claveId; serie=antes.serie;
+    detalle=antes.detalle; ntiradas=antes.nt; recortadas=antes.rec; s32=antes.s;
+    opt=antes.opt; gv=antes.gv; TOPE_DET=antes.TD; TOPE_SERIE=antes.TS; undoStack=antes.undo;
+    anim=antes.anim; importMode='replace'; cacheTeo=null;
+    gvTope={x:1, y:1}; evolCortada=false;
+    compilaFormula(); sincronizaControles(); pintaCaras(); pintaTabla(); actualizaQuien(); draw();
+  }catch(e2){}
+
+  /* --- informe --------------------------------------------------------------- */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length
+                                         : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación de los dados a medida</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__dados={
+  test:runSelfTest, cfg:function(){ return cfg; }, opt:opt, view:view,
+  probs:probs, probsDe:probsDe, pesosDe:pesosDe, esSano:esSano,
+  porcentajes:porcentajes, ponPorcentaje:ponPorcentaje,
+  decimas:decimas, dadoListo:dadoListo, csvRecuento:csvRecuento, csvTiradas:csvTiradas,
+  equilibra:equilibra, pesosValidos:pesosValidos, rehazEtiquetas:rehazEtiquetas,
+  reinicia:reinicia, rnd:function(){ return rnd(); }, tiraDado:tiraDado, tirada:tirada,
+  agregados:agregados, resultadoDe:resultadoDe, compila:compila, evalua:evalua,
+  enumTeorica:enumTeorica, dpDe:dpDe, teorica:teorica,
+  claves:function(){ return claves; }, serie:function(){ return serie; },
+  detalle:function(){ return detalle; }, ntiradas:function(){ return ntiradas; },
+  pintaCara:pintaCara, silueta:silueta, drawDados:drawDados, drawGrafico:drawGrafico,
+  gv:function(){ return gv; }, gvZoom:gvZoom, gvMueve:gvMueve, gvReset:gvReset,
+  gvHayZoom:gvHayZoom, ejeRueda:ejeRueda, gplot:function(){ return gplot; },
+  marcasEje:marcasEje, gvTope:function(){ return gvTope; },
+  tiraN:tiraN, limpiaConfig:limpiaConfig, load:loadData,
+  setMode:function(m){ importMode=m; }, datos:datos, redraw:draw, OPS:OPS, COLORES:COLORES
+};
+
+
+
+})();
+</script>
+</body>
+</html>
