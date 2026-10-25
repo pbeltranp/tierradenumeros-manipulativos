@@ -1,0 +1,2287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Longitud × Longitud</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:#2b2f36;background:#fff;display:flex;height:100%;overflow:hidden}
+  #side{width:212px;flex:0 0 212px;border-right:1px solid #e6e8ec;padding:10px 10px;overflow:auto;
+        background:#fafbfc}
+  #side h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a919c;
+           margin:0 0 6px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;
+           text-overflow:ellipsis;clear:both}
+  #side h2.sep{margin-top:16px}
+  #side .brand{font-size:19px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:2px 2px 10px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+           border-bottom:1px solid #e6e8ec;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover{background:#f0f2f5}
+  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  #toolbar .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;
+       padding:3px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer}
+  .act{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:5px;
+       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:6px 8px;font-size:12px;
+       color:#3d4450;cursor:pointer;text-align:left;line-height:1.3}
+  .act:hover:not(:disabled){background:#f0f2f5}
+  .act:disabled{opacity:.4;cursor:default}
+  .act kbd{font:11px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
+  .act.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .act.on:hover:not(:disabled){background:#2f62a8}
+  .act.on kbd{color:#cfdcf0}
+  select,input[type=text]{font:12px inherit;border:1px solid #d5d9e0;border-radius:6px;
+       padding:5px 6px;color:#2b2f36;background:#fff;width:100%}
+  .fila{display:flex;gap:5px;align-items:stretch;margin-top:4px}
+  .fila > *{min-width:0}
+  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:4px 0;font-size:12.5px;
+        color:#3d4450;cursor:pointer;flex:1;text-align:center}
+  .mini:hover:not(:disabled){background:#f0f2f5}
+  .mini:disabled{opacity:.35;cursor:default}
+  .cuenta{flex:1.4;display:flex;align-items:center;justify-content:center;gap:5px;
+          font-weight:600;font-size:12.5px;color:#2b2f36}
+  .lab{font-size:11px;color:#8a919c;margin-top:7px}
+  #stage{position:relative;flex:1;min-height:0;background:#fbfbfa}
+  canvas#cv{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
+        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:320px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:156px;flex:0 0 156px;padding:8px 7px}
+    .btn{padding:5px 7px;font-size:12px}
+    #info{width:calc(100% - 20px)}
+  }
+</style>
+</head>
+<body>
+
+  <aside id="side">
+    <div class="brand">Longitud × <b>Longitud</b></div>
+
+    <h2>Enunciado</h2>
+    <input type="text" id="aMano" placeholder="2/3 x 5/4"
+           title="Escribe las dos longitudes, en unidades, con una x en medio. Déjalo vacío para trabajar sin enunciado">
+    <button class="act" id="poner">Poner ese enunciado</button>
+    <select id="nivel" style="margin-top:7px">
+      <option value="0">Menores que la unidad</option>
+      <option value="1" selected>Una puede ser mayor</option>
+      <option value="2">Las dos pueden ser mayores</option>
+    </select>
+    <button class="act" id="azar">Otro al azar</button>
+
+    <h2 class="sep">Sacar una unidad</h2>
+    <button class="act" id="otraU" title="Saca al tablero otro segmento de 1 u">De longitud<kbd>U</kbd></button>
+    <button class="act" id="otraA" title="Saca al tablero un cuadrado de 1 u de lado">De área<kbd>A</kbd></button>
+
+    <h2 class="sep">Al pinchar</h2>
+    <button class="act on" id="modoP" title="Al pinchar se selecciona la pieza entera">Seleccionar pieza<kbd>1</kbd></button>
+    <button class="act" id="modoS" title="Al pinchar se selecciona el trocito más pequeño que dejan las marcas de la pieza">Seleccionar subunidad<kbd>2</kbd></button>
+    <button class="act" id="modoR" title="Al pinchar en una subunidad de un rectángulo se resalta, y al volver a pinchar se quita. Arrastrando se resaltan varias seguidas">▨ Resaltar subunidad<kbd>3</kbd></button>
+
+    <h2 class="sep">Partir la pieza</h2>
+    <div class="lab" id="labCol">En columnas</div>
+    <div class="fila">
+      <button class="mini" id="colMenos">−</button>
+      <div class="cuenta" id="ncol">—</div>
+      <button class="mini" id="colMas">+</button>
+    </div>
+    <div class="lab">En filas</div>
+    <div class="fila">
+      <button class="mini" id="filMenos">−</button>
+      <div class="cuenta" id="nfil">—</div>
+      <button class="mini" id="filMas">+</button>
+    </div>
+
+    <h2 class="sep">Con lo seleccionado</h2>
+    <button class="act" id="cortar" title="Corta la subunidad seleccionada, o la pieza entera por todas sus marcas">✂ Cortar<kbd>C</kbd></button>
+    <button class="act" id="duplicar" title="Saca una copia de la pieza o de la subunidad seleccionada">⧉ Duplicar<kbd>D</kbd></button>
+    <button class="act" id="girar" title="Gira la pieza un cuarto de vuelta">⟲ Girar<kbd>G</kbd></button>
+    <button class="act" id="unir" title="Funde en una sola pieza la seleccionada y las que tenga pegadas">⬒ Unir lo pegado<kbd>J</kbd></button>
+    <button class="act" id="rectan" title="Con la longitud seleccionada y otra que tenga pegada por un extremo, en ángulo recto, construye el rectángulo que las tiene por lados">▭ Rectángulo<kbd>R</kbd></button>
+    <button class="act" id="hueca" title="Deja el rectángulo en su borde, sin relleno, para ponerlo encima de otro">▢ Solo el borde<kbd>B</kbd></button>
+    <button class="act" id="borrar">Quitar<kbd>Supr</kbd></button>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <button class="btn" id="reiniciar" title="Deja en el tablero una unidad de longitud sola">Reiniciar</button>
+      <span class="sep"></span>
+      <label class="chk" title="Al soltar, los extremos, los bordes y las marcas se enganchan a los de los demás"><input type="checkbox" id="iman" checked>Imán</label>
+      <label class="chk" title="Junto a cada longitud, lo que mide; sobre cada rectángulo, lo que miden sus lados"><input type="checkbox" id="rot" checked>Rótulos</label>
+      <label class="chk" title="Escribe lo que mide, en unidades, cada tramo que dejan las marcas de una longitud"><input type="checkbox" id="etiqL">Etiquetas u</label>
+      <label class="chk" title="Escribe lo que mide, en unidades cuadradas, cada trocito que dejan las marcas de un rectángulo"><input type="checkbox" id="etiqA">Etiquetas u²</label>
+      <label class="chk" title="Añade al rótulo de cada rectángulo lo que mide en unidades cuadradas"><input type="checkbox" id="res">Resultado</label>
+      <button class="btn" id="transp" title="Los rectángulos se vuelven translúcidos y se ve lo que hay debajo">◑ Transparencia</button>
+      <span class="sep"></span>
+      <button class="btn" id="mano" title="Mover el tablero en vez de las piezas">✋</button>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar el tablero">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir lo de un archivo a lo que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo</div>
+    </div>
+  </main>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LA IDEA
+   En «2/3 u × 5/4 u» las dos fracciones son cantidades de longitud, y lo
+   que sale no es una longitud: es un área. Por eso aquí se empieza por la
+   unidad de longitud, un segmento de 1 u, que es lo que hay en el tablero.
+
+   No hay pasos. Hay un tablero con dos clases de piezas y unas pocas
+   herramientas que valen para las dos:
+   · Longitudes (tipo 'L'): segmentos horizontales o verticales. Se parten en
+     partes iguales (son marcas), se cortan por las marcas, se duplican
+     enteras o un solo tramo, y se unen las que están pegadas a continuación.
+     5/4 u es la unidad con un cuarto duplicado a continuación, unidos.
+   · Rectángulos (tipo 'A'): salen de dos longitudes pegadas por un extremo en
+     ángulo recto. La unidad de área es el cuadrado de 1 u de lado: se
+     reconoce cuando sale de 1 u y 1 u, y también se puede sacar ya hecha,
+     para tenerla de referencia. Se parten en columnas y filas, se cortan, se
+     duplican, se unen, se resaltan sus subunidades y se dejan en solo el borde.
+
+   Las restricciones que lo condicionan todo:
+   · Una subunidad es el trocito más pequeño que dejan todas las marcas de
+     una pieza: las de los cortes de ahora y las que le quedan de antes. Es
+     lo que se selecciona, se resalta, se duplica y se corta suelto.
+   · Todas las medidas son racionales y van en aritmética entera. Las
+     fracciones se guardan tal como salen, sin simplificar: 1 u y 1/4 u,
+     unidos, son 5/4 u; dos cuartos son 2/4 u; un rectángulo de 2/3 u por
+     5/4 u mide 10/12 u². La geometría se compara multiplicando en cruz.
+   · Un rectángulo nace liso: no hereda las marcas de sus lados. Las rayas
+     de dentro las pone quien usa el material, y el imán las engancha a las
+     marcas de las longitudes.
+   · Las longitudes se dibujan y se pinchan por encima de los rectángulos,
+     porque suelen quedar justo en su borde.
+   · Lo que mide un rectángulo en u² no se dice si no se pide (Resultado y
+     Etiquetas u² empiezan apagadas). La excepción es el cuadrado de 1 u de
+     lado: es la unidad de área, y su rótulo lo dice siempre.
+
+   El rótulo de un rectángulo dice primero el lado vertical y luego el
+   horizontal. Al girarlo, se cambian de sitio.
+   ========================================================================= */
+var U=150;                 // la unidad de longitud, en píxeles de mundo
+var MAXD=12;               // en cuántas partes, columnas o filas se puede partir una pieza
+var MAXLADO=4;             // ninguna pieza pasa de 4 u de lado
+var MAXVECES=3;            // el enunciado: ninguna longitud mayor que 3 u
+var MAXDEN=1000;           // ni trozos de menos de una milésima de unidad
+var PEGA=0.75;             // dos bordes a menos de esto, en píxeles de mundo, están pegados
+
+var TINTA='#2b2f36', AZUL='#2f62a8', ROJO='#c8372d';
+var FONT='-apple-system,Segoe UI,Roboto,sans-serif';
+/* la unidad de área, en verde; los demás rectángulos, en arena; lo resaltado, en naranja */
+var VERDE={f:'#b5e08a', b:'#3f8f2f', t:'#2c6a20'};
+var ARENA={f:'#f4ead6', b:'#4a4436', t:'#6b5d36'};
+var NARANJA={f:'#f9d3a4', b:'#c06a1a', t:'#8f4c10'};
+
+var NIVELES=[
+  {dens:[2,3,4],         max:[1,1]},
+  {dens:[2,3,4,5,6],     max:[1,2]},
+  {dens:[2,3,4,5,6,7,8], max:[2,2]}
+];
+
+/* =========================================================================
+   2. ESTADO
+   ========================================================================= */
+var piezas=[], sel=null, selK=null, nid=1;
+var modo='pieza';                  // 'pieza', 'sub' o 'res': qué hace un pinchazo
+var enun={p:2,q:3,a:5,b:4};        // p/q u × a/b u
+var view={x:0,y:0,z:1};
+var drag=null, undoStack=[], importMode='replace';
+var opt={iman:1, rot:1, etiqL:0, etiqA:0, res:0, mano:0, alfa:0};
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop');
+var flashMsg=null, flashT=0;
+
+function w2s(p){ return {x:p.x*view.z+view.x, y:p.y*view.z+view.y}; }
+function s2w(p){ return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z}; }
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2600); }
+function foto(){ return JSON.stringify({p:piezas, s:sel, k:selK, n:nid, e:enun}); }
+function pushUndo(){
+  undoStack.push(foto());
+  if(undoStack.length>90) undoStack.shift();
+}
+function doUndo(){
+  if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var d=JSON.parse(undoStack.pop());
+  piezas=d.p; sel=d.s; selK=d.k; nid=d.n||1; enun=d.e;
+  draw();
+}
+
+/* =========================================================================
+   3. FRACCIONES
+   ========================================================================= */
+function mcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=a%b; a=b; b=t; } return a; }
+function mcm(a,b){ return a/mcd(a,b)*b; }
+function reduce(p,q){ var d=mcd(p,q)||1; return {p:p/d, q:q/d}; }
+function mismaFraccion(a,b){ return a.p*b.q===b.p*a.q; }
+function entero(v,lo,hi){ return typeof v==='number' && isFinite(v) && v===Math.floor(v) && v>=lo && v<=hi; }
+function txtFr(n,d){ return d===1? ''+n : n+'/'+d; }
+
+/* k partes de las a en que se parte n/d, tal como sale: un cuarto de 1 es
+   1/4, un tercio de 5/4 es 5/12, la mitad de 2/4 es 1/4 y no 2/8 */
+function parteFr(n,d,k,a){ return (n*k)%a===0? [n*k/a, d] : [n*k, d*a]; }
+/* la suma de dos, con el denominador común más pequeño y sin simplificar */
+function sumaFr(A,B){ var L=mcm(A[1],B[1]); return [A[0]*L/A[1]+B[0]*L/B[1], L]; }
+/* Las marcas van en decimales, así que la fracción se recupera buscando el
+   denominador más pequeño. */
+function fraccionDe(v){
+  for(var d=1;d<=5000;d++){
+    var n=v*d;
+    if(n>0.5 && Math.abs(n-Math.round(n))<1e-6*d) return {n:Math.round(n), d:d};
+  }
+  return null;
+}
+/* ordena unas marcas, quita las repetidas y las que caen en el borde */
+function ordenaMarcas(L,largo){
+  var out=[];
+  L.slice().sort(function(p,q){ return p-q; }).forEach(function(t){
+    if(t<1e-6 || t>largo-1e-6) return;
+    if(out.length && Math.abs(out[out.length-1]-t)<1e-6) return;
+    out.push(t);
+  });
+  return out;
+}
+/* Lo que mide el tramo de p0 a p1 de un lado que mide n/d y que sus marcas
+   dejan cortado en «cortes» (de 0 al final). Si los trocitos son todos
+   iguales, tantos de los que hay; si no, la fracción que salga. */
+function frTramo(n,d,cortes,p0,p1){
+  var T=cortes.length-1, paso=cortes[T]/T, iguales=true, m=0, i, c;
+  for(i=0;i<T;i++){
+    if(Math.abs(cortes[i+1]-cortes[i]-paso)>1e-9) iguales=false;
+    c=(cortes[i]+cortes[i+1])/2;
+    if(c>p0 && c<p1) m++;
+  }
+  if(iguales) return parteFr(n,d,m,T);
+  var f=fraccionDe(p1-p0);
+  return f? [f.n,f.d] : null;
+}
+
+/* «2/3 x 5/4», sin simplificar nada: si alguien escribe 2/4, quiere 2/4 */
+function leeEnunciado(txt){
+  var s=String(txt===null||txt===undefined?'':txt).toLowerCase().replace(/\s+/g,' ').trim();
+  var m=s.match(/^(\d+)(?: ?\/ ?(\d+))?(?: ?[um])? ?(?:x|×|\*|·|por) ?(\d+)(?: ?\/ ?(\d+))?(?: ?[um])?$/);
+  if(!m) return null;
+  var e={p:+m[1], q:m[2]===undefined?1:+m[2], a:+m[3], b:m[4]===undefined?1:+m[4]};
+  return enunciadoValido(e)? e : null;
+}
+function enunciadoValido(e){
+  if(!e) return false;
+  if(!entero(e.p,1,999) || !entero(e.q,1,MAXD) || !entero(e.a,1,999) || !entero(e.b,1,MAXD)) return false;
+  return e.p<=MAXVECES*e.q && e.a<=MAXVECES*e.b;
+}
+function fraccionAlAzar(dens,max){
+  for(var i=0;i<400;i++){
+    var d=dens[Math.floor(Math.random()*dens.length)];
+    var n=1+Math.floor(Math.random()*(max*d));
+    if(n===d || mcd(n,d)!==1) continue;
+    return {n:n, d:d};
+  }
+  return {n:1, d:2};
+}
+function enunciadoAlAzar(nivel){
+  var N=NIVELES[nivel]||NIVELES[1];
+  for(var i=0;i<200;i++){
+    var g=Math.random()<0.5;
+    var x=fraccionAlAzar(N.dens,N.max[g?0:1]), y=fraccionAlAzar(N.dens,N.max[g?1:0]);
+    var e={p:x.n, q:x.d, a:y.n, b:y.d};
+    if(enun && e.p===enun.p && e.q===enun.q && e.a===enun.a && e.b===enun.b) continue;
+    return e;
+  }
+  return {p:2,q:3,a:5,b:4};
+}
+
+/* =========================================================================
+   4. LAS PIEZAS
+   Una longitud mide n/d unidades; v dice si está de pie. Está partida ahora en
+   a partes, y t son las marcas que le quedan de cortes y uniones anteriores,
+   en unidades desde su origen: el extremo izquierdo, o el de abajo si está de
+   pie. (x,y) es su extremo izquierdo, o el de arriba.
+
+   Un rectángulo mide wn/wd por hn/hd unidades. a y b son las columnas y filas
+   en que está partido ahora, res las subunidades que tiene resaltadas, y tx
+   y ty las marcas que le quedan de antes, en unidades desde la esquina de
+   abajo a la izquierda. Las subunidades se numeran por columnas, y dentro de
+   cada una de abajo arriba. (x,y) es su esquina de arriba a la izquierda.
+   ========================================================================= */
+function esL(s){ return s.tipo==='L'; }
+function largo(s){ return s.n/s.d; }
+function ancho(s){ return esL(s)? (s.v? 0 : U*s.n/s.d) : U*s.wn/s.wd; }
+function alto(s){ return esL(s)? (s.v? U*s.n/s.d : 0) : U*s.hn/s.hd; }
+function nuevaUnidad(P){
+  return {id:nid++, tipo:'L', x:P.x, y:P.y, n:1, d:1, v:0, a:1, t:[]};
+}
+function porId(id){
+  for(var i=0;i<piezas.length;i++) if(piezas[i].id===id) return piezas[i];
+  return null;
+}
+function seleccionada(){ return sel==null? null : porId(sel); }
+function esUnidadL(s){ return esL(s) && s.n===s.d; }
+function esUnidadA(s){ return !esL(s) && s.wn===s.wd && s.hn===s.hd; }
+function colorDe(s){ return esUnidadA(s)? VERDE : ARENA; }
+function areaDe(s){ return reduce(s.wn*s.hn, s.wd*s.hd); }
+/* lo que mide un rectángulo, en unidades cuadradas, tal como sale */
+function valor(s){ return {n:s.wn*s.hn, d:s.wd*s.hd}; }
+function rect(s){ return {x0:s.x, y0:s.y, x1:s.x+ancho(s), y1:s.y+alto(s)}; }
+/* Dos longitudes sobre la misma recta que se pisan —1 u y 5/4 u saliendo de
+   la misma esquina— tendrían las etiquetas y la cota en el mismo sitio. Cada
+   una las lleva un escalón más lejos por cada longitud más corta que pisa:
+   la corta, cerca. */
+function nivelCota(s){
+  var n=0, r=rect(s), Ls=largo(s);
+  piezas.forEach(function(o){
+    if(!esL(o) || o.id===s.id || !o.v!==!s.v) return;
+    var q=rect(o), Lo=largo(o);
+    if(s.v? (Math.abs(q.x0-r.x0)>6 || Math.min(q.y1,r.y1)-Math.max(q.y0,r.y0)<PEGA)
+          : (Math.abs(q.y0-r.y0)>6 || Math.min(q.x1,r.x1)-Math.max(q.x0,r.x0)<PEGA)) return;
+    if(Lo<Ls-1e-9 || (Math.abs(Lo-Ls)<=1e-9 && o.id<s.id)) n++;
+  });
+  return n;
+}
+/* lo que mide cada escalón, en píxeles de mundo */
+function pasoCota(s){ return s.v? (opt.etiqL? 88 : 46) : (opt.etiqL? 58 : 36); }
+function cajaPieza(s,GG){
+  var r=rect(s);
+  if(esL(s)){
+    var mas=(opt.rot || opt.etiqL)? nivelCota(s)*pasoCota(s) : 0;
+    if(s.v) return {x0:r.x0-mas-(opt.rot? (opt.etiqL? 96 : 56) : (opt.etiqL? 58 : 12)), y0:r.y0-12, x1:r.x1+12, y1:r.y1+12};
+    return {x0:r.x0-12, y0:r.y0-12, x1:r.x1+12, y1:r.y1+mas+(opt.rot? (opt.etiqL? 76 : 56) : (opt.etiqL? 32 : 12))};
+  }
+  if(!opt.rot) return {x0:r.x0, y0:r.y0, x1:r.x1, y1:r.y1};
+  var G=(GG||gruposA()).filter(function(g){ return g.miembros.indexOf(s)>=0; })[0];
+  return {x0:Math.min(r.x0, G.cx-G.ancho/2-6), y0:Math.min(r.y0, G.top-12-ALTOFILA*G.filas.length),
+          x1:Math.max(r.x1, G.cx+G.ancho/2+6), y1:r.y1};
+}
+function caja(lista){
+  if(!lista.length) return null;
+  var b={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9}, GG=opt.rot? gruposA() : null;
+  lista.forEach(function(s){
+    var c=cajaPieza(s,GG);
+    b.x0=Math.min(b.x0,c.x0); b.x1=Math.max(b.x1,c.x1);
+    b.y0=Math.min(b.y0,c.y0); b.y1=Math.max(b.y1,c.y1);
+  });
+  return b;
+}
+/* las marcas de una longitud, las de ahora y las de antes, en unidades desde su origen */
+function marcasL(s){
+  var out=s.t.slice(), Lg=largo(s), k;
+  for(k=1;k<s.a;k++) out.push(Lg*k/s.a);
+  return ordenaMarcas(out,Lg);
+}
+function cortesL(s){ return [0].concat(marcasL(s)).concat([largo(s)]); }
+function marcasX(s){                      // en mundo
+  var out=[], w=ancho(s), k;
+  if(esL(s)){
+    if(!s.v) marcasL(s).forEach(function(t){ out.push(s.x+t*U); });
+    return out;
+  }
+  for(k=1;k<s.a;k++) out.push(s.x+w*k/s.a);
+  s.tx.forEach(function(t){ out.push(s.x+t*U); });
+  return out;
+}
+function marcasY(s){
+  var out=[], h=alto(s), k;
+  if(esL(s)){
+    if(s.v) marcasL(s).forEach(function(t){ out.push(s.y+h-t*U); });
+    return out;
+  }
+  for(k=1;k<s.b;k++) out.push(s.y+h-h*k/s.b);
+  s.ty.forEach(function(t){ out.push(s.y+h-t*U); });
+  return out;
+}
+function puntosX(s){ return (esL(s) && s.v)? [s.x] : [s.x, s.x+ancho(s)].concat(marcasX(s)); }
+function puntosY(s){ return (esL(s) && !s.v)? [s.y] : [s.y, s.y+alto(s)].concat(marcasY(s)); }
+function todasLasRayas(s){
+  var W=s.wn/s.wd, H=s.hn/s.hd, xs=s.tx.slice(), ys=s.ty.slice(), k;
+  for(k=1;k<s.a;k++) xs.push(W*k/s.a);
+  for(k=1;k<s.b;k++) ys.push(H*k/s.b);
+  return {xs:ordenaMarcas(xs,W), ys:ordenaMarcas(ys,H), W:W, H:H};
+}
+/* Las subunidades: los trocitos que dejan todas las marcas de la pieza, con
+   lo que mide cada uno. En una longitud son tramos, de p0 a p1; en un
+   rectángulo, rectangulitos de x0 a x1 y de y0 a y1. */
+function trocitos(s){
+  var out=[], i, j, f;
+  if(esL(s)){
+    var c=cortesL(s);
+    for(i=0;i+1<c.length;i++){
+      f=fraccionDe(c[i+1]-c[i]);
+      out.push({p0:c[i], p1:c[i+1], txt:f? txtFr(f.n,f.d) : ''});
+    }
+    return out;
+  }
+  var R=todasLasRayas(s), xs=[0].concat(R.xs).concat([R.W]), ys=[0].concat(R.ys).concat([R.H]);
+  for(i=0;i+1<xs.length;i++) for(j=0;j+1<ys.length;j++){
+    f=fraccionDe((xs[i+1]-xs[i])*(ys[j+1]-ys[j]));
+    out.push({x0:xs[i], x1:xs[i+1], y0:ys[j], y1:ys[j+1], txt:f? txtFr(f.n,f.d) : ''});
+  }
+  return out;
+}
+function sonIguales(T){
+  return T.every(function(q){ return q.txt && q.txt===T[0].txt; });
+}
+
+/* --- el imán --------------------------------------------------------------- */
+function engancheEje(s,puntosDe){
+  var lim=10/view.z, mios=puntosDe(s), mejor=null, dist=Infinity;
+  piezas.forEach(function(o){
+    if(o.id===s.id) return;
+    puntosDe(o).forEach(function(b){
+      mios.forEach(function(a){
+        var d=b-a;
+        if(Math.abs(d)<lim && Math.abs(d)<dist){ mejor=d; dist=Math.abs(d); }
+      });
+    });
+  });
+  return mejor;
+}
+function aplicaIman(s){
+  if(!opt.iman || !s) return false;
+  var dx=engancheEje(s,puntosX), dy=engancheEje(s,puntosY), algo=false;
+  if(dx!==null){ s.x+=dx; algo=true; }
+  if(dy!==null){ s.y+=dy; algo=true; }
+  return algo;
+}
+
+/* =========================================================================
+   5. ACCIONES
+   ========================================================================= */
+function parte(s,a,b){
+  if(!s) return false;
+  a=Math.max(1, Math.min(MAXD, Math.round(a)));
+  if(esL(s)){
+    if(a===s.a) return false;
+    pushUndo();
+    s.a=a; selK=null;
+    draw();
+    return true;
+  }
+  b=Math.max(1, Math.min(MAXD, Math.round(b)));
+  if(a===s.a && b===s.b) return false;
+  pushUndo();
+  s.a=a; s.b=b; s.res=[]; selK=null;     // otras partes: ni la subunidad elegida ni lo resaltado existen ya
+  draw();
+  return true;
+}
+/* el tramo de p0 a p1 de una longitud (en unidades desde su origen), como pieza
+   nueva sin partir que mide fr, con las marcas que le caigan dentro. No toca
+   el tablero. */
+function tramoL(s,p0,p1,fr){
+  return {id:nid++, tipo:'L', x:s.v? s.x : s.x+U*p0, y:s.v? s.y+alto(s)-U*p1 : s.y,
+          n:fr[0], d:fr[1], v:s.v? 1 : 0, a:1,
+          t:ordenaMarcas(marcasL(s).map(function(t){ return t-p0; }), p1-p0)};
+}
+function recorteL(s,p0,p1){
+  var fr=frTramo(s.n,s.d,cortesL(s),p0,p1);
+  return fr? tramoL(s,p0,p1,fr) : null;
+}
+/* el trozo de un rectángulo que va de la columna c0 a la c1 y de la fila f0 a
+   la f1 de las de ahora (sin incluir c1 ni f1; las filas, de abajo arriba) */
+function trozoA(s,c0,c1,f0,f1){
+  var w=parteFr(s.wn,s.wd,c1-c0,s.a), h=parteFr(s.hn,s.hd,f1-f0,s.b);
+  var W=s.wn/s.wd, H=s.hn/s.hd, ux=W*c0/s.a, uy=H*f0/s.b;
+  return {id:nid++, tipo:'A', x:s.x+U*ux, y:s.y+alto(s)-U*H*f1/s.b,
+          wn:w[0], wd:w[1], hn:h[0], hd:h[1], a:1, b:1, res:[],
+          tx:ordenaMarcas(s.tx.map(function(t){ return t-ux; }), w[0]/w[1]),
+          ty:ordenaMarcas(s.ty.map(function(t){ return t-uy; }), h[0]/h[1])};
+}
+/* el rectángulo de s que va de x0 a x1 y de y0 a y1 (en unidades, desde abajo a
+   la izquierda), como pieza nueva sin partir, con las rayas que le caigan
+   dentro. null si sus lados no salen racionales. */
+function recorteA(s,x0,x1,y0,y1){
+  var R=todasLasRayas(s);
+  var w=frTramo(s.wn,s.wd,[0].concat(R.xs).concat([R.W]),x0,x1);
+  var h=frTramo(s.hn,s.hd,[0].concat(R.ys).concat([R.H]),y0,y1);
+  if(!w || !h) return null;
+  return {id:nid++, tipo:'A', x:s.x+U*x0, y:s.y+alto(s)-U*y1, wn:w[0], wd:w[1], hn:h[0], hd:h[1],
+          a:1, b:1, res:[],
+          tx:ordenaMarcas(R.xs.map(function(t){ return t-x0; }), x1-x0),
+          ty:ordenaMarcas(R.ys.map(function(t){ return t-y0; }), y1-y0)};
+}
+function demasiado(L){
+  var mal=L.some(function(t){ return esL(t)? t.d>MAXDEN : (t.wd>MAXDEN || t.hd>MAXDEN); });
+  if(mal) flash('Esos trozos serían demasiado pequeños');
+  return mal;
+}
+function duplica(s,k){
+  if(!s) return null;
+  var t, T=trocitos(s);
+  if(k===null || k===undefined || T.length<2){
+    pushUndo();
+    t=JSON.parse(JSON.stringify(s)); t.id=nid++;
+  } else {
+    if(!T[k]) return null;
+    t=esL(s)? recorteL(s,T[k].p0,T[k].p1) : recorteA(s,T[k].x0,T[k].x1,T[k].y0,T[k].y1);
+    if(!t){ flash('Por ahí no sé cortar'); return null; }
+    if(demasiado([t])) return null;
+    pushUndo();
+  }
+  t.x+=18; t.y+=18;
+  piezas.push(t); sel=t.id; selK=null;
+  draw();
+  return t;
+}
+/* Cortar. Con una subunidad elegida, la separa y deja lo demás en los trozos
+   que queden: en una longitud, lo de antes y lo de después; en un rectángulo,
+   lo de su izquierda, lo de su derecha, y lo de debajo y lo de encima en su
+   misma franja. Con la pieza entera, la deshace en las partes en que está
+   partida ahora. Devuelve las piezas nuevas. */
+function corta(s,k){
+  if(!s) return null;
+  var nuevas=[], i, j, t, L, entera=(k===null || k===undefined);
+  if(entera){
+    if((esL(s)? s.a : s.a*s.b)<2){ flash('Se corta por las marcas: primero parte la pieza'); return null; }
+    if(esL(s)){
+      var Lg=largo(s), fr=parteFr(s.n,s.d,1,s.a);
+      for(i=0;i<s.a;i++){
+        t=tramoL(s, Lg*i/s.a, Lg*(i+1)/s.a, fr);
+        if(s.v) t.y-=i*10; else t.x+=i*10;     // un poco separadas, para que se vea el corte
+        nuevas.push(t);
+      }
+    } else {
+      for(i=0;i<s.a;i++) for(j=0;j<s.b;j++){
+        t=trozoA(s,i,i+1,j,j+1);
+        t.x+=i*10; t.y-=j*10;
+        nuevas.push(t);
+      }
+    }
+    if(demasiado(nuevas)) return null;
+    pushUndo();
+    sel=nuevas[0].id;
+  } else {
+    var T=trocitos(s), q=T[k];
+    if(!q || T.length<2){ flash('Esa pieza no tiene subunidades que cortar'); return null; }
+    if(esL(s)){
+      L=[[0,q.p0,0,0], [q.p1,largo(s),20,0], [q.p0,q.p1,10,-14]];
+      for(i=0;i<L.length;i++){
+        if(L[i][1]-L[i][0]<1e-9) continue;
+        t=recorteL(s,L[i][0],L[i][1]);
+        if(!t){ flash('Por ahí no sé cortar'); return null; }
+        if(s.v){ t.y-=L[i][2]; t.x-=L[i][3]; } else { t.x+=L[i][2]; t.y+=L[i][3]; }
+        nuevas.push(t);
+      }
+    } else {
+      var R=todasLasRayas(s);
+      L=[[0,q.x0,0,R.H,0,0], [q.x1,R.W,0,R.H,20,0], [q.x0,q.x1,0,q.y0,0,0],
+         [q.x0,q.x1,q.y1,R.H,10,-20], [q.x0,q.x1,q.y0,q.y1,10,-10]];
+      for(i=0;i<L.length;i++){
+        if(L[i][1]-L[i][0]<1e-9 || L[i][3]-L[i][2]<1e-9) continue;
+        t=recorteA(s,L[i][0],L[i][1],L[i][2],L[i][3]);
+        if(!t){ flash('Por ahí no sé cortar'); return null; }
+        t.x+=L[i][4]; t.y+=L[i][5];
+        nuevas.push(t);
+      }
+    }
+    if(demasiado(nuevas)) return null;
+    pushUndo();
+    sel=nuevas[nuevas.length-1].id;
+  }
+  piezas=piezas.filter(function(o){ return o.id!==s.id; }).concat(nuevas);
+  selK=null;
+  draw();
+  return nuevas;
+}
+/* --- unir -------------------------------------------------------------------- */
+/* dos longitudes van a continuación si están en la misma recta y el final de
+   una es el principio de la otra */
+function aContinuacion(A,B){
+  if(!A.v!==!B.v) return false;
+  if(A.v) return Math.abs(A.x-B.x)<PEGA && (Math.abs(A.y+alto(A)-B.y)<PEGA || Math.abs(B.y+alto(B)-A.y)<PEGA);
+  return Math.abs(A.y-B.y)<PEGA && (Math.abs(A.x+ancho(A)-B.x)<PEGA || Math.abs(B.x+ancho(B)-A.x)<PEGA);
+}
+function uneL(s){
+  var grupo=[s], cola=[s];
+  while(cola.length){
+    var p=cola.pop();
+    piezas.forEach(function(o){
+      if(!esL(o) || grupo.indexOf(o)>=0 || !aContinuacion(p,o)) return;
+      grupo.push(o); cola.push(o);
+    });
+  }
+  if(grupo.length<2){ flash('No tiene ninguna longitud pegada a continuación: acércale otra hasta que el imán la enganche'); return null; }
+  /* desde el origen: de izquierda a derecha, o de abajo arriba */
+  var orden=grupo.slice().sort(function(p,q){ return s.v? (q.y+alto(q))-(p.y+alto(p)) : p.x-q.x; });
+  var fr=[orden[0].n, orden[0].d], marcas=[], pos=0, bien=true;
+  orden.forEach(function(o,i){
+    if(i){
+      var ant=orden[i-1];
+      if((s.v? Math.abs(ant.y-(o.y+alto(o))) : Math.abs(ant.x+ancho(ant)-o.x))>=PEGA) bien=false;
+      fr=sumaFr(fr,[o.n,o.d]); marcas.push(pos);
+    }
+    marcasL(o).forEach(function(t){ marcas.push(pos+t); });
+    pos+=largo(o);
+  });
+  if(!bien){ flash('Esas longitudes se pisan: no forman una sola'); return null; }
+  if(fr[0]/fr[1]>MAXLADO || fr[1]>1e5){ flash('Esa longitud sería enorme: no cabe en el tablero'); return null; }
+  pushUndo();
+  var p0=orden[0];
+  var t={id:nid++, tipo:'L', x:s.v? s.x : p0.x, y:s.v? p0.y+alto(p0)-U*fr[0]/fr[1] : s.y,
+         n:fr[0], d:fr[1], v:s.v? 1 : 0, a:1, t:ordenaMarcas(marcas, fr[0]/fr[1])};
+  piezas=piezas.filter(function(o){ return grupo.indexOf(o)<0; }).concat([t]);
+  sel=t.id; selK=null;
+  draw();
+  return t;
+}
+function seTocan(A,B){
+  var solX=Math.min(A.x1,B.x1)-Math.max(A.x0,B.x0), solY=Math.min(A.y1,B.y1)-Math.max(A.y0,B.y0);
+  var ladoV=(Math.abs(A.x1-B.x0)<PEGA || Math.abs(B.x1-A.x0)<PEGA) && solY>PEGA;
+  var ladoH=(Math.abs(A.y1-B.y0)<PEGA || Math.abs(B.y1-A.y0)<PEGA) && solX>PEGA;
+  return ladoV || ladoH;
+}
+function pegadasA(s){
+  var grupo=[s], cola=[s];
+  while(cola.length){
+    var p=cola.pop();
+    piezas.forEach(function(o){
+      if(esL(o) || grupo.indexOf(o)>=0 || !seTocan(rect(p),rect(o))) return;
+      grupo.push(o); cola.push(o);
+    });
+  }
+  return grupo;
+}
+/* dos rectángulos se funden si comparten un lado entero; el resultado, o null */
+function funde(A,B){
+  var ancA=U*A.wn/A.wd, altA=U*A.hn/A.hd, ancB=U*B.wn/B.wd, altB=U*B.hn/B.hd, r, primero;
+  if(A.wn*B.wd===B.wn*A.wd && Math.abs(A.x-B.x)<PEGA &&
+     (Math.abs(A.y+altA-B.y)<PEGA || Math.abs(B.y+altB-A.y)<PEGA)){
+    primero=A.y<B.y? A : B;
+    r=sumaFr([A.hn,A.hd],[B.hn,B.hd]);
+    return {x:primero.x, y:primero.y, wn:A.wn, wd:A.wd, hn:r[0], hd:r[1], mx:A.mx.concat(B.mx),
+            my:A.my.concat(B.my).concat([primero.y+U*primero.hn/primero.hd])};
+  }
+  if(A.hn*B.hd===B.hn*A.hd && Math.abs(A.y-B.y)<PEGA &&
+     (Math.abs(A.x+ancA-B.x)<PEGA || Math.abs(B.x+ancB-A.x)<PEGA)){
+    primero=A.x<B.x? A : B;
+    r=sumaFr([A.wn,A.wd],[B.wn,B.wd]);
+    return {x:primero.x, y:primero.y, wn:r[0], wd:r[1], hn:A.hn, hd:A.hd, my:A.my.concat(B.my),
+            mx:A.mx.concat(B.mx).concat([primero.x+U*primero.wn/primero.wd])};
+  }
+  return null;
+}
+function uneA(s){
+  var grupo=pegadasA(s);
+  if(grupo.length<2){ flash('No tiene ningún rectángulo pegado: acércale otro hasta que el imán lo enganche'); return null; }
+  var L=grupo.map(function(o){
+    return {x:o.x, y:o.y, wn:o.wn, wd:o.wd, hn:o.hn, hd:o.hd, mx:marcasX(o), my:marcasY(o)};
+  });
+  var hecho=true, i, j, F;
+  while(L.length>1 && hecho){
+    hecho=false;
+    for(i=0;i<L.length && !hecho;i++) for(j=i+1;j<L.length && !hecho;j++){
+      F=funde(L[i],L[j]);
+      if(F){ L.splice(j,1); L[i]=F; hecho=true; }
+    }
+  }
+  if(L.length>1){ flash('Esas piezas pegadas no forman un rectángulo'); return null; }
+  F=L[0];
+  if(F.wn/F.wd>MAXLADO || F.hn/F.hd>MAXLADO || F.wd>1e5 || F.hd>1e5){ flash('Esa pieza sería enorme: no cabe en el tablero'); return null; }
+  pushUndo();
+  var H=U*F.hn/F.hd;
+  var t={id:nid++, tipo:'A', x:F.x, y:F.y, wn:F.wn, wd:F.wd, hn:F.hn, hd:F.hd, a:1, b:1, res:[],
+         tx:ordenaMarcas(F.mx.map(function(m){ return (m-F.x)/U; }), F.wn/F.wd),
+         ty:ordenaMarcas(F.my.map(function(m){ return (F.y+H-m)/U; }), F.hn/F.hd)};
+  piezas=piezas.filter(function(o){ return grupo.indexOf(o)<0; }).concat([t]);
+  sel=t.id; selK=null;
+  draw();
+  return t;
+}
+function une(s){
+  if(!s) return null;
+  return esL(s)? uneL(s) : uneA(s);
+}
+/* --- girar ---------------------------------------------------------------------
+   Un cuarto de vuelta hacia la izquierda, alrededor del centro de la pieza.
+   En una longitud, el extremo izquierdo pasa a ser el de abajo, y el de abajo
+   pasa a ser el derecho: por eso al tumbarla las marcas se cuentan desde el
+   otro lado. En un rectángulo, el punto (x,y) va a (alto−y, x). */
+function gira(s){
+  if(!s) return false;
+  pushUndo();
+  var cx=s.x+ancho(s)/2, cy=s.y+alto(s)/2;
+  if(esL(s)){
+    if(s.v){
+      var Lg=largo(s);
+      s.t=ordenaMarcas(s.t.map(function(t){ return Lg-t; }), Lg);
+      s.v=0;
+    } else s.v=1;
+  } else {
+    var T0=trocitos(s), H=s.hn/s.hd;
+    var centros=s.res.map(function(k){ var q=T0[k]; return {x:H-(q.y0+q.y1)/2, y:(q.x0+q.x1)/2}; });
+    var tx=s.ty.map(function(t){ return H-t; }), ty=s.tx.slice(), g;
+    g=s.wn; s.wn=s.hn; s.hn=g;
+    g=s.wd; s.wd=s.hd; s.hd=g;
+    g=s.a; s.a=s.b; s.b=g;
+    s.tx=ordenaMarcas(tx, s.wn/s.wd); s.ty=ordenaMarcas(ty, s.hn/s.hd);
+    var T1=trocitos(s);
+    s.res=[];
+    centros.forEach(function(c){
+      T1.forEach(function(q,i){ if(c.x>q.x0 && c.x<q.x1 && c.y>q.y0 && c.y<q.y1) s.res.push(i); });
+    });
+    s.res.sort(function(p,q){ return p-q; });
+  }
+  s.x=cx-ancho(s)/2; s.y=cy-alto(s)/2;
+  selK=null;
+  draw();
+  return true;
+}
+/* --- el rectángulo ---------------------------------------------------------------
+   Dos longitudes en ángulo recto, pegadas por un extremo, son dos lados de un
+   rectángulo. Nace liso, sin heredar las marcas de sus lados, y las
+   longitudes se quedan donde estaban. Si en esa esquina hay más de una
+   longitud en ángulo recto, vale la que se haya tocado la última, que es la
+   que está más arriba en la lista. */
+function extremos(s){ var r=rect(s); return [{x:r.x0,y:r.y0},{x:r.x1,y:r.y1}]; }
+function esquinaCon(s){
+  var mejor=null, E=extremos(s);
+  piezas.forEach(function(o){
+    if(!esL(o) || o.id===s.id || !o.v===!s.v) return;
+    extremos(o).forEach(function(q){
+      E.forEach(function(p){
+        if(Math.abs(p.x-q.x)+Math.abs(p.y-q.y)<2*PEGA) mejor=o;
+      });
+    });
+  });
+  return mejor;
+}
+function rectangulo(s){
+  if(!s || !esL(s)) return null;
+  var o=esquinaCon(s);
+  if(!o){ flash('Hace falta otra longitud en ángulo recto con esta, pegada por un extremo'); return null; }
+  var H=s.v? o : s, V=s.v? s : o;
+  pushUndo();
+  var t={id:nid++, tipo:'A', x:H.x, y:V.y, wn:H.n, wd:H.d, hn:V.n, hd:V.d, a:1, b:1, res:[], tx:[], ty:[]};
+  piezas.push(t); sel=t.id; selK=null;
+  draw();
+  return t;
+}
+/* --- resaltar --------------------------------------------------------------------
+   Resaltar no fabrica nada: señala, dentro de un rectángulo, unas subunidades
+   de las que tiene. */
+function resalta(s,k){
+  if(!s || esL(s)) return false;
+  if(trocitos(s).length<2){ flash('Se resaltan subunidades: primero parte el rectángulo'); return false; }
+  if(k===null || k===undefined){
+    if(!s.res.length){ flash('Elige una subunidad con «Seleccionar subunidad» para resaltarla'); return false; }
+    pushUndo(); s.res=[];                 // con la pieza entera, se quita todo lo resaltado
+  } else {
+    pushUndo();
+    var i=s.res.indexOf(k);
+    if(i>=0) s.res.splice(i,1); else{ s.res.push(k); s.res.sort(function(p,q){ return p-q; }); }
+  }
+  draw();
+  return true;
+}
+/* En el modo de resaltar, pinchar en una subunidad la resalta o la deja de
+   resaltar, y arrastrando se sigue haciendo lo mismo con las que se pisen.
+   empiezaAResaltar devuelve lo que hay que ir haciendo (poner o quitar), o
+   null si ahí no hay subunidad que resaltar. */
+function ponResalte(s,k,poner){
+  var i=s.res.indexOf(k);
+  if(poner && i<0){ s.res.push(k); s.res.sort(function(p,q){ return p-q; }); return true; }
+  if(!poner && i>=0){ s.res.splice(i,1); return true; }
+  return false;
+}
+function empiezaAResaltar(P){
+  var t=piezaEn(P);
+  if(!t || t.hueca) return null;
+  sel=t.id; selK=null;
+  if(esL(t)){ flash('Se resaltan subunidades de un rectángulo'); return null; }
+  if(trocitos(t).length<2){ flash('Se resaltan subunidades: primero parte el rectángulo'); return null; }
+  var k=parteEn(t,P);
+  if(k<0) return null;
+  pushUndo();
+  var poner=t.res.indexOf(k)<0;
+  ponResalte(t,k,poner);
+  return {s:t, poner:poner};
+}
+function sigueResaltando(R,P){
+  var k=parteEn(R.s,P);
+  return k>=0 && ponResalte(R.s,k,R.poner);
+}
+function ahueca(s){
+  if(!s || esL(s)) return false;
+  pushUndo();
+  s.hueca=s.hueca? 0 : 1;
+  if(s.hueca) selK=null;
+  draw();
+  return true;
+}
+/* los rectángulos, debajo; los de solo el borde, encima de ellos; y las
+   longitudes, las últimas: se dibujan encima y se pinchan antes */
+function enOrden(){
+  return piezas.filter(function(o){ return !esL(o) && !o.hueca; })
+    .concat(piezas.filter(function(o){ return !esL(o) && !!o.hueca; }))
+    .concat(piezas.filter(esL));
+}
+function quita(s){
+  if(!s) return false;
+  pushUndo();
+  piezas=piezas.filter(function(q){ return q.id!==s.id; });
+  sel=null; selK=null; draw();
+  return true;
+}
+function otraUnidad(){
+  pushUndo();
+  var b=caja(piezas);
+  var t=nuevaUnidad(b? {x:b.x0+24, y:b.y1+40} : {x:0, y:0});
+  piezas.push(t); sel=t.id; selK=null;
+  if(!enPantalla(t)) fitView(); else draw();
+  return t;
+}
+function nuevaUnidadA(P){
+  return {id:nid++, tipo:'A', x:P.x, y:P.y, wn:1, wd:1, hn:1, hd:1, a:1, b:1, res:[], tx:[], ty:[]};
+}
+/* la unidad de área, ya hecha: para tenerla de referencia sin construirla */
+function otraUnidadA(){
+  pushUndo();
+  var b=caja(piezas);
+  var t=nuevaUnidadA(b? {x:b.x0+24, y:b.y1+40+(opt.rot? 52 : 0)} : {x:0, y:0});
+  piezas.push(t); sel=t.id; selK=null;
+  if(!enPantalla(t)) fitView(); else draw();
+  return t;
+}
+function tableroNuevo(){
+  piezas=[nuevaUnidad({x:0,y:0})]; sel=piezas[0].id; selK=null;
+}
+function ponEnunciado(e){
+  pushUndo();
+  enun=e; tableroNuevo();
+  fitView();
+}
+function ponModo(m){
+  modo = (m==='sub' || m==='res')? m : 'pieza';
+  if(modo!=='sub') selK=null;
+  draw();
+}
+
+/* =========================================================================
+   6. DIBUJO
+   ========================================================================= */
+/* --- las expresiones: fracciones apiladas, el signo y las unidades ---------- */
+function toksL(s){ return [{n:s.n, d:s.d, col:AZUL}, {t:'u', col:AZUL}]; }
+function toksLados(hn,hd,wn,wd){
+  return [{n:hn, d:hd, col:AZUL}, {t:'u'}, {t:'×'}, {n:wn, d:wd, col:AZUL}, {t:'u'}];
+}
+/* el rótulo de un rectángulo: sus lados, el vertical delante. Lo que mide solo
+   se escribe si se pide, salvo en el cuadrado de 1 u de lado, que es la unidad de área */
+function toksArea(s){
+  var T=toksLados(s.hn,s.hd,s.wn,s.wd), v=valor(s);
+  if(esUnidadA(s)) return T.concat([{t:'='}, {n:1, d:1, col:VERDE.t}, {t:'u²', col:VERDE.t}]);
+  if(opt.res) T=T.concat([{t:'='}, {n:v.n, d:v.d, col:TINTA}, {t:'u²'}]);
+  return T;
+}
+/* El rótulo de lo resaltado dice lo que mide, y por eso solo sale con
+   Resultado: tantas subunidades de las que tiene el rectángulo, cuando son
+   todas iguales; si no, la fracción que sumen. */
+function toksResaltado(s){
+  if(esL(s) || !opt.res || !s.res.length) return [];
+  var T=trocitos(s), v=valor(s), area=0, f;
+  if(sonIguales(T)) f=parteFr(v.n, v.d, s.res.length, T.length);
+  else {
+    s.res.forEach(function(k){ if(T[k]) area+=(T[k].x1-T[k].x0)*(T[k].y1-T[k].y0); });
+    var g=fraccionDe(area);
+    if(!g) return [];
+    f=[g.n,g.d];
+  }
+  return [{n:f[0], d:f[1], col:NARANJA.t}, {t:'u²', col:NARANJA.t}];
+}
+function toksEnunciado(){
+  return [{n:enun.p, d:enun.q, col:AZUL}, {t:'u'}, {t:'×'}, {n:enun.a, d:enun.b, col:AZUL}, {t:'u'}];
+}
+function textoDe(T){
+  return T.map(function(t){ return t.t!==undefined? t.t : txtFr(t.n,t.d); }).join(' ');
+}
+function fuente(px,estilo){ return (estilo? estilo+' ' : '')+px+'px '+FONT; }
+function anchoTok(c,t,px){
+  if(t.t!==undefined){ c.font=fuente(px, (t.t==='u' || t.t==='u²')?'italic 600':''); return c.measureText(t.t).width; }
+  if(t.d===1){ c.font=fuente(px,'600'); return c.measureText(''+t.n).width; }
+  c.font=fuente(px*0.84,'600');
+  return Math.max(c.measureText(''+t.n).width, c.measureText(''+t.d).width)+px*0.34;
+}
+function exprAncho(c,T,px){
+  var w=0;
+  for(var i=0;i<T.length;i++) w+=anchoTok(c,T[i],px)+(i? px*0.34 : 0);
+  return w;
+}
+function dibExpr(c,T,x,y,px){
+  c.save();
+  c.textBaseline='middle';
+  for(var i=0;i<T.length;i++){
+    var t=T[i], w=anchoTok(c,t,px);
+    if(i) x+=px*0.34;
+    if(t.t!==undefined || t.d===1){
+      c.textAlign='left';
+      c.fillStyle=t.col||(t.t==='×'||t.t==='='? '#5a626e' : TINTA);
+      c.fillText(t.t!==undefined? t.t : ''+t.n, x, y);
+    } else {
+      c.fillStyle=t.col||TINTA;
+      c.textAlign='center';
+      c.fillText(''+t.n, x+w/2, y-px*0.5);
+      c.fillText(''+t.d, x+w/2, y+px*0.56);
+      c.fillRect(x, y-Math.max(0.6,px*0.04), w, Math.max(1.2,px*0.08));
+    }
+    x+=w;
+  }
+  c.restore();
+}
+function linea(c,x0,y0,x1,y1){ c.beginPath(); c.moveTo(x0,y0); c.lineTo(x1,y1); c.stroke(); }
+/* una punta de flecha en (x,y) que mira hacia (ux,uy) */
+function flecha(c,x,y,ux,uy,m){
+  c.beginPath();
+  c.moveTo(x-ux*m-uy*m*0.6, y-uy*m+ux*m*0.6);
+  c.lineTo(x,y);
+  c.lineTo(x-ux*m+uy*m*0.6, y-uy*m-ux*m*0.6);
+  c.stroke();
+}
+function rayado(c,r,col){
+  c.save();
+  c.beginPath(); c.rect(r.x,r.y,r.w,r.h); c.clip();
+  c.strokeStyle=col; c.globalAlpha=0.3; c.lineWidth=Math.max(1,1.2*view.z);
+  var paso=Math.max(5,9*view.z), d;
+  for(d=-r.h;d<r.w+r.h;d+=paso){
+    linea(c, r.x+d, r.y, r.x+d+r.h, r.y+r.h);
+    linea(c, r.x+d+r.h, r.y, r.x+d, r.y+r.h);
+  }
+  c.restore();
+}
+function ponEtiq(c,r,largoT,corto,col){
+  var px=Math.max(8, Math.min(13, 10.5*view.z));
+  if(r.h<px+3) return;
+  c.save();
+  c.font=fuente(px); c.fillStyle=col; c.textAlign='center'; c.textBaseline='middle';
+  var t = c.measureText(largoT).width+7<r.w ? largoT : (c.measureText(corto).width+5<r.w ? corto : '');
+  if(t) c.fillText(t, r.x+r.w/2, r.y+r.h/2);
+  c.restore();
+}
+/* el rectángulo en pantalla de la subunidad número k de un rectángulo */
+function rectCelda(s,k){
+  var q=trocitos(s)[k], p=w2s({x:s.x, y:s.y}), z=view.z, h=alto(s)*z;
+  if(!q) return {x:p.x, y:p.y, w:0, h:0};
+  return {x:p.x+q.x0*U*z, y:p.y+h-q.y1*U*z, w:(q.x1-q.x0)*U*z, h:(q.y1-q.y0)*U*z};
+}
+/* --- una longitud: la línea, sus topes, sus marcas, y al lado lo que mide ----
+   Las etiquetas y la cota van debajo si está tumbada y a la izquierda si está
+   de pie, que es por donde no suele haber un rectángulo. */
+function drawL(c,s,marcada,kMarcada){
+  var z=view.z, r=rect(s), A=w2s({x:r.x0,y:r.y0}), B=w2s({x:r.x1,y:r.y1});
+  var T=trocitos(s), Lg=largo(s), Lpx=Lg*U*z, k;
+  var qSel=(marcada && kMarcada!==null && kMarcada!==undefined && T.length>1)? T[kMarcada] : null;
+  function pt(t){ return s.v? {x:A.x, y:B.y-t*U*z} : {x:A.x+t*U*z, y:A.y}; }
+  function raya(t,m){
+    var p=pt(t);
+    if(s.v) linea(c,p.x-m,p.y,p.x+m,p.y); else linea(c,p.x,p.y-m,p.x,p.y+m);
+  }
+  var P0=pt(0), P1=pt(Lg);
+  var mas=(opt.rot || opt.etiqL)? nivelCota(s)*pasoCota(s) : 0;
+
+  c.save();
+  if(marcada){
+    var h0=qSel? pt(qSel.p0) : P0, h1=qSel? pt(qSel.p1) : P1;
+    c.lineCap='round'; c.strokeStyle='rgba(31,78,140,.26)'; c.lineWidth=Math.max(12,16*z);
+    linea(c,h0.x,h0.y,h1.x,h1.y);
+    c.lineCap='butt';
+  }
+  c.strokeStyle=AZUL; c.lineWidth=Math.max(2.6,4*z);
+  linea(c,A.x,A.y,B.x,B.y);
+  c.lineWidth=Math.max(2,3*z);
+  raya(0,9*z); raya(Lg,9*z);
+  /* las marcas que le quedan de antes, finas, y los cortes de ahora, más gruesos */
+  c.strokeStyle=ROJO;
+  c.lineWidth=Math.max(1.2,1.6*z);
+  s.t.forEach(function(t){ raya(t,6*z); });
+  c.lineWidth=Math.max(1.8,2.8*z);
+  for(k=1;k<s.a;k++) raya(Lg*k/s.a, 8*z);
+  c.restore();
+
+  if(opt.etiqL){
+    var px=Math.max(8, Math.min(13, 10.5*z));
+    c.save();
+    c.font=fuente(px); c.fillStyle=ROJO; c.textBaseline='middle';
+    T.forEach(function(q){
+      if(!q.txt) return;
+      var m=pt((q.p0+q.p1)/2), lp=(q.p1-q.p0)*U*z, largoT=q.txt+' u', t;
+      if(s.v){
+        if(lp<px+2) return;
+        c.textAlign='right'; c.fillText(largoT, m.x-(13+mas)*z, m.y);
+      } else {
+        t = c.measureText(largoT).width+6<lp ? largoT : (c.measureText(q.txt).width+4<lp ? q.txt : '');
+        if(t){ c.textAlign='center'; c.fillText(t, m.x, m.y+(20+mas)*z); }
+      }
+    });
+    c.restore();
+  }
+
+  if(opt.rot){
+    var pxr=15*z, Tk=toksL(s), wl=exprAncho(c,Tk,pxr), hl=(s.d===1? 1.25 : 2.35)*pxr, f=6*z;
+    c.save();
+    c.strokeStyle=AZUL; c.lineWidth=Math.max(1,1.3*z); c.lineJoin='round';
+    if(s.v){
+      var X=A.x-((opt.etiqL? 70 : 30)+mas)*z, cy=(A.y+B.y)/2;
+      if(Lpx>hl+26*z){
+        linea(c,X,P0.y,X,cy+hl/2+3*z); linea(c,X,cy-hl/2-3*z,X,P1.y);
+        flecha(c,X,P0.y,0,1,f); flecha(c,X,P1.y,0,-1,f);
+      }
+      dibExpr(c,Tk,X-wl/2,cy,pxr);
+    } else {
+      var Y=A.y+((opt.etiqL? 52 : 32)+mas)*z, cx=(A.x+B.x)/2;
+      if(Lpx>wl+30*z){
+        linea(c,P0.x,Y,cx-wl/2-6*z,Y); linea(c,cx+wl/2+6*z,Y,P1.x,Y);
+        flecha(c,P0.x,Y,-1,0,f); flecha(c,P1.x,Y,1,0,f);
+      }
+      dibExpr(c,Tk,cx-wl/2,Y,pxr);
+    }
+    c.restore();
+  }
+}
+function drawA(c,s,marcada,kMarcada){
+  var z=view.z, p=w2s({x:s.x, y:s.y}), w=ancho(s)*z, h=alto(s)*z;
+  var C=colorDe(s), S=NARANJA, k, r;
+
+  c.save();
+  if(opt.alfa) c.globalAlpha=0.55;
+  if(!s.hueca){ c.fillStyle=C.f; c.fillRect(p.x,p.y,w,h); }
+  (s.hueca? [] : s.res).forEach(function(q){
+    var rq=rectCelda(s,q);
+    c.fillStyle=S.f; c.fillRect(rq.x,rq.y,rq.w,rq.h);
+    rayado(c,rq,S.b);
+  });
+  c.restore();
+
+  /* las marcas que le quedan de antes, finas, y los cortes de ahora, más gruesos */
+  c.save();
+  c.strokeStyle=C.b; c.globalAlpha=0.55; c.lineWidth=Math.max(1,1.1*z);
+  s.tx.forEach(function(t){ linea(c, p.x+t*U*z, p.y, p.x+t*U*z, p.y+h); });
+  s.ty.forEach(function(t){ linea(c, p.x, p.y+h-t*U*z, p.x+w, p.y+h-t*U*z); });
+  c.restore();
+  c.strokeStyle=C.b; c.lineWidth=Math.max(1.4,2*z);
+  for(k=1;k<s.a;k++) linea(c, p.x+w*k/s.a, p.y, p.x+w*k/s.a, p.y+h);
+  for(k=1;k<s.b;k++) linea(c, p.x, p.y+h*k/s.b, p.x+w, p.y+h*k/s.b);
+
+  if(opt.etiqA && !s.hueca){
+    trocitos(s).forEach(function(q,i){
+      if(!q.txt) return;
+      ponEtiq(c, {x:p.x+q.x0*U*z, y:p.y+h-q.y1*U*z, w:(q.x1-q.x0)*U*z, h:(q.y1-q.y0)*U*z},
+              q.txt+' u²', q.txt, s.res.indexOf(i)>=0? S.t : C.t);
+    });
+  }
+
+  var entera = marcada && (kMarcada===null || kMarcada===undefined || trocitos(s).length<2);
+  c.lineWidth=(entera || s.hueca)? Math.max(2.6,3.4*z) : Math.max(1.6,2.2*z);
+  c.strokeStyle=entera? '#1f4e8c' : C.b;
+  c.strokeRect(p.x,p.y,w,h);
+  if(marcada && !entera){
+    r=rectCelda(s,kMarcada);
+    c.save();
+    c.fillStyle='rgba(31,78,140,.16)'; c.fillRect(r.x,r.y,r.w,r.h);
+    c.strokeStyle='#1f4e8c'; c.lineWidth=Math.max(2.6,3.2*z); c.strokeRect(r.x,r.y,r.w,r.h);
+    c.restore();
+  }
+}
+/* --- los rótulos de los rectángulos ------------------------------------------------
+   Van encima: debajo y a la izquierda suelen estar las longitudes. Pero los
+   rectángulos se ponen unos sobre otros —es para lo que están—, y un rótulo
+   sobre cada uno acabaría encima del vecino. Por eso los rectángulos cuyos
+   rótulos se estorbarían comparten una pila, por encima de todos ellos: un
+   renglón por rectángulo, con un cuadradito de su color delante, y lo que
+   mide lo resaltado en el mismo renglón. Los que dirían lo mismo, como los
+   trozos iguales de un corte, comparten renglón. Se dibujan al final, por
+   encima de todas las piezas. */
+var ALTOFILA=40;
+function anchoFila(c,F,px,conMuestra){
+  var w=exprAncho(c,F.T,px);
+  if(conMuestra) w+=1.2*px;
+  if(F.R.length) w+=2.3*px+exprAncho(c,F.R,px);
+  return w;
+}
+function textoFila(F){ return textoDe(F.T)+(F.R.length? ' ▨ '+textoDe(F.R) : ''); }
+function gruposA(){
+  /* la huella de cada rectángulo: él mismo y el sitio que ocuparía su rótulo */
+  var H=piezas.filter(function(o){ return !esL(o); }).map(function(o){
+    var r=rect(o), F={s:o, T:toksArea(o), R:toksResaltado(o)}, w=anchoFila(ctx,F,15,false), cx=(r.x0+r.x1)/2;
+    return {s:o, F:F, r:r, x0:Math.min(r.x0,cx-w/2)-4, x1:Math.max(r.x1,cx+w/2)+4, y0:r.y0-ALTOFILA-8, y1:r.y1+4, g:0};
+  });
+  var grupos=[];
+  H.forEach(function(h){
+    if(h.g) return;
+    var G=[h], cola=[h];
+    h.g=1;
+    while(cola.length){
+      var p=cola.pop();
+      H.forEach(function(o){
+        if(o.g || Math.min(p.x1,o.x1)<=Math.max(p.x0,o.x0) || Math.min(p.y1,o.y1)<=Math.max(p.y0,o.y0)) return;
+        o.g=1; G.push(o); cola.push(o);
+      });
+    }
+    grupos.push(G);
+  });
+  return grupos.map(function(G){
+    var x0=Infinity, x1=-Infinity, top=Infinity, filas=[], vistas={}, ancho0=0;
+    G.sort(function(p,q){ return (p.r.y0-q.r.y0) || (p.s.id-q.s.id); });      // el de más arriba, el renglón de más cerca
+    G.forEach(function(h){
+      x0=Math.min(x0,h.r.x0); x1=Math.max(x1,h.r.x1); top=Math.min(top,h.r.y0);
+      var k=textoFila(h.F)+'|'+(esUnidadA(h.s)? 'u' : 'r')+(h.s.hueca? 'h' : '');
+      if(!vistas[k]){ vistas[k]=1; filas.push(h.F); }
+    });
+    filas.forEach(function(F){ ancho0=Math.max(ancho0, anchoFila(ctx,F,15,filas.length>1)); });
+    return {miembros:G.map(function(h){ return h.s; }), cx:(x0+x1)/2, top:top, filas:filas, ancho:ancho0, varias:filas.length>1};
+  });
+}
+function muestra(c,x,y,px,relleno,borde,rayada){
+  var m={x:x, y:y-0.4*px, w:0.8*px, h:0.8*px};
+  if(relleno){ c.fillStyle=relleno; c.fillRect(m.x,m.y,m.w,m.h); }
+  if(rayada) rayado(c,m,borde);
+  c.strokeStyle=borde; c.lineWidth=Math.max(1,1.2*view.z); c.strokeRect(m.x,m.y,m.w,m.h);
+}
+function drawRotulosA(c){
+  var px=15*view.z;
+  gruposA().forEach(function(G){
+    /* una pila de varios renglones va alineada por la izquierda, como una leyenda */
+    var W=0;
+    G.filas.forEach(function(F){ W=Math.max(W, anchoFila(c,F,px,G.varias)); });
+    G.filas.forEach(function(F,i){
+      var p=w2s({x:G.cx, y:G.top-26-ALTOFILA*i}), x=p.x-W/2, C=colorDe(F.s);
+      if(G.varias){ muestra(c,x,p.y,px,F.s.hueca? null : C.f,C.b,false); x+=1.2*px; }
+      dibExpr(c,F.T,x,p.y,px);
+      if(F.R.length){
+        x+=exprAncho(c,F.T,px)+1.1*px;
+        muestra(c,x,p.y,px,NARANJA.f,NARANJA.b,true);
+        dibExpr(c,F.R,x+1.2*px,p.y,px);
+      }
+    });
+  });
+}
+function drawPieza(c,s,marcada,kMarcada){
+  if(esL(s)) drawL(c,s,marcada,kMarcada); else drawA(c,s,marcada,kMarcada);
+}
+function drawEnunciado(c,x,y,px){
+  if(enun) dibExpr(c, toksEnunciado(), x, y, px);
+}
+function draw(){
+  var dpr=window.devicePixelRatio||1, W=cv.width/dpr, H=cv.height/dpr;
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='#fbfbfa'; ctx.fillRect(0,0,W,H);
+  enOrden().forEach(function(s){ drawPieza(ctx,s,s.id===sel,selK); });
+  if(opt.rot) drawRotulosA(ctx);
+  drawEnunciado(ctx,16,36,26);
+  updateUI();
+}
+/* el tablero en un lienzo aparte, a escala 1: para el PNG y para las pruebas */
+function lienzoAparte(sc){
+  var b=caja(piezas)||{x0:0,y0:0,x1:U,y1:U}, m=26, cab=enun? 70 : 0;
+  var W=Math.ceil(Math.max(b.x1-b.x0+2*m, enun? exprAncho(ctx,toksEnunciado(),26)+2*m : 0));
+  var H=Math.ceil(b.y1-b.y0+2*m+cab);
+  var oc=document.createElement('canvas'); oc.width=Math.max(1,W*sc); oc.height=Math.max(1,H*sc);
+  var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
+  var g=view;
+  view={x:m-b.x0, y:m+cab-b.y0, z:1};
+  try{
+    enOrden().forEach(function(s){ drawPieza(o,s,false,null); });
+    if(opt.rot) drawRotulosA(o);
+    drawEnunciado(o,m,m+18,26);
+  } finally { view=g; }
+  return oc;
+}
+
+/* =========================================================================
+   7. INTERACCIÓN
+   ========================================================================= */
+function pos(e){
+  var r=stage.getBoundingClientRect();
+  return {x:e.clientX-r.left, y:e.clientY-r.top};
+}
+/* en qué subunidad de la pieza cae un punto del mundo; -1 si cae fuera.
+   En una raya, gana la de más arriba y más a la derecha. Una longitud no
+   tiene grosor: se le da un margen a cada lado para poder acertarle. */
+function parteEn(s,P){
+  var w=ancho(s), h=alto(s), T=trocitos(s), e=1e-9, k=-1;
+  if(esL(s)){
+    var m=8/view.z;
+    if(P.x<s.x-m || P.y<s.y-m || P.x>s.x+w+m || P.y>s.y+h+m) return -1;
+    var u=Math.max(0, Math.min(largo(s), s.v? (s.y+h-P.y)/U : (P.x-s.x)/U));
+    T.forEach(function(q,i){ if(u>=q.p0-e && u<=q.p1+e) k=i; });
+    return k;
+  }
+  if(P.x<s.x || P.y<s.y || P.x>s.x+w || P.y>s.y+h) return -1;
+  var ux=(P.x-s.x)/U, uy=(s.y+h-P.y)/U;
+  T.forEach(function(q,i){
+    if(ux>=q.x0-e && ux<=q.x1+e && uy>=q.y0-e && uy<=q.y1+e) k=i;
+  });
+  return k;
+}
+function tocaBorde(s,P){
+  var m=9/view.z, r=rect(s);
+  if(P.x<r.x0-m || P.x>r.x1+m || P.y<r.y0-m || P.y>r.y1+m) return false;
+  return P.x<r.x0+m || P.x>r.x1-m || P.y<r.y0+m || P.y>r.y1-m;
+}
+/* Dos longitudes que salen de la misma esquina se pisan: la corta queda
+   entera debajo de la larga. Por eso, de las longitudes que hay en un punto
+   se coge la más corta; a la larga siempre le queda un trozo libre. */
+function piezaEn(P){
+  var L=enOrden(), i, corta0=null;
+  for(i=L.length-1;i>=0;i--)
+    if(esL(L[i]) && parteEn(L[i],P)>=0 && (!corta0 || largo(L[i])<largo(corta0)-1e-9)) corta0=L[i];
+  if(corta0) return corta0;
+  for(i=L.length-1;i>=0;i--)
+    if(!esL(L[i]) && (L[i].hueca? tocaBorde(L[i],P) : parteEn(L[i],P)>=0)) return L[i];
+  return null;
+}
+function enPantalla(s){
+  var r=stage.getBoundingClientRect(), c=cajaPieza(s);
+  var a=w2s({x:c.x0,y:c.y0}), b=w2s({x:c.x1,y:c.y1});
+  return a.x>=0 && a.y>=0 && b.x<=(r.width||700) && b.y<=(r.height||420);
+}
+/* seleccionar lo que hay en un punto: la pieza, o una de sus subunidades si
+   el modo es el de subunidades y la pieza las tiene */
+function seleccionaEn(P){
+  var t=piezaEn(P);
+  if(!t){ sel=null; selK=null; return null; }
+  sel=t.id;
+  selK = (modo==='sub' && !t.hueca && trocitos(t).length>1)? parteEn(t,P) : null;
+  piezas=piezas.filter(function(q){ return q.id!==t.id; }).concat([t]);
+  return t;
+}
+cv.addEventListener('pointerdown',function(e){
+  cv.setPointerCapture(e.pointerId);
+  var s=pos(e), w=s2w(s);
+  if(!opt.mano && modo==='res' && e.button===0){
+    var R=empiezaAResaltar(w);
+    if(R){ drag={modo:'pintar', R:R, ult:w}; draw(); return; }
+    if(piezaEn(w)){ drag={modo:'nada'}; draw(); return; }
+  } else if(!opt.mano && e.button!==1 && e.button!==2){
+    var antes=foto(), t=seleccionaEn(w);
+    if(t){
+      drag={modo:'mover', w0:w, s0:s, s:t, x0:t.x, y0:t.y, movido:false, antes:antes};
+      draw(); return;
+    }
+  }
+  drag={modo:'pan', s0:s, v0:{x:view.x, y:view.y}};
+  draw();
+});
+cv.addEventListener('pointermove',function(e){
+  if(!drag) return;
+  var s=pos(e), w=s2w(s);
+  if(drag.modo==='nada') return;
+  if(drag.modo==='pintar'){
+    /* un arrastre rápido salta de un punto a otro: se recorre el tramo entero
+       para no dejarse subunidades por el camino */
+    var a=drag.ult, pasos=Math.max(1, Math.ceil((Math.abs(w.x-a.x)+Math.abs(w.y-a.y))*view.z/5)), i, algo=false;
+    for(i=1;i<=pasos;i++)
+      if(sigueResaltando(drag.R,{x:a.x+(w.x-a.x)*i/pasos, y:a.y+(w.y-a.y)*i/pasos})) algo=true;
+    drag.ult=w;
+    if(algo) draw();
+    return;
+  }
+  if(drag.modo==='pan'){
+    view.x=drag.v0.x+(s.x-drag.s0.x); view.y=drag.v0.y+(s.y-drag.s0.y);
+    draw(); return;
+  }
+  if(!drag.movido && Math.abs(s.x-drag.s0.x)+Math.abs(s.y-drag.s0.y)<5) return;
+  drag.movido=true;
+  drag.s.x=drag.x0+(w.x-drag.w0.x);
+  drag.s.y=drag.y0+(w.y-drag.w0.y);
+  draw();
+});
+function suelta(){
+  if(!drag) return;
+  var d=drag; drag=null;
+  if(d.modo==='mover' && d.movido){
+    undoStack.push(d.antes); if(undoStack.length>90) undoStack.shift();
+    aplicaIman(d.s);
+  }
+  draw();
+}
+cv.addEventListener('pointerup',suelta);
+cv.addEventListener('pointercancel',function(){ drag=null; draw(); });
+cv.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  var s=pos(e), w=s2w(s);
+  var z=Math.max(0.2, Math.min(3, view.z*(e.deltaY<0?1.12:1/1.12)));
+  view.z=z; view.x=s.x-w.x*z; view.y=s.y-w.y*z;
+  draw();
+},{passive:false});
+
+function pulsa(id,f){ document.getElementById(id).addEventListener('click',f); }
+function conPieza(f){ return function(){ var s=seleccionada(); if(s) f(s); }; }
+function veSiHaceFalta(t){
+  var L=Array.isArray(t)? t : (t? [t] : []);
+  if(L.some(function(o){ return !enPantalla(o); })) fitView();
+}
+pulsa('colMenos',conPieza(function(s){ parte(s,s.a-1,s.b); }));
+pulsa('colMas',conPieza(function(s){ parte(s,s.a+1,s.b); }));
+pulsa('filMenos',conPieza(function(s){ parte(s,s.a,s.b-1); }));
+pulsa('filMas',conPieza(function(s){ parte(s,s.a,s.b+1); }));
+pulsa('cortar',conPieza(function(s){ veSiHaceFalta(corta(s,selK)); }));
+pulsa('duplicar',conPieza(function(s){ veSiHaceFalta(duplica(s,selK)); }));
+pulsa('girar',conPieza(function(s){ gira(s); veSiHaceFalta(s); }));
+pulsa('rectan',conPieza(function(s){ veSiHaceFalta(rectangulo(s)); }));
+pulsa('hueca',conPieza(ahueca));
+pulsa('unir',conPieza(function(s){ veSiHaceFalta(une(s)); }));
+pulsa('borrar',conPieza(quita));
+pulsa('otraU',otraUnidad);
+pulsa('otraA',otraUnidadA);
+pulsa('modoP',function(){ ponModo('pieza'); });
+pulsa('modoS',function(){ ponModo('sub'); });
+pulsa('modoR',function(){ ponModo('res'); });
+pulsa('reiniciar',function(){
+  if(piezas.length===1 && esUnidadL(piezas[0]) && piezas[0].a===1 && !piezas[0].t.length){ fitView(); return; }
+  if(!confirm('¿Quitar todo y dejar una unidad de longitud sola?')) return;
+  pushUndo(); tableroNuevo(); fitView();
+});
+pulsa('undo',doUndo);
+pulsa('poner',function(){
+  var caja0=document.getElementById('aMano'), txt=String(caja0.value||'').trim();
+  if(!txt){ pushUndo(); enun=null; draw(); flash('Sin enunciado: construye lo que quieras'); return; }
+  var e=leeEnunciado(txt);
+  if(!e){
+    flash('Escríbelo así: 2/3 x 5/4. Denominadores hasta '+MAXD+', y ninguna longitud mayor que '+MAXVECES+' u');
+    return;
+  }
+  ponEnunciado(e); caja0.value='';
+});
+document.getElementById('aMano').addEventListener('keydown',function(e){
+  if(e.key==='Enter') document.getElementById('poner').click();
+});
+pulsa('azar',function(){ ponEnunciado(enunciadoAlAzar(+document.getElementById('nivel').value)); });
+['iman','rot','etiqL','etiqA','res'].forEach(function(id){
+  document.getElementById(id).addEventListener('change',function(e){ opt[id]=e.target.checked?1:0; draw(); });
+});
+pulsa('transp',function(){ opt.alfa=opt.alfa?0:1; this.classList.toggle('on', !!opt.alfa); draw(); });
+pulsa('mano',function(){ opt.mano=opt.mano?0:1; this.classList.toggle('on', !!opt.mano); draw(); });
+pulsa('zoomin',function(){ zoomAt(1.2); });
+pulsa('zoomout',function(){ zoomAt(1/1.2); });
+function zoomAt(k){
+  var r=stage.getBoundingClientRect(), c={x:r.width/2, y:r.height/2}, w=s2w(c);
+  view.z=Math.max(0.2, Math.min(3, view.z*k));
+  view.x=c.x-w.x*view.z; view.y=c.y-w.y*view.z;
+  draw();
+}
+pulsa('fit',fitView);
+function fitView(){
+  var r=stage.getBoundingClientRect(), m=60, cab=enun? 60 : 0;
+  var W=r.width||700, H=r.height||420;
+  var b=caja(piezas);
+  if(!b){ view={x:W/2, y:H/2, z:1}; draw(); return; }
+  var z=Math.min((W-2*m)/((b.x1-b.x0)||1), (H-2*m-cab)/((b.y1-b.y0)||1));
+  view.z=Math.max(0.2, Math.min(1.25, z));
+  view.x=W/2-((b.x0+b.x1)/2)*view.z;
+  view.y=cab+(H-cab)/2-((b.y0+b.y1)/2)*view.z;
+  draw();
+}
+document.addEventListener('keydown',function(e){
+  if(e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+  var k=(e.key||'').toLowerCase(), id=null, s=seleccionada(), lin=!!s && esL(s);
+  if((e.ctrlKey||e.metaKey) && k==='z'){ e.preventDefault(); doUndo(); return; }
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(k==='d') id='duplicar';
+  else if(k==='c') id='cortar';
+  else if(k==='j') id='unir';
+  else if(k==='g') id='girar';
+  else if(k==='r') id='rectan';
+  else if(k==='b') id='hueca';
+  else if(k==='u') id='otraU';
+  else if(k==='a') id='otraA';
+  else if(k==='1') id='modoP';
+  else if(k==='2') id='modoS';
+  else if(k==='3') id='modoR';
+  /* una longitud solo se parte de una manera: valen las cuatro flechas */
+  else if(e.key==='ArrowUp') id=lin? 'colMas' : 'filMas';
+  else if(e.key==='ArrowDown') id=lin? 'colMenos' : 'filMenos';
+  else if(e.key==='ArrowRight') id='colMas';
+  else if(e.key==='ArrowLeft') id='colMenos';
+  else if(e.key==='Delete' || e.key==='Backspace') id='borrar';
+  else if(e.key==='Escape'){ sel=null; selK=null; draw(); return; }
+  if(id){ e.preventDefault(); var b=document.getElementById(id); if(!b.disabled) b.click(); }
+});
+
+/* --- guardar y abrir ------------------------------------------------------------ */
+function datos(){
+  return {formato:'longitud-x-longitud', version:1,
+    enunciado: enun? {p:enun.p,q:enun.q,a:enun.a,b:enun.b} : null,
+    piezas:piezas.map(function(s){
+      if(esL(s)) return {tipo:'L', x:+s.x.toFixed(2), y:+s.y.toFixed(2), n:s.n, d:s.d, v:s.v?1:0, a:s.a, t:s.t};
+      return {tipo:'A', x:+s.x.toFixed(2), y:+s.y.toFixed(2), wn:s.wn, wd:s.wd, hn:s.hn, hd:s.hd,
+              a:s.a, b:s.b, res:s.res, hueca:s.hueca?1:0, tx:s.tx, ty:s.ty}; })};
+}
+function limpiaMarcas(L,largo0){
+  if(!Array.isArray(L) || L.length>300) return null;
+  for(var i=0;i<L.length;i++)
+    if(typeof L[i]!=='number' || !isFinite(L[i]) || L[i]<=0 || L[i]>=largo0) return null;
+  return L.slice();
+}
+/* no se fía del archivo: o cuadra todo, o no se abre */
+function limpiaPiezas(lista){
+  if(!Array.isArray(lista)) return null;
+  var out=[];
+  for(var i=0;i<lista.length;i++){
+    var s=lista[i], j;
+    if(!s || typeof s.x!=='number' || typeof s.y!=='number' || !isFinite(s.x) || !isFinite(s.y)) return null;
+    if(!entero(s.a,1,MAXD)) return null;
+    if(s.tipo==='L'){
+      if(!entero(s.n,1,1e6) || !entero(s.d,1,1e6) || s.n/s.d>MAXLADO) return null;
+      var t=limpiaMarcas(s.t, s.n/s.d);
+      if(!t) return null;
+      out.push({id:nid++, tipo:'L', x:s.x, y:s.y, n:s.n, d:s.d, v:s.v?1:0, a:s.a, t:t});
+      continue;
+    }
+    if(s.tipo!=='A') return null;
+    if(!entero(s.wn,1,1e6) || !entero(s.wd,1,1e6) || !entero(s.hn,1,1e6) || !entero(s.hd,1,1e6)) return null;
+    if(s.wn/s.wd>MAXLADO || s.hn/s.hd>MAXLADO) return null;
+    if(!entero(s.b,1,MAXD)) return null;
+    var tx=limpiaMarcas(s.tx, s.wn/s.wd), ty=limpiaMarcas(s.ty, s.hn/s.hd);
+    if(!tx || !ty) return null;
+    var res=[], lr=s.res===undefined? [] : s.res;
+    var nt=trocitos({tipo:'A', wn:s.wn, wd:s.wd, hn:s.hn, hd:s.hd, a:s.a, b:s.b, tx:tx, ty:ty}).length;
+    if(!Array.isArray(lr)) return null;
+    for(j=0;j<lr.length;j++){
+      if(!entero(lr[j],0,nt-1) || res.indexOf(lr[j])>=0) return null;
+      res.push(lr[j]);
+    }
+    res.sort(function(p,q){ return p-q; });
+    out.push({id:nid++, tipo:'A', x:s.x, y:s.y, wn:s.wn, wd:s.wd, hn:s.hn, hd:s.hd, a:s.a, b:s.b, res:res,
+              hueca:s.hueca?1:0, tx:tx, ty:ty});
+  }
+  return out;
+}
+function loadData(d){
+  var bien = d && d.formato==='longitud-x-longitud' &&
+             (d.enunciado===null || d.enunciado===undefined || enunciadoValido(d.enunciado));
+  var nuevas=bien? limpiaPiezas(d.piezas) : null;
+  if(!nuevas){ flash('Ese archivo no trae nada que yo entienda'); return false; }
+  pushUndo();
+  if(importMode==='add') piezas=piezas.concat(nuevas);
+  else{
+    piezas=nuevas;
+    enun=d.enunciado? {p:d.enunciado.p, q:d.enunciado.q, a:d.enunciado.a, b:d.enunciado.b} : null;
+  }
+  sel=null; selK=null; fitView();
+  flash(nuevas.length+(nuevas.length===1?' pieza cargada':' piezas cargadas'));
+  return true;
+}
+function descarga(blob,nombre){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download=nombre; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+}
+pulsa('save',function(){
+  descarga(new Blob([JSON.stringify(datos(),null,1)],{type:'application/json'}), 'longitud-x-longitud.json');
+});
+var fileIn=document.getElementById('fileIn');
+pulsa('open',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+pulsa('add',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leer(f); });
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }catch(err){ flash('No he podido leer ese archivo'); } };
+  r.readAsText(f);
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); });
+});
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='replace'; leer(f); }
+});
+pulsa('png',function(){
+  if(!piezas.length){ flash('No hay nada que exportar'); return; }
+  lienzoAparte(2).toBlob(function(blob){ descarga(blob,'longitud-x-longitud.png'); });
+});
+
+/* =========================================================================
+   8. INTERFAZ
+   ========================================================================= */
+pulsa('help',function(){
+  infoEl.classList.toggle('show');
+  if(!infoEl.innerHTML) infoEl.innerHTML=ayuda();
+});
+function ayuda(){
+  return '<div><b>Longitud × Longitud</b><br>'+
+ 'Arriba hay un enunciado con dos <b>longitudes</b>. En el tablero hay una unidad de longitud: un segmento '+
+ 'de 1 <i>u</i>. Las otras longitudes, y los rectángulos que se construyen con ellas, se fabrican a partir '+
+ 'de ella. La <b>unidad de área</b> es el cuadrado de 1 <i>u</i> de lado, que va en verde: se puede '+
+ 'construir, o sacar ya hecha con el botón <b>De área</b>.</div>'+
+ '<div style="margin-top:7px"><b>Al pinchar</b><br>'+
+ 'Con <b>Seleccionar pieza</b>, al pinchar se elige la pieza entera. Con <b>Seleccionar subunidad</b>, '+
+ 'se elige solo la subunidad en la que se pincha: el trocito más pequeño que dejan las marcas de la '+
+ 'pieza, las de ahora y las que le quedan de antes. En una longitud es un tramo; en un rectángulo, un '+
+ 'rectangulito. En los dos casos, arrastrando se mueve la pieza entera.</div>'+
+ '<div style="margin-top:7px"><b>Partir</b><br>'+
+ 'Los botones parten la pieza seleccionada en partes iguales: una longitud, en partes; un rectángulo, '+
+ 'en columnas y en filas. Son marcas: la pieza sigue entera.</div>'+
+ '<div style="margin-top:7px"><b>Cortar, duplicar, girar y unir</b><br>'+
+ '<b>✂ Cortar</b> separa la subunidad seleccionada del resto de la pieza; con la pieza entera '+
+ 'seleccionada, la deshace en todas sus partes. <b>⧉ Duplicar</b> saca una copia de la pieza o de la '+
+ 'subunidad seleccionada. <b>⟲ Girar</b> le da un cuarto de vuelta. <b>⬒ Unir lo pegado</b> funde en '+
+ 'una sola las longitudes que están pegadas una a continuación de otra, o los rectángulos pegados que '+
+ 'entre todos forman un rectángulo. El imán engancha extremos, bordes y marcas, que es lo que permite '+
+ 'pegar las piezas sin pulso.</div>'+
+ '<div style="margin-top:7px"><b>Rectángulo</b><br>'+
+ 'Con una longitud seleccionada que tenga otra pegada por un extremo, en ángulo recto, <b>▭ Rectángulo</b> '+
+ 'construye el rectángulo que las tiene por lados. Las longitudes se quedan donde estaban. Si en esa '+
+ 'esquina hay más de una, vale la que se haya tocado la última.</div>'+
+ '<div style="margin-top:7px"><b>Resaltar</b><br>'+
+ 'Con <b>▨ Resaltar subunidad</b>, pinchar en una subunidad de un rectángulo la deja rayada, sin '+
+ 'sacarla de la pieza, y pinchar otra vez se lo quita. Arrastrando se resaltan, o se dejan de resaltar, '+
+ 'todas las que se pisen. En este modo las piezas no se mueven.</div>'+
+ '<div style="margin-top:7px"><b>Solo el borde</b><br>'+
+ '<b>▢ Solo el borde</b> deja el rectángulo seleccionado sin relleno y sin etiquetas, y por encima de '+
+ 'los demás: sirve para ponerlo sobre otro sin taparlo. Un rectángulo así se coge por el borde; '+
+ 'pinchando dentro se llega a lo que haya debajo.</div>'+
+ '<div style="margin-top:7px"><b>Las casillas</b><br>'+
+ '<b>Rótulos</b> escribe junto a cada longitud lo que mide, y encima de cada rectángulo lo que miden '+
+ 'sus lados, el vertical delante; si varios rectángulos se pisan, sus rótulos se apilan encima de todos, '+
+ 'cada uno con un cuadradito de su color. <b>Etiquetas u</b> escribe lo que mide, en unidades, cada tramo que dejan '+
+ 'las marcas de una longitud. <b>Etiquetas u²</b> escribe lo que mide, en unidades cuadradas, cada trocito '+
+ 'que dejan las marcas de un rectángulo. <b>Resultado</b> añade al rótulo de cada rectángulo lo que mide '+
+ 'en unidades cuadradas, con la fracción tal como sale, sin simplificar, y lo que mide lo que tenga '+
+ 'resaltado. Con <b>◑ Transparencia</b> se ve lo que hay debajo de un rectángulo.</div>'+
+ '<div style="margin-top:7px"><b>El enunciado</b><br>'+
+ 'Se escribe a mano —<i>2/3 x 5/4</i>— o se pide uno al azar. Con la casilla vacía se trabaja sin '+
+ 'enunciado. El programa no comprueba que lo construido sea lo que se pedía.</div>'+
+ '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+}
+function textoAyudaBarra(){
+  var s=seleccionada();
+  if(!piezas.length) return 'El tablero está vacío — saca una unidad de longitud';
+  if(modo==='res') return 'Pincha en una subunidad de un rectángulo para resaltarla, y otra vez para quitarlo — arrastrando se resaltan varias seguidas';
+  if(!s) return 'Pincha en una pieza para seleccionarla — arrastra para moverla';
+  var nt=trocitos(s).length;
+  if(s.hueca) return 'Rectángulo en solo el borde — se coge por el borde, y lo de debajo se pincha a través';
+  if(selK!==null && nt>1) return 'Una subunidad seleccionada, de las '+nt+' de la pieza — se puede cortar o duplicar';
+  if(modo==='sub' && nt>1) return 'Pieza con '+nt+' subunidades — pincha en una para seleccionarla';
+  if(esL(s)){
+    if(esquinaCon(s)) return 'Longitud con otra pegada por un extremo, en ángulo recto — con las dos se puede construir un rectángulo';
+    if(s.a===1) return (esUnidadL(s)? 'La unidad de longitud' : 'Una longitud')+' sin partir — se puede partir, duplicar, girar o unir a las que tenga a continuación';
+    return 'Longitud partida en '+s.a+' partes iguales — cortar la deshace en sus partes';
+  }
+  if(s.a*s.b===1) return (esUnidadA(s)? 'La unidad de área' : 'Un rectángulo')+' sin partir — se puede partir, duplicar, girar o unir a los que tenga pegados';
+  return 'Rectángulo partido en '+(s.a*s.b)+' partes iguales — cortar lo deshace en sus partes';
+}
+function updateUI(){
+  function pon(id,v){ document.getElementById(id).textContent=v; }
+  function off(id,v){ document.getElementById(id).disabled=!!v; }
+  var s=seleccionada(), lin=!!s && esL(s);
+  pon('labCol', lin? 'En partes' : 'En columnas');
+  pon('ncol', s? s.a : '—'); pon('nfil', s && !lin? s.b : '—');
+  off('colMenos',!s||s.a<=1); off('colMas',!s||s.a>=MAXD);
+  off('filMenos',!s||lin||s.b<=1); off('filMas',!s||lin||s.b>=MAXD);
+  var nt=s? trocitos(s).length : 0;
+  off('cortar',!s||(selK===null? (lin? s.a : s.a*s.b)<2 : nt<2));
+  off('duplicar',!s); off('girar',!s); off('unir',!s); off('borrar',!s);
+  off('rectan',!lin); off('hueca',!s||lin);
+  document.getElementById('hueca').className='act'+(s && s.hueca?' on':'');
+  document.getElementById('modoP').className='act'+(modo==='pieza'?' on':'');
+  document.getElementById('modoS').className='act'+(modo==='sub'?' on':'');
+  document.getElementById('modoR').className='act'+(modo==='res'?' on':'');
+  hintEl.textContent = (flashMsg && Date.now()-flashT<2500)? flashMsg : textoAyudaBarra();
+  cv.style.cursor = opt.mano? 'grab' : (modo==='res'? 'crosshair' : 'default');
+}
+
+/* =========================================================================
+   9. ARRANQUE
+   ========================================================================= */
+var primera=true;
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr));
+  cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  if(primera && r.width>0){ primera=false; fitView(); } else draw();
+}
+tableroNuevo();
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+resize();
+
+/* =========================================================================
+  10. AUTOCOMPROBACIÓN  ·  añade #test al final de la URL
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){ out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':'')); if(!c) fails++; }
+  function num(v){ return (Math.round(v*1000)/1000).toString().replace('.',','); }
+  var antes={p:piezas, s:sel, k:selK, n:nid, e:enun, view:view, undo:undoStack, opt:JSON.stringify(opt), modo:modo};
+
+  try{
+  var medidas=function(s){
+    if(!s) return 'nada';
+    return esL(s)? txtFr(s.n,s.d)+' u'+(s.v? ' de pie' : '') : s.wn+'/'+s.wd+' por '+s.hn+'/'+s.hd;
+  };
+  var rot=function(s){ return s? textoDe(esL(s)? toksL(s) : toksArea(s)) : 'nada'; };
+  var lista=function(L){ return L.map(function(t){ return num(t); }).join(' '); };
+  var fr=function(F){ return F? txtFr(F[0],F[1]) : 'null'; };
+  var limpio=function(){ piezas=[]; sel=null; selK=null; undoStack=[]; var u=nuevaUnidad({x:0,y:0}); piezas=[u]; sel=u.id; return u; };
+  var sumaAreas=function(L){ var n=0, d=1; L.forEach(function(s){ var A=areaDe(s); n=n*A.q+A.p*d; d=d*A.q; var r=reduce(n,d); n=r.p; d=r.q; }); return {p:n,q:d}; };
+  var sumaLargos=function(L){ var F=[0,1]; L.forEach(function(s){ F=sumaFr(F,[s.n,s.d]); }); return reduce(F[0],F[1]); };
+  var etis=function(s){ var L=trocitos(s), v={}; L.forEach(function(q){ v[q.txt]=(v[q.txt]||0)+1; });
+    return Object.keys(v).sort().map(function(t){ return v[t]+' de '+t; }).join(', '); };
+  /* píxeles de un color en el tablero, a escala 1 */
+  var cuenta=function(cual){
+    var oc=lienzoAparte(1), d=oc.getContext('2d').getImageData(0,0,oc.width,oc.height).data, v=0;
+    for(var i=0;i<d.length;i+=4) if(cual(d[i],d[i+1],d[i+2])) v++;
+    return v;
+  };
+  var verde=function(r,g,b){ return g-r>30 && g-b>60; };
+  var naranja=function(r,g,b){ return r-b>60 && g>150; };
+  var azul=function(r,g,b){ return b-r>60; };
+  var rojo=function(r,g,b){ return r-g>90 && r-b>90; };
+  /* pone t a continuación de s, o encima o al lado de un rectángulo, con un poco de descuadre, y deja que el imán la enganche */
+  var aCont=function(t,s){ t.x=s.x+ancho(s)+5; t.y=s.y+4; aplicaIman(t); };
+  var pegaEncima=function(t,s){ t.x=s.x+4; t.y=s.y-alto(t)-5; aplicaIman(t); };
+  /* V, de pie, con su extremo de abajo en el extremo izquierdo de H */
+  var enEsquina=function(V,H){ V.x=H.x+4; V.y=H.y-alto(V)-5; aplicaIman(V); };
+  /* 5/4 u: la unidad con un cuarto suyo a continuación */
+  var cincoCuartos=function(){ var u=limpio(); parte(u,4); var c=duplica(u,3); aCont(c,u); return une(u); };
+  /* 2/3 u de pie en el extremo izquierdo de H: otra unidad sin su último tercio */
+  var dosTercios=function(H){
+    var v=nuevaUnidad({x:H.x, y:H.y+3*U}); piezas.push(v); parte(v,3);
+    var L=corta(v,2); quita(L[1]); gira(L[0]); enEsquina(L[0],H);
+    return L[0];
+  };
+  /* una unidad de área con su esquina de abajo a la izquierda en P, sin sus dos lados */
+  var cuadradoUnidad=function(P){
+    var todas=piezas, h=nuevaUnidad({x:P.x, y:P.y}), v=nuevaUnidad({x:P.x, y:P.y-U}); v.v=1;
+    piezas=[h,v];
+    var M=rectangulo(h);
+    piezas=todas.concat([M]);
+    return M;
+  };
+  view={x:0,y:0,z:1}; opt.iman=1; opt.rot=1; opt.etiqL=0; opt.etiqA=0; opt.res=0; opt.alfa=0; opt.mano=0; modo='pieza';
+  enun={p:2,q:3,a:5,b:4};
+
+  /* --- las fracciones, tal como salen ------------------------------------------------- */
+  ok('un cuarto de 1 es 1/4, un tercio de 5/4 es 5/12 y la mitad de 2/4 es 1/4, no 2/8',
+     fr(parteFr(1,1,1,4))==='1/4' && fr(parteFr(5,4,1,3))==='5/12' && fr(parteFr(2,4,1,2))==='1/4',
+     [fr(parteFr(1,1,1,4)), fr(parteFr(5,4,1,3)), fr(parteFr(2,4,1,2))].join(' '));
+  ok('dos tercios de 5/4 son 10/12, sin simplificar', fr(parteFr(5,4,2,3))==='10/12', fr(parteFr(5,4,2,3)));
+  ok('1 y 1/4 suman 5/4; 1/4 y 1/4, 2/4; 1/4 y 1/3, 7/12',
+     fr(sumaFr([1,1],[1,4]))==='5/4' && fr(sumaFr([1,4],[1,4]))==='2/4' && fr(sumaFr([1,4],[1,3]))==='7/12');
+  ok('una fracción se recupera de su decimal: 0,08333… es 1/12, y 0,41666… es 5/12', (function(){
+      var a=fraccionDe(1/12), b=fraccionDe(5/12); return a.n===1 && a.d===12 && b.n===5 && b.d===12; })());
+
+  /* --- el enunciado ---------------------------------------------------------------- */
+  var e1=leeEnunciado('2/3 x 5/4');
+  ok('«2/3 x 5/4» se lee como dos longitudes: 2/3 u y 5/4 u',
+     !!e1 && e1.p===2 && e1.q===3 && e1.a===5 && e1.b===4, e1? e1.p+'/'+e1.q+' y '+e1.a+'/'+e1.b : 'nada');
+  ok('vale también con el signo ×, con «por», con asterisco y con las unidades puestas',
+     !!leeEnunciado(' 2/3 u × 5/4 u ') && !!leeEnunciado('2/3 u x 5/4 u') && !!leeEnunciado('2/3 por 5/4') && !!leeEnunciado('2/3*5/4') && !!leeEnunciado('2 X 3/2'));
+  var e2=leeEnunciado('2/4 x 6/8');
+  ok('no simplifica lo que se escribe: 2/4 x 6/8 se queda en 2/4 y 6/8', !!e2 && e2.p===2 && e2.q===4 && e2.a===6 && e2.b===8);
+  ok('con la palabra «de» no se entiende: aquí las dos son longitudes', leeEnunciado('2/3 de 5/4')===null);
+  ok('se rechaza un denominador cero, uno que no se puede partir y una longitud enorme',
+     leeEnunciado('2/0 x 5/4')===null && leeEnunciado('2/3 x 5/13')===null && leeEnunciado('2/3 x 13/4')===null);
+  ok('los tres niveles dan longitudes construibles, irreducibles y distintas de la unidad', (function(){
+      for(var nv=0;nv<3;nv++) for(var i=0;i<300;i++){
+        var e=enunciadoAlAzar(nv), N=NIVELES[nv], x=e.p/e.q, y=e.a/e.b;
+        if(!enunciadoValido(e) || mcd(e.p,e.q)!==1 || mcd(e.a,e.b)!==1 || e.p===e.q || e.a===e.b) return false;
+        if(N.dens.indexOf(e.q)<0 || N.dens.indexOf(e.b)<0) return false;
+        if(Math.max(x,y)>Math.max(N.max[0],N.max[1]) || Math.min(x,y)>Math.min(N.max[0],N.max[1])) return false;
+      }
+      return true; })());
+  ok('en el nivel intermedio salen enunciados con una longitud mayor que la unidad, y nunca las dos', (function(){
+      var alguna=false;
+      for(var i=0;i<300;i++){ var e=enunciadoAlAzar(1); if(e.p>e.q && e.a>e.b) return false; if(e.p>e.q || e.a>e.b) alguna=true; }
+      return alguna; })());
+
+  /* --- la unidad de longitud ----------------------------------------------------------- */
+  var u=limpio();
+  ok('el tablero empieza con una unidad de longitud: un segmento tumbado de 1 u, y ningún rectángulo',
+     piezas.length===1 && esL(u) && esUnidadL(u) && !u.v && Math.abs(ancho(u)-U)<1e-9 && alto(u)===0, medidas(u));
+  ok('que se rotula 1 u', rot(u)==='1 u', rot(u));
+  parte(u,4);
+  ok('partida en 4, tiene cuatro subunidades de 1/4 u y sigue siendo una pieza', trocitos(u).length===4 && etis(u)==='4 de 1/4' && piezas.length===1, etis(u));
+  ok('no se parte en más de '+MAXD+' ni en menos de 1', (function(){
+      parte(u,99); var a=u.a; parte(u,0); var b=u.a; parte(u,4); return a===MAXD && b===1 && u.a===4; })());
+  var enMedio={x:u.x+U*0.6, y:u.y+3};
+  modo='pieza'; seleccionaEn(enMedio);
+  ok('en modo pieza, pinchar sobre el tercer cuarto selecciona la longitud entera', sel===u.id && selK===null);
+  modo='sub'; seleccionaEn(enMedio);
+  ok('en modo subunidad, selecciona ese tramo', sel===u.id && selK===2, selK);
+  ok('no hace falta acertar en la línea: vale a 6 píxeles, y a 20 ya no', (function(){
+      var cerca=piezaEn({x:u.x+U*0.6, y:u.y-6})===u, lejos=piezaEn({x:u.x+U*0.6, y:u.y+20})===null; return cerca && lejos; })());
+  ok('pinchar fuera deselecciona', (function(){ seleccionaEn({x:u.x-40,y:u.y-40}); return sel===null && selK===null; })());
+  modo='pieza';
+
+  /* --- 5/4 u: la unidad y un cuarto más ----------------------------------------------------- */
+  var c4=duplica(u,3);
+  ok('duplicar el último cuarto saca una longitud de 1/4 u, y la unidad se queda entera',
+     !!c4 && medidas(c4)==='1/4 u' && piezas.length===2 && medidas(u)==='1 u' && u.a===4, medidas(c4));
+  aCont(c4,u);
+  ok('puesta a continuación de la unidad, el imán la deja pegada a su extremo',
+     Math.abs(c4.x-(u.x+U))<1e-9 && Math.abs(c4.y-u.y)<1e-9);
+  var Q=une(c4);
+  ok('unir da una sola longitud de 5/4 u', !!Q && medidas(Q)==='5/4 u' && piezas.length===1 && Math.abs(ancho(Q)-U*5/4)<1e-9, medidas(Q));
+  ok('que conserva las marcas de los cuartos y la del final de la unidad', lista(Q.t)==='0,25 0,5 0,75 1' && Q.a===1, lista(Q.t));
+  ok('sus subunidades son cinco tramos de 1/4 u', etis(Q)==='5 de 1/4', etis(Q));
+  ok('da igual desde cuál de las dos se una', (function(){
+      var v=limpio(); parte(v,4); var c=duplica(v,0); aCont(c,v); var R=une(v);
+      return !!R && medidas(R)==='5/4 u'; })());
+  ok('el mismo 5/4 u sale de cinco cuartos sueltos: cortar la unidad, duplicar un cuarto y unir', (function(){
+      var v=limpio(); parte(v,4);
+      var L=corta(v,null);
+      if(!L || L.length!==4 || piezas.length!==4 || !L.every(function(t){ return medidas(t)==='1/4 u'; })) return false;
+      for(var i=1;i<4;i++) aCont(L[i],L[i-1]);
+      var c=duplica(L[3],null); aCont(c,L[3]);
+      var R=une(L[0]);
+      return !!R && piezas.length===1 && medidas(R)==='5/4 u' && lista(R.t)==='0,25 0,5 0,75 1'; })());
+  ok('dos unidades a continuación son 2 u, y dos cuartos son 2/4 u, sin simplificar', (function(){
+      var a=limpio(), b=nuevaUnidad({x:0,y:0}); piezas.push(b); aCont(b,a);
+      var R=une(a);
+      var v=limpio(); parte(v,4); var L=corta(v,null); aCont(L[1],L[0]); var S=une(L[0]);
+      return medidas(R)==='2 u' && medidas(S)==='2/4 u'; })());
+
+  /* --- cortar longitudes ------------------------------------------------------------------- */
+  Q=cincoCuartos();
+  parte(Q,3);
+  ok('5/4 u partida en 3 tiene siete tramos: las marcas de los cuartos también cuentan', trocitos(Q).length===7 && etis(Q)==='2 de 1/12, 3 de 1/4, 2 de 1/6', etis(Q));
+  var Lt=corta(Q,null);
+  ok('cortarla entera deja tres longitudes de 5/12 u donde había una',
+     !!Lt && Lt.length===3 && piezas.length===3 && Lt.every(function(t){ return medidas(t)==='5/12 u'; }), Lt? Lt.map(medidas).join(' | ') : 'nada');
+  ok('que entre las tres miden 5/4 u y conservan las marcas de los cuartos que les caen dentro',
+     mismaFraccion(sumaLargos(Lt),{p:5,q:4}) && Lt[0].t.length===1 && Lt[1].t.length===2 && Lt[2].t.length===1,
+     Lt.map(function(t){ return lista(t.t); }).join(' | '));
+  u=limpio(); parte(u,4);
+  var L3=corta(u,1);
+  ok('cortar el segundo cuarto de la unidad la deja en 1/4 u, 2/4 u y 1/4 u',
+     !!L3 && L3.map(medidas).join(' | ')==='1/4 u | 2/4 u | 1/4 u' && mismaFraccion(sumaLargos(L3),{p:1,q:1}), L3? L3.map(medidas).join(' | ') : 'nada');
+  ok('y el trozo de 2/4 u conserva su marca en medio', lista(L3[1].t)==='0,25');
+  u=limpio();
+  ok('una longitud sin partir no se corta', corta(u,null)===null && piezas.length===1);
+  ok('ni se hacen trozos de menos de una milésima de unidad', (function(){
+      var s=limpio(), i;
+      for(i=0;i<2;i++){ parte(s,12); s=duplica(s,0); if(!s) return false; }
+      parte(s,12);
+      var n=piezas.length;
+      return medidas(s)==='1/144 u' && duplica(s,0)===null && corta(s,null)===null && piezas.length===n; })());
+  flashMsg=null;
+
+  /* --- girar longitudes -------------------------------------------------------------------- */
+  u=limpio(); parte(u,4); L3=corta(u,3);
+  var T3=L3[0];                                      // 3/4 u, con marcas en 1/4 y 2/4
+  quita(L3[1]); parte(T3,1);
+  T3.t=[0.25];                                       // una sola marca, a un cuarto de su origen
+  var x0=T3.x, y0=T3.y;
+  gira(T3);
+  ok('girar una longitud tumbada la pone de pie, con el mismo centro y la misma medida',
+     T3.v===1 && medidas(T3)==='3/4 u de pie' && Math.abs(alto(T3)-U*3/4)<1e-9 && ancho(T3)===0 &&
+     Math.abs(T3.x-(x0+U*3/8))<1e-9 && Math.abs(T3.y+alto(T3)/2-y0)<1e-9);
+  ok('la marca que estaba a 1/4 u del extremo izquierdo queda a 1/4 u del de abajo',
+     Math.abs(marcasY(T3)[0]-(T3.y+alto(T3)-U/4))<1e-9 && marcasX(T3).length===0, num((T3.y+alto(T3)-marcasY(T3)[0])/U));
+  gira(T3);
+  ok('con otro cuarto de vuelta vuelve a estar tumbada, donde estaba, pero con la marca al otro lado',
+     T3.v===0 && Math.abs(T3.x-x0)<1e-9 && Math.abs(T3.y-y0)<1e-9 && lista(T3.t)==='0,5', lista(T3.t));
+  gira(T3); gira(T3);
+  ok('y a las cuatro vueltas queda como al principio', T3.v===0 && Math.abs(T3.x-x0)<1e-9 && Math.abs(T3.y-y0)<1e-9 && lista(T3.t)==='0,25', lista(T3.t));
+  ok('de pie, se parte, se selecciona por tramos y se corta igual', (function(){
+      var v=limpio(); gira(v); parte(v,3);
+      modo='sub'; seleccionaEn({x:v.x+2, y:v.y+alto(v)-U*0.1}); var abajo=selK;
+      seleccionaEn({x:v.x-3, y:v.y+U*0.1}); var arriba=selK; modo='pieza';
+      var L=corta(v,2);
+      return abajo===0 && arriba===2 && L.length===2 && medidas(L[0])==='2/3 u de pie' && medidas(L[1])==='1/3 u de pie' &&
+             Math.abs(L[0].y+alto(L[0])-(v.y+U))<1e-9; })());
+  ok('dos longitudes de pie, una encima de otra, se unen en una', (function(){
+      var a=limpio(); gira(a); var b=duplica(a,null); parte(b,2); var L=corta(b,null); quita(L[1]);
+      pegaEncima(L[0],a);
+      var R=une(a);
+      return !!R && medidas(R)==='3/2 u de pie' && lista(R.t)==='1' && piezas.length===1; })());
+
+  /* --- unir lo que no se puede ---------------------------------------------------------------------- */
+  u=limpio();
+  ok('una longitud sola no tiene nada con lo que unirse', une(u)===null && piezas.length===1);
+  ok('ni dos que no se tocan, ni dos paralelas una al lado de otra', (function(){
+      var b=nuevaUnidad({x:3*U, y:0}); piezas.push(b);
+      var lejos=une(u)===null;
+      b.x=u.x; b.y=u.y+12;
+      return lejos && une(u)===null && piezas.length===2; })());
+  ok('ni dos en ángulo recto: eso no es una longitud', (function(){
+      var b=piezas[1]; gira(b); enEsquina(b,u);
+      return esquinaCon(u)===b && une(u)===null && piezas.length===2; })());
+  ok('no se une una longitud que pasaría de '+MAXLADO+' u', (function(){
+      var a=limpio(), i, b;
+      for(i=0;i<MAXLADO;i++){ b=nuevaUnidad({x:0,y:0}); piezas.push(b); aCont(b, piezas[piezas.length-2]); }
+      var n=piezas.length;
+      return une(a)===null && piezas.length===n; })());
+  flashMsg=null;
+
+  /* --- el imán ---------------------------------------------------------------------------- */
+  u=limpio();
+  var u2=nuevaUnidad({x:U+6, y:5}); piezas.push(u2);
+  aplicaIman(u2);
+  ok('una longitud casi a continuación de otra se engancha a su extremo', Math.abs(u2.x-U)<1e-9 && Math.abs(u2.y)<1e-9);
+  u2.x=5*U; u2.y=4*U; aplicaIman(u2);
+  ok('y una que está lejos se queda donde se suelta', Math.abs(u2.x-5*U)<1e-9 && Math.abs(u2.y-4*U)<1e-9);
+  u.a=3; u2.v=1; u2.x=U/3+7; u2.y=-U-4; aplicaIman(u2);
+  ok('una de pie engancha su extremo en una marca de otra tumbada', Math.abs(u2.x-U/3)<1e-9 && Math.abs(u2.y+U)<1e-9, num(u2.x));
+  opt.iman=0; u2.x=U/3+7; u2.y=-U-4; aplicaIman(u2);
+  ok('con el imán apagado no engancha nada', Math.abs(u2.x-(U/3+7))<1e-9);
+  opt.iman=1; u.a=1;
+
+  /* --- el rectángulo ---------------------------------------------------------------------- */
+  u=limpio();
+  ok('con una longitud sola no hay rectángulo', rectangulo(u)===null && piezas.length===1);
+  ok('ni con dos tumbadas, ni con una de pie que no la toca por un extremo', (function(){
+      var b=nuevaUnidad({x:0,y:0}); piezas.push(b); aCont(b,u);
+      var paralelas=rectangulo(u)===null;
+      b.v=1; b.x=u.x+U/2; b.y=u.y-U;                       // de pie sobre el medio de u
+      var enT=rectangulo(u)===null;
+      b.x=u.x+3; b.y=u.y-U-30;                             // sobre el extremo, pero sin llegar
+      return paralelas && enT && rectangulo(u)===null && piezas.length===2; })());
+  flashMsg=null;
+  Q=cincoCuartos();
+  var V=dosTercios(Q);
+  ok('2/3 u de pie con su extremo de abajo en el extremo izquierdo de 5/4 u: el imán las deja en esquina',
+     medidas(V)==='2/3 u de pie' && Math.abs(V.x-Q.x)<1e-9 && Math.abs(V.y+alto(V)-Q.y)<1e-9 && esquinaCon(V)===Q && esquinaCon(Q)===V, medidas(V));
+  ok('y 2/3 u conserva la marca de su tercio', lista(V.t)==='0,333', lista(V.t));
+  var n0=piezas.length, R=rectangulo(V);
+  ok('con esas dos longitudes sale un rectángulo de 5/4 u de ancho y 2/3 u de alto, y las longitudes siguen ahí',
+     !!R && !esL(R) && medidas(R)==='5/4 por 2/3' && piezas.length===n0+1 && piezas.indexOf(Q)>=0 && piezas.indexOf(V)>=0, medidas(R));
+  ok('que tiene sus lados justo sobre ellas', Math.abs(R.x-Q.x)<1e-9 && Math.abs(R.y-V.y)<1e-9 &&
+     Math.abs(R.y+alto(R)-Q.y)<1e-9 && Math.abs(R.x+ancho(R)-(Q.x+ancho(Q)))<1e-9);
+  ok('nace liso: no hereda las marcas de sus lados', R.a===1 && R.b===1 && R.tx.length===0 && R.ty.length===0 && trocitos(R).length===1);
+  ok('y se rotula con sus lados, el vertical delante: 2/3 u × 5/4 u', rot(R)==='2/3 u × 5/4 u', rot(R));
+  ok('mide 10/12 u², que simplificado es 5/6', valor(R).n===10 && valor(R).d===12 && mismaFraccion(areaDe(R),{p:5,q:6}), valor(R).n+'/'+valor(R).d);
+  ok('no es la unidad de área, y va en color arena', !esUnidadA(R) && colorDe(R)===ARENA);
+  ok('da lo mismo pedirlo desde la otra longitud', (function(){
+      var S=rectangulo(Q), bien=!!S && medidas(S)==='5/4 por 2/3' && Math.abs(S.x-R.x)<1e-9 && Math.abs(S.y-R.y)<1e-9;
+      quita(S); return bien; })());
+  ok('con la de pie colgando del extremo derecho, el rectángulo sale hacia abajo', (function(){
+      var H=limpio(), W=nuevaUnidad({x:0,y:0}); W.v=1; W.n=1; W.d=2; piezas.push(W);
+      W.x=H.x+U-3; W.y=H.y+4; aplicaIman(W);
+      var S=rectangulo(H);
+      return !!S && medidas(S)==='1/1 por 1/2' && Math.abs(S.x-H.x)<1e-9 && Math.abs(S.y-H.y)<1e-9; })());
+  (function(){
+    Q=cincoCuartos(); V=dosTercios(Q);
+    var W=nuevaUnidad({x:Q.x, y:Q.y-U}); W.v=1; piezas.push(W);            // 1 u de pie, en la misma esquina
+    modo='pieza';
+    ok('de dos longitudes que salen de la misma esquina, donde se pisan se coge la corta, y la larga por lo que le sobra',
+       piezaEn({x:V.x-4, y:Q.y-20})===V && piezaEn({x:W.x+4, y:W.y+10})===W);
+    seleccionaEn({x:W.x+4, y:W.y+10}); seleccionaEn({x:Q.x+U*1.2, y:Q.y+5});
+    var a=rectangulo(Q), conLaLarga=!!a && medidas(a)==='5/4 por 1/1'; quita(a);
+    seleccionaEn({x:V.x-4, y:Q.y-20}); seleccionaEn({x:Q.x+U*1.2, y:Q.y+5});
+    var b=rectangulo(Q);
+    ok('y el rectángulo se hace con la que se ha tocado la última: primero con 1 u, luego con 2/3 u',
+       conLaLarga && !!b && medidas(b)==='5/4 por 2/3', medidas(a)+' y '+medidas(b));
+  })();
+  ok('las longitudes se pinchan antes que el rectángulo que tienen debajo', (function(){
+      Q=cincoCuartos(); V=dosTercios(Q); R=rectangulo(V);
+      return piezaEn({x:Q.x+50, y:Q.y-3})===Q && piezaEn({x:V.x+3, y:V.y+40})===V && piezaEn({x:R.x+60, y:R.y+50})===R &&
+             enOrden()[0]===R; })());
+
+  ok('de dos longitudes que se pisan sobre la misma recta, la cota de la larga va un escalón más lejos que la de la corta', (function(){
+      var todas=piezas, a=nuevaUnidad({x:0,y:0}), b=nuevaUnidad({x:0,y:0}), c=nuevaUnidad({x:U,y:0}), d=nuevaUnidad({x:0,y:0});
+      b.n=5; b.d=4; d.v=1;
+      piezas=[a,b,c,d];
+      var r=[nivelCota(a),nivelCota(b),nivelCota(c),nivelCota(d)].join(' ');
+      piezas=todas;
+      return r==='0 2 0 0'; })());
+  /* --- la unidad de área ------------------------------------------------------------------- */
+  var M=cuadradoUnidad({x:R.x, y:R.y+alto(R)});
+  ok('con 1 u y 1 u sale un cuadrado de 1 por 1: la unidad de área, en verde',
+     !!M && medidas(M)==='1/1 por 1/1' && esUnidadA(M) && colorDe(M)===VERDE && Math.abs(ancho(M)-U)<1e-9 && Math.abs(alto(M)-U)<1e-9, medidas(M));
+  ok('su rótulo dice siempre que es 1 u², aunque Resultado esté apagado', opt.res===0 && rot(M)==='1 u × 1 u = 1 u²', rot(M));
+  ok('y el del otro rectángulo, con Resultado apagado, no dice lo que mide', rot(R).indexOf('=')<0 && rot(R).indexOf('u²')<0, rot(R));
+  opt.res=1;
+  ok('encendido, añade 10/12 u², sin simplificar', rot(R)==='2/3 u × 5/4 u = 10/12 u²', rot(R));
+  opt.res=0;
+  parte(M,4,3);
+  ok('la unidad de área partida en 4 columnas y 3 filas queda en 12 subunidades de 1/12 u²', trocitos(M).length===12 && etis(M)==='12 de 1/12', etis(M));
+  ok('y sus rayas caen sobre las marcas de las dos longitudes', (function(){
+      var mx=marcasX(M), my=marcasY(M), qx=marcasX(Q), vy=marcasY(V).concat([V.y]);
+      return mx.every(function(x){ return qx.some(function(o){ return Math.abs(o-x)<1e-9; }); }) &&
+             my.some(function(y){ return vy.some(function(o){ return Math.abs(o-y)<1e-9; }); }) &&
+             Math.abs(M.x-R.x)<1e-9 && Math.abs(M.y+alto(M)-(R.y+alto(R)))<1e-9; })());
+  ok('partida al revés, en 3 columnas y 4 filas, tiene las mismas 12 pero sus rayas ya no caen en los cuartos', (function(){
+      var m2=JSON.parse(JSON.stringify(M)); m2.a=3; m2.b=4;
+      var qx=marcasX(Q);
+      return trocitos(m2).length===12 && !marcasX(m2).some(function(x){ return qx.some(function(o){ return Math.abs(o-x)<1e-6; }); }); })());
+  ok('sin partir, el rectángulo de 2/3 u × 5/4 u es una sola subunidad', trocitos(R).length===1);
+  parte(R,5,2);
+  ok('partido en 5 columnas y 2 filas, queda en 10 subunidades, y cada una mide lo que una de las de la unidad de área: 1/12 u²',
+     trocitos(R).length===10 && etis(R)==='10 de 1/12', etis(R));
+  ok('y esas 10 llenan el rectángulo: entre todas miden 10/12 u²', (function(){
+      var t=0; trocitos(R).forEach(function(q){ t+=(q.x1-q.x0)*(q.y1-q.y0); }); return Math.abs(t-10/12)<1e-9; })());
+  ok('una subunidad del rectángulo es igual de ancha y de alta que una de la unidad de área', (function(){
+      var a=trocitos(R)[0], b=trocitos(M)[0];
+      return Math.abs((a.x1-a.x0)-(b.x1-b.x0))<1e-9 && Math.abs((a.y1-a.y0)-(b.y1-b.y0))<1e-9; })());
+  ok('partido en 3 columnas, en cambio, sus subunidades no son las de la unidad de área', (function(){
+      var r2=JSON.parse(JSON.stringify(R)); r2.a=3; r2.b=1; return etis(r2)==='3 de 5/18'; })());
+
+  /* --- seleccionar, resaltar y etiquetar rectángulos ------------------------------------------- */
+  /* con la unidad de área sola en el tablero; si dentro se deshace, M es otro objeto y hay que devolverlo a su sitio */
+  var soloM=function(f){
+    var todas=piezas; piezas=[M];
+    var r=f();
+    piezas=todas.map(function(o){ return o.id===M.id? M : o; });
+    return r;
+  };
+  ok('en modo subunidad, pinchar en la unidad de área elige un rectangulito de 1/4 u por 1/3 u', soloM(function(){
+      modo='sub'; seleccionaEn({x:M.x+U*0.3, y:M.y+U*0.9}); modo='pieza';
+      var r=rectCelda(M,selK), k=selK; selK=null;
+      return k===3 && Math.abs(r.w-U/4)<1e-9 && Math.abs(r.h-U/3)<1e-9; }));
+  ok('resaltar las 8 de las dos filas de abajo no saca nada de la pieza', soloM(function(){
+      [0,1,3,4,6,7,9,10].forEach(function(k){ resalta(M,k); });
+      return M.res.length===8 && piezas.length===1 && medidas(M)==='1/1 por 1/1'; }));
+  ok('con Resultado apagado, lo resaltado no lleva rótulo', toksResaltado(M).length===0);
+  opt.res=1;
+  ok('encendido, dice 8/12 u²', textoDe(toksResaltado(M))==='8/12 u²', textoDe(toksResaltado(M)));
+  ok('y en el otro rectángulo, 7 de sus 10 subunidades resaltadas son 7/12 u²', (function(){
+      R.res=[0,1,2,3,4,5,6]; var t=textoDe(toksResaltado(R)); R.res=[];
+      return t==='7/12 u²'; })());
+  opt.res=0;
+  ok('en el modo de resaltar, un pinchazo en un rectangulito lo resalta, y otro en el mismo se lo quita', soloM(function(){
+      var r0=M.res.slice(), P={x:M.x+U*0.1, y:M.y+U*0.1}, k=parteEn(M,P);       // primera columna, arriba
+      ponModo('res');
+      var A=empiezaAResaltar(P), puesto=M.res.indexOf(k)>=0 && A.poner===true;
+      var B=empiezaAResaltar(P), quitado=M.res.indexOf(k)<0 && B.poner===false;
+      ponModo('pieza');
+      return k===2 && puesto && quitado && M.res.join()===r0.join(); }));
+  ok('arrastrando se resaltan las que se pisan, y cada arrastre es un solo deshacer', soloM(function(){
+      var r0=M.res.slice(), n=undoStack.length, fila=M.y+U*0.1, i;
+      var A=empiezaAResaltar({x:M.x+U*0.1, y:fila});
+      for(i=1;i<4;i++) sigueResaltando(A,{x:M.x+U*(0.1+0.25*i), y:fila});
+      var todas=M.res.length===12, pasos=undoStack.length-n;
+      doUndo(); M=porId(M.id); piezas=[M];
+      return todas && pasos===1 && M.res.join()===r0.join(); }));
+  ok('en ese modo, pinchar en una longitud o en un rectángulo sin partir no resalta nada', (function(){
+      var liso=cuadradoUnidad({x:M.x+6*U, y:M.y});
+      var a=empiezaAResaltar({x:Q.x+U*1.2, y:Q.y}), b=empiezaAResaltar({x:liso.x+10, y:liso.y+10});
+      quita(liso); flashMsg=null;
+      return a===null && b===null && liso.res.length===0; })());
+  M=porId(M.id); R=porId(R.id); Q=porId(Q.id); V=porId(V.id);
+  ok('una longitud no se resalta ni se deja en solo el borde', resalta(Q,0)===false && ahueca(Q)===false && !Q.hueca);
+  ok('volver a partir el rectángulo borra lo resaltado', (function(){
+      parte(M,2,3); var n=M.res.length; doUndo(); M=porId(M.id);
+      return n===0 && M.res.length===8 && M.a===4; })());
+  R=porId(R.id); Q=porId(Q.id); V=porId(V.id);
+  ok('las etiquetas de una longitud miden cada tramo en unidades: cinco de 1/4 en 5/4 u, y dos de 1/3 en 2/3 u',
+     etis(Q)==='5 de 1/4' && etis(V)==='2 de 1/3', etis(Q)+' · '+etis(V));
+
+  /* --- girar rectángulos ------------------------------------------------------------------------ */
+  (function(){
+    var G=JSON.parse(JSON.stringify(R)); G.id=nid++; G.x=20*U; G.y=0; G.res=[0]; G.tx=[0.1]; piezas.push(G);
+    var gx=G.x, gy=G.y;
+    gira(G);
+    ok('girar el rectángulo le cambia los lados de sitio, y el rótulo con ellos: 5/4 u × 2/3 u',
+       medidas(G)==='2/3 por 5/4' && rot(G)==='5/4 u × 2/3 u' && G.a===2 && G.b===5, medidas(G)+' · '+rot(G));
+    ok('mide lo mismo, y tiene el mismo centro', valor(G).n===10 && valor(G).d===12 &&
+       Math.abs(G.x+ancho(G)/2-(gx+U*5/8))<1e-9 && Math.abs(G.y+alto(G)/2-(gy+U/3))<1e-9);
+    ok('la subunidad resaltada, que era la de abajo a la izquierda, queda abajo a la derecha', (function(){
+        var q=trocitos(G)[G.res[0]];
+        return G.res.length===1 && Math.abs(q.x1-2/3)<1e-9 && Math.abs(q.y0)<1e-9; })(), G.res.join());
+    ok('y la marca que tenía a 0,1 u de su lado izquierdo queda a 0,1 u del de abajo', G.tx.length===0 && lista(G.ty)==='0,1', lista(G.ty));
+    gira(G); gira(G); gira(G);
+    ok('a las cuatro vueltas queda como al principio', medidas(G)==='5/4 por 2/3' && G.a===5 && G.b===2 &&
+       G.res.join()==='0' && lista(G.tx)==='0,1' && G.ty.length===0 && Math.abs(G.x-gx)<1e-9 && Math.abs(G.y-gy)<1e-9);
+    quita(G);
+  })();
+
+  /* --- cortar, duplicar y unir rectángulos -------------------------------------------------------- */
+  u=limpio();
+  M=cuadradoUnidad({x:0,y:4*U}); parte(M,4,3);
+  var L12=corta(M,null);
+  ok('cortar la unidad de área entera, partida en 4 por 3, la deshace en 12 rectángulos de 1/3 u × 1/4 u',
+     !!L12 && L12.length===12 && L12.every(function(s){ return medidas(s)==='1/4 por 1/3' && rot(s)==='1/3 u × 1/4 u'; }), rot(L12[0]));
+  ok('que entre todos miden una unidad de área, y ninguno lo es', mismaFraccion(sumaAreas(L12),{p:1,q:1}) && !L12.some(esUnidadA));
+  u=limpio();
+  M=cuadradoUnidad({x:0,y:4*U}); parte(M,3,4);
+  var L5=corta(M,1*4+2);
+  ok('cortar una subunidad de en medio de la unidad de área en 3 por 4 la deja en cinco rectángulos', !!L5 && L5.length===5 && piezas.length===6);
+  ok('de 1/3 por 1, 1/3 por 1, 1/3 por 2/4, 1/3 por 1/4 y 1/3 por 1/4',
+     L5.map(medidas).join(' | ')==='1/3 por 1/1 | 1/3 por 1/1 | 1/3 por 2/4 | 1/3 por 1/4 | 1/3 por 1/4', L5.map(medidas).join(' | '));
+  ok('que entre todos siguen midiendo una unidad de área', mismaFraccion(sumaAreas(L5),{p:1,q:1}));
+  ok('los trozos grandes conservan las rayas por donde estaban partidos', L5[0].ty.length===3 && L5[2].ty.length===1 && trocitos(L5[0]).length===4);
+  u=limpio();
+  M=cuadradoUnidad({x:0,y:4*U}); parte(M,2,1);
+  var mit=corta(M,null);
+  ok('dos mitades de la unidad de área, pegadas, se unen en un cuadrado de 2/2 u de ancho que vuelve a ser la unidad de área', (function(){
+      mit[1].x=mit[0].x+ancho(mit[0])+5; mit[1].y=mit[0].y+4; aplicaIman(mit[1]);
+      var S=une(mit[0]);
+      return !!S && medidas(S)==='2/2 por 1/1' && esUnidadA(S) && lista(S.tx)==='0,5' && rot(S)==='1 u × 2/2 u = 1 u²'; })());
+  ok('un rectángulo con otro pegado que no forma rectángulo con él no se une', (function(){
+      var a=cuadradoUnidad({x:10*U,y:0}); parte(a,1,4); var c=duplica(a,0);
+      c.x=a.x+ancho(a)+5; c.y=a.y+4; aplicaIman(c);
+      var n=piezas.length;
+      return medidas(c)==='1/1 por 1/4' && une(a)===null && piezas.length===n; })());
+  ok('un rectángulo y una longitud pegada a su borde no se unen', (function(){
+      var a=cuadradoUnidad({x:20*U,y:0}), b=nuevaUnidad({x:a.x, y:a.y+U}); piezas.push(b);
+      var n=piezas.length;
+      return une(a)===null && une(b)===null && piezas.length===n; })());
+  ok('una pieza sin partir no se corta, y la copia de una subunidad no se lleva lo resaltado', (function(){
+      var a=cuadradoUnidad({x:30*U,y:0}), sinPartir=corta(a,null)===null;
+      parte(a,2,2); resalta(a,0); var c=duplica(a,null), d=duplica(a,0);
+      return sinPartir && c.res.length===1 && d.res.length===0 && medidas(d)==='1/2 por 1/2'; })());
+  flashMsg=null;
+
+  /* --- lo que no se dice si no se pide ------------------------------------------------------ */
+  ok('las casillas Etiquetas u, Etiquetas u² y Resultado arrancan apagadas',
+     !document.getElementById('etiqL').defaultChecked && !document.getElementById('etiqA').defaultChecked &&
+     !document.getElementById('res').defaultChecked);
+  ok('ni el panel, ni la barra de arriba, ni la ayuda, ni la barra de estado dicen cuánto mide el rectángulo del enunciado', (function(){
+      Q=cincoCuartos(); V=dosTercios(Q); R=rectangulo(V); parte(R,5,2);
+      var barras='', s0=sel, k0=selK, m0=modo;
+      [[null,null,'pieza'],[Q.id,null,'pieza'],[V.id,null,'pieza'],[R.id,null,'pieza'],[R.id,1,'sub'],[R.id,null,'sub'],[null,null,'res']].forEach(function(c){
+        sel=c[0]; selK=c[1]; modo=c[2]; barras+=' '+textoAyudaBarra(); });
+      sel=s0; selK=k0; modo=m0;
+      var todo=document.getElementById('side').textContent+document.getElementById('toolbar').textContent+
+               ayuda()+barras+piezas.map(rot).join(' ');
+      return todo.indexOf('10/12')<0 && todo.indexOf('5/6')<0 && todo.indexOf('1/12')<0; })());
+
+  /* --- el dibujo, contando tinta -------------------------------------------------------------- */
+  var enunAntes=enun;
+  enun=null; opt.rot=0;                      // el enunciado y las cotas también van en azul
+  u=limpio();
+  var azul1=cuenta(azul), rojo1=cuenta(rojo);
+  ok('la unidad de longitud se dibuja en azul, y sin partir no lleva marcas rojas', azul1>450 && azul1<1100 && rojo1<5, azul1+' azules, '+rojo1+' rojos');
+  parte(u,4);
+  var rojo4=cuenta(rojo);
+  ok('partida en 4, lleva tres marcas rojas', rojo4>60 && rojo4<400, rojo4);
+  gira(u);
+  ok('de pie se dibuja lo mismo', Math.abs(cuenta(azul)-azul1)<azul1*0.12 && Math.abs(cuenta(rojo)-rojo4)<rojo4*0.25, cuenta(azul)+' azules, '+cuenta(rojo)+' rojos');
+  opt.etiqL=1;
+  ok('con Etiquetas u, hay más tinta roja: las de los cuatro tramos', cuenta(rojo)>rojo4+60, cuenta(rojo));
+  opt.etiqL=0; opt.rot=1;
+  ok('y con Rótulos, más azul: la cota con lo que mide', cuenta(azul)>azul1+60, cuenta(azul));
+  opt.rot=0;
+  Q=cincoCuartos(); V=dosTercios(Q); R=rectangulo(V);
+  M=cuadradoUnidad({x:R.x, y:R.y+alto(R)});
+  /* las rayas se comen algo de color y el borde añade medio trazo por fuera:
+     tiene que salir lo exacto con un margen estrecho */
+  var casi=function(v,exacto){ var c=v/(U*U)/exacto; return c>0.88 && c<1.05; };
+  piezas=[M];
+  ok('la unidad de área es verde y ocupa lo que una unidad de ancho por una de alto', casi(cuenta(verde),1), num(cuenta(verde)/(U*U)));
+  piezas=[R];
+  ok('el otro rectángulo no es verde', cuenta(verde)<U*U*0.02, cuenta(verde));
+  piezas=[M,R];
+  var tapado=cuenta(verde)/(U*U);
+  ahueca(R);
+  var visto=cuenta(verde)/(U*U);
+  ok('puesto encima, tapa dos tercios de la unidad de área; en solo el borde, la deja ver entera',
+     tapado>0.28 && tapado<0.38 && visto>0.9 && visto<1.05, num(tapado)+' y '+num(visto));
+  ok('aunque esté el primero de la lista, se dibuja y se pincha por encima', (function(){
+      piezas=[R,M];
+      return enOrden()[1]===R && piezaEn({x:R.x+ancho(R)-1, y:R.y+alto(R)/2})===R; })());
+  ok('pinchando dentro de él se llega a la unidad de área de debajo, y donde no hay nada debajo, a nada',
+     piezaEn({x:M.x+20, y:M.y+U-20})===M && piezaEn({x:R.x+ancho(R)-15, y:R.y+alto(R)/2})===null);
+  ok('volver a pulsar le devuelve el relleno', (function(){ ahueca(R); piezas=[M,R]; return !R.hueca && cuenta(verde)/(U*U)<0.38; })());
+  piezas=[M]; parte(M,4,3);
+  [0,1,3,4,6,7,9,10].forEach(function(k){ resalta(M,k); });
+  ok('lo resaltado se pinta en naranja y ocupa 8/12 de la unidad de área', casi(cuenta(naranja),8/12), num(cuenta(naranja)/(U*U))+' de '+num(8/12));
+  M.res=[];
+  ok('y sin nada resaltado no hay naranja', cuenta(naranja)<U*U*0.02, cuenta(naranja));
+  piezas=[M,R,Q,V]; sel=null; selK=null;
+  var sinSel=cuenta(azul);
+  sel=Q.id; selK=1;
+  ok('seleccionar no cambia el color de nada en la imagen que se exporta', cuenta(azul)===sinSel && sinSel>0, sinSel);
+  opt.rot=1; opt.etiqL=1; opt.etiqA=1; opt.res=1; enun=enunAntes; M.res=[0,1]; parte(R,5,2);
+  ok('el tablero entero se dibuja con todo encendido, sin ningún NaN', (function(){
+      var oc=lienzoAparte(0.5), b=caja(piezas);
+      draw();
+      return oc.width>10 && oc.height>10 && [b.x0,b.y0,b.x1,b.y1].every(isFinite); })());
+
+  /* --- los rótulos de los rectángulos, sin pisarse ---------------------------------------- */
+  /* la caja, en el mundo, de cada renglón */
+  var renglones=function(){
+    var L=[];
+    gruposA().forEach(function(G){ G.filas.forEach(function(F,i){
+      var w=anchoFila(ctx,F,15,G.varias), y=G.top-26-ALTOFILA*i;
+      L.push({x0:G.cx-G.ancho/2, x1:G.cx-G.ancho/2+w, y0:y-18, y1:y+18, txt:textoFila(F), G:G});
+    }); });
+    return L;
+  };
+  (function(){
+    var todas=piezas, s0=sel;
+    piezas=[M,R,Q,V]; sel=null;
+    var GG=gruposA(), L=renglones();
+    ok('la unidad de área y el rectángulo que tiene encima comparten una pila de rótulos: un renglón cada uno',
+       GG.length===1 && GG[0].filas.length===2 && GG[0].varias && GG[0].miembros.length===2, GG.length+' grupo, '+L.length+' renglones');
+    ok('los dos renglones quedan por encima de los dos rectángulos y no se pisan entre sí',
+       L.length===2 && L.every(function(q){ return q.y1<=Math.min(M.y,R.y); }) && L[1].y1<=L[0].y0, L.map(function(q){ return num(q.y0)+'…'+num(q.y1); }).join(' | '));
+    ok('el de la unidad, el de más cerca, lleva en el mismo renglón lo que mide lo resaltado',
+       L[0].txt==='1 u × 1 u = 1 u² ▨ 2/12 u²' && L[1].txt==='2/3 u × 5/4 u = 10/12 u²', L[0].txt+' | '+L[1].txt);
+    opt.res=0;
+    ok('con Resultado apagado, los renglones no dicen lo que mide el rectángulo ni lo resaltado',
+       renglones().map(function(q){ return q.txt; }).join(' | ')==='1 u × 1 u = 1 u² | 2/3 u × 5/4 u');
+    opt.res=1;
+    ok('y empiezan los dos a la misma altura por la izquierda, como una leyenda', Math.abs(L[0].x0-L[1].x0)<1e-9 && L[0].x0<L[0].x1);
+    ok('la imagen que se exporta deja sitio para la pila entera', (function(){
+        var b=caja(piezas); return b.y0<=L[1].y0 && b.x0<=Math.min(L[0].x0,L[1].x0) && b.x1>=Math.max(L[0].x1,L[1].x1); })());
+    var lejos=cuadradoUnidad({x:M.x+10*U, y:M.y+U});
+    GG=gruposA();
+    ok('un rectángulo que está lejos lleva su rótulo aparte, centrado encima de él y sin cuadradito',
+       GG.length===2 && GG[1].miembros[0]===lejos && !GG[1].varias && Math.abs(GG[1].cx-(lejos.x+U/2))<1e-9 && GG[1].top===lejos.y);
+    piezas=[lejos]; opt.res=0; enun=null;
+    var conRot=cuenta(azul);
+    opt.rot=0;
+    ok('y ese rótulo se dibuja: con Rótulos hay tinta azul, y sin Rótulos no', conRot>25 && cuenta(azul)<5, conRot+' y '+cuenta(azul));   // son dos unos, que tienen poca tinta
+    opt.rot=1;
+    parte(lejos,4,3);
+    var doce=corta(lejos,null);
+    GG=gruposA();
+    ok('los 12 trozos iguales de un corte comparten un solo renglón', doce.length===12 && GG.length===1 && GG[0].filas.length===1 &&
+       GG[0].miembros.length===12 && textoFila(GG[0].filas[0])==='1/3 u × 1/4 u', GG.length+' grupo, '+GG[0].filas.length+' renglón');
+    piezas=todas; sel=s0; enun=enunAntes; opt.res=1;
+  })();
+  opt.etiqL=0; opt.etiqA=0; opt.res=0; selK=null;
+
+  /* --- guardar y abrir -------------------------------------------------------------------------- */
+  R.hueca=1; V.a=2;
+  var firmaDe=function(){
+    return JSON.stringify(enun)+piezas.map(function(s){
+      return esL(s)? ['L',s.n,s.d,s.v?1:0,s.a,lista(s.t),s.x.toFixed(2),s.y.toFixed(2)].join(',')
+                   : ['A',s.wn,s.wd,s.hn,s.hd,s.a,s.b,s.res.join('+'),s.hueca?1:0,lista(s.tx),lista(s.ty),s.x.toFixed(2),s.y.toFixed(2)].join(','); }).join('|');
+  };
+  var firma=firmaDe(), guardado=JSON.parse(JSON.stringify(datos()));
+  n0=piezas.length;
+  piezas=[]; enun=null;
+  importMode='replace';
+  ok('guardar y volver a abrir conserva las longitudes y los rectángulos, sus cortes, sus marcas, lo resaltado, el que está en solo el borde y el enunciado',
+     loadData(JSON.parse(JSON.stringify(guardado))) && firmaDe()===firma, piezas.length+' piezas');
+  importMode='add'; loadData(JSON.parse(JSON.stringify(guardado)));
+  ok('el botón ＋ añade sin borrar lo que había', piezas.length===n0*2, piezas.length);
+  importMode='replace';
+  var malo=function(f){ var d=JSON.parse(JSON.stringify(guardado)); f(d); return limpiaPiezas(d.piezas)===null; };
+  var deTipo=function(d,t){ return d.piezas.filter(function(s){ return s.tipo===t; })[0]; };
+  ok('se rechaza una pieza que no es ni longitud ni rectángulo', malo(function(d){ d.piezas[0].tipo='Z'; }));
+  ok('y una longitud partida en cero partes', malo(function(d){ deTipo(d,'L').a=0; }));
+  ok('y una de denominador cero', malo(function(d){ deTipo(d,'L').d=0; }));
+  ok('y una más larga de lo que cabe', malo(function(d){ deTipo(d,'L').n=99; }));
+  ok('y una con marcas fuera de ella', malo(function(d){ deTipo(d,'L').t=[7]; }));
+  ok('y un rectángulo con coordenadas que no son números', malo(function(d){ deTipo(d,'A').x='ahí'; }));
+  ok('y uno con una subunidad resaltada que no tiene', malo(function(d){ deTipo(d,'A').res=[99]; }));
+  ok('y uno con un lado que no es una fracción', malo(function(d){ deTipo(d,'A').wn=1.5; }));
+  ok('abrir un archivo de otro manipulativo deja el tablero como estaba', (function(){
+      var f=firmaDe(); var r=loadData({formato:'operacion-de', piezas:[]});
+      return r===false && firmaDe()===f; })());
+  flashMsg=null;
+
+  /* --- deshacer ------------------------------------------------------------------------------------ */
+  u=limpio();
+  parte(u,4); c4=duplica(u,3); aCont(c4,u); une(u);
+  ok('unir se deshace: vuelven la unidad y su cuarto', (function(){ doUndo(); return piezas.length===2 && piezas.some(esUnidadL); })());
+  ok('y duplicar, y partir', (function(){ doUndo(); var n=piezas.length; doUndo(); return n===1 && piezas[0].a===1; })());
+  parte(piezas[0],3); corta(piezas[0],null);
+  ok('y cortar', (function(){ var n=piezas.length; doUndo(); return n===3 && piezas.length===1 && piezas[0].a===3; })());
+  ok('y girar, y construir un rectángulo', (function(){
+      var a=limpio(), b=duplica(a,null); gira(b); enEsquina(b,a);
+      var n=undoStack.length; rectangulo(a);
+      var con=piezas.length; doUndo(); var sin=piezas.length;
+      b=porId(b.id); var x1=b.x;
+      return con===3 && sin===2 && undoStack.length===n && b.v===1 && isFinite(x1); })());
+  ok('la unidad de área se puede sacar ya hecha: un cuadrado de 1 u de lado, verde, igual que el construido, y sin tocar lo demás', (function(){
+      var g={x:view.x, y:view.y, z:view.z};
+      var a=limpio(), x0=a.x, y0=a.y, n=undoStack.length;
+      var c=otraUnidadA(), hecho=cuadradoUnidad({x:9*U, y:9*U});
+      var bien=piezas.indexOf(a)>=0 && a.x===x0 && a.y===y0 && esL(a) && !esL(c) && esUnidadA(c) && colorDe(c)===VERDE &&
+               medidas(c)===medidas(hecho) && rot(c)==='1 u × 1 u = 1 u²' && c.a===1 && c.b===1 && trocitos(c).length===1 &&
+               sel!==null && c.y>a.y+20 && undoStack.length===n+2;
+      doUndo(); doUndo();
+      view=g;
+      return bien && piezas.length===1 && esL(piezas[0]); })());
+  ok('una acción que no cambia nada no gasta un deshacer', (function(){
+      var s=piezas[0], n=undoStack.length; parte(s,s.a); rectangulo(nuevaUnidad({x:50*U,y:50*U})); return undoStack.length===n; })());
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+  }
+  /* el tablero, como estaba */
+  piezas=antes.p; sel=antes.s; selK=antes.k; nid=Math.max(nid,antes.n); enun=antes.e; view=antes.view; undoStack=antes.undo;
+  opt=JSON.parse(antes.opt); modo=antes.modo; importMode='replace'; flashMsg=null;
+  try{ draw(); }catch(e2){}
+
+  /* --- informe ------------------------------------------------------------------------------ */
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length
+                                         : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación de Longitud × Longitud</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); });
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__lxl={
+  test:runSelfTest, U:U, MAXD:MAXD, NIVELES:NIVELES, opt:opt,
+  piezas:function(){ return piezas; }, sel:function(){ return sel; }, selK:function(){ return selK; },
+  enun:function(){ return enun; }, modo:function(){ return modo; }, ponModo:ponModo, view:function(){ return view; },
+  selecciona:function(id,k){ sel=id; selK=(k===undefined? null : k); draw(); }, seleccionaEn:seleccionaEn,
+  nuevaUnidad:nuevaUnidad, otraUnidad:otraUnidad, parte:parte, corta:corta, duplica:duplica, une:une, gira:gira,
+  rectangulo:rectangulo, esquinaCon:esquinaCon, quita:quita, resalta:resalta, empiezaAResaltar:empiezaAResaltar,
+  sigueResaltando:sigueResaltando, ahueca:ahueca, piezaEn:piezaEn, parteEn:parteEn, trocitos:trocitos,
+  valor:valor, areaDe:areaDe, parteFr:parteFr, sumaFr:sumaFr, marcasX:marcasX, marcasY:marcasY,
+  aplicaIman:aplicaIman, ponEnunciado:ponEnunciado, leeEnunciado:leeEnunciado, enunciadoAlAzar:enunciadoAlAzar,
+  lienzoAparte:lienzoAparte, datos:datos, limpiaPiezas:limpiaPiezas, load:loadData, w2s:w2s,
+  setMode:function(m){ importMode=m; }, redraw:draw, fit:fitView
+};
+
+})();
+</script>
+</body>
+</html>

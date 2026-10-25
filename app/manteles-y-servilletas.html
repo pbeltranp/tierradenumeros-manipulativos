@@ -5,109 +5,154 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Manteles y servilletas</title>
 <style>
+  /* Los tamaños de letra están pensados para proyectar en clase: lo que en un
+     portátil se lee de cerca, en la pantalla del aula hay que leerlo desde la
+     última fila. Es la misma escala de «Tiras de papel». */
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
-  body{font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  body{font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
        color:#2b2f36;background:#fff;display:flex;height:100%;overflow:hidden}
-  #side{width:212px;flex:0 0 212px;border-right:1px solid #e6e8ec;padding:10px 10px;overflow:auto;
+  #side{width:256px;flex:0 0 256px;border-right:1px solid #e6e8ec;padding:11px 11px;overflow:auto;
         background:#fafbfc}
-  #side h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a919c;
+  #side h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#7b828d;
            margin:0 0 6px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;
            text-overflow:ellipsis;clear:both}
-  #side h2.sep{margin-top:16px}
+  #side h2.sep{margin-top:13px}
+  /* rótulo del material: sobrio, peso ligero y una línea fina debajo. Este
+     nombre es largo y va un punto más pequeño que en las tiras, para que quepa
+     en una línea */
+  #side .brand{font-size:22.5px;font-weight:200;letter-spacing:.01em;color:#39404a;line-height:1.25;
+               padding:1px 0 9px;margin-bottom:11px;border-bottom:1px solid #e3e6eb;white-space:nowrap}
+  #side .brand b{font-weight:400;color:#2b2f36}
   main{flex:1;display:flex;flex-direction:column;min-width:0}
-  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 9px;
            border-bottom:1px solid #e6e8ec;background:#fafbfc}
-  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:6px 10px;font-size:15px;
        color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
-  .btn:hover{background:#f0f2f5}
-  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
-  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
-  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;
-       padding:3px 6px;border-radius:6px}
+  .btn:hover:not(:disabled){background:#f0f2f5}
+  .btn.on,.btn.on:hover:not(:disabled){background:#2f62a8;border-color:#2f62a8;color:#fff}
+  /* solo en la barra: la misma clase separa las secciones del panel, y sin
+     acotarla sus títulos se quedaban en una raya de 1 px */
+  #toolbar .sep{width:1px;height:22px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:5px;font-size:15px;color:#4a515c;cursor:pointer;
+       padding:4px 6px;border-radius:6px}
   .chk:hover{background:#eff1f4}
-  .chk input{margin:0;cursor:pointer}
+  .chk input{margin:0;cursor:pointer;width:16px;height:16px}
   .act{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:5px;
-       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:6px 8px;font-size:12px;
+       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:7px 9px;font-size:15px;
        color:#3d4450;cursor:pointer;text-align:left;line-height:1.3}
-  .act:hover{background:#f0f2f5}
+  .act:hover:not(:disabled){background:#f0f2f5}
   .act:disabled{opacity:.4;cursor:default}
-  .act kbd{font:11px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
-  #servi{width:100%;height:82px;border:1px dashed #d5d9e0;border-radius:9px;background:#fff;
+  .act kbd{font:12.5px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
+  /* un botón que espera el segundo pinchazo para hacer lo que dice */
+  .act.seguro,.btn.seguro,.act.seguro:hover:not(:disabled),.btn.seguro:hover:not(:disabled){
+       border-color:#c2410c;color:#c2410c;background:#fff7f2;font-weight:600}
+  .act.on,.act.on:hover:not(:disabled){background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .act.on kbd{color:#cfdcf0}
+  .fila .act{margin-top:0;flex:1;padding:7px 7px}
+  /* tres en una fila, para que «Comprobar» no se salga de los 700 px del marco */
+  .fila .act.tres{font-size:14px;padding:7px 3px;justify-content:center;white-space:nowrap}
+  #servi{width:100%;height:74px;border:1px dashed #d5d9e0;border-radius:9px;background:#fff;
          cursor:grab;display:block;touch-action:none}
   #servi:hover{border-color:#c7ccd4;background:#f7f8fa}
-  select,input[type=text],input[type=number]{font:12px inherit;border:1px solid #d5d9e0;border-radius:6px;
-       padding:5px 6px;color:#2b2f36;background:#fff;width:100%}
-  .fila{display:flex;gap:5px;align-items:stretch;margin-top:4px}
+  select,input[type=text],input[type=number]{font:15px inherit;border:1px solid #d5d9e0;border-radius:6px;
+       padding:6px 7px;color:#2b2f36;background:#fff;width:100%}
+  .fila{display:flex;gap:5px;align-items:stretch;margin-top:5px}
   .fila > *{min-width:0}
-  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:4px 0;font-size:12.5px;
+  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:5px 0;font-size:16px;
         color:#3d4450;cursor:pointer;flex:1;text-align:center}
-  .mini:hover{background:#f0f2f5}
+  .mini:hover:not(:disabled){background:#f0f2f5}
   .mini:disabled{opacity:.35;cursor:default}
-  .cuenta{flex:1.4;display:flex;align-items:center;justify-content:center;gap:5px;
-          font-weight:600;font-size:12.5px;color:#2b2f36}
+  #lisa{font-size:14.5px}
+  /* columnas y filas, lado a lado: cada mitad lleva su rótulo y sus dos botones */
+  .mitad{flex:1}
+  .mitad .fila{margin-top:3px;gap:3px}
+  .mitad .mini{flex:0 0 28px}
+  .cuenta{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
+          font-weight:600;font-size:15.5px;color:#2b2f36}
   .cuenta svg{display:block;flex:0 0 auto}
-  .lab{font-size:11px;color:#8a919c;margin-top:7px}
-  #partes{margin-top:7px;font-size:11.5px;color:#4a515c;line-height:1.45;text-align:center;
-          background:#fff;border:1px solid #e6e8ec;border-radius:8px;padding:6px 7px}
+  .lab{font-size:13.5px;color:#7b828d;margin-top:0}
+  #partes{margin-top:7px;font-size:14px;color:#4a515c;line-height:1.45;text-align:center;
+          background:#fff;border:1px solid #e6e8ec;border-radius:8px;padding:7px 8px}
   #partes b{color:#2b2f36}
-  .nota{font-size:11px;color:#8a919c;line-height:1.5;margin-top:7px}
-  #cajamedir .resp{display:flex;gap:4px;align-items:center;margin-top:5px}
-  #cajamedir input{text-align:center;padding:5px 2px}
-  #veredicto{margin-top:6px;font-size:12px;line-height:1.4;min-height:16px}
+  .nota{font-size:13.5px;color:#7b828d;line-height:1.45;margin-top:7px}
+  #cajamedir .resp{display:flex;gap:5px;align-items:center;margin-top:5px}
+  #cajamedir input{text-align:center;padding:6px 2px;font-size:17px}
+  #cajamedir .barra{font-size:21px;color:#8a919c}
+  #cajamedir .uni{font-size:18px;font-weight:600;color:#4a515c;padding:0 3px 0 1px}
+  #veredicto{margin-top:6px;font-size:15px;line-height:1.4;min-height:16px}
   #veredicto.si{color:#15803d;font-weight:600}
   #veredicto.no{color:#c2410c}
-  #colores{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
-  #colores .sw{width:23px;height:23px;border-radius:6px;border:2px solid #fff;
+  #colores{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+  #colores .sw{width:26px;height:26px;border-radius:6px;border:2px solid #fff;
                box-shadow:0 0 0 1px #d5d9e0;cursor:pointer;padding:0}
   #colores .sw:hover{box-shadow:0 0 0 1px #9aa1ab}
   #colores .sw.on{box-shadow:0 0 0 2px #2f62a8}
   #stage{position:relative;flex:1;min-height:0;background:#fbfbfa}
   canvas#cv{display:block;width:100%;height:100%;touch-action:none}
-  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
-        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
-  #info{position:absolute;right:10px;top:10px;width:320px;background:#fff;border:1px solid #dfe2e7;
-        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
-        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:14.5px;
+        padding:6px 12px;border-radius:16px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:390px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:12px 15px;font-size:14px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto;
+        max-width:calc(100% - 20px)}
   #info.show{display:block}
   #info b{color:#2b2f36}
   #info a{color:#2f62a8}
-  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:12.5px;
              line-height:1.5;color:#8a919c}
   #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
-        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+        display:none;align-items:center;justify-content:center;font-size:18px;color:#2f62a8;font-weight:600}
   #drop.show{display:flex}
   @media (max-width:640px){
-    #side{width:156px;flex:0 0 156px;padding:8px 7px}
-    .btn{padding:5px 7px;font-size:12px}
-    #info{width:calc(100% - 20px)}
+    #side{width:176px;flex:0 0 176px;padding:8px 7px}
+    #side .brand{white-space:normal;font-size:20px}
+    .btn{padding:5px 7px;font-size:13.5px}
+    .act,.chk,select,input[type=text]{font-size:13.5px}
   }
 </style>
 </head>
 <body>
 
   <aside id="side">
+    <div class="brand">Manteles y <b>servilletas</b></div>
     <h2>Servilleta (unidad)</h2>
-    <canvas id="servi" title="Arrástrala al tablero"></canvas>
-    <div class="nota">Arrástrala. Todas son iguales y cuadradas; saca las que necesites.</div>
+    <canvas id="servi" title="Arrástrala al tablero. Todas son iguales y cuadradas; saca las que necesites"></canvas>
 
     <h2 class="sep">Doblar la servilleta</h2>
-    <div class="lab">En vertical, columnas</div>
-    <div class="fila">
-      <button class="mini" id="colMenos" disabled>−</button>
-      <div class="cuenta" id="ncol">—</div>
-      <button class="mini" id="colMas" disabled>+</button>
+    <div class="fila" style="gap:9px">
+      <div class="mitad" title="Dobleces en vertical: columnas">
+        <div class="lab">Columnas</div>
+        <div class="fila">
+          <button class="mini" id="colMenos" disabled title="Una columna menos">−</button>
+          <div class="cuenta" id="ncol">—</div>
+          <button class="mini" id="colMas" disabled title="Una columna más">+</button>
+        </div>
+      </div>
+      <div class="mitad" title="Dobleces en horizontal: filas">
+        <div class="lab">Filas</div>
+        <div class="fila">
+          <button class="mini" id="filMenos" disabled title="Una fila menos">−</button>
+          <div class="cuenta" id="nfil">—</div>
+          <button class="mini" id="filMas" disabled title="Una fila más">+</button>
+        </div>
+      </div>
     </div>
-    <div class="lab">En horizontal, filas</div>
     <div class="fila">
-      <button class="mini" id="filMenos" disabled>−</button>
-      <div class="cuenta" id="nfil">—</div>
-      <button class="mini" id="filMas" disabled>+</button>
-    </div>
-    <div class="fila">
-      <button class="mini" id="lisa" disabled>desdoblar</button>
+      <button class="mini" id="lisa" disabled title="Quitar todos los dobleces">desdoblar</button>
     </div>
     <div id="partes"></div>
+
+    <h2 class="sep">Al pinchar, seleccionar</h2>
+    <div class="fila">
+      <button class="act on" id="modoP" title="Al pinchar se selecciona la pieza entera (tecla 1)">Pieza<kbd>1</kbd></button>
+      <button class="act" id="modoS" title="Al pinchar en una servilleta doblada se selecciona solo el trozo en el que se pincha (tecla 2)">Subunidad<kbd>2</kbd></button>
+    </div>
+    <div class="fila" style="margin-top:9px">
+      <button class="act tres" id="cortar" disabled style="flex:1" title="Separa la subunidad seleccionada del resto de la servilleta; con la servilleta entera, la corta por todas sus marcas (tecla C)">✂ Cortar</button>
+      <button class="act tres" id="duplicar" disabled style="flex:1.25" title="Saca una copia de la pieza o de la subunidad seleccionada (tecla D)">⧉ Duplicar</button>
+      <button class="act tres" id="borrar" disabled style="flex:.85" title="Quita la pieza seleccionada (tecla Supr)">Quitar</button>
+    </div>
 
     <h2 class="sep">Mantel</h2>
     <select id="nivel">
@@ -116,9 +161,11 @@
       <option value="2">Difícil (hasta sextos y octavos)</option>
     </select>
     <button class="act" id="nuevo">Nuevo mantel al azar</button>
-    <input type="text" id="aMano" placeholder="3/2 x 5/4, o 15/8" style="margin-top:5px"
-           title="Escribe las medidas del mantel, o directamente el área que quieres que tenga">
-    <button class="act" id="crear">Crear ese mantel</button>
+    <div class="fila">
+      <input type="text" id="aMano" placeholder="3/2 x 5/4, o 15/8" style="flex:1.9"
+             title="Escribe las medidas del mantel, o directamente el área que quieres que tenga">
+      <button class="act" id="crear" style="justify-content:center" title="Crear un mantel con esas medidas">Crear</button>
+    </div>
 
     <h2 class="sep">Comprobar</h2>
     <div id="cajamedir"></div>
@@ -126,10 +173,6 @@
 
     <h2 class="sep">Color del mantel</h2>
     <div id="colores"></div>
-
-    <h2 class="sep">Selección</h2>
-    <button class="act" id="duplicar" disabled>Duplicar<kbd>D</kbd></button>
-    <button class="act" id="borrar" disabled>Quitar<kbd>Supr</kbd></button>
   </aside>
 
   <main>
@@ -138,7 +181,7 @@
       <button class="btn" id="vaciar" title="Quitar todo del tablero">Vaciar</button>
       <span class="sep"></span>
       <label class="chk" title="Al soltar, los bordes y las marcas se enganchan a los de los demás"><input type="checkbox" id="iman" checked>Imán</label>
-      <label class="chk" title="Escribe 1/n dentro de cada parte de las servilletas dobladas"><input type="checkbox" id="etiq">Etiquetas</label>
+      <label class="chk" title="Escribe dentro de cada parte de las servilletas cuánto mide, en unidades"><input type="checkbox" id="etiq">Etiquetas</label>
       <button class="btn" id="transp" title="Las servilletas se vuelven translúcidas y se ve el mantel por debajo">◑ Transparencia</button>
       <span class="sep"></span>
       <button class="btn" id="mano" title="Mover el tablero en vez de las piezas">✋</button>
@@ -174,9 +217,22 @@
    cuadradito, las tres de la misma área, y solo algunas de esas formas
    embaldosan el mantel. Por eso la servilleta se dobla en columnas y en
    filas por separado: la forma de la parte importa tanto como su tamaño.
+
+   Hay tres clases de pieza:
+   · 'u', la servilleta entera: 1 por 1, doblada en a columnas y b filas.
+   · 't', un trozo de servilleta, que sale de cortar o de duplicar una
+     subunidad: wp columnas de las wq en que estaba doblada la servilleta y hp
+     filas de las hq, sin simplificar (dos cuartos seguidos son dos cuartos,
+     con su marca en medio). Es papel de la servilleta, va de su color, y ya
+     no se dobla más.
+   · 'm', el mantel: sin marcas y sin medida escrita.
+   La subunidad es cada uno de los trozos de una 'u' o de una 't': siempre
+   mide 1/(columnas·filas) de unidad, y es lo que se selecciona, se duplica y
+   se corta, igual que en «Tiras de papel».
    ========================================================================= */
 var U=150;                 // el lado de la servilleta, en píxeles
 var MAXD=8;                // dobleces máximos en cada dirección
+var HUECO=12;              // lo que se separa de su pieza un trozo sacado de ella
 
 var COLU={f:'#f4ead6', b:'#c2ab7d', t:'#7a6634'};     // la servilleta, color fijo
 var PALETA=[
@@ -189,12 +245,14 @@ var PALETA=[
   {f:'#8d6e63', b:'#5f463d'},
   {f:'#5c6bc0', b:'#39479a'}
 ];
-function colorDe(s){ return s.tipo==='u' ? COLU : PALETA[(s.c||0)%PALETA.length]; }
+function colorDe(s){ return s.tipo==='m' ? PALETA[(s.c||0)%PALETA.length] : COLU; }
 
 /* =========================================================================
    2. ESTADO
    ========================================================================= */
 var piezas=[], sel=null, nid=1, letra=0, colorTurno=0;
+var selK=null;                     // la subunidad seleccionada dentro de la pieza sel, o null si es la pieza entera
+var modoSel='pieza';               // 'pieza' o 'sub': qué selecciona un pinchazo
 var view={x:0,y:0,z:1};
 var drag=null, undoStack=[], importMode='replace';
 var opt={iman:1, etiq:0, mano:0, alfa:0};
@@ -208,14 +266,17 @@ var flashMsg=null, flashT=0;
 function w2s(p){ return {x:p.x*view.z+view.x, y:p.y*view.z+view.y}; }
 function s2w(p){ return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z}; }
 function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2400); }
+function fuente(px,peso){ return (peso? peso+' ' : '')+px+'px -apple-system,Segoe UI,Roboto,sans-serif'; }
+function foto(){ return JSON.stringify({p:piezas, s:sel, k:selK, n:nid}); }
 function pushUndo(){
-  undoStack.push(JSON.stringify({p:piezas, s:sel, n:nid}));
+  undoStack.push(foto());
   if(undoStack.length>90) undoStack.shift();
 }
 function doUndo(){
   if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
   var d=JSON.parse(undoStack.pop());
   piezas=d.p; sel=d.s; nid=d.n||1;
+  selK=(d.k===null || d.k===undefined)? null : d.k;
   ponVeredicto(''); draw();
 }
 
@@ -335,15 +396,33 @@ function porId(id){
   return null;
 }
 function seleccionada(){ return sel==null? null : porId(sel); }
+/* --- las subunidades ---------------------------------------------------------
+   Una servilleta o un trozo tienen a columnas y b filas de subunidades. Cada
+   una mide 1/denCol de ancho y 1/denFil de alto, que son los dobleces de la
+   servilleta de la que sale; en la servilleta entera, sus propias a y b. */
+function partes(s){ return s.tipo==='m'? 1 : s.a*s.b; }
+function denCol(s){ return Math.round(s.wq*s.a/s.wp); }
+function denFil(s){ return Math.round(s.hq*s.b/s.hp); }
+function celdaDen(s){ return denCol(s)*denFil(s); }
+/* un trozo de ci columnas y cj filas de subunidades de 1/A por 1/B */
+function nuevoTrozo(ci,cj,A,B,P){
+  return {id:nid++, tipo:'t', wp:ci, wq:A, hp:cj, hq:B, a:ci, b:cj, c:0,
+          x:P.x, y:P.y, nombre:''};
+}
+/* las subunidades se numeran por filas, de arriba abajo y de izquierda a derecha */
+function rectParte(s,k){
+  var i=k%s.a, j=Math.floor(k/s.a);
+  return {i:i, j:j, x:s.x+ancho(s)*i/s.a, y:s.y+alto(s)*j/s.b, w:ancho(s)/s.a, h:alto(s)/s.b};
+}
 function marcasX(s){
   var out=[];
-  if(s.tipo!=='u' || s.a<2) return out;
+  if(s.tipo==='m' || s.a<2) return out;
   for(var k=1;k<s.a;k++) out.push(s.x+ancho(s)*k/s.a);
   return out;
 }
 function marcasY(s){
   var out=[];
-  if(s.tipo!=='u' || s.b<2) return out;
+  if(s.tipo==='m' || s.b<2) return out;
   for(var k=1;k<s.b;k++) out.push(s.y+alto(s)*k/s.b);
   return out;
 }
@@ -351,6 +430,13 @@ function puntosX(s){ return [s.x, s.x+ancho(s)].concat(marcasX(s)); }
 function puntosY(s){ return [s.y, s.y+alto(s)].concat(marcasY(s)); }
 function dentro(P,s){
   return P.x>=s.x && P.x<=s.x+ancho(s) && P.y>=s.y && P.y<=s.y+alto(s);
+}
+/* en qué subunidad de la pieza cae un punto del mundo; -1 si cae fuera */
+function parteEn(s,P){
+  if(!dentro(P,s)) return -1;
+  var i=Math.max(0, Math.min(s.a-1, Math.floor((P.x-s.x)/ancho(s)*s.a)));
+  var j=Math.max(0, Math.min(s.b-1, Math.floor((P.y-s.y)/alto(s)*s.b)));
+  return j*s.a+i;
 }
 function caja(lista){
   if(!lista.length) return null;
@@ -408,9 +494,67 @@ function dobla(s,a,b){
   b=Math.max(1, Math.min(MAXD, Math.round(b)));
   if(a===s.a && b===s.b) return false;
   pushUndo();
-  s.a=a; s.b=b;
+  s.a=a; s.b=b; selK=null;          // otros trozos: la subunidad elegida ya no existe
   draw();
   return true;
+}
+
+/* --- duplicar y cortar -------------------------------------------------------
+   Como en «Tiras de papel», en dos dimensiones.
+   Duplicar saca una copia: de la pieza entera, o de la subunidad elegida, que
+   sale suelta justo debajo de la pieza, en la vertical de su columna.
+   Cortar separa: con una subunidad elegida, esa cae debajo de la pieza y lo
+   demás se queda en su sitio, en los rectángulos que queden —lo de su
+   izquierda y lo de su derecha, a toda la altura, y lo de encima y lo de debajo
+   en su misma columna—; con la pieza entera, la deshace en todas sus
+   subunidades, un poco separadas para que se vea el corte. El mantel no se
+   corta, igual que no se dobla. */
+function duplica(s,k){
+  if(!s) return null;
+  var t;
+  if(k===null || k===undefined || partes(s)<2){
+    pushUndo();
+    t={id:nid++, tipo:s.tipo, wp:s.wp, wq:s.wq, hp:s.hp, hq:s.hq, a:s.a, b:s.b, c:s.c||0,
+       x:s.x+U*0.2, y:s.y+U*0.2, nombre:s.tipo==='m'? siguienteLetra() : ''};
+  } else {
+    if(!(k>=0 && k<partes(s))) return null;
+    pushUndo();
+    t=nuevoTrozo(1, 1, denCol(s), denFil(s), {x:rectParte(s,k).x, y:s.y+alto(s)+HUECO});
+  }
+  piezas.push(t); sel=t.id; selK=null; ponVeredicto(''); draw();
+  return t;
+}
+function corta(s,k){
+  if(!s) return null;
+  if(s.tipo==='m'){ flash('El mantel no se corta: se mide con la servilleta'); return null; }
+  var N=partes(s), A=denCol(s), B=denFil(s), nuevas=[], i, j, R;
+  if(N<2){ flash('Se corta por las marcas: primero dobla la servilleta'); return null; }
+  if(k===null || k===undefined){
+    pushUndo();
+    for(j=0;j<s.b;j++) for(i=0;i<s.a;i++){
+      R=rectParte(s, j*s.a+i);
+      nuevas.push(nuevoTrozo(1, 1, A, B, {x:R.x+i*8, y:R.y+j*8}));
+    }
+    sel=nuevas[0].id;
+  } else {
+    if(!(k>=0 && k<N)) return null;
+    pushUndo();
+    R=rectParte(s,k); i=R.i; j=R.j;
+    if(i>0)     nuevas.push(nuevoTrozo(i, s.b, A, B, {x:s.x, y:s.y}));
+    if(i<s.a-1) nuevas.push(nuevoTrozo(s.a-1-i, s.b, A, B, {x:R.x+R.w, y:s.y}));
+    if(j>0)     nuevas.push(nuevoTrozo(1, j, A, B, {x:R.x, y:s.y}));
+    if(j<s.b-1) nuevas.push(nuevoTrozo(1, s.b-1-j, A, B, {x:R.x, y:R.y+R.h}));
+    nuevas.push(nuevoTrozo(1, 1, A, B, {x:R.x, y:s.y+alto(s)+HUECO}));
+    sel=nuevas[nuevas.length-1].id;
+  }
+  piezas=piezas.filter(function(o){ return o.id!==s.id; }).concat(nuevas);
+  selK=null; ponVeredicto(''); draw();
+  return nuevas;
+}
+function ponModoSel(m){
+  modoSel = m==='sub'? 'sub' : 'pieza';
+  if(modoSel!=='sub') selK=null;
+  draw();
 }
 
 /* =========================================================================
@@ -425,18 +569,45 @@ function rectRedondo(c,x,y,w,h,r){
   c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y);
   c.closePath();
 }
+/* La unidad se escribe «u», como en el resto de los materiales de medida: la
+   servilleta es la unidad de área, y cada trozo mide 1/n u. */
 function etiquetaParte(c,anchoCelda,altoCelda,n){
   if(altoCelda<13) return '';
-  var largoT='1/'+n+' s';
+  var largoT='1/'+n+' u';
   if(c.measureText(largoT).width+7<anchoCelda) return largoT;
   var cortoT='1/'+n;
   if(c.measureText(cortoT).width+5<anchoCelda) return cortoT;
   return '';
 }
-function drawPieza(c,s,marcada){
+/* La letra de las etiquetas crece con el zoom y es grande de entrada, que esto
+   se proyecta. A cambio, en los trozos estrechos no cabe: antes de quitarle la
+   unidad a la etiqueta se prueba con letra más pequeña, hasta 3/4 de la ideal;
+   después se prueba la fracción sola, hasta un mínimo que aún se lea, y solo
+   si tampoco cabe se deja el trozo sin rotular. Deja puesta en el contexto la
+   tipografía con la que cabe. */
+var PX_ETIQ=15, PX_MIN=9;
+function pxEtiqueta(){ return Math.max(10, Math.min(34, PX_ETIQ*view.z)); }
+function ajustaEtiqueta(c,anchoCelda,altoCelda,n,px){
+  var p, t, suelo=Math.max(PX_MIN, px*0.75);
+  for(p=px; p>=suelo-1e-9; p-=1){
+    c.font=fuente(p);
+    t=etiquetaParte(c,anchoCelda,altoCelda,n);
+    if(t.indexOf('u')>=0) return {t:t, px:p};
+  }
+  for(p=px; p>=PX_MIN-1e-9; p-=1){
+    c.font=fuente(p);
+    t=etiquetaParte(c,anchoCelda,altoCelda,n);
+    if(t) return {t:t, px:p};
+  }
+  return {t:'', px:0};
+}
+/* kSel es la subunidad que hay que marcar como seleccionada, o null */
+function drawPieza(c,s,marcada,kSel){
   var p=w2s({x:s.x, y:s.y});
   var w=ancho(s)*view.z, h=alto(s)*view.z;
-  var C=colorDe(s);
+  var C=colorDe(s), N=partes(s);
+  var conSub = marcada && kSel!==null && kSel!==undefined && N>1;
+  var iS=conSub? kSel%s.a : 0, jS=conSub? Math.floor(kSel/s.a) : 0;
   c.save();
   if(opt.alfa) c.globalAlpha=0.55;
   c.save();
@@ -445,9 +616,13 @@ function drawPieza(c,s,marcada){
   c.fillStyle=C.f; c.fill();
   c.restore();
 
-  if(s.tipo==='u' && (s.a>1 || s.b>1)){
+  if(s.tipo!=='m' && N>1){
     c.save();
     rectRedondo(c,p.x,p.y,w,h,3.5*view.z); c.clip();
+    if(conSub){
+      c.fillStyle='rgba(47,98,168,.22)';
+      c.fillRect(p.x+w*iS/s.a, p.y+h*jS/s.b, w/s.a, h/s.b);
+    }
     c.strokeStyle=C.b; c.lineWidth=Math.max(1.5, 1.9*view.z);
     var k;
     for(k=1;k<s.a;k++){
@@ -458,36 +633,40 @@ function drawPieza(c,s,marcada){
       var Y=p.y+h*k/s.b;
       c.beginPath(); c.moveTo(p.x,Y); c.lineTo(p.x+w,Y); c.stroke();
     }
-    if(opt.etiq){
-      c.fillStyle=C.t;
-      c.font=Math.max(8,Math.min(13,10*view.z))+'px -apple-system,Segoe UI,Roboto,sans-serif';
-      c.textAlign='center'; c.textBaseline='middle';
-      var txt=etiquetaParte(c, w/s.a, h/s.b, s.a*s.b);
-      if(txt) for(var i=0;i<s.a;i++) for(var j=0;j<s.b;j++)
-        c.fillText(txt, p.x+w*(i+0.5)/s.a, p.y+h*(j+0.5)/s.b);
-    }
     c.restore();
-  } else if(s.tipo==='u' && opt.etiq){
+  }
+  if(s.tipo!=='m' && opt.etiq){
     c.save();
+    rectRedondo(c,p.x,p.y,w,h,3.5*view.z); c.clip();
     c.fillStyle=C.t;
-    c.font=Math.max(9,Math.min(14,11*view.z))+'px -apple-system,Segoe UI,Roboto,sans-serif';
     c.textAlign='center'; c.textBaseline='middle';
-    if(c.measureText('1 s').width+8<w && h>15) c.fillText('1 s', p.x+w/2, p.y+h/2);
+    if(s.tipo==='u' && N===1){
+      c.font=fuente(pxEtiqueta());
+      if(c.measureText('1 u').width+8<w && h>15) c.fillText('1 u', p.x+w/2, p.y+h/2);
+    } else {
+      var E=ajustaEtiqueta(c, w/s.a, h/s.b, celdaDen(s), pxEtiqueta());
+      if(E.t) for(var i=0;i<s.a;i++) for(var j=0;j<s.b;j++)
+        c.fillText(E.t, p.x+w*(i+0.5)/s.a, p.y+h*(j+0.5)/s.b);
+    }
     c.restore();
   }
 
   rectRedondo(c,p.x,p.y,w,h,3.5*view.z);
-  c.lineWidth=marcada? 2.6 : 1.3;
-  c.strokeStyle=marcada? '#1f4e8c' : C.b;
+  c.lineWidth=(marcada && !conSub)? 2.6 : 1.3;
+  c.strokeStyle=(marcada && !conSub)? '#1f4e8c' : C.b;
   c.stroke();
+  if(conSub){
+    c.lineWidth=2.6; c.strokeStyle='#1f4e8c';
+    c.strokeRect(p.x+w*iS/s.a, p.y+h*jS/s.b, w/s.a, h/s.b);
+  }
   c.restore();
 
   if(s.tipo==='m'){
     c.save();
-    c.fillStyle='#8a919c';
-    c.font='600 '+Math.max(9,Math.min(15,12*view.z))+'px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.fillStyle='#6b7280';
+    c.font=fuente(Math.max(11,Math.min(34,16*view.z)),'600');
     c.textAlign='right'; c.textBaseline='top';
-    c.fillText(s.nombre, p.x-6, p.y);
+    c.fillText(s.nombre, p.x-8, p.y);
     c.restore();
   }
 }
@@ -497,8 +676,8 @@ function draw(){
   ctx.fillStyle='#fbfbfa'; ctx.fillRect(0,0,W,H);
   /* los manteles debajo y las servilletas encima: la herramienta de medir
      tiene que verse siempre */
-  piezas.forEach(function(s){ if(s.tipo==='m') drawPieza(ctx,s,s.id===sel); });
-  piezas.forEach(function(s){ if(s.tipo==='u') drawPieza(ctx,s,s.id===sel); });
+  piezas.forEach(function(s){ if(s.tipo==='m') drawPieza(ctx,s,s.id===sel,null); });
+  piezas.forEach(function(s){ if(s.tipo!=='m') drawPieza(ctx,s,s.id===sel,s.id===sel? selK : null); });
   updateUI();
 }
 
@@ -512,22 +691,32 @@ function pos(e){
 function piezaEn(P){
   /* primero las servilletas, que son las que están encima */
   var i;
-  for(i=piezas.length-1;i>=0;i--) if(piezas[i].tipo==='u' && dentro(P,piezas[i])) return piezas[i];
+  for(i=piezas.length-1;i>=0;i--) if(piezas[i].tipo!=='m' && dentro(P,piezas[i])) return piezas[i];
   for(i=piezas.length-1;i>=0;i--) if(piezas[i].tipo==='m' && dentro(P,piezas[i])) return piezas[i];
   return null;
+}
+/* seleccionar lo que hay en un punto: la pieza, o una de sus subunidades si el
+   modo es el de subunidades y la pieza está doblada */
+function seleccionaEn(P){
+  var t=piezaEn(P);
+  if(!t){ sel=null; selK=null; return null; }
+  var k = (modoSel==='sub' && partes(t)>1)? parteEn(t,P) : null;
+  if(sel!==t.id) ponVeredicto('');
+  sel=t.id; selK=k;
+  piezas=piezas.filter(function(q){ return q.id!==t.id; }).concat([t]);
+  return t;
 }
 cv.addEventListener('pointerdown',function(e){
   cv.setPointerCapture(e.pointerId);
   var s=pos(e), w=s2w(s);
   var t=piezaEn(w);
   if(t && !opt.mano && e.button!==1 && e.button!==2){
-    if(sel!==t.id){ sel=t.id; ponVeredicto(''); }
-    piezas=piezas.filter(function(q){ return q.id!==t.id; }).concat([t]);
-    pushUndo();
-    drag={modo:'mover', w0:w, s:t, x0:t.x, y0:t.y};
+    var antes=foto();
+    seleccionaEn(w);
+    drag={modo:'mover', w0:w, s0:s, s:t, x0:t.x, y0:t.y, movido:false, antes:antes};
     draw(); return;
   }
-  if(!t && !opt.mano && e.button===0){ sel=null; ponVeredicto(''); }
+  if(!t && !opt.mano && e.button===0){ sel=null; selK=null; ponVeredicto(''); }
   drag={modo:'pan', s0:s, v0:{x:view.x, y:view.y}};
   draw();
 });
@@ -538,14 +727,21 @@ cv.addEventListener('pointermove',function(e){
     view.x=drag.v0.x+(s.x-drag.s0.x); view.y=drag.v0.y+(s.y-drag.s0.y);
     draw(); return;
   }
+  /* un pinchazo sin arrastre es solo seleccionar: ni mueve la pieza ni gasta
+     un deshacer */
+  if(!drag.movido && Math.abs(s.x-drag.s0.x)+Math.abs(s.y-drag.s0.y)<4) return;
+  drag.movido=true;
   drag.s.x=drag.x0+(w.x-drag.w0.x);
   drag.s.y=drag.y0+(w.y-drag.w0.y);
   draw();
 });
 function suelta(){
   if(!drag) return;
-  if(drag.modo==='mover') aplicaIman(drag.s);
-  drag=null;
+  var d=drag; drag=null;
+  if(d.modo==='mover' && d.movido){
+    if(d.antes){ undoStack.push(d.antes); if(undoStack.length>90) undoStack.shift(); }
+    aplicaIman(d.s);
+  }
   draw();
 }
 cv.addEventListener('pointerup',suelta);
@@ -562,11 +758,11 @@ cv.addEventListener('wheel',function(e){
 /* --- sacar servilletas del menú -------------------------------------------- */
 function pintaServi(){
   var c=document.getElementById('servi'), r=c.getBoundingClientRect();
-  var an=Math.max(120, r.width||170), al=82;
+  var an=Math.max(120, r.width||170), al=74;
   c.width=an*2; c.height=al*2;
   var o=c.getContext('2d'); o.scale(2,2);
   o.clearRect(0,0,an,al);
-  var lado=58, x=(an-lado)/2, y=(al-lado)/2;
+  var lado=54, x=(an-lado)/2, y=(al-lado)/2;
   o.save();
   o.shadowColor='rgba(20,25,35,.13)'; o.shadowBlur=5; o.shadowOffsetY=2;
   rectRedondo(o,x,y,lado,lado,3);
@@ -574,9 +770,9 @@ function pintaServi(){
   o.restore();
   rectRedondo(o,x,y,lado,lado,3);
   o.lineWidth=1.3; o.strokeStyle=COLU.b; o.stroke();
-  o.fillStyle=COLU.t; o.font='11px -apple-system,Segoe UI,Roboto,sans-serif';
+  o.fillStyle=COLU.t; o.font=fuente(15);
   o.textAlign='center'; o.textBaseline='middle';
-  o.fillText('1 s', an/2, al/2);
+  o.fillText('1 u', an/2, al/2);
 }
 function sueltaPaleta(){
   window.removeEventListener('pointermove', muevePaleta);
@@ -586,6 +782,7 @@ function sueltaPaleta(){
 function muevePaleta(e){
   if(!drag) return;
   var w=s2w(pos(e));
+  drag.movido=true;
   drag.s.x=drag.x0+(w.x-drag.w0.x);
   drag.s.y=drag.y0+(w.y-drag.w0.y);
   draw();
@@ -595,8 +792,8 @@ document.getElementById('servi').addEventListener('pointerdown',function(e){
   pushUndo();
   var w=s2w(pos(e));
   var t=nuevaServilleta({x:w.x-U/2, y:w.y-U/2});
-  piezas.push(t); sel=t.id; ponVeredicto('');
-  drag={modo:'mover', w0:w, s:t, x0:t.x, y0:t.y};
+  piezas.push(t); sel=t.id; selK=null; ponVeredicto('');
+  drag={modo:'mover', w0:w, s0:pos(e), s:t, x0:t.x, y0:t.y, movido:true, antes:null};
   window.addEventListener('pointermove', muevePaleta);
   window.addEventListener('pointerup', sueltaPaleta);
   draw();
@@ -606,7 +803,7 @@ document.getElementById('servi').addEventListener('pointerdown',function(e){
 function ponMantel(R){
   pushUndo();
   var t=nuevoMantel(R, sitioLibre());
-  piezas.push(t); sel=t.id;
+  piezas.push(t); sel=t.id; selK=null;
   ponVeredicto('');
   fitView();
   return t;
@@ -646,31 +843,50 @@ function ponVeredicto(txt,clase){
   var v=document.getElementById('veredicto');
   v.textContent=txt||'';
   v.className=clase||'';
+  /* con la letra grande el panel puede necesitar barra: que el veredicto no se
+     quede escondido debajo */
+  if(txt && v.scrollIntoView){ try{ v.scrollIntoView({block:'nearest'}); }catch(err){} }
+}
+/* Los dos textos de la comprobación. La medida se escribe siempre con su
+   unidad, «15/8 u», que es como se lee en las etiquetas de los trozos. No hay
+   manera de pedirle la medida al programa: comprobar dice si la respuesta se
+   queda corta o se pasa, y nada más. */
+/* Si la respuesta se puede simplificar, se dice la irreducible y se propone
+   volver a medir con esa subunidad mayor. Es una pregunta de verdad: aquí las
+   subunidades salen de doblar y son rectángulos, así que la forma manda. Un
+   mantel de 3/2 por 4/3 mide 12/6 u, que son 2 u, y dos servilletas sin doblar
+   no caben en él tal como están.
+   El veredicto solo pregunta. Ni calcula si en este mantel se puede, ni avisa
+   de que a veces no se podrá: eso es lo que hay que descubrir midiendo. */
+function textoAcierto(nombre,num,den,mia){
+  var extra = '';
+  if(!(num===mia.p && den===mia.q)){
+    extra = ' Es la misma área que '+textoFrac(mia)+' u, que ya no se puede simplificar más. '+
+            (mia.q===1 ? 'Intenta medirla con servilletas sin doblar, ¿puedes?'
+                       : 'Intenta medirla en 1/'+mia.q+' u, ¿puedes?');
+  }
+  return '¡Eso es! El mantel '+nombre+' mide '+num+'/'+den+' u.'+extra;
+}
+function textoFallo(nombre,num,den,mayor){
+  return 'Todavía no. '+num+'/'+den+' u es '+(mayor?'más grande':'más pequeño')+' que el mantel '+nombre+'.';
 }
 function cajaMedirUI(){
   var c=document.getElementById('cajamedir');
   var s=seleccionada();
   if(!s || s.tipo!=='m'){
-    c.innerHTML='<div class="nota" style="margin-top:0">Selecciona un mantel y escribe aquí su área, '+
-                'en servilletas.</div>';
+    c.innerHTML='<div class="nota" style="margin-top:0">Selecciona un mantel y escribe aquí cuánto '+
+                'mide.</div>';
     return;
   }
-  c.innerHTML='<div class="nota" style="margin-top:0">El mantel <b>'+s.nombre+'</b> mide, '+
-      'en servilletas:</div>'+
+  c.innerHTML='<div class="nota" style="margin-top:0">El mantel <b>'+s.nombre+'</b> mide:</div>'+
     '<div class="resp">'+
-      '<input type="number" id="rNum" min="0" step="1" placeholder="—" style="flex:1">'+
-      '<span style="font-size:16px;color:#8a919c">/</span>'+
-      '<input type="number" id="rDen" min="1" step="1" placeholder="—" style="flex:1">'+
+      '<input type="number" id="rNum" min="0" step="1" placeholder="—" style="flex:1" title="Cuántos trozos lo cubren">'+
+      '<span class="barra">/</span>'+
+      '<input type="number" id="rDen" min="1" step="1" placeholder="—" style="flex:1" title="En cuántos trozos has partido la servilleta">'+
+      '<span class="uni">u</span>'+
     '</div>'+
-    '<button class="act" id="comprobar">Comprobar</button>'+
-    '<button class="act" id="rendirse" style="font-size:11px;color:#9aa1ab">Ver la medida</button>';
+    '<button class="act" id="comprobar" style="justify-content:center;font-weight:600">Comprobar</button>';
   document.getElementById('comprobar').addEventListener('click',compruebaMedida);
-  document.getElementById('rendirse').addEventListener('click',function(){
-    var t=seleccionada();
-    if(!t || t.tipo!=='m') return;
-    if(!confirm('¿Seguro? Se acabó la gracia de medirlo.')) return;
-    ponVeredicto('El mantel '+t.nombre+' mide '+textoFrac(areaDe(t))+' de servilleta.','no');
-  });
   ['rNum','rDen'].forEach(function(id){
     document.getElementById(id).addEventListener('keydown',function(e){
       if(e.key==='Enter') compruebaMedida();
@@ -683,7 +899,7 @@ function compruebaMedida(){
   var n=document.getElementById('rNum').value.trim();
   var d=document.getElementById('rDen').value.trim();
   if(n==='' || d===''){
-    ponVeredicto('Escribe cuántos trozos caben y en cuántos trozos has partido la servilleta.','no');
+    ponVeredicto('Escribe cuántos trozos lo cubren y en cuántos trozos has partido la servilleta.','no');
     return;
   }
   var num=parseInt(n,10), den=parseInt(d,10);
@@ -691,23 +907,15 @@ function compruebaMedida(){
     ponVeredicto('Esos números no me valen.','no'); return;
   }
   var f=reduce(num,den), mia=areaDe(s);
-  if(mismaFraccion(f,mia)){
-    var extra = (num===mia.p && den===mia.q) ? ''
-      : ' Es la misma área que '+textoFrac(mia)+', que ya no se puede simplificar más.';
-    ponVeredicto('¡Eso es! El mantel '+s.nombre+' mide '+num+'/'+den+' de servilleta.'+extra,'si');
-  } else {
-    var mayor = f.p*mia.q > mia.p*f.q;
-    ponVeredicto('Todavía no. '+num+'/'+den+' es un poco '+(mayor?'más grande':'más pequeño')+
-                 ' que el mantel '+s.nombre+'.','no');
-  }
+  if(mismaFraccion(f,mia)) ponVeredicto(textoAcierto(s.nombre,num,den,mia),'si');
+  else ponVeredicto(textoFallo(s.nombre,num,den, f.p*mia.q > mia.p*f.q),'no');
 }
 /* --- color -------------------------------------------------------------------- */
 var cacheColor='';
 function coloresUI(){
   var c=document.getElementById('colores'), s=seleccionada();
   if(!s || s.tipo!=='m'){
-    c.innerHTML='<div class="nota" style="margin-top:0">Selecciona un mantel para cambiarle el color. '+
-                'El de la servilleta es siempre el mismo.</div>';
+    c.innerHTML='<div class="nota" style="margin-top:0">Selecciona un mantel para cambiarle el color.</div>';
     return;
   }
   c.innerHTML=PALETA.map(function(P,i){
@@ -738,24 +946,60 @@ document.getElementById('colMas').addEventListener('click',conServilleta(functio
 document.getElementById('filMenos').addEventListener('click',conServilleta(function(s){ dobla(s,s.a,s.b-1); }));
 document.getElementById('filMas').addEventListener('click',conServilleta(function(s){ dobla(s,s.a,s.b+1); }));
 document.getElementById('lisa').addEventListener('click',conServilleta(function(s){ dobla(s,1,1); }));
+/* si lo que acaba de salir cae fuera de lo que se ve —debajo del borde, o
+   tapado por la barra de abajo—, se reajusta el tablero para que no parezca
+   que el botón no ha hecho nada */
+function enPantalla(s){
+  var r=stage.getBoundingClientRect();
+  var a=w2s({x:s.x, y:s.y}), b=w2s({x:s.x+ancho(s), y:s.y+alto(s)});
+  return a.x>=0 && a.y>=0 && b.x<=(r.width||700) && b.y<=(r.height||420)-46;
+}
+function queSeVea(lista){
+  if(!lista) return;
+  if(!Array.isArray(lista)) lista=[lista];
+  for(var i=0;i<lista.length;i++) if(!enPantalla(lista[i])){ fitView(); return; }
+}
 document.getElementById('duplicar').addEventListener('click',function(){
-  var s=seleccionada(); if(!s) return;
-  pushUndo();
-  var t={id:nid++, tipo:s.tipo, wp:s.wp, wq:s.wq, hp:s.hp, hq:s.hq, a:s.a, b:s.b, c:s.c||0,
-         x:s.x+U*0.2, y:s.y+U*0.2, nombre:s.tipo==='m'? siguienteLetra() : ''};
-  piezas.push(t); sel=t.id; ponVeredicto(''); draw();
+  var s=seleccionada(); if(s) queSeVea(duplica(s, selK));
 });
+document.getElementById('cortar').addEventListener('click',function(){
+  var s=seleccionada(); if(s) queSeVea(corta(s, selK));
+});
+document.getElementById('modoP').addEventListener('click',function(){ ponModoSel('pieza'); });
+document.getElementById('modoS').addEventListener('click',function(){ ponModoSel('sub'); });
 document.getElementById('borrar').addEventListener('click',function(){
   var s=seleccionada(); if(!s) return;
   pushUndo();
   piezas=piezas.filter(function(q){ return q.id!==s.id; });
-  sel=null; ponVeredicto(''); draw();
+  sel=null; selK=null; ponVeredicto(''); draw();
 });
-document.getElementById('vaciar').addEventListener('click',function(){
-  if(!piezas.length) return;
-  if(!confirm('¿Quitar todo del tablero?')) return;
-  pushUndo(); piezas=[]; sel=null; ponVeredicto(''); draw();
-});
+/* --- confirmar sin diálogos --------------------------------------------------
+   Nada de diálogos del navegador: dentro de un marco con sandbox —el Moodle de
+   un centro— y en más de un visor incrustado, el navegador no enseña el diálogo
+   y contesta que no, así que el botón parece muerto. La confirmación va en el
+   propio botón: el primer pinchazo lo arma («¿Seguro?») y avisa en la barra de
+   abajo; el segundo, si llega antes de cuatro segundos, hace la acción. */
+function dosPasos(b, aviso, accion, puede){
+  var t=null, antes=null;
+  function desarma(){
+    if(t){ clearTimeout(t); t=null; }
+    if(antes!==null){ b.innerHTML=antes; antes=null; }
+    b.classList.remove('seguro');
+  }
+  b.addEventListener('click',function(){
+    if(t){ desarma(); flashMsg=null; accion(); draw(); return; }
+    if(puede && !puede()) return;
+    antes=b.innerHTML; b.textContent='¿Seguro?'; b.classList.add('seguro');
+    flash(aviso);
+    t=setTimeout(desarma, 4000);
+  });
+}
+dosPasos(document.getElementById('vaciar'), 'Pulsa otra vez para quitar todo del tablero',
+  function(){
+    if(!piezas.length) return;
+    pushUndo(); piezas=[]; sel=null; selK=null; ponVeredicto(''); draw();
+  },
+  function(){ return piezas.length>0; });
 document.getElementById('undo').addEventListener('click',doUndo);
 document.getElementById('iman').addEventListener('change',function(e){ opt.iman=e.target.checked?1:0; });
 document.getElementById('etiq').addEventListener('change',function(e){ opt.etiq=e.target.checked?1:0; draw(); });
@@ -789,6 +1033,9 @@ document.addEventListener('keydown',function(e){
   var k=(e.key||'').toLowerCase();
   if((e.ctrlKey||e.metaKey) && k==='z'){ e.preventDefault(); doUndo(); return; }
   if(k==='d'){ document.getElementById('duplicar').click(); }
+  else if(k==='c'){ document.getElementById('cortar').click(); }
+  else if(k==='1'){ ponModoSel('pieza'); }
+  else if(k==='2'){ ponModoSel('sub'); }
   else if(k==='+' || k==='='){ document.getElementById('colMas').click(); }
   else if(k==='-'){ document.getElementById('colMenos').click(); }
   else if(e.key==='ArrowUp'){ document.getElementById('filMas').click(); e.preventDefault(); }
@@ -796,12 +1043,12 @@ document.addEventListener('keydown',function(e){
   else if(e.key==='ArrowRight'){ document.getElementById('colMas').click(); e.preventDefault(); }
   else if(e.key==='ArrowLeft'){ document.getElementById('colMenos').click(); e.preventDefault(); }
   else if(e.key==='Delete' || e.key==='Backspace'){ document.getElementById('borrar').click(); e.preventDefault(); }
-  else if(e.key==='Escape'){ sel=null; ponVeredicto(''); draw(); }
+  else if(e.key==='Escape'){ sel=null; selK=null; ponVeredicto(''); draw(); }
 });
 
 /* --- guardar y abrir ------------------------------------------------------------ */
 document.getElementById('save').addEventListener('click',function(){
-  var d={formato:'manteles-y-servilletas', version:1,
+  var d={formato:'manteles-y-servilletas', version:2,
     piezas:piezas.map(function(s){
       return {tipo:s.tipo, wp:s.wp, wq:s.wq, hp:s.hp, hq:s.hq, a:s.a, b:s.b, c:s.c||0,
               x:+s.x.toFixed(2), y:+s.y.toFixed(2), nombre:s.nombre}; })};
@@ -824,7 +1071,8 @@ function limpiaPiezas(lista){
   var out=[];
   for(var i=0;i<lista.length;i++){
     var s=lista[i];
-    var tipo = s.tipo==='m' ? 'm' : s.tipo==='u' ? 'u' : null;
+    if(!s || typeof s!=='object') return null;
+    var tipo = s.tipo==='m' ? 'm' : s.tipo==='u' ? 'u' : s.tipo==='t' ? 't' : null;
     if(!tipo) return null;
     var wp=Number(s.wp), wq=Number(s.wq), hp=Number(s.hp), hq=Number(s.hq);
     var x=Number(s.x), y=Number(s.y);
@@ -835,6 +1083,13 @@ function limpiaPiezas(lista){
     var a=Math.max(1, Math.min(MAXD, Math.round(Number(s.a)||1)));
     var b=Math.max(1, Math.min(MAXD, Math.round(Number(s.b)||1)));
     if(tipo==='m'){ a=1; b=1; }
+    /* un trozo son columnas y filas enteras de las de la servilleta, sin llegar
+       a ser la servilleta entera, y tiene tantas marcas como subunidades */
+    if(tipo==='t'){
+      if([wp,wq,hp,hq].some(function(v){ return v!==Math.round(v); })) return null;
+      if(wp>wq || hp>hq || (wp===wq && hp===hq)) return null;
+      a=wp; b=hp;
+    }
     var col=Math.round(Number(s.c)||0);
     if(!(col>=0 && col<PALETA.length)) col=0;
     var cuantos=out.filter(function(o){ return o.tipo==='m'; }).length;
@@ -850,7 +1105,7 @@ function loadData(d){
   if(!nuevas){ flash('Ese archivo no trae nada que yo entienda'); return; }
   pushUndo();
   piezas = (importMode==='add') ? piezas.concat(nuevas) : nuevas;
-  sel=null; ponVeredicto(''); fitView();
+  sel=null; selK=null; ponVeredicto(''); fitView();
   flash(nuevas.length+(nuevas.length===1?' pieza cargada':' piezas cargadas'));
 }
 ['dragenter','dragover'].forEach(function(ev){
@@ -866,13 +1121,13 @@ stage.addEventListener('drop',function(e){
 document.getElementById('png').addEventListener('click',function(){
   var b=caja(piezas);
   if(!b){ flash('No hay nada que exportar'); return; }
-  var m=26, sc=2, W=(b.x1-b.x0)+2*m+16, H=(b.y1-b.y0)+2*m;
+  var m=26, sc=2, W=(b.x1-b.x0)+2*m+24, H=(b.y1-b.y0)+2*m;
   var oc=document.createElement('canvas'); oc.width=W*sc; oc.height=H*sc;
   var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
   var g={x:view.x,y:view.y,z:view.z}, ctx0=ctx, sel0=sel;
-  view={x:m+16-b.x0, y:m-b.y0, z:1}; ctx=o; sel=null;
-  piezas.forEach(function(s){ if(s.tipo==='m') drawPieza(o,s,false); });
-  piezas.forEach(function(s){ if(s.tipo==='u') drawPieza(o,s,false); });
+  view={x:m+24-b.x0, y:m-b.y0, z:1}; ctx=o; sel=null;
+  piezas.forEach(function(s){ if(s.tipo==='m') drawPieza(o,s,false,null); });
+  piezas.forEach(function(s){ if(s.tipo!=='m') drawPieza(o,s,false,null); });
   ctx=ctx0; view=g; sel=sel0;
   oc.toBlob(function(blob){
     var url=URL.createObjectURL(blob);
@@ -892,9 +1147,11 @@ document.getElementById('help').addEventListener('click',function(){
 function ayuda(){
   return '<div><b>Manteles y servilletas</b><br>'+
  'La unidad es una servilleta cuadrada, y hay que medir manteles rectangulares con ella. Medir es lo '+
- 'de siempre: ver cuántas veces cabe la unidad y, cuando no cabe un número entero de veces, partirla '+
- 'en trozos iguales hasta que los trozos cubran justo lo que falta. Los trozos que caben son el '+
- 'numerador y los trozos en que se ha partido la servilleta, el denominador.</div>'+
+ 'de siempre: ver cuántas veces cabe la unidad (qué es «caber» depende de la magnitud: si es '+
+ 'longitud, es concatenar; si es área, como aquí, cubrir) y, cuando no cabe un número entero de '+
+ 'veces, partirla en trozos iguales hasta que los trozos cubran justo lo que falta. Los trozos que '+
+ 'cubren el mantel son el numerador y los trozos en que se ha partido la servilleta, el '+
+ 'denominador.</div>'+
  '<div style="margin-top:7px"><b>Lo que cambia al medir superficies</b><br>'+
  'Con las tiras, «un cuarto» solo podía ser una cosa. Aquí no: un cuarto de servilleta puede ser una '+
  'tira vertical, una tira horizontal o un cuadradito, y las tres tienen la misma área. Pero no '+
@@ -905,17 +1162,22 @@ function ayuda(){
  'Arrastra servilletas desde la izquierda, las que hagan falta. Pide un mantel: en pantalla no dice '+
  'cuánto mide. Coloca servilletas encima y con <b>◑ Transparencia</b> las verás translúcidas, con el '+
  'mantel por debajo, que es la manera de contar. El imán engancha por los bordes y también por las '+
- 'marcas de los dobleces. Con la casilla <b>Etiquetas</b>, cada trozo dice cuánto vale y el menú '+
- 'recuerda en cuántos trozos ha quedado la servilleta.</div>'+
+ 'marcas de los dobleces. Con la casilla <b>Etiquetas</b>, cada trozo dice cuánto mide, en unidades '+
+ '(u), y el menú recuerda en cuántos trozos ha quedado la servilleta.</div>'+
+ '<div style="margin-top:7px"><b>Seleccionar una subunidad</b><br>'+
+ 'Con <b>Pieza</b> (tecla 1), al pinchar se elige la pieza entera. Con <b>Subunidad</b> (tecla 2), se '+
+ 'elige solo el trozo en el que se pincha de una servilleta doblada. En los dos casos, arrastrando '+
+ 'se mueve la pieza entera.</div>'+
+ '<div style="margin-top:7px"><b>Duplicar y cortar</b><br>'+
+ '<b>⧉ Duplicar</b> (tecla D) saca una copia de la pieza seleccionada o, si lo seleccionado es una '+
+ 'subunidad, una copia suelta de esa subunidad, que aparece justo debajo de la pieza. <b>✂ Cortar</b> '+
+ '(tecla C) separa la subunidad seleccionada: cae debajo de la pieza y lo demás se queda en su '+
+ 'sitio. Con la servilleta entera seleccionada, la corta por todas sus marcas. Los trozos son del '+
+ 'color de la servilleta, conservan sus marcas y ya no se doblan más. El mantel no se corta.</div>'+
  '<div style="margin-top:7px"><b>Comprobar</b><br>'+
- 'Con el mantel seleccionado, escribe el área como una fracción: arriba los trozos que lo cubren, '+
- 'abajo en cuántos trozos has partido la servilleta. Vale cualquier fracción equivalente. Si no '+
- 'aciertas, te dice solo si te has quedado corto o te has pasado.</div>'+
- '<div style="margin-top:7px"><b>Para pensar</b><br>'+
- '¿Hay manteles que se puedan medir doblando la servilleta de varias maneras distintas? ¿Y alguno '+
- 'que solo admita una? Si un doblez no encaja, ¿sirve de algo doblar más, o hay que cambiar de '+
- 'forma? Dos manteles con la misma área, ¿tienen que tener la misma forma? Y al revés: dos manteles '+
- 'con la misma forma, ¿tienen la misma área?</div>'+
+ 'Con el mantel seleccionado, escribe el área como una fracción de la unidad: a la izquierda los '+
+ 'trozos que lo cubren, a la derecha en cuántos trozos has partido la servilleta. Vale cualquier '+
+ 'fracción equivalente. Si no aciertas, te dice solo si te has quedado corto o te has pasado.</div>'+
  '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
  '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
  '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
@@ -946,21 +1208,24 @@ function updateUI(){
     document.getElementById(id).disabled=!esU; });
   document.getElementById('duplicar').disabled=!s;
   document.getElementById('borrar').disabled=!s;
+  document.getElementById('cortar').disabled=!(s && s.tipo!=='m' && partes(s)>1);
+  document.getElementById('modoP').className='act'+(modoSel==='pieza'?' on':'');
+  document.getElementById('modoS').className='act'+(modoSel==='sub'?' on':'');
 
   /* el resumen del doblado cuenta en cuántos trozos ha quedado la servilleta,
      que es parte de lo que hay que averiguar: solo sale con las etiquetas */
   var claveP = (esU? (s.a+'x'+s.b) : '-')+(opt.etiq?'E':'');
   if(claveP!==cachePartes){
     cachePartes=claveP;
-    document.getElementById('ncol').innerHTML = esU? (iconoDoblado(s.a,1,15)+s.a) : '—';
-    document.getElementById('nfil').innerHTML = esU? (iconoDoblado(1,s.b,15)+s.b) : '—';
+    document.getElementById('ncol').innerHTML = esU? (iconoDoblado(s.a,1,18)+s.a) : '—';
+    document.getElementById('nfil').innerHTML = esU? (iconoDoblado(1,s.b,18)+s.b) : '—';
     var caja0=document.getElementById('partes');
     if(!opt.etiq || !esU) caja0.style.display='none';
     else{
       caja0.style.display='block';
       caja0.innerHTML = (s.a===1 && s.b===1)
-        ? iconoDoblado(1,1,26)+'<br>Servilleta entera: <b>1 s</b>'
-        : iconoDoblado(s.a,s.b,26)+'<br><b>'+(s.a*s.b)+' trozos</b> de <b>1/'+(s.a*s.b)+' s</b>';
+        ? iconoDoblado(1,1,30)+'<br>Servilleta entera: <b>1 u</b>'
+        : iconoDoblado(s.a,s.b,30)+'<br><b>'+(s.a*s.b)+' trozos</b> de <b>1/'+(s.a*s.b)+' u</b>';
     }
   }
   var clave = s? (s.id+':'+s.tipo) : '-';
@@ -968,15 +1233,24 @@ function updateUI(){
   var claveC = s? (s.id+':'+s.tipo+':'+(s.c||0)) : '-';
   if(claveC!==cacheColor){ cacheColor=claveC; coloresUI(); }
 
-  var t;
-  if(flashMsg && Date.now()-flashT<2300) t=flashMsg;
-  else if(!piezas.length) t='Pide un mantel y saca servilletas de la izquierda';
-  else if(esU && s.a*s.b>1) t='Los trozos son de 1/'+(s.a*s.b)+' · si no encajan, prueba a repartir '+
-                              'los dobleces de otra manera';
-  else if(esU) t='Dobla la servilleta en columnas y en filas para hacer trozos iguales';
-  else if(s) t='Cubre el mantel con servilletas y mira lo que sobra';
-  else t='Arrastra para colocar · con la transparencia se ve el mantel bajo las servilletas';
-  hintEl.textContent=t;
+  hintEl.textContent = (flashMsg && Date.now()-flashT<2300)? flashMsg : textoAyudaBarra();
+}
+/* lo que dice la barra de abajo: qué hay seleccionado y qué se puede hacer */
+function textoAyudaBarra(){
+  var s=seleccionada();
+  if(!piezas.length) return 'Pide un mantel y saca servilletas de la izquierda';
+  if(!s) return modoSel==='sub'
+    ? 'Pincha en un trozo de una servilleta doblada para seleccionarlo'
+    : 'Arrastra para colocar · con la transparencia se ve el mantel bajo las servilletas';
+  if(s.tipo==='m') return 'Cubre el mantel con servilletas y mira lo que sobra';
+  if(selK!==null && partes(s)>1) return 'Una subunidad seleccionada — se puede cortar o duplicar';
+  if(modoSel==='sub' && partes(s)>1) return 'Pincha en uno de los trozos para seleccionarlo';
+  if(s.tipo==='t') return partes(s)>1
+    ? 'Un trozo de servilleta con marcas — se puede cortar por ellas o duplicar'
+    : 'Una subunidad suelta — se puede duplicar y cubrir el mantel con las copias';
+  if(s.a*s.b>1) return 'Servilleta doblada en '+s.a+' columnas y '+s.b+' filas · si los trozos no encajan, '+
+                       'prueba a repartir los dobleces de otra manera';
+  return 'Dobla la servilleta en columnas y en filas para hacer trozos iguales';
 }
 
 /* =========================================================================
@@ -1017,8 +1291,9 @@ function runSelfTest(){
      leeFraccion('mantel')===null && leeFraccion('3/0')===null);
 
   /* --- guardo lo que hubiera en el tablero ------------------------------------ */
-  var antesP=piezas, antesS=sel, antesV=view, antesI=opt.iman;
-  piezas=[]; sel=null; view={x:0,y:0,z:1}; opt.iman=1;
+  var antesP=piezas, antesS=sel, antesV=view, antesI=opt.iman, antesE=opt.etiq, antesA=opt.alfa;
+  var antesK=selK, antesM=modoSel;
+  piezas=[]; sel=null; selK=null; modoSel='pieza'; view={x:0,y:0,z:1}; opt.iman=1; opt.etiq=0; opt.alfa=0;
 
   /* --- las piezas -------------------------------------------------------------- */
   var sv=nuevaServilleta({x:0,y:0});
@@ -1029,7 +1304,7 @@ function runSelfTest(){
       var A=areaDe(sv); return A.p===1 && A.q===1; })());
   var M=nuevoMantel({wp:3,wq:2,hp:5,hq:4},{x:0,y:-U*2});
   piezas.push(M);
-  ok('un mantel de 3/2 por 5/4 mide 15/8 de servilleta', (function(){
+  ok('un mantel de 3/2 por 5/4 mide 15/8 u', (function(){
       var A=areaDe(M); return A.p===15 && A.q===8; })(), textoFrac(areaDe(M)));
   ok('el mantel no lleva su medida escrita: solo una letra',
      M.nombre.length===1 && /[A-Z]/.test(M.nombre), M.nombre);
@@ -1191,6 +1466,52 @@ function runSelfTest(){
       var corta=reduce(14,8), larga=reduce(16,8), mia=areaDe(man);
       return (corta.p*mia.q < mia.p*corta.q) && (larga.p*mia.q > mia.p*larga.q); })());
 
+  ok('al acertar, la medida se da en u', textoAcierto('A',15,8,{p:15,q:8})==='¡Eso es! El mantel A mide 15/8 u.',
+     textoAcierto('A',15,8,{p:15,q:8}));
+  ok('con una equivalente, la irreducible también lleva su u',
+     textoAcierto('A',30,16,{p:15,q:8}).indexOf('mide 30/16 u.')>0 &&
+     textoAcierto('A',30,16,{p:15,q:8}).indexOf('que 15/8 u,')>0, textoAcierto('A',30,16,{p:15,q:8}));
+  ok('si la respuesta se puede simplificar, propone volver a medir con la subunidad de la irreducible',
+     textoAcierto('A',12,9,{p:4,q:3})==='¡Eso es! El mantel A mide 12/9 u. Es la misma área que 4/3 u, '+
+       'que ya no se puede simplificar más. Intenta medirla en 1/3 u, ¿puedes?', textoAcierto('A',12,9,{p:4,q:3}));
+  ok('si ya venía simplificada, no propone nada', textoAcierto('A',4,3,{p:4,q:3}).indexOf('Intenta')<0 &&
+     textoAcierto('A',4,3,{p:4,q:3}).indexOf('¿')<0);
+  ok('y si el área es un número entero de unidades, propone medir con servilletas sin doblar',
+     textoAcierto('A',4,2,{p:2,q:1})==='¡Eso es! El mantel A mide 4/2 u. Es la misma área que 2 u, '+
+       'que ya no se puede simplificar más. Intenta medirla con servilletas sin doblar, ¿puedes?',
+     textoAcierto('A',4,2,{p:2,q:1}));
+  ok('la pregunta es de verdad: el mantel de 3/2 por 4/3 mide 12/6 u, que son 2 u, y dos servilletas sin doblar no caben',
+     (function(){ var m={tipo:'m',wp:3,wq:2,hp:4,hq:3}, A=areaDe(m);
+       return A.p===2 && A.q===1 && trozosQueCubren(m,2,3)===12 && !encaja(m,1,1); })(), '12 trozos de 1/6 u');
+  ok('el veredicto pregunta y no contesta: ni dice si se puede ni avisa de que a veces no', (function(){
+      var todo=textoAcierto('A',12,6,{p:2,q:1})+' '+textoAcierto('B',30,16,{p:15,q:8})+' '+textoAcierto('C',12,9,{p:4,q:3});
+      return !/a veces|no se pod|no se puede medir|sí se puede/i.test(todo) && todo.split('¿puedes?').length===4; })());
+  ok('al fallar, lo mismo', textoFallo('A',14,8,false)==='Todavía no. 14/8 u es más pequeño que el mantel A.',
+     textoFallo('A',14,8,false));
+  ok('ningún texto de la comprobación dice «de servilleta» ni «de unidad»', (function(){
+      var todo=[textoAcierto('A',15,8,{p:15,q:8}), textoAcierto('A',30,16,{p:15,q:8}),
+                textoFallo('A',14,8,false), textoFallo('A',16,8,true)].join(' ');
+      return !/de servilleta|de unidad|unidades/i.test(todo); })());
+  ok('la medida de un mantel no se puede pedir: en el panel solo está el botón de comprobar', (function(){
+      var m=nuevoMantel({wp:3,wq:2,hp:5,hq:4},{x:0,y:0}); piezas=[m]; sel=m.id; cacheMedir=''; updateUI();
+      var caja0=document.getElementById('cajamedir'), botones=caja0.querySelectorAll('button');
+      var bien = botones.length===1 && botones[0].id==='comprobar' && caja0.textContent.indexOf('15/8')<0 &&
+                 document.getElementById('side').textContent.indexOf('Ver la medida')<0;
+      piezas=[]; sel=null; ponVeredicto(''); updateUI();
+      return bien; })());
+  ok('ni fallando la comprobación se escapa: dice si es más grande o más pequeño, y nada más', (function(){
+      var m=nuevoMantel({wp:3,wq:2,hp:5,hq:4},{x:0,y:0}); piezas=[m]; sel=m.id; cacheMedir=''; updateUI();
+      document.getElementById('rNum').value='2'; document.getElementById('rDen').value='1';
+      compruebaMedida();
+      var v=document.getElementById('veredicto').textContent;
+      piezas=[]; sel=null; ponVeredicto(''); updateUI();
+      return v==='Todavía no. 2/1 u es más grande que el mantel '+m.nombre+'.' && v.indexOf('15/8')<0; })());
+  ok('la barra de abajo no regala en cuántos trozos ha quedado la servilleta', (function(){
+      var u=nuevaServilleta({x:0,y:0}); u.a=2; u.b=4; piezas=[u]; sel=u.id;
+      var t=textoAyudaBarra();
+      piezas=[]; sel=null;
+      return t.indexOf('1/8')<0 && t.indexOf('8 trozos')<0 && t.indexOf('2 columnas y 4 filas')>0; })());
+
   /* --- colores y nombres ------------------------------------------------------------ */
   ok('la servilleta tiene color fijo, que no está en la paleta de los manteles',
      PALETA.every(function(P){ return P.f.toLowerCase()!==COLU.f.toLowerCase(); }), COLU.f);
@@ -1218,16 +1539,309 @@ function runSelfTest(){
   /* --- etiquetas ---------------------------------------------------------------------- */
   ctx.save();
   ctx.font='10px -apple-system,Segoe UI,Roboto,sans-serif';
-  var anLargo=ctx.measureText('1/8 s').width, anCorto=ctx.measureText('1/8').width;
+  var anLargo=ctx.measureText('1/8 u').width, anCorto=ctx.measureText('1/8').width;
   var etL=etiquetaParte(ctx, anLargo+8, 40, 8);
   var etC=etiquetaParte(ctx, anCorto+6, 40, 8);
   var etN=etiquetaParte(ctx, anCorto, 40, 8);
   var etBaja=etiquetaParte(ctx, anLargo+8, 9, 8);
   ctx.restore();
-  ok('la etiqueta de cada trozo lleva la unidad: 1/8 s', etL==='1/8 s', etL);
+  ok('la etiqueta de cada trozo lleva la unidad: 1/8 u', etL==='1/8 u', etL);
   ok('si el trozo es estrecho se queda solo con la fracción', etC==='1/8', etC);
   ok('si no cabe ni eso, no se escribe nada', etN==='', '«'+etN+'»');
   ok('y si el trozo es muy bajo, tampoco', etBaja==='', '«'+etBaja+'»');
+
+  /* --- seleccionar una subunidad ------------------------------------------------------- */
+  /* el área de una lista de piezas, en dieciseisavos... o en lo que haga falta:
+     numerador sobre un denominador común, para sumar sin decimales */
+  function areaTotal(L){
+    var n=0, d=1;
+    L.forEach(function(o){ var A=areaDe(o); n=n*A.q+A.p*d; d=d*A.q; var g=mcd(n,d)||1; n/=g; d/=g; });
+    return n+'/'+d;
+  }
+  piezas=[]; sel=null; selK=null; modoSel='pieza'; undoStack=[];
+  var S1=nuevaServilleta({x:0,y:0}); S1.a=2; S1.b=4;
+  var SM=nuevoMantel({wp:3,wq:2,hp:5,hq:4},{x:0,y:400});
+  var SL=nuevaServilleta({x:400,y:0});
+  piezas=[SM,S1,SL];
+  ok('una servilleta doblada en 2 columnas y 4 filas tiene 8 subunidades de 1/8 u',
+     partes(S1)===8 && celdaDen(S1)===8 && denCol(S1)===2 && denFil(S1)===4);
+  var enSegFilaDer={x:U*0.75, y:U*0.375};          // columna 1, fila 1
+  ok('las subunidades se numeran por filas: la de la derecha de la segunda fila es la 3',
+     parteEn(S1,enSegFilaDer)===3 && parteEn(S1,{x:1,y:1})===0 && parteEn(S1,{x:U-1,y:U-1})===7 &&
+     parteEn(S1,{x:U+5,y:10})===-1, parteEn(S1,enSegFilaDer));
+  ok('y cada una está donde toca', (function(){
+      var R=rectParte(S1,3);
+      return R.i===1 && R.j===1 && Math.abs(R.x-U/2)<1e-9 && Math.abs(R.y-U/4)<1e-9 &&
+             Math.abs(R.w-U/2)<1e-9 && Math.abs(R.h-U/4)<1e-9; })());
+  modoSel='pieza'; seleccionaEn(enSegFilaDer);
+  ok('en modo pieza, pinchar ahí selecciona la servilleta entera', sel===S1.id && selK===null);
+  modoSel='sub'; seleccionaEn(enSegFilaDer);
+  ok('en modo subunidad, selecciona ese trozo', sel===S1.id && selK===3, selK);
+  ok('en ese modo, una servilleta sin doblar se selecciona entera', (function(){
+      seleccionaEn({x:450,y:50}); return sel===SL.id && selK===null; })());
+  ok('y el mantel, también: no tiene trozos', (function(){
+      seleccionaEn({x:50,y:450}); return sel===SM.id && selK===null; })());
+  ok('volver al modo pieza suelta la subunidad', (function(){
+      modoSel='sub'; seleccionaEn(enSegFilaDer); var k=selK; ponModoSel('pieza');
+      return k===3 && selK===null && sel===S1.id; })());
+  ok('y volver a doblar, también, que esos trozos ya no existen', (function(){
+      modoSel='sub'; seleccionaEn(enSegFilaDer); var k=selK; dobla(S1,3,3); var k2=selK; dobla(S1,2,4); modoSel='pieza';
+      return k===3 && k2===null; })());
+
+  /* --- duplicar una subunidad ------------------------------------------------------------ */
+  piezas=[S1]; sel=null; selK=null; undoStack=[];
+  var cp=duplica(S1,3);
+  ok('duplicar una subunidad saca un trozo suelto de 1/8 u', !!cp && cp.tipo==='t' && partes(cp)===1 &&
+     celdaDen(cp)===8 && textoFrac(areaDe(cp))==='1/8', cp? textoFrac(areaDe(cp))+' u' : 'nada');
+  ok('con la misma forma que tenía en la servilleta: media de ancho por un cuarto de alto',
+     Math.abs(ancho(cp)-U/2)<1e-9 && Math.abs(alto(cp)-U/4)<1e-9);
+  ok('aparece justo debajo de la servilleta, en la vertical de su columna',
+     Math.abs(cp.x-U/2)<1e-9 && Math.abs(cp.y-(S1.y+U+HUECO))<1e-9);
+  ok('y la servilleta se queda entera, con sus 8 trozos', piezas.length===2 && S1.tipo==='u' && S1.a===2 && S1.b===4);
+  ok('el trozo queda seleccionado, es del color de la servilleta y no lleva letra',
+     sel===cp.id && selK===null && colorDe(cp).f===COLU.f && cp.nombre==='');
+  ok('un trozo ya no se dobla', dobla(cp,2,2)===false && cp.a===1 && cp.b===1);
+  doUndo();
+  ok('deshacer quita la copia', piezas.length===1 && piezas[0].id===S1.id);
+  ok('pedir una subunidad que no existe no hace nada', duplica(S1,8)===null && piezas.length===1);
+  ok('duplicar la servilleta entera la copia con sus dobleces', (function(){
+      var c2=duplica(S1,null), bien=!!c2 && c2.tipo==='u' && c2.a===2 && c2.b===4;
+      doUndo(); return bien && piezas.length===1; })());
+  ok('quince copias de ese octavo cubren el mantel de 3/2 por 5/4: tres columnas por cinco filas', (function(){
+      var M2=nuevoMantel({wp:3,wq:2,hp:5,hq:4},{x:0,y:600}); piezas=[S1,M2];
+      var n=0, i, j, c, bien=true;
+      for(j=0;j<5;j++) for(i=0;i<3;i++){
+        c=duplica(S1,0);
+        c.x=M2.x+i*U/2+4; c.y=M2.y+j*U/4-3;          // se suelta cerca, no en su sitio
+        aplicaIman(c);
+        if(Math.abs(c.x-(M2.x+i*U/2))>1e-9 || Math.abs(c.y-(M2.y+j*U/4))>1e-9) bien=false;
+        n++;
+      }
+      var copias=piezas.filter(function(o){ return o.tipo==='t'; });
+      var cubre = bien && areaTotal(copias)===textoFrac(areaDe(M2)) && n===15;
+      piezas=[S1]; sel=null;
+      return cubre; })(), '15 trozos de 1/8 u');
+
+  /* --- cortar ----------------------------------------------------------------------------- */
+  piezas=[]; sel=null; selK=null; undoStack=[];
+  var K1=nuevaServilleta({x:100,y:50}); K1.a=3; K1.b=4; piezas=[K1]; sel=K1.id;
+  var C5=corta(K1, 1*3+1);                              // la de en medio de la segunda fila
+  ok('cortar una subunidad de en medio de una servilleta de 3 por 4 la deja en cinco piezas',
+     !!C5 && C5.length===5 && piezas.length===5 && !porId(K1.id), C5? C5.length : 'nada');
+  ok('que son lo de la izquierda, lo de la derecha, lo de encima, lo de debajo y ella', (function(){
+      var f=C5.map(function(o){ return o.a+'x'+o.b; }).join(' ');
+      return f==='1x4 1x4 1x1 1x2 1x1'; })(), C5.map(function(o){ return o.a+'x'+o.b; }).join(', '));
+  ok('entre las cinco miden una servilleta justa: cortar no crea ni quita papel', areaTotal(C5)==='1/1', areaTotal(C5));
+  ok('todas siguen teniendo subunidades de 1/12 u', C5.every(function(o){ return celdaDen(o)===12 && o.tipo==='t'; }));
+  ok('lo demás se queda donde estaba',
+     Math.abs(C5[0].x-100)<1e-9 && Math.abs(C5[0].y-50)<1e-9 &&
+     Math.abs(C5[1].x-(100+2*U/3))<1e-9 && Math.abs(C5[1].y-50)<1e-9 &&
+     Math.abs(C5[2].x-(100+U/3))<1e-9 && Math.abs(C5[2].y-50)<1e-9 &&
+     Math.abs(C5[3].x-(100+U/3))<1e-9 && Math.abs(C5[3].y-(50+U/2))<1e-9);
+  ok('y la cortada cae debajo de la pieza, en su columna, y queda seleccionada',
+     Math.abs(C5[4].x-(100+U/3))<1e-9 && Math.abs(C5[4].y-(50+U+HUECO))<1e-9 && sel===C5[4].id && selK===null);
+  ok('los trozos conservan sus marcas: el de la izquierda, tres horizontales',
+     marcasY(C5[0]).length===3 && marcasX(C5[0]).length===0);
+  ok('y el imán engancha por ellas', (function(){
+      var d=nuevaServilleta({x:100-U-4, y:50+U/4+5});
+      piezas.push(d); aplicaIman(d);
+      var bien=Math.abs(d.x-(100-U))<1e-9 && Math.abs(d.y-(50+U/4))<1e-9;
+      piezas=piezas.filter(function(o){ return o.id!==d.id; });
+      return bien; })());
+  ok('un trozo con marcas se puede volver a cortar', (function(){
+      var r=corta(C5[0],0);
+      return !!r && r.length===2 && r[0].a===1 && r[0].b===3 && partes(r[1])===1 && piezas.length===6; })());
+  doUndo(); doUndo();
+  ok('deshacer dos veces devuelve la servilleta entera, doblada en 3 por 4', piezas.length===1 &&
+     piezas[0].tipo==='u' && piezas[0].a===3 && piezas[0].b===4);
+  ok('cortar la de una esquina deja tres piezas', (function(){
+      var a=nuevaServilleta({x:0,y:0}); a.a=3; a.b=4; piezas=[a];
+      var r=corta(a,0);
+      return !!r && r.length===3 && areaTotal(r)==='1/1' && r[0].a===2 && r[0].b===4 && r[1].a===1 && r[1].b===3; })());
+  ok('con la servilleta entera, cortar la deshace en todas sus subunidades', (function(){
+      var a=nuevaServilleta({x:0,y:0}); a.a=2; a.b=2; piezas=[a];
+      var r=corta(a,null);
+      return !!r && r.length===4 && piezas.length===4 && areaTotal(r)==='1/1' && sel===r[0].id &&
+             r.every(function(o){ return o.tipo==='t' && partes(o)===1 && celdaDen(o)===4; }); })(), '4 de 1/4 u');
+  ok('que quedan separadas, sin pisarse, para que se vea el corte', (function(){
+      var L=piezas, i, j;
+      for(i=0;i<L.length;i++) for(j=i+1;j<L.length;j++){
+        var sx=Math.min(L[i].x+ancho(L[i]),L[j].x+ancho(L[j]))-Math.max(L[i].x,L[j].x);
+        var sy=Math.min(L[i].y+alto(L[i]),L[j].y+alto(L[j]))-Math.max(L[i].y,L[j].y);
+        if(sx>0.5 && sy>0.5) return false;
+      }
+      return true; })());
+  ok('una servilleta sin doblar no se corta, y no cambia nada', (function(){
+      var a=nuevaServilleta({x:0,y:0}); piezas=[a]; undoStack=[];
+      return corta(a,null)===null && piezas.length===1 && piezas[0]===a && undoStack.length===0; })());
+  ok('el mantel tampoco, aunque se le pida', (function(){
+      var a=nuevoMantel({wp:3,wq:2,hp:5,hq:4},{x:0,y:0}); piezas=[a]; undoStack=[];
+      return corta(a,null)===null && corta(a,0)===null && piezas.length===1 && undoStack.length===0; })());
+  flashMsg=null;
+  ok('guardar y abrir conserva los trozos, con sus subunidades sin simplificar', (function(){
+      var a=nuevoTrozo(2,4,4,4,{x:5,y:6}), b=nuevoTrozo(1,1,2,4,{x:50,y:60});
+      var L=limpiaPiezas(JSON.parse(JSON.stringify([a,b])));
+      return !!L && L.length===2 && L[0].tipo==='t' && L[0].a===2 && L[0].b===4 && celdaDen(L[0])===16 &&
+             textoFrac(areaDe(L[0]))==='1/2' && celdaDen(L[1])===8; })());
+  ok('un trozo que fuera la servilleta entera, o mayor, se rechaza: eso no sale de cortar',
+     limpiaPiezas([{tipo:'t',wp:2,wq:2,hp:4,hq:4,a:2,b:4,x:0,y:0}])===null &&
+     limpiaPiezas([{tipo:'t',wp:3,wq:2,hp:1,hq:4,a:3,b:1,x:0,y:0}])===null);
+  ok('y lo que no es una pieza se rechaza sin romperse', limpiaPiezas([null])===null && limpiaPiezas(['a'])===null);
+
+  /* --- lo que se ve --------------------------------------------------------------------------- */
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=U+40; oc.height=U+40;
+    var o=oc.getContext('2d'), v0=view;
+    view={x:20,y:20,z:1};
+    function azules(s,marcada,k,x0,y0,x1,y1){
+      o.setTransform(1,0,0,1,0,0); o.fillStyle='#fff'; o.fillRect(0,0,oc.width,oc.height);
+      drawPieza(o,s,marcada,k);
+      var d=o.getImageData(0,0,oc.width,oc.height).data, n=0, x, y, i;
+      for(y=Math.round(y0);y<Math.round(y1);y++) for(x=Math.round(x0);x<Math.round(x1);x++){
+        i=(y*oc.width+x)*4; if(d[i+2]-d[i]>60) n++; }
+      return n;
+    }
+    var t=nuevaServilleta({x:0,y:0}); t.a=2; t.b=2;
+    var W=oc.width, H=oc.height, m=20, h=U/2;
+    var nada=azules(t,false,null,0,0,W,H);
+    var entera=azules(t,true,null,0,0,W,H);
+    /* la subunidad 3 es la de abajo a la derecha */
+    var dentro3=azules(t,true,3, m+h-4, m+h-4, W, H);
+    var fuera3 =azules(t,true,3, 0, 0, m+h-6, H) + azules(t,true,3, m+h-6, 0, W, m+h-6);
+    ok('sin seleccionar, la servilleta no lleva nada de azul', nada===0, nada);
+    ok('seleccionada entera, el azul la rodea', entera>300, entera+' píxeles');
+    ok('con una subunidad seleccionada, el azul rodea solo ese trozo', dentro3>150 && fuera3===0,
+       dentro3+' dentro y '+fuera3+' fuera');
+    view=v0;
+  })();
+  ok('la barra de abajo distingue lo seleccionado, y nunca dice cuántos trozos hay', (function(){
+      var a=nuevaServilleta({x:0,y:0}); a.a=2; a.b=4;
+      var b=nuevoTrozo(1,1,2,4,{x:0,y:300}), c=nuevoTrozo(1,3,2,4,{x:0,y:400}),
+          m=nuevoMantel({wp:3,wq:2,hp:5,hq:4},{x:300,y:0});
+      piezas=[a,b,c,m];
+      var T=[];
+      [[null,null,'pieza'],[null,null,'sub'],[a.id,null,'pieza'],[a.id,null,'sub'],[a.id,2,'sub'],
+       [b.id,null,'pieza'],[c.id,null,'pieza'],[m.id,null,'pieza']].forEach(function(q){
+        sel=q[0]; selK=q[1]; modoSel=q[2]; T.push(textoAyudaBarra()); });
+      sel=null; selK=null; modoSel='pieza'; piezas=[];
+      var distintos={}; T.forEach(function(t){ distintos[t]=1; });
+      return Object.keys(distintos).length===8 && !/1\/8|8 trozos|de las 8/.test(T.join(' ')); })());
+  ok('cortar solo se enciende con algo que tenga marcas; duplicar, con cualquier pieza', (function(){
+      var a=nuevaServilleta({x:0,y:0}), m=nuevoMantel({wp:3,wq:2,hp:5,hq:4},{x:300,y:0});
+      var bc=document.getElementById('cortar'), bd=document.getElementById('duplicar'), r=[];
+      piezas=[a,m];
+      sel=null; updateUI(); r.push(bc.disabled, bd.disabled);
+      sel=a.id; updateUI(); r.push(bc.disabled, bd.disabled);
+      a.a=3; updateUI(); r.push(bc.disabled, bd.disabled);
+      sel=m.id; updateUI(); r.push(bc.disabled, bd.disabled);
+      sel=null; piezas=[]; updateUI();
+      return r.join()==='true,true,true,false,false,false,true,false'; })());
+  ok('la ayuda explica las herramientas de subunidad', ayuda().indexOf('Duplicar')>0 && ayuda().indexOf('Cortar')>0 &&
+     ayuda().indexOf('Subunidad')>0);
+
+  ok('una pieza que cae fuera de lo que se ve se detecta, y una que está a la vista no', (function(){
+      var v0=view; view={x:300,y:200,z:1};
+      var dentroV=nuevoTrozo(1,1,2,2,{x:0,y:0}), fuera=nuevoTrozo(1,1,2,2,{x:0,y:5000});
+      var r=enPantalla(dentroV) && !enPantalla(fuera);
+      view=v0; return r; })());
+
+  /* --- la letra de las etiquetas -------------------------------------------------------- */
+  ok('la letra de las etiquetas crece con el zoom', (function(){
+      var z0=view.z; view.z=1; var a=pxEtiqueta(); view.z=2; var b=pxEtiqueta(); view.z=z0;
+      return a>=14 && b>a; })());
+  ctx.save();
+  ctx.font=fuente(15); var w15=ctx.measureText('1/16 u').width;
+  ctx.font=fuente(12); var w12=ctx.measureText('1/16 u').width, c12=ctx.measureText('1/16').width;
+  ctx.font=fuente(9);  var c9=ctx.measureText('1/16').width;
+  var eA=ajustaEtiqueta(ctx, w15+8, 40, 16, 15);
+  var eB=ajustaEtiqueta(ctx, w12+7.5, 40, 16, 15);
+  var eC=ajustaEtiqueta(ctx, c12+7, 40, 16, 15);
+  var eD=ajustaEtiqueta(ctx, c9, 40, 16, 15);
+  ctx.restore();
+  ok('si cabe, la etiqueta va con su unidad y a su tamaño', eA.t==='1/16 u' && eA.px===15, eA.t+' a '+eA.px+' px');
+  ok('si no cabe, antes de quitarle la unidad se achica la letra', eB.t==='1/16 u' && eB.px<15 && eB.px>=11,
+     eB.t+' a '+eB.px+' px');
+  ok('más estrecho todavía, se queda la fracción sola', eC.t==='1/16' && eC.px>=9, eC.t+' a '+eC.px+' px');
+  ok('y si no cabe ni con la letra mínima, no se escribe nada', eD.t==='', '«'+eD.t+'»');
+  /* se dibuja en un lienzo aparte y se cuenta la tinta de la letra */
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=U+40; oc.height=U+40;
+    var o=oc.getContext('2d'), v0=view, e0=opt.etiq;
+    view={x:20,y:20,z:1};
+    function tinta(s){
+      o.setTransform(1,0,0,1,0,0); o.fillStyle='#fff'; o.fillRect(0,0,oc.width,oc.height);
+      drawPieza(o,s,false);
+      var d=o.getImageData(0,0,oc.width,oc.height).data, n=0, i;
+      /* más oscuro que cualquier relleno, borde o marca: solo queda la letra */
+      for(i=0;i<d.length;i+=4) if(d[i]<160 && d[i+1]<140 && d[i+2]<100) n++;
+      return n;
+    }
+    var q=nuevaServilleta({x:0,y:0}); q.a=2; q.b=2;
+    var e=nuevaServilleta({x:0,y:0});
+    var m=nuevoMantel({wp:1,wq:1,hp:1,hq:1},{x:20,y:0});
+    opt.etiq=0; var q0=tinta(q), e0n=tinta(e);
+    opt.etiq=1; var q1=tinta(q), e1=tinta(e), m1=tinta(m);
+    opt.etiq=0; var m0=tinta(m);
+    ok('las etiquetas se escriben al encenderlas, y no antes', q0===0 && q1>120, q0+' → '+q1+' píxeles de tinta');
+    ok('la servilleta entera lleva la suya, 1 u', e0n===0 && e1>15, e0n+' → '+e1);
+    ok('el mantel no se etiqueta: encendidas o apagadas, dentro no lleva nada escrito', m1===m0 && m1===0, m0+' y '+m1);
+    view=v0; opt.etiq=e0;
+  })();
+
+  /* --- la interfaz ------------------------------------------------------------------------ */
+  ok('el panel de ayuda cuenta cómo funciona y no hace preguntas', ayuda().indexOf('¿')<0 && ayuda().indexOf('Para pensar')<0);
+  ok('ningún botón depende de un diálogo del navegador, que en un marco incrustado no sale', (function(){
+      var codigo=document.querySelector('script').textContent;
+      return ['con'+'firm(', 'al'+'ert(', 'pro'+'mpt('].every(function(p){ return codigo.indexOf(p)<0; }); })());
+  ok('un botón de dos pasos no hace nada al primer pinchazo, y avisa', (function(){
+      var b=document.createElement('button'), veces=0; b.innerHTML='Hacer<kbd>X</kbd>';
+      dosPasos(b,'aviso de prueba',function(){ veces++; });
+      b.click();
+      var armado = veces===0 && b.textContent==='¿Seguro?' && b.classList.contains('seguro') && flashMsg==='aviso de prueba';
+      b.click();
+      return armado && veces===1 && b.innerHTML==='Hacer<kbd>X</kbd>' && !b.classList.contains('seguro'); })());
+  ok('«Vaciar» quita las piezas al segundo pinchazo, y se puede deshacer', (function(){
+      piezas=[nuevaServilleta({x:0,y:0}), nuevaServilleta({x:200,y:0})]; undoStack=[];
+      var b=document.getElementById('vaciar');
+      b.click(); var uno=piezas.length;
+      b.click(); var dos=piezas.length;
+      doUndo(); var tres=piezas.length;
+      piezas=[]; undoStack=[];
+      return uno===2 && dos===0 && tres===2; })());
+  ok('y con el tablero vacío ni siquiera se arma', (function(){
+      piezas=[]; var b=document.getElementById('vaciar'); b.click();
+      return b.textContent==='Vaciar' && !b.classList.contains('seguro'); })());
+  flashMsg=null;
+  ok('el panel empieza por el rótulo del material, encima de la servilleta', (function(){
+      var b=document.querySelector('#side .brand'), h=document.querySelector('#side h2');
+      return !!b && b.textContent==='Manteles y servilletas' && b.querySelector('b').textContent==='servilletas' &&
+             document.getElementById('side').firstElementChild===b && b.nextElementSibling===h; })());
+  if(document.getElementById('side').offsetWidth>0){
+    ok('la letra es la de proyectar: 16 px de base', parseFloat(getComputedStyle(document.body).fontSize)>=16,
+       getComputedStyle(document.body).fontSize);
+    ok('el rótulo es lo más grande del panel y cabe en una línea', (function(){
+        var el=document.querySelector('#side .brand');
+        var b=parseFloat(getComputedStyle(el).fontSize);
+        var h=parseFloat(getComputedStyle(document.querySelector('#side h2')).fontSize);
+        return b>=20 && b>h && el.scrollWidth<=el.clientWidth+1 && el.offsetHeight<50; })(),
+       getComputedStyle(document.querySelector('#side .brand')).fontSize+', '+
+       document.querySelector('#side .brand').scrollWidth+' de '+document.querySelector('#side .brand').clientWidth+' px');
+    ok('los títulos del panel se ven enteros: ni en una raya ni cortados', (function(){
+        var hs=document.querySelectorAll('#side h2'), i;
+        for(i=0;i<hs.length;i++){
+          if(hs[i].offsetWidth<80 || hs[i].offsetHeight<12) return false;
+          if(hs[i].scrollWidth>hs[i].clientWidth+1) return false;
+        }
+        return hs.length>=6; })(), document.querySelectorAll('#side h2').length+' títulos');
+    ok('ningún botón del panel se queda con el texto cortado', (function(){
+        var u=nuevaServilleta({x:0,y:0}); u.a=8; u.b=8; piezas=[u]; sel=u.id; cachePartes=''; updateUI();
+        var bs=document.querySelectorAll('#side button, #side .cuenta'), i, malos=[];
+        for(i=0;i<bs.length;i++) if(bs[i].scrollWidth>bs[i].clientWidth+1) malos.push(bs[i].id);
+        piezas=[]; sel=null; cachePartes=''; updateUI();
+        return malos.length===0; })());
+  } else {
+    out.push('--    la ventana no tiene tamaño: no se miden la letra ni los títulos del panel');
+  }
 
   /* --- doblar con los botones ---------------------------------------------------------- */
   piezas=[]; sel=null;
@@ -1283,7 +1897,8 @@ function runSelfTest(){
   doUndo();
   ok('y deshacer la devuelve', Math.abs(piezas[0].x)<1e-9, num(piezas[0].x));
 
-  piezas=antesP; sel=antesS; view=antesV; opt.iman=antesI; undoStack=[];
+  piezas=antesP; sel=antesS; view=antesV; opt.iman=antesI; opt.etiq=antesE; opt.alfa=antesA; undoStack=[];
+  flashMsg=null; cachePartes=''; cacheMedir=''; cacheColor=''; selK=antesK; modoSel=antesM;
   ponVeredicto(''); draw();
 
   }catch(errT){
@@ -1333,7 +1948,12 @@ window.__manteles={
   nuevaServilleta:nuevaServilleta, nuevoMantel:nuevoMantel, dobla:dobla,
   aplicaIman:aplicaIman, mantelAlAzar:mantelAlAzar, rectDeArea:rectDeArea,
   leeFraccion:leeFraccion, reduce:reduce, mcd:mcd, etiquetaParte:etiquetaParte,
-  load:loadData, setMode:function(m){ importMode=m; }, redraw:draw, fit:fitView
+  load:loadData, setMode:function(m){ importMode=m; }, redraw:draw, fit:fitView,
+  nuevoTrozo:nuevoTrozo, partes:partes, celdaDen:celdaDen, parteEn:parteEn, rectParte:rectParte,
+  duplica:duplica, corta:corta, seleccionaEn:seleccionaEn, ponModoSel:ponModoSel,
+  selK:function(){ return selK; }, modoSel:function(){ return modoSel; },
+  ajustaEtiqueta:ajustaEtiqueta, pxEtiqueta:pxEtiqueta,
+  view:function(){ return view; }, w2s:w2s, s2w:s2w, undo:doUndo
 };
 
 })();

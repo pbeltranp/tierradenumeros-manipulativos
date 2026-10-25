@@ -1,0 +1,1997 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dicotominó</title>
+<style>
+  /* Los tamaños de letra están pensados para proyectar en clase: lo que en un
+     portátil se lee de cerca, en la pantalla del aula hay que leerlo desde la
+     última fila. */
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+       color:#2b2f36;background:#fff;display:flex;height:100%;overflow:hidden}
+  #side{width:256px;flex:0 0 256px;border-right:1px solid #e6e8ec;padding:11px 11px;overflow:auto;
+        background:#fafbfc}
+  #side h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#7b828d;
+           margin:0 0 6px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;
+           text-overflow:ellipsis;clear:both}
+  #side h2.sep{margin-top:13px}
+  #side .brand{font-size:24px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:1px 2px 9px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 9px;
+           border-bottom:1px solid #e6e8ec;background:#fafbfc}
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:6px 10px;font-size:15px;
+       color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
+  .btn:hover:not(:disabled){background:#f0f2f5}
+  .btn.on,.btn.on:hover:not(:disabled){background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn:disabled{opacity:.4;cursor:default}
+  /* solo en la barra: la misma clase separa las secciones del panel */
+  #toolbar .sep{width:1px;height:22px;background:#dfe2e7;margin:0 3px}
+  #toolbar select{width:auto;padding:5px 6px}
+  .chk{display:inline-flex;align-items:center;gap:5px;font-size:15px;color:#4a515c;cursor:pointer;
+       padding:4px 6px;border-radius:6px}
+  .chk:hover{background:#eff1f4}
+  .chk input{margin:0;cursor:pointer;width:16px;height:16px}
+  .act{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:5px;
+       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:7px 9px;font-size:15px;
+       color:#3d4450;cursor:pointer;text-align:left;line-height:1.3}
+  .act:hover:not(:disabled){background:#f0f2f5}
+  .act:disabled{opacity:.4;cursor:default}
+  .act kbd{font:12.5px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
+  .act.on,.act.on:hover:not(:disabled){background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .act.on kbd{color:#cfdcf0}
+  .act.seguro,.btn.seguro,.act.seguro:hover:not(:disabled),.btn.seguro:hover:not(:disabled){
+       border-color:#c2410c;color:#c2410c;background:#fff7f2;font-weight:600}
+  .fila{display:flex;gap:5px;align-items:stretch;margin-top:5px}
+  .fila > *{min-width:0}
+  .fila .act{margin-top:0;flex:1;padding:7px 7px}
+  .fila .act.centro{justify-content:center}
+  select{font:15px inherit;border:1px solid #d5d9e0;border-radius:6px;
+       padding:6px 5px;color:#2b2f36;background:#fff;width:100%}
+  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:4px 0;font-size:16px;
+        color:#3d4450;cursor:pointer;flex:1;text-align:center}
+  .mini:hover:not(:disabled){background:#f0f2f5}
+  .mini:disabled{opacity:.35;cursor:default}
+  .lab{font-size:13.5px;color:#7b828d;line-height:1.3;margin-bottom:3px}
+  .mitad{flex:1}
+  .cont{display:flex;gap:4px;align-items:center}
+  .cont span{flex:1;text-align:center;font-weight:600;font-size:15px}
+  #caja{display:block;width:100%;border:1px solid #e6e8ec;border-radius:9px;background:#fff;
+        cursor:grab;touch-action:none}
+  #stage{position:relative;flex:1;min-height:0;background:#fff}
+  canvas#cv{display:block;width:100%;height:100%;touch-action:none}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:14.5px;
+        padding:6px 12px;border-radius:16px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:400px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:12px 15px;font-size:14px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto;
+        max-width:calc(100% - 20px)}
+  #info.show{display:block}
+  #info b{color:#2b2f36}
+  #info a{color:#2f62a8}
+  #info .ref{padding-left:1.6em;text-indent:-1.6em;font-size:13px}
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:12.5px;
+             line-height:1.5;color:#8a919c}
+  #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
+        display:none;align-items:center;justify-content:center;font-size:18px;color:#2f62a8;font-weight:600}
+  #drop.show{display:flex}
+  @media (max-width:640px){
+    #side{width:176px;flex:0 0 176px;padding:8px 7px}
+    .btn{padding:5px 7px;font-size:13.5px}
+    .act,.chk,select{font-size:13.5px}
+  }
+</style>
+</head>
+<body>
+
+  <aside id="side">
+    <div class="brand"><b>Dicotominó</b></div>
+    <h2>La caja</h2>
+    <canvas id="caja" title="Arrastra una pieza al tablero. Para devolverla, arrástrala aquí"></canvas>
+    <div class="fila">
+      <select id="sacarQue" style="flex:1.5" title="Qué piezas se sacan o se recogen con los botones de al lado"></select>
+    </div>
+    <div class="fila">
+      <button class="act centro" id="sacar" title="Saca de la caja, desordenadas, las piezas que diga el desplegable">Sacar</button>
+      <button class="act centro" id="recoger" title="Devuelve a la caja las piezas del tablero que diga el desplegable">Recoger</button>
+    </div>
+
+    <h2 class="sep">Selección</h2>
+    <div class="fila">
+      <button class="act" id="gIzq" disabled title="Girar 45° (tecla L)">↺ Girar<kbd>L</kbd></button>
+      <button class="act" id="gDer" disabled title="Girar 45° (tecla R)">↻ Girar<kbd>R</kbd></button>
+    </div>
+    <div class="fila">
+      <button class="act" id="tapar" disabled title="Pone la pieza boca abajo, para que no se vea cuál es; también con doble clic (tecla T)">Tapar<kbd>T</kbd></button>
+      <button class="act" id="quitar" disabled title="Las piezas vuelven a la caja; las cuerdas, cuadros y tarjetas se quitan (tecla Supr)">Quitar<kbd>Supr</kbd></button>
+    </div>
+
+    <h2 class="sep">Para clasificar</h2>
+    <div class="fila">
+      <button class="act centro" id="nCuerda" title="Una cuerda cerrada para separar piezas">＋ Cuerda</button>
+      <button class="act centro" id="nCuadro" title="Un cuadro de casillas: de 2 × 2, de 4 × 4, de doble entrada…">＋ Cuadro</button>
+    </div>
+    <div class="fila">
+      <select id="tarVal" style="flex:2.2" title="Lo que dice la tarjeta"></select>
+      <button class="act centro" id="tarNo" title="Niega la tarjeta: «no rojo»">No</button>
+      <button class="act centro" id="tarMas" title="Pone una tarjeta nueva en el tablero">＋</button>
+    </div>
+    <div class="fila" id="cajaCuadro" style="display:none;margin-top:9px">
+      <div class="mitad"><div class="lab">Filas</div>
+        <div class="cont"><button class="mini" id="fMenos">−</button><span id="nF">2</span><button class="mini" id="fMas">+</button></div></div>
+      <div class="mitad"><div class="lab">Columnas</div>
+        <div class="cont"><button class="mini" id="cMenos">−</button><span id="nC">2</span><button class="mini" id="cMas">+</button></div></div>
+    </div>
+  </aside>
+
+  <main>
+    <div id="toolbar">
+      <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
+      <button class="btn" id="vaciar" title="Devuelve todas las piezas a la caja y quita cuerdas, cuadros y tarjetas">Vaciar</button>
+      <span class="sep"></span>
+      <select id="colores" title="Los dos colores del juego. Cambiarlos no cambia las piezas, solo cómo se ven y cómo se llaman"></select>
+      <label class="chk" title="La barra de abajo dice el nombre de la pieza seleccionada"><input type="checkbox" id="nombres">Nombres</label>
+      <label class="chk" title="Al soltar una pieza pequeña sobre el hueco de una grande de su forma, se mete dentro; al soltar una pieza en un cuadro, se centra en su casilla"><input type="checkbox" id="iman" checked>Imán</label>
+      <span class="sep"></span>
+      <select id="fondo" title="Lo que hay debajo de las piezas. Con cristal o sin fondo se puede mirar también desde abajo">
+        <option value="mesa">Fondo: mesa</option>
+        <option value="cristal">Fondo: cristal</option>
+        <option value="nada">Sin fondo</option>
+      </select>
+      <button class="btn" id="ojoIni" disabled title="Volver al punto de vista de partida">⟲</button>
+      <button class="btn" id="mano" title="Arrastrar mueve el tablero, como con el botón derecho">✋</button>
+      <button class="btn" id="zoomout">−</button>
+      <button class="btn" id="zoomin">+</button>
+      <button class="btn" id="fit">Ajustar</button>
+      <span class="sep"></span>
+      <button class="btn" id="save" title="Descargar el tablero">⤓ Guardar</button>
+      <button class="btn" id="open" title="Abrir un archivo guardado">⤒ Abrir</button>
+      <button class="btn" id="add" title="Añadir lo de un archivo a lo que ya hay">＋</button>
+      <button class="btn" id="png" title="Descargar imagen">⤓ PNG</button>
+      <button class="btn" id="help">?</button>
+      <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+    </div>
+    <div id="stage">
+      <canvas id="cv"></canvas>
+      <div id="hint"></div>
+      <div id="info"></div>
+      <div id="drop">Suelta aquí el archivo</div>
+    </div>
+  </main>
+
+<script>
+"use strict";
+(function(){
+
+/* =========================================================================
+   1. LAS PIEZAS
+   El Dicotominó (de «dicotomía» y «dominó») lo diseñó Carlos de Castro en
+   2024 a partir de los bloques lógicos de Dienes y de los bloques de
+   Touyarot (de Castro y Nolla, 2026). Seis variables, y cada una con solo dos
+   valores:
+       color     los dos colores del juego (rojo y verde, azul y negro…)
+       forma     círculo, cuadrado
+       tamaño    grande, pequeño
+       altura    alto, bajo
+       interior  relleno, hueco
+       textura   liso, rayado                         2⁶ = 64 piezas
+   Como en los de Dienes, no hay dos piezas iguales: la caja es un conjunto
+   finito, y cada pieza se identifica con seis bits,
+       clave = color·32 + forma·16 + tamaño·8 + altura·4 + interior·2 + textura.
+
+   Lo que lo distingue es que encajan: cada pieza pequeña cabe justo en el
+   hueco de la grande hueca de su forma. Por eso el hueco de cualquier pieza
+   es la mitad de lado que la pieza: el de la grande es exactamente la
+   pequeña. El hueco atraviesa la pieza, y la pequeña metida dentro descansa
+   en la mesa: si es alta y la grande es baja, asoma por encima.
+
+   La textura rayada es la de las piezas impresas en 3D sin capas de arriba
+   ni de abajo, que dejan ver la rejilla del relleno: se dibuja como una
+   rejilla a 45° en la cara que se ve, que gira con la pieza.
+
+   Medidas, en unidades de tablero: el cuadrado grande mide 70 de lado y el
+   círculo grande 70 de diámetro; las pequeñas, la mitad. Las altas miden 22
+   de alto y las bajas 9.
+   ========================================================================= */
+var FORMAS=['círculo','cuadrado'];
+var PARES=[
+  {n:'rojo y verde',      col:['#d7322d','#2e8b3e'], nom:['rojo','verde'],      pl:['las rojas','las verdes']},
+  {n:'azul y negro',      col:['#2557a7','#34373d'], nom:['azul','negro'],      pl:['las azules','las negras']},
+  {n:'amarillo y morado', col:['#f2c418','#7b3fa0'], nom:['amarillo','morado'], pl:['las amarillas','las moradas']}
+];
+var ATRS=['color','forma','tam','altura','interior','textura'];
+var NOMBRES={
+  forma:FORMAS,
+  tam:['grande','pequeño'],
+  altura:['alto','bajo'],
+  interior:['relleno','hueco'],
+  textura:['liso','rayado']
+};
+var PLURAL={
+  forma:['los círculos','los cuadrados'],
+  tam:['las grandes','las pequeñas'],
+  altura:['las altas','las bajas'],
+  interior:['las rellenas','las huecas'],
+  textura:['las lisas','las rayadas']
+};
+var TITULO_AT={color:'Color', forma:'Forma', tam:'Tamaño', altura:'Altura', interior:'Interior', textura:'Textura'};
+var NPIEZAS=64;
+
+var LADO=70, ESC=[1,0.5], NCIRC=72, REJILLA=6;
+var ALTO=[22,9];                           // alta, baja
+var TAPA=84;                               // lado de la pieza tapada
+
+function attrs(k){ return [(k>>5)&1, (k>>4)&1, (k>>3)&1, (k>>2)&1, (k>>1)&1, k&1]; }
+function clave(a){ return (a[0]<<5)|(a[1]<<4)|(a[2]<<3)|(a[3]<<2)|(a[4]<<1)|a[5]; }
+function nombresDe(at){ return at===0? PARES[opt.par].nom : NOMBRES[ATRS[at]]; }
+function pluralesDe(at){ return at===0? PARES[opt.par].pl : PLURAL[ATRS[at]]; }
+function valorNombre(at,v){ return nombresDe(at)[v]; }
+function nombre(k){
+  var a=attrs(k), f=FORMAS[a[1]], s=f.charAt(0).toUpperCase()+f.slice(1);
+  for(var i=0;i<6;i++) if(i!==1) s+=' '+valorNombre(i,a[i]);
+  return s;
+}
+function diferencias(k1,k2){
+  var a=attrs(k1), b=attrs(k2), n=0;
+  for(var i=0;i<6;i++) if(a[i]!==b[i]) n++;
+  return n;
+}
+function colorDe(k){ return PARES[opt.par].col[attrs(k)[0]]; }
+
+/* El contorno de una forma, centrado en el origen; «ins» lo encoge hacia
+   dentro, que es como se hace el hueco. */
+function contorno(f,e,ins){
+  var v=[], i, t;
+  if(f===0){
+    var r=LADO/2*e-ins;
+    for(i=0;i<NCIRC;i++){ t=i*2*Math.PI/NCIRC; v.push({x:r*Math.cos(t), y:r*Math.sin(t)}); }
+  }else{
+    var h=LADO/2*e-ins;
+    v=[{x:-h,y:-h},{x:h,y:-h},{x:h,y:h},{x:-h,y:h}];
+  }
+  return v;
+}
+/* el marco del hueco: un cuarto del lado, para que el hueco sea la mitad */
+function marco(e){ return LADO/4*e; }
+function areaPoli(v){
+  var s=0;
+  for(var i=0;i<v.length;i++){ var A=v[i], B=v[(i+1)%v.length]; s+=A.x*B.y-B.x*A.y; }
+  return Math.abs(s)/2;
+}
+function alto(k){ return ALTO[attrs(k)[3]]; }
+function hueca(k){ return attrs(k)[4]===1; }
+function grande(k){ return attrs(k)[2]===0; }
+function formaDe(k){ return attrs(k)[1]; }
+
+/* =========================================================================
+   2. LA CÁMARA
+   Como en los programas de 3D (BlocksCAD, por ejemplo): una cámara con
+   perspectiva que mira a un punto de la mesa y da vueltas a su alrededor.
+     cam.tx, cam.ty  el punto de la mesa al que mira, que queda en el centro
+                     de la pantalla
+     cam.d           a qué distancia está (la rueda la acerca y la aleja)
+     cam.th          la vuelta alrededor de la mesa, en grados
+     cam.ph          la altura, en grados: 90 es desde encima del todo; con
+                     cristal o sin fondo puede bajar hasta −90, desde abajo
+   La mesa es el plano z = 0, con x a la derecha, y hacia quien mira y z
+   hacia arriba. La cámara está en C = T + d·(sin th·cos ph, cos th·cos ph,
+   sin ph) y tiene tres ejes: F hacia donde mira, R a su derecha (siempre
+   horizontal, para que la mesa no se ladee) y U = F × R hacia arriba. Un
+   punto P se ve en
+       X = cx + f·(P−C)·R / (P−C)·F      Y = cy − f·(P−C)·U / (P−C)·F
+   Lo que queda detrás de la cámara se recorta en el plano z = NEAR delante
+   de ella. Para arrastrar por la mesa se hace lo contrario: el rayo que sale
+   de la cámara por el punto de la pantalla, cortado con el plano z = 0.
+   Gestos: botón izquierdo en el vacío, girar la cámara (arriba y abajo, la
+   altura; a los lados, la vuelta); botón derecho, desplazar; rueda, acercar.
+   Las caras se pintan si miran a la cámara, y las piezas de lejos a cerca.
+   ========================================================================= */
+var E0=50, E_MESA=4, FOV=40, NEAR=5, E_CAJA=45;
+var cam={tx:0, ty:0, d:1200, th:0, ph:E0};
+var GRADO_PX={th:0.45, ph:0.35};           // cuánto gira cada píxel de ratón
+function phMin(){ return opt.fondo==='mesa'? E_MESA : -90; }
+function ponVista(th,ph){
+  cam.th=((th%360)+540)%360-180;
+  cam.ph=Math.max(phMin(), Math.min(90, ph));
+}
+function vistaDePartida(){ return Math.abs(cam.th)<1e-9 && Math.abs(cam.ph-E0)<1e-9; }
+function camara(c,cx,cy,f){
+  var th=c.th*Math.PI/180, ph=c.ph*Math.PI/180, cp=Math.cos(ph), sp=Math.sin(ph), st=Math.sin(th), ct=Math.cos(th);
+  var o={x:st*cp, y:ct*cp, z:sp};
+  var F={x:-o.x, y:-o.y, z:-o.z}, R={x:ct, y:-st, z:0};
+  var U={x:F.y*R.z-F.z*R.y, y:F.z*R.x-F.x*R.z, z:F.x*R.y-F.y*R.x};
+  return {C:{x:c.tx+c.d*o.x, y:c.ty+c.d*o.y, z:c.d*o.z}, F:F, R:R, U:U, f:f, cx:cx, cy:cy};
+}
+function centroPantalla(){
+  var r=stage.getBoundingClientRect();
+  return {x:(r.width||800)/2, y:(r.height||560)/2};
+}
+function focal(){
+  var r=stage.getBoundingClientRect();
+  return (r.height||560)/2/Math.tan(FOV*Math.PI/360);
+}
+function vw(){ var c=centroPantalla(); return camara(cam,c.x,c.y,focal()); }
+function aCam(V,x,y,z){
+  var dx=x-V.C.x, dy=y-V.C.y, dz=z-V.C.z;
+  return {x:dx*V.R.x+dy*V.R.y+dz*V.R.z, y:dx*V.U.x+dy*V.U.y+dz*V.U.z, z:dx*V.F.x+dy*V.F.y+dz*V.F.z};
+}
+function proyecta(V,c){ var z=Math.max(c.z,NEAR); return {x:V.cx+V.f*c.x/z, y:V.cy-V.f*c.y/z}; }
+/* un punto de la mesa a una altura h; «plano» es una vista de frente, sin
+   cámara, que es como se dibujan las tarjetas */
+function pr(V,q,h){
+  if(V.plano) return {x:V.x+V.z*q.x, y:V.y+V.z*q.y};
+  return proyecta(V,aCam(V,q.x,q.y,h||0));
+}
+function delante(V,q,h){ return aCam(V,q.x,q.y,h||0).z>NEAR; }
+function escala(V,q,h){ return V.f/Math.max(aCam(V,q.x,q.y,h||0).z,NEAR); }
+function poliCam(V,pts){
+  var cs=pts.map(function(p){ return aCam(V,p.x,p.y,p.z||0); }), out=[], n=cs.length;
+  for(var i=0;i<n;i++){
+    var A=cs[i], B=cs[(i+1)%n], ia=A.z>NEAR, ib=B.z>NEAR;
+    if(ia) out.push(A);
+    if(ia!==ib){ var t=(NEAR-A.z)/(B.z-A.z); out.push({x:A.x+t*(B.x-A.x), y:A.y+t*(B.y-A.y), z:NEAR}); }
+  }
+  return out.length>=3? out.map(function(c){ return proyecta(V,c); }) : null;
+}
+function segCam(V,a,b){
+  var A=aCam(V,a.x,a.y,a.z||0), B=aCam(V,b.x,b.y,b.z||0);
+  if(A.z<=NEAR && B.z<=NEAR) return null;
+  if(A.z<=NEAR){ var t=(NEAR-A.z)/(B.z-A.z); A={x:A.x+t*(B.x-A.x), y:A.y+t*(B.y-A.y), z:NEAR}; }
+  else if(B.z<=NEAR){ var u=(NEAR-B.z)/(A.z-B.z); B={x:B.x+u*(A.x-B.x), y:B.y+u*(A.y-B.y), z:NEAR}; }
+  return [proyecta(V,A), proyecta(V,B)];
+}
+function s2wV(V,s,h){
+  var u=(s.x-V.cx)/V.f, v=-(s.y-V.cy)/V.f;
+  var d={x:V.F.x+u*V.R.x+v*V.U.x, y:V.F.y+u*V.R.y+v*V.U.y, z:V.F.z+u*V.R.z+v*V.U.z};
+  if(Math.abs(d.z)<1e-9) return null;
+  var t=((h||0)-V.C.z)/d.z;
+  if(t<=0) return null;
+  return {x:V.C.x+t*d.x, y:V.C.y+t*d.y};
+}
+function w2s(p){ return pr(vw(),p,0); }
+function s2w(s){ return s2wV(vw(),s,0); }
+function distSeg(p,a,b){
+  var dx=b.x-a.x, dy=b.y-a.y, L=dx*dx+dy*dy, t=L? ((p.x-a.x)*dx+(p.y-a.y)*dy)/L : 0;
+  t=Math.max(0,Math.min(1,t));
+  return Math.hypot(p.x-a.x-t*dx, p.y-a.y-t*dy);
+}
+
+/* =========================================================================
+   3. ESTADO
+     'p'  pieza     {k, x, y, r, tap}   centro, sobre la mesa; r giros de 45°
+     'c'  cuerda    {x, y, rx, ry, n}
+     'q'  cuadro    {x, y, nf, nc, cw, ch}
+     't'  tarjeta   {x, y, at, v, no}
+   Que una pequeña esté metida en una grande no se guarda: se deduce de que
+   estén en el mismo sitio (ver huespedDe), y así no se puede desajustar.
+   ========================================================================= */
+var obj=[], sel=[], nid=1;
+var drag=null, undoStack=[], importMode='replace';
+var opt={par:0, nombres:0, iman:1, mano:0, fondo:'mesa'};
+var tarCtl={at:0, v:0, no:0};
+var nCuerdas=0, nNuevos=0;
+
+var cv=document.getElementById('cv'), ctx=cv.getContext('2d');
+var cajaEl=document.getElementById('caja'), cctx=cajaEl.getContext('2d');
+var stage=document.getElementById('stage');
+var hintEl=document.getElementById('hint'), infoEl=document.getElementById('info');
+var dropEl=document.getElementById('drop');
+var flashMsg=null, flashT=0;
+var FUENTE='-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif';
+
+function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2200); }
+function estado(){ return JSON.stringify({o:obj, s:sel, n:nid}); }
+function pushFoto(f){ undoStack.push(f); if(undoStack.length>90) undoStack.shift(); }
+function pushUndo(){ pushFoto(estado()); }
+function doUndo(){
+  if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
+  var d=JSON.parse(undoStack.pop());
+  obj=d.o; sel=d.s||[]; nid=d.n||1;
+  draw();
+}
+function piezas(){ return obj.filter(function(o){ return o.tipo==='p'; }); }
+function porId(id){ for(var i=0;i<obj.length;i++) if(obj[i].id===id) return obj[i]; return null; }
+function seleccionados(){ return sel.map(porId).filter(Boolean); }
+function enMesa(k){ for(var i=0;i<obj.length;i++) if(obj[i].tipo==='p' && obj[i].k===k) return obj[i]; return null; }
+
+/* =========================================================================
+   4. GEOMETRÍA
+   ========================================================================= */
+function geo(p){
+  if(p.tap){
+    var h=TAPA/2;
+    return {base:[{x:p.x-h,y:p.y-h},{x:p.x+h,y:p.y-h},{x:p.x+h,y:p.y+h},{x:p.x-h,y:p.y+h}],
+            hole:null, h:4, col:'#9aa1ab', f:1, tex:0, ang:0, e:1};
+  }
+  var a=attrs(p.k), e=ESC[a[2]], ang=p.r*Math.PI/4, co=Math.cos(ang), si=Math.sin(ang);
+  function pon(v){ return v.map(function(q){ return {x:p.x+q.x*co-q.y*si, y:p.y+q.x*si+q.y*co}; }); }
+  return {base:pon(contorno(a[1],e,0)), hole:a[4]? pon(contorno(a[1],e,marco(e))) : null,
+          h:ALTO[a[3]], col:colorDe(p.k), f:a[1], tex:a[5], ang:ang, e:e};
+}
+function casco(pts){
+  var P=pts.slice().sort(function(a,b){ return a.x-b.x || a.y-b.y; });
+  function cruz(o,a,b){ return (a.x-o.x)*(b.y-o.y)-(a.y-o.y)*(b.x-o.x); }
+  var lo=[], up=[], i;
+  for(i=0;i<P.length;i++){ while(lo.length>=2 && cruz(lo[lo.length-2],lo[lo.length-1],P[i])<=0) lo.pop(); lo.push(P[i]); }
+  for(i=P.length-1;i>=0;i--){ while(up.length>=2 && cruz(up[up.length-2],up[up.length-1],P[i])<=0) up.pop(); up.push(P[i]); }
+  lo.pop(); up.pop();
+  return lo.concat(up);
+}
+function dentroPoli(P,v){
+  var d=false;
+  for(var i=0,j=v.length-1;i<v.length;j=i++){
+    if((v[i].y>P.y)!==(v[j].y>P.y) &&
+       P.x < (v[j].x-v[i].x)*(P.y-v[i].y)/(v[j].y-v[i].y)+v[i].x) d=!d;
+  }
+  return d;
+}
+/* La pieza vista con V: todo en pantalla. «cap» es la cara que se ve, la de
+   arriba o, desde abajo, la de abajo; «hc» y «hl» son la boca del agujero en
+   esa cara y en la otra. Si la pieza queda detrás de la cámara, null. */
+function vista(p,V){
+  var G=geo(p);
+  if(!delante(V,{x:p.x,y:p.y},G.h/2)) return null;
+  var top=G.base.map(function(q){ return pr(V,q,G.h); });
+  var bot=G.base.map(function(q){ return pr(V,q,0); });
+  var arriba=V.C.z>=G.h/2;
+  var r={G:G, top:top, bot:bot, sil:casco(top.concat(bot)), arriba:arriba, cap:arriba?top:bot, hcap:arriba?G.h:0};
+  if(G.hole){
+    var ht=G.hole.map(function(q){ return pr(V,q,G.h); }), hb=G.hole.map(function(q){ return pr(V,q,0); });
+    r.hc=arriba?ht:hb; r.hl=arriba?hb:ht;
+  }
+  return r;
+}
+
+/* --- piezas metidas unas en otras --------------------------------------------
+   Una pequeña está metida en una grande si la grande es hueca, de su misma
+   forma, no está tapada, las dos tienen el mismo centro y, si son cuadrados,
+   el mismo giro (de 90 en 90). En cada grande cabe una sola. */
+function cabeEn(p,q){
+  if(!p || !q || p===q || p.tap || q.tap) return false;
+  if(grande(p.k) || !grande(q.k) || !hueca(q.k) || formaDe(p.k)!==formaDe(q.k)) return false;
+  return formaDe(p.k)===0 || ((p.r-q.r)%2+2)%2===0;
+}
+function anfitrionDe(p){
+  if(p.tipo!=='p' || grande(p.k)) return null;
+  for(var i=0;i<obj.length;i++){
+    var q=obj[i];
+    if(q.tipo==='p' && cabeEn(p,q) && Math.abs(q.x-p.x)<0.5 && Math.abs(q.y-p.y)<0.5) return q;
+  }
+  return null;
+}
+function huespedDe(q){
+  if(q.tipo!=='p' || !grande(q.k) || !hueca(q.k) || q.tap) return null;
+  for(var i=0;i<obj.length;i++){
+    var p=obj[i];
+    if(p.tipo==='p' && cabeEn(p,q) && Math.abs(q.x-p.x)<0.5 && Math.abs(q.y-p.y)<0.5) return p;
+  }
+  return null;
+}
+/* El imán del hueco: una pequeña que se suelta con el centro dentro del
+   hueco de una grande libre de su forma se mete en ella. */
+function meteEnHueco(p){
+  if(p.tipo!=='p' || grande(p.k) || p.tap) return false;
+  for(var i=obj.length-1;i>=0;i--){
+    var q=obj[i];
+    if(q.tipo!=='p' || q===p || !grande(q.k) || !hueca(q.k) || q.tap || formaDe(q.k)!==formaDe(p.k)) continue;
+    var h=huespedDe(q);
+    if(h && h!==p) continue;
+    if(!dentroPoli({x:p.x,y:p.y}, geo(q).hole)) continue;
+    p.x=q.x; p.y=q.y;
+    if(formaDe(p.k)===1) p.r=q.r;
+    return true;
+  }
+  return false;
+}
+/* Lo que se ve de una pequeña metida: lo que queda fuera de la grande, lo
+   que se ve por la boca del hueco y, mirando desde más arriba que la
+   grande, lo que asoma por encima de ella. */
+function zonasHuesped(p,q,V){
+  var Wq=vista(q,V);
+  if(!Wq) return null;
+  var z={sil:Wq.sil, hc:Wq.hc, up:null}, hp=geo(p).h, hq=geo(q).h;
+  if(hp>hq && V.C.z>hq){
+    var G=geo(p);
+    z.up=casco(G.base.map(function(b){ return pr(V,b,hq); }).concat(G.base.map(function(b){ return pr(V,b,hp); })));
+  }
+  return z;
+}
+function tocaPieza(s,p,V){
+  V=V||vw();
+  var W=vista(p,V);
+  if(!W) return false;
+  /* por el hueco se ve lo de detrás (o la pequeña metida, que se mira antes) */
+  if(W.hc && dentroPoli(s,W.hc) && dentroPoli(s,W.hl)) return false;
+  if(!dentroPoli(s,W.sil)) return false;
+  var q=anfitrionDe(p);
+  if(q){
+    var z=zonasHuesped(p,q,V);
+    if(z) return !dentroPoli(s,z.sil) || dentroPoli(s,z.hc) || (z.up && dentroPoli(s,z.up));
+  }
+  return true;
+}
+var medCtx=document.createElement('canvas').getContext('2d');
+var ALTO_T=46;
+function textoTarjeta(t){ return (t.no?'no ':'')+valorNombre(t.at,t.v); }
+function anchoTarjeta(t){
+  medCtx.font='600 18px '+FUENTE;
+  return Math.round(medCtx.measureText(textoTarjeta(t)).width)+62;
+}
+function vistaTarjeta(o,V){
+  var S=pr(V,{x:o.x,y:o.y},0), k=V.plano? V.z : Math.max(0.15,Math.min(4,escala(V,o,0)));
+  return {plano:1, x:S.x-o.x*k, y:S.y-o.y*k, z:k};
+}
+function tocaTarjeta(s,o,V){
+  V=V||vw();
+  if(!V.plano && !delante(V,o,0)) return false;
+  var T=vistaTarjeta(o,V), S=pr(T,o);
+  return Math.abs(s.x-S.x)<=anchoTarjeta(o)*T.z/2 && Math.abs(s.y-S.y)<=ALTO_T*T.z/2;
+}
+function elipse(o,n){
+  var v=[];
+  for(var i=0;i<n;i++){ var t=i*2*Math.PI/n; v.push({x:o.x+o.rx*Math.cos(t), y:o.y+o.ry*Math.sin(t)}); }
+  return v;
+}
+function lineasCuadro(o){
+  var x1=o.x+o.nc*o.cw, y1=o.y+o.nf*o.ch, out=[], i;
+  for(i=0;i<=o.nc;i++) out.push([{x:o.x+i*o.cw,y:o.y},{x:o.x+i*o.cw,y:y1}]);
+  for(i=0;i<=o.nf;i++) out.push([{x:o.x,y:o.y+i*o.ch},{x:x1,y:o.y+i*o.ch}]);
+  return out;
+}
+function tocaCuerda(s,o,V){
+  V=V||vw();
+  var v=elipse(o,72);
+  for(var i=0;i<v.length;i++){ var sg=segCam(V,v[i],v[(i+1)%v.length]); if(sg && distSeg(s,sg[0],sg[1])<9) return true; }
+  return false;
+}
+function tocaCuadro(s,o,V){
+  V=V||vw();
+  var L=lineasCuadro(o);
+  for(var i=0;i<L.length;i++){ var sg=segCam(V,L[i][0],L[i][1]); if(sg && distSeg(s,sg[0],sg[1])<9) return true; }
+  return false;
+}
+function centroObj(o){
+  if(o.tipo==='q') return {x:o.x+o.nc*o.cw/2, y:o.y+o.nf*o.ch/2};
+  return {x:o.x, y:o.y};
+}
+function asaDe(o){
+  if(o.tipo==='c') return {x:o.x+o.rx*Math.SQRT1_2, y:o.y+o.ry*Math.SQRT1_2};
+  if(o.tipo==='q') return {x:o.x+o.nc*o.cw, y:o.y+o.nf*o.ch};
+  return null;
+}
+function cajaPantalla(lista,V){
+  var b={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9}, hay=false;
+  function mete(q){ hay=true; if(q.x<b.x0)b.x0=q.x; if(q.x>b.x1)b.x1=q.x; if(q.y<b.y0)b.y0=q.y; if(q.y>b.y1)b.y1=q.y; }
+  lista.forEach(function(o){
+    if(o.tipo==='p'){ var W=vista(o,V); if(W) W.sil.forEach(mete); }
+    else if(o.tipo==='c') elipse(o,32).forEach(function(q){ if(delante(V,q,0)) mete(pr(V,q,0)); });
+    else if(o.tipo==='q') [{x:o.x,y:o.y},{x:o.x+o.nc*o.cw,y:o.y},{x:o.x,y:o.y+o.nf*o.ch},
+                           {x:o.x+o.nc*o.cw,y:o.y+o.nf*o.ch}].forEach(function(q){ if(delante(V,q,0)) mete(pr(V,q,0)); });
+    else if(delante(V,o,0)){
+      var T=vistaTarjeta(o,V), S=pr(T,o), w=anchoTarjeta(o)*T.z/2, h=ALTO_T*T.z/2;
+      mete({x:S.x-w,y:S.y-h}); mete({x:S.x+w,y:S.y+h});
+    }
+  });
+  return hay? b : null;
+}
+/* El orden de dibujo: de la más lejana a la más cercana (si están igual de
+   lejos, la última que se ha tocado, encima); lo que se arrastra, encima; y
+   cada pequeña metida, justo después de su grande. */
+function ordenPiezas(V){
+  var arr=[], lev={}, metidas={};
+  if(drag && drag.modo==='mover') drag.orig.forEach(function(q){ lev[q.o.id]=1; });
+  obj.forEach(function(o){ if(o.tipo==='p'){ var q=anfitrionDe(o); if(q) metidas[o.id]=q; } });
+  obj.forEach(function(o,i){
+    if(o.tipo!=='p' || metidas[o.id]) return;
+    var dx=o.x-V.C.x, dy=o.y-V.C.y, dz=V.C.z;
+    arr.push({o:o, i:i, f:Math.round(Math.sqrt(dx*dx+dy*dy+dz*dz)*100)/100, l:lev[o.id]?1:0});
+  });
+  arr.sort(function(a,b){ return (a.l-b.l) || (b.f-a.f) || (a.i-b.i); });
+  var out=[];
+  arr.forEach(function(q){ out.push(q.o); var h=huespedDe(q.o); if(h) out.push(h); });
+  return out;
+}
+
+/* =========================================================================
+   5. ACCIONES
+   ========================================================================= */
+function selecciona(ids, anadir){
+  var base = anadir? sel.slice() : [];
+  ids.forEach(function(id){
+    var i=base.indexOf(id);
+    if(anadir && i>=0) base.splice(i,1); else if(i<0) base.push(id);
+  });
+  sel=base;
+}
+function alFrente(ids){
+  var arriba=obj.filter(function(o){ return ids.indexOf(o.id)>=0; });
+  obj=obj.filter(function(o){ return ids.indexOf(o.id)<0; }).concat(arriba);
+}
+function nuevaPieza(k,P){
+  if(enMesa(k)) return null;               // cada pieza es única
+  var p={tipo:'p', id:nid++, k:k, x:P.x, y:P.y, r:0, tap:0};
+  obj.push(p);
+  return p;
+}
+/* Lo que se mueve o gira con una lista: las piezas metidas en las grandes de
+   la lista. */
+function conMetidas(lista){
+  var out=lista.slice(), ids={};
+  out.forEach(function(o){ ids[o.id]=1; });
+  lista.forEach(function(o){
+    if(o.tipo!=='p') return;
+    var h=huespedDe(o);
+    if(h && !ids[h.id]){ out.push(h); ids[h.id]=1; }
+  });
+  return out;
+}
+function gira(sentido){
+  var s=seleccionados().filter(function(o){ return o.tipo==='p'; }), ids={};
+  if(!s.length) return;
+  pushUndo();
+  /* una pequeña metida no puede girar sola dentro de su hueco: gira la grande */
+  s=s.map(function(p){ return anfitrionDe(p)||p; });
+  conMetidas(s).forEach(function(p){
+    if(ids[p.id]) return; ids[p.id]=1;
+    p.r=((p.r+sentido)%8+8)%8;
+  });
+  draw();
+}
+function tapa(lista){
+  var ps=lista.filter(function(o){ return o.tipo==='p'; });
+  if(!ps.length) return;
+  pushUndo();
+  var poner=ps.some(function(p){ return !p.tap; });
+  ps.forEach(function(p){ p.tap=poner?1:0; });
+  draw();
+}
+function quitaSeleccion(){
+  if(!sel.length) return;
+  pushUndo();
+  obj=obj.filter(function(o){ return sel.indexOf(o.id)<0; });
+  sel=[];
+  draw();
+}
+function centroVista(){ return {x:cam.tx, y:cam.ty}; }
+function huecos(n){
+  var c=centroVista(), P=104, ncol=8, out=[], i=0, ocup=piezas();
+  var x0=c.x-(ncol/2-0.5)*P, y0=c.y-3.5*P;
+  while(out.length<n && i<4000){
+    var cx=x0+(i%ncol)*P, cy=y0+Math.floor(i/ncol)*P; i++;
+    var libre=ocup.every(function(o){ return Math.abs(o.x-cx)>P*0.6 || Math.abs(o.y-cy)>P*0.6; });
+    if(libre) out.push({x:cx+(Math.random()-0.5)*16, y:cy+(Math.random()-0.5)*16});
+  }
+  return out;
+}
+function cumple(k,at,v){ return at<0 || attrs(k)[at]===v; }
+function sacar(at,v){
+  var claves=[], k;
+  for(k=0;k<NPIEZAS;k++) if(!enMesa(k) && cumple(k,at,v)) claves.push(k);
+  if(!claves.length) return [];
+  pushUndo();
+  for(var i=claves.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)), t=claves[i]; claves[i]=claves[j]; claves[j]=t; }
+  var sitios=huecos(claves.length);
+  var nuevas=claves.map(function(k2,i2){ return nuevaPieza(k2, sitios[i2]); });
+  sel=[];
+  return nuevas;
+}
+function recoger(at,v){
+  var fuera=piezas().filter(function(p){ return cumple(p.k,at,v); });
+  if(!fuera.length) return 0;
+  pushUndo();
+  var ids=fuera.map(function(p){ return p.id; });
+  obj=obj.filter(function(o){ return ids.indexOf(o.id)<0; });
+  sel=sel.filter(function(id){ return ids.indexOf(id)<0; });
+  return fuera.length;
+}
+function encaja(p){
+  for(var i=obj.length-1;i>=0;i--){
+    var q=obj[i];
+    if(q.tipo!=='q') continue;
+    if(p.x<q.x || p.y<q.y || p.x>q.x+q.nc*q.cw || p.y>q.y+q.nf*q.ch) continue;
+    var ci=Math.min(q.nc-1, Math.floor((p.x-q.x)/q.cw)), fj=Math.min(q.nf-1, Math.floor((p.y-q.y)/q.ch));
+    p.x=q.x+(ci+0.5)*q.cw;
+    p.y=q.y+(fj+0.5)*q.ch;
+    return true;
+  }
+  return false;
+}
+var CUERDAS=['#8a5a24','#2f62a8','#7a3e9d','#c2410c'];
+function nuevaCuerda(){
+  pushUndo();
+  var c=centroVista(), off=(nNuevos++%5)*24;
+  var o={tipo:'c', id:nid++, x:c.x+off, y:c.y+off, rx:160, ry:115, n:(nCuerdas++)%CUERDAS.length};
+  obj.push(o); sel=[o.id]; draw();
+  return o;
+}
+function nuevoCuadro(){
+  pushUndo();
+  var c=centroVista(), off=(nNuevos++%5)*24;
+  var o={tipo:'q', id:nid++, x:c.x-110+off, y:c.y-110+off, nf:2, nc:2, cw:110, ch:110};
+  obj.unshift(o); sel=[o.id]; draw();
+  return o;
+}
+function nuevaTarjeta(){
+  pushUndo();
+  var c=centroVista(), off=(nNuevos++%5)*24;
+  var o={tipo:'t', id:nid++, x:c.x+off, y:c.y-150+off, at:tarCtl.at, v:tarCtl.v, no:tarCtl.no};
+  obj.push(o); sel=[o.id]; draw();
+  return o;
+}
+function cambiaCuadro(df,dc){
+  var s=seleccionados();
+  if(s.length!==1 || s[0].tipo!=='q') return;
+  var q=s[0], nf=Math.max(1,Math.min(6,q.nf+df)), nc=Math.max(1,Math.min(6,q.nc+dc));
+  if(nf===q.nf && nc===q.nc) return;
+  pushUndo(); q.nf=nf; q.nc=nc; draw();
+}
+function acerca(k,s){
+  var w=s2w(s);
+  cam.d=Math.max(150, Math.min(8000, cam.d/k));
+  var w2=s2w(s);
+  if(w && w2){ cam.tx+=w.x-w2.x; cam.ty+=w.y-w2.y; }
+}
+function ponFondo(f){
+  opt.fondo=(f==='cristal'||f==='nada')? f : 'mesa';
+  document.getElementById('fondo').value=opt.fondo;
+  ponVista(cam.th, cam.ph);                // la mesa no deja mirar desde abajo
+  draw();
+}
+
+/* =========================================================================
+   6. DIBUJO
+   ========================================================================= */
+function tinta(hex,f,al){
+  var h=hex.replace('#','');
+  var r=parseInt(h.substr(0,2),16), g=parseInt(h.substr(2,2),16), b=parseInt(h.substr(4,2),16);
+  r=Math.round(r+(f>0?(255-r)*f:r*f)); g=Math.round(g+(f>0?(255-g)*f:g*f)); b=Math.round(b+(f>0?(255-b)*f:b*f));
+  return 'rgba('+r+','+g+','+b+','+(al===undefined?1:al)+')';
+}
+function oscuro(hex){
+  var h=hex.replace('#','');
+  return 0.3*parseInt(h.substr(0,2),16)+0.59*parseInt(h.substr(2,2),16)+0.11*parseInt(h.substr(4,2),16) < 80;
+}
+function poli(c,pts){
+  c.moveTo(pts[0].x,pts[0].y);
+  for(var i=1;i<pts.length;i++) c.lineTo(pts[i].x,pts[i].y);
+  c.closePath();
+}
+function trazo(c,V,v){ poli(c, v.map(function(q){ return pr(V,q,0); })); }
+/* La luz viene de delante a la izquierda de la mesa y no se mueve con la
+   cámara: al dar la vuelta, cada cara se ve más clara o más oscura. */
+var LUZ={x:-Math.SQRT1_2, y:Math.SQRT1_2};
+function sombra(nx,ny,col){
+  var d=(nx*LUZ.x+ny*LUZ.y+1)/2;
+  /* en las piezas oscuras, oscurecer no se ve: se aclara la cara iluminada */
+  if(col && oscuro(col)) return 0.22*d-0.18;
+  return -0.16-0.36*(1-d);
+}
+function normales(v){
+  var s=0, i, out=[];
+  for(i=0;i<v.length;i++){ var A=v[i], B=v[(i+1)%v.length]; s+=A.x*B.y-B.x*A.y; }
+  for(i=0;i<v.length;i++){
+    var P=v[i], Q=v[(i+1)%v.length], dx=Q.x-P.x, dy=Q.y-P.y, L=Math.hypot(dx,dy)||1;
+    out.push(s>0? {x:dy/L, y:-dx/L} : {x:-dy/L, y:dx/L});
+  }
+  return out;
+}
+function miraA(V,A,N){ return (V.C.x-A.x)*N.x+(V.C.y-A.y)*N.y>1e-9; }
+/* La rejilla de las rayadas: dos familias de rectas a 45° de la pieza, con
+   la separación del relleno de la impresora, sobre la cara que se ve. */
+function dibujaRejilla(c,V,p,W){
+  var G=W.G, R=LADO/2*G.e*1.5, co=Math.cos(G.ang), si=Math.sin(G.ang);
+  function m(lx,ly){ return pr(V,{x:p.x+lx*co-ly*si, y:p.y+lx*si+ly*co},W.hcap); }
+  c.save();
+  c.beginPath(); poli(c,W.cap); if(W.hc) poli(c,W.hc); c.clip('evenodd');
+  c.beginPath();
+  for(var d=-R; d<=R+1e-9; d+=REJILLA){
+    var a=m((d-R)*Math.SQRT1_2,(d+R)*Math.SQRT1_2), b=m((d+R)*Math.SQRT1_2,(d-R)*Math.SQRT1_2);
+    var a2=m((d-R)*Math.SQRT1_2,(-d-R)*Math.SQRT1_2), b2=m((d+R)*Math.SQRT1_2,(-d+R)*Math.SQRT1_2);
+    c.moveTo(a.x,a.y); c.lineTo(b.x,b.y); c.moveTo(a2.x,a2.y); c.lineTo(b2.x,b2.y);
+  }
+  c.lineWidth=Math.max(0.5, 1.1*escala(V,p,W.hcap));
+  c.strokeStyle=tinta(G.col, oscuro(G.col)? 0.38 : -0.4);
+  c.stroke();
+  c.restore();
+}
+function dibujaPieza(c,V,p,marcada){
+  var W=vista(p,V);
+  if(!W) return;
+  var G=W.G, top=W.top, bot=W.bot, n=top.length, i;
+  var col=G.col, borde=oscuro(col)? '#15171a' : tinta(col,-0.5);
+  c.lineJoin='round';
+  if(marcada){
+    c.beginPath(); poli(c,W.sil);
+    c.lineWidth=7; c.strokeStyle='#2f62a8'; c.stroke();
+  }
+  var N=normales(G.base);
+  for(i=0;i<n;i++){
+    if(!miraA(V,G.base[i],N[i])) continue;
+    var j=(i+1)%n;
+    c.beginPath(); poli(c,[top[i],top[j],bot[j],bot[i]]);
+    var sh=tinta(col,sombra(N[i].x,N[i].y,col));
+    c.fillStyle=sh; c.fill();
+    if(G.f===0){ c.lineWidth=0.8; c.strokeStyle=sh; }
+    else{ c.lineWidth=1; c.strokeStyle=borde; }
+    c.stroke();
+  }
+  c.beginPath(); poli(c,W.sil); c.lineWidth=1; c.strokeStyle=borde; c.stroke();
+  if(W.hc){
+    var NH=normales(G.hole), m=G.hole.length;
+    var hT=G.hole.map(function(q){ return pr(V,q,G.h); }), hB=G.hole.map(function(q){ return pr(V,q,0); });
+    c.save();
+    c.beginPath(); poli(c,W.hc); c.clip();
+    for(i=0;i<m;i++){
+      if(miraA(V,G.hole[i],NH[i])) continue;
+      var j2=(i+1)%m;
+      c.beginPath(); poli(c,[hT[i],hT[j2],hB[j2],hB[i]]);
+      var sw=tinta(col,sombra(-NH[i].x,-NH[i].y,col)-0.08);
+      c.fillStyle=sw; c.fill(); c.lineWidth=0.8; c.strokeStyle=sw; c.stroke();
+    }
+    c.beginPath(); poli(c,W.hl); c.lineWidth=1; c.strokeStyle=borde; c.stroke();
+    c.restore();
+  }
+  c.beginPath(); poli(c,W.cap); if(W.hc) poli(c,W.hc);
+  c.fillStyle=W.arriba? col : tinta(col,oscuro(col)? 0.1 : -0.22); c.fill('evenodd');
+  if(G.tex) dibujaRejilla(c,V,p,W);
+  c.beginPath(); poli(c,W.cap); if(W.hc) poli(c,W.hc);
+  c.lineWidth=1.2; c.strokeStyle=borde; c.stroke();
+  if(p.tap && W.arriba){
+    var m2=pr(V,{x:p.x,y:p.y},G.h), k=escala(V,p,G.h);
+    c.fillStyle='#fff'; c.font='700 '+Math.round(40*k)+'px '+FUENTE;
+    c.textAlign='center'; c.textBaseline='middle';
+    c.fillText('?', m2.x, m2.y+1);
+  }
+}
+/* Una pequeña metida se pinta recortada: por fuera de la grande y por la
+   boca del hueco, y otra vez lo que asoma por encima de la grande. */
+function dibujaHuesped(c,V,p,q,marcada){
+  var z=zonasHuesped(p,q,V);
+  if(!z){ dibujaPieza(c,V,p,marcada); return; }
+  c.save();
+  c.beginPath(); c.rect(-1e5,-1e5,2e5,2e5); poli(c,z.sil); if(z.hc) poli(c,z.hc); c.clip('evenodd');
+  dibujaPieza(c,V,p,marcada);
+  c.restore();
+  if(z.up){
+    c.save();
+    c.beginPath(); poli(c,z.up); c.clip();
+    dibujaPieza(c,V,p,marcada);
+    c.restore();
+  }
+}
+function dibujaCuerda(c,V,o,marcada){
+  var v=elipse(o,72), k=Math.max(0.3,escala(V,o,0)), i, sg;
+  c.save();
+  c.lineCap='round';
+  if(marcada){
+    c.beginPath();
+    for(i=0;i<v.length;i++){ sg=segCam(V,v[i],v[(i+1)%v.length]); if(sg){ c.moveTo(sg[0].x,sg[0].y); c.lineTo(sg[1].x,sg[1].y); } }
+    c.lineWidth=Math.max(2.5,4*k)+6; c.strokeStyle='rgba(47,98,168,.35)'; c.stroke();
+  }
+  c.beginPath();
+  for(i=0;i<v.length;i++){ sg=segCam(V,v[i],v[(i+1)%v.length]); if(sg){ c.moveTo(sg[0].x,sg[0].y); c.lineTo(sg[1].x,sg[1].y); } }
+  c.lineWidth=Math.max(2.5,4*k); c.strokeStyle=CUERDAS[o.n%CUERDAS.length]; c.stroke();
+  c.restore();
+}
+function dibujaCuadro(c,V,o,marcada,sinRelleno){
+  var x1=o.x+o.nc*o.cw, y1=o.y+o.nf*o.ch, k=Math.max(0.3,escala(V,centroObj(o),0));
+  var pol=poliCam(V,[{x:o.x,y:o.y},{x:x1,y:o.y},{x:x1,y:y1},{x:o.x,y:y1}]);
+  c.save();
+  if(pol){
+    c.beginPath(); poli(c,pol);
+    if(!sinRelleno){ c.fillStyle='rgba(239,241,245,.92)'; c.fill(); }
+    if(marcada){ c.lineWidth=7; c.strokeStyle='rgba(47,98,168,.35)'; c.stroke(); }
+  }
+  c.beginPath();
+  lineasCuadro(o).forEach(function(L){ var sg=segCam(V,L[0],L[1]); if(sg){ c.moveTo(sg[0].x,sg[0].y); c.lineTo(sg[1].x,sg[1].y); } });
+  c.lineWidth=Math.max(1.5,2*k); c.strokeStyle=marcada?'#2f62a8':'#a0a7b1'; c.stroke();
+  c.restore();
+}
+/* El fondo: una mesa con cuadrícula, como la de los programas de 3D, o un
+   cristal con la misma cuadrícula, o nada. La cuadrícula es de la mesa y no
+   de la cámara: al desplazar el tablero, se mueve con él. */
+var CUAD={fina:35, gruesa:175, rFina:1050, rGruesa:2800};
+function dibujaFondo(c,V,encima){
+  if(opt.fondo==='nada' || V.plano) return;
+  var cristal=opt.fondo==='cristal', G=CUAD.gruesa;
+  var gx=Math.round(cam.tx/G)*G, gy=Math.round(cam.ty/G)*G, R=CUAD.rGruesa, x, y, sg;
+  var pol=poliCam(V,[{x:gx-R,y:gy-R},{x:gx+R,y:gy-R},{x:gx+R,y:gy+R},{x:gx-R,y:gy+R}]);
+  if(pol){
+    c.beginPath(); poli(c,pol);
+    c.fillStyle=cristal? (encima? 'rgba(140,190,225,.30)' : 'rgba(170,210,235,.25)') : '#f6f6f3';
+    c.fill();
+  }
+  function rejilla(paso,r,color){
+    c.beginPath();
+    for(x=gx-r;x<=gx+r+1e-6;x+=paso){ sg=segCam(V,{x:x,y:gy-r},{x:x,y:gy+r}); if(sg){ c.moveTo(sg[0].x,sg[0].y); c.lineTo(sg[1].x,sg[1].y); } }
+    for(y=gy-r;y<=gy+r+1e-6;y+=paso){ sg=segCam(V,{x:gx-r,y:y},{x:gx+r,y:y}); if(sg){ c.moveTo(sg[0].x,sg[0].y); c.lineTo(sg[1].x,sg[1].y); } }
+    c.lineWidth=1; c.strokeStyle=color; c.stroke();
+  }
+  rejilla(CUAD.fina, CUAD.rFina, cristal? 'rgba(90,140,175,.18)' : '#e9e9e6');
+  rejilla(G, R, cristal? 'rgba(70,120,160,.40)' : '#d3d3cf');
+}
+/* El dibujito de la tarjeta, centrado en (cx,cy), en unidades de tablero. */
+function iconoTarjeta(c,V,t,cx,cy){
+  var nom=ATRS[t.at], z=V.z, m=pr(V,{x:cx,y:cy}), gris='#4a515c', claro='#c4c9d0';
+  c.save();
+  c.lineJoin='round';
+  if(nom==='color'){
+    var col=PARES[opt.par].col[t.v];
+    c.beginPath(); c.arc(m.x,m.y,11*z,0,2*Math.PI);
+    c.fillStyle=col; c.fill(); c.lineWidth=1; c.strokeStyle=tinta(col,-0.4); c.stroke();
+  }else if(nom==='forma'){
+    var v=contorno(t.v,0.32,0).map(function(q){ return {x:q.x+cx, y:q.y+cy}; });
+    c.beginPath(); trazo(c,V,v); c.lineWidth=2.2*z; c.strokeStyle=gris; c.stroke();
+  }else if(nom==='tam'){
+    var big=pr(V,{x:cx-13,y:cy-9}), sm=pr(V,{x:cx+5,y:cy+1});
+    c.lineWidth=1.5*z;
+    c.fillStyle=gris; c.strokeStyle=t.v===0?gris:claro;
+    if(t.v===0) c.fillRect(big.x,big.y,18*z,18*z); else c.strokeRect(big.x,big.y,18*z,18*z);
+    c.strokeStyle=t.v===1?gris:claro;
+    if(t.v===1) c.fillRect(sm.x,sm.y,8*z,8*z); else c.strokeRect(sm.x,sm.y,8*z,8*z);
+  }else if(nom==='altura'){
+    /* de perfil: un taco alto o uno bajo sobre una raya de mesa */
+    var ha=t.v===0?22:9, b0=pr(V,{x:cx-9,y:cy+11-ha}), l0=pr(V,{x:cx-14,y:cy+11}), l1=pr(V,{x:cx+14,y:cy+11});
+    c.fillStyle=gris; c.fillRect(b0.x,b0.y,18*z,ha*z);
+    c.beginPath(); c.moveTo(l0.x,l0.y); c.lineTo(l1.x,l1.y); c.lineWidth=1.5*z; c.strokeStyle=claro; c.stroke();
+  }else if(nom==='interior'){
+    var q0=pr(V,{x:cx-10,y:cy-10}), q1=pr(V,{x:cx-5,y:cy-5});
+    c.beginPath(); c.rect(q0.x,q0.y,20*z,20*z);
+    if(t.v===1) c.rect(q1.x,q1.y,10*z,10*z);
+    c.fillStyle=gris; c.fill('evenodd');
+  }else{
+    var r0=pr(V,{x:cx-10,y:cy-10});
+    c.beginPath(); c.rect(r0.x,r0.y,20*z,20*z);
+    c.lineWidth=1.6*z; c.strokeStyle=gris; c.stroke();
+    if(t.v===1){
+      c.save(); c.clip(); c.beginPath();
+      for(var d=-20; d<=20; d+=5){
+        var e0=pr(V,{x:cx+d-10,y:cy-10}), e1=pr(V,{x:cx+d+10,y:cy+10});
+        var f0=pr(V,{x:cx+d+10,y:cy-10}), f1=pr(V,{x:cx+d-10,y:cy+10});
+        c.moveTo(e0.x,e0.y); c.lineTo(e1.x,e1.y); c.moveTo(f0.x,f0.y); c.lineTo(f1.x,f1.y);
+      }
+      c.lineWidth=1.1*z; c.stroke(); c.restore();
+    }
+  }
+  if(t.no){
+    var s0=pr(V,{x:cx-14,y:cy+14}), s1=pr(V,{x:cx+14,y:cy-14});
+    c.beginPath(); c.moveTo(s0.x,s0.y); c.lineTo(s1.x,s1.y);
+    c.lineWidth=3*z; c.strokeStyle='#fff'; c.stroke();
+    c.lineWidth=2.2*z; c.strokeStyle='#c2410c'; c.stroke();
+  }
+  c.restore();
+}
+function rectRedondo(c,x,y,w,h,r){
+  c.beginPath(); c.moveTo(x+r,y); c.lineTo(x+w-r,y); c.quadraticCurveTo(x+w,y,x+w,y+r);
+  c.lineTo(x+w,y+h-r); c.quadraticCurveTo(x+w,y+h,x+w-r,y+h); c.lineTo(x+r,y+h);
+  c.quadraticCurveTo(x,y+h,x,y+h-r); c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y); c.closePath();
+}
+function dibujaTarjeta(c,V0,o,marcada){
+  if(!V0.plano && !delante(V0,o,0)) return;
+  var V=vistaTarjeta(o,V0), w=anchoTarjeta(o), a=pr(V,{x:o.x-w/2, y:o.y-ALTO_T/2});
+  c.save();
+  rectRedondo(c,a.x,a.y,w*V.z,ALTO_T*V.z,7*V.z);
+  c.fillStyle='#fff'; c.fill();
+  c.lineWidth=marcada?2.6:1.3; c.strokeStyle=marcada?'#2f62a8':'#b7bdc6'; c.stroke();
+  iconoTarjeta(c,V,o,o.x-w/2+25,o.y);
+  var tx=pr(V,{x:o.x-w/2+48, y:o.y});
+  c.fillStyle='#2b2f36'; c.font='600 '+(18*V.z)+'px '+FUENTE;
+  c.textAlign='left'; c.textBaseline='middle';
+  c.fillText(textoTarjeta(o), tx.x, tx.y+1);
+  c.restore();
+}
+/* Desde arriba: fondo, lo que está pintado en la mesa, piezas y tarjetas.
+   Desde abajo, el fondo (si es cristal) y lo pintado en la mesa quedan entre
+   la cámara y las piezas, y se pintan después. */
+function dibujaTodo(c,V,marc){
+  var abajo=V.C.z<0;
+  function mesa(sinRelleno){
+    obj.forEach(function(o){ if(o.tipo==='q') dibujaCuadro(c,V,o,!!marc[o.id],sinRelleno); });
+    obj.forEach(function(o){ if(o.tipo==='c') dibujaCuerda(c,V,o,!!marc[o.id]); });
+  }
+  if(!abajo){ dibujaFondo(c,V,false); mesa(false); }
+  ordenPiezas(V).forEach(function(o){
+    var q=anfitrionDe(o);
+    if(q) dibujaHuesped(c,V,o,q,!!marc[o.id]);
+    else dibujaPieza(c,V,o,!!marc[o.id]);
+  });
+  if(abajo){ mesa(true); dibujaFondo(c,V,true); }
+  obj.forEach(function(o){ if(o.tipo==='t') dibujaTarjeta(c,V,o,!!marc[o.id]); });
+}
+function draw(){
+  var dpr=window.devicePixelRatio||1, W=cv.width/dpr, Hh=cv.height/dpr, V=vw();
+  ctx.clearRect(0,0,W,Hh);
+  ctx.fillStyle='#fff'; ctx.fillRect(0,0,W,Hh);
+  var marc={}; sel.forEach(function(id){ marc[id]=1; });
+  dibujaTodo(ctx,V,marc);
+  var s=seleccionados();
+  if(s.length===1 && asaDe(s[0]) && delante(V,asaDe(s[0]),0)){
+    var h=pr(V,asaDe(s[0]),0);
+    ctx.fillStyle='#fff'; ctx.fillRect(h.x-6,h.y-6,12,12);
+    ctx.lineWidth=1.6; ctx.strokeStyle='#2f62a8'; ctx.strokeRect(h.x-6,h.y-6,12,12);
+  }
+  if(drag && drag.modo==='marco'){
+    var a=drag.p0s, b=drag.p1s;
+    ctx.save();
+    ctx.fillStyle='rgba(47,98,168,.10)';
+    ctx.strokeStyle='rgba(47,98,168,.7)'; ctx.lineWidth=1;
+    ctx.fillRect(Math.min(a.x,b.x), Math.min(a.y,b.y), Math.abs(b.x-a.x), Math.abs(b.y-a.y));
+    ctx.strokeRect(Math.min(a.x,b.x), Math.min(a.y,b.y), Math.abs(b.x-a.x), Math.abs(b.y-a.y));
+    ctx.restore();
+  }
+  updateUI();
+}
+
+/* --- la caja ----------------------------------------------------------------
+   Ocho columnas (forma, tamaño y altura) por ocho filas (color, interior y
+   textura), con los dos colores separados. Se mira siempre desde el mismo
+   sitio, un poco inclinada y casi sin perspectiva (la cámara, muy lejos). */
+var CGAP=7;
+function cajaCS(){ return Math.max(20, Math.floor((cajaEl.clientWidth||232)/8)); }
+function celdaCaja(k){
+  var a=attrs(k), cs=cajaCS();
+  return {x:(a[1]*4+a[2]*2+a[3])*cs+cs/2, y:(a[0]*4+a[4]*2+a[5])*cs+(a[0]?CGAP:0)+cs/2};
+}
+function claveEnCaja(x,y){
+  var cs=cajaCS(), ci=Math.floor(x/cs), fy=y;
+  if(fy>4*cs) fy-=CGAP;
+  var fi=Math.floor(fy/cs);
+  if(ci<0 || ci>7 || fi<0 || fi>7) return -1;
+  return clave([fi>>2, ci>>2, (ci>>1)&1, ci&1, (fi>>1)&1, fi&1]);
+}
+function vistaCaja(m,z,h){
+  var c={tx:0, ty:0, d:4000, th:0, ph:E_CAJA}, V=camara(c,0,0,4000*z), p0=pr(V,{x:0,y:0},h/2);
+  return camara(c, m.x-p0.x, m.y-p0.y, 4000*z);
+}
+var cacheCaja='';
+function pintaCaja(forzar){
+  var marca=piezas().map(function(p){ return p.k; }).sort().join(',')+'|'+opt.par+'|'+(cajaEl.clientWidth||0);
+  if(!forzar && marca===cacheCaja) return;
+  cacheCaja=marca;
+  var cs=cajaCS(), W=cs*8, H=cs*8+CGAP, dpr=window.devicePixelRatio||1;
+  cajaEl.style.height=(H+2)+'px';
+  cajaEl.width=Math.round(W*dpr); cajaEl.height=Math.round(H*dpr);
+  cctx.setTransform(dpr,0,0,dpr,0,0);
+  cctx.clearRect(0,0,W,H);
+  cctx.strokeStyle='#eef0f3'; cctx.lineWidth=1;
+  cctx.beginPath(); cctx.moveTo(4,4*cs+CGAP/2); cctx.lineTo(W-4,4*cs+CGAP/2); cctx.stroke();
+  for(var k=0;k<NPIEZAS;k++){
+    var m=celdaCaja(k), Vc=vistaCaja(m,cs/92,alto(k));
+    if(enMesa(k)){
+      var a=attrs(k), v=contorno(a[1],ESC[a[2]],0);
+      cctx.save(); cctx.setLineDash([2,2]);
+      cctx.beginPath(); trazo(cctx,Vc,v);
+      cctx.lineWidth=1; cctx.strokeStyle='#c4c9d0'; cctx.stroke();
+      cctx.restore();
+    }else{
+      dibujaPieza(cctx,Vc,{tipo:'p', k:k, x:0, y:0, r:0, tap:0},false);
+    }
+  }
+}
+
+/* =========================================================================
+   7. INTERACCIÓN
+   Botón izquierdo: sobre una pieza (o una cuerda, un cuadro, una tarjeta),
+   la arrastra; en el vacío, gira la cámara; con Mayúsculas en el vacío,
+   selecciona con un recuadro. Botón derecho o central (o ✋): desplaza.
+   ========================================================================= */
+function pos(e){
+  var r=stage.getBoundingClientRect();
+  return {x:e.clientX-r.left, y:e.clientY-r.top};
+}
+function objetoEn(s,V){
+  V=V||vw();
+  var i, ps=ordenPiezas(V);
+  for(i=obj.length-1;i>=0;i--) if(obj[i].tipo==='t' && tocaTarjeta(s,obj[i],V)) return obj[i];
+  for(i=ps.length-1;i>=0;i--) if(tocaPieza(s,ps[i],V)) return ps[i];
+  for(i=obj.length-1;i>=0;i--) if(obj[i].tipo==='c' && tocaCuerda(s,obj[i],V)) return obj[i];
+  for(i=obj.length-1;i>=0;i--) if(obj[i].tipo==='q' && tocaCuadro(s,obj[i],V)) return obj[i];
+  return null;
+}
+function asaEn(s,V){
+  var x=seleccionados();
+  if(x.length!==1) return null;
+  var a=asaDe(x[0]); if(!a || !delante(V,a,0)) return null;
+  var h=pr(V,a,0);
+  return (Math.abs(s.x-h.x)<=9 && Math.abs(s.y-h.y)<=9)? x[0] : null;
+}
+function sobreCaja(e){
+  var r=cajaEl.getBoundingClientRect();
+  return e.clientX>=r.left && e.clientX<=r.right && e.clientY>=r.top && e.clientY<=r.bottom;
+}
+/* Al mover una grande se lleva dentro la pequeña que tenga metida; se
+   apunta la pareja para volver a juntarlas al soltar, después del imán. */
+function empiezaMover(w,s,foto,movido){
+  var sels=seleccionados(), lista=conMetidas(sels), pareja={};
+  sels.forEach(function(o){ if(o.tipo==='p'){ var h=huespedDe(o); if(h) pareja[h.id]=o; } });
+  drag={modo:'mover', w0:w, s0:s, foto:foto, movido:!!movido, pareja:pareja,
+        orig:lista.map(function(o){ return {o:o, x:o.x, y:o.y}; })};
+}
+
+cv.addEventListener('pointerdown',function(e){
+  try{ cv.setPointerCapture(e.pointerId); }catch(err){}
+  var V=vw(), s=pos(e), w=s2wV(V,s,0), foto=estado();
+  if(e.button===2 || e.button===1 || (opt.mano && e.button===0)){
+    drag={modo:'pan', w0:w};
+    return;
+  }
+  var a=asaEn(s,V);
+  if(a){ drag={modo:'asa', o:a, foto:foto, s0:s, movido:false}; return; }
+  var o=objetoEn(s,V);
+  if(o){
+    if(sel.indexOf(o.id)<0 || e.shiftKey) selecciona([o.id], e.shiftKey);
+    if(sel.indexOf(o.id)<0){ draw(); return; }
+    alFrente(sel.filter(function(id){ var q=porId(id); return q && q.tipo==='p'; }));
+    if(w) empiezaMover(w,s,foto,false);
+    draw(); return;
+  }
+  if(e.shiftKey){
+    drag={modo:'marco', p0s:s, p1s:s, shift:true};
+    draw(); return;
+  }
+  sel=[];
+  drag={modo:'vista', s0:s, v0:{th:cam.th, ph:cam.ph}};
+  draw();
+});
+function mueveA(s){
+  var V=vw(), w=s2wV(V,s,0);
+  if(drag.modo==='pan'){
+    if(drag.w0 && w){ cam.tx+=drag.w0.x-w.x; cam.ty+=drag.w0.y-w.y; }
+    draw(); return;
+  }
+  if(drag.modo==='marco'){ drag.p1s=s; draw(); return; }
+  if(drag.modo==='vista'){
+    ponVista(drag.v0.th-(s.x-drag.s0.x)*GRADO_PX.th, drag.v0.ph+(s.y-drag.s0.y)*GRADO_PX.ph);
+    draw(); return;
+  }
+  if(!drag.movido){
+    if(Math.hypot(s.x-drag.s0.x, s.y-drag.s0.y)<=4) return;
+    drag.movido=true; pushFoto(drag.foto);
+  }
+  if(!w) return;                           // por encima del horizonte
+  if(drag.modo==='mover'){
+    var dx=w.x-drag.w0.x, dy=w.y-drag.w0.y;
+    drag.orig.forEach(function(q){ q.o.x=q.x+dx; q.o.y=q.y+dy; });
+  }else if(drag.modo==='asa'){
+    var o=drag.o;
+    if(o.tipo==='c'){
+      o.rx=Math.max(40, Math.abs(w.x-o.x)/Math.SQRT1_2);
+      o.ry=Math.max(40, Math.abs(w.y-o.y)/Math.SQRT1_2);
+    }else{
+      o.cw=Math.max(50, (w.x-o.x)/o.nc);
+      o.ch=Math.max(50, (w.y-o.y)/o.nf);
+    }
+  }
+  draw();
+}
+cv.addEventListener('pointermove',function(e){ if(drag) mueveA(pos(e)); });
+/* Al soltar: primero las sueltas buscan hueco (las pequeñas) o casilla; luego
+   cada pequeña que iba metida vuelve al centro de su grande. */
+function asienta(d){
+  var ps=d.orig.map(function(q){ return q.o; }).filter(function(o){ return o.tipo==='p'; });
+  ps.forEach(function(p){
+    if(d.pareja[p.id]) return;
+    if(!opt.iman) return;
+    if(!meteEnHueco(p)) encaja(p);
+  });
+  Object.keys(d.pareja).forEach(function(id){
+    var p=porId(+id), q=d.pareja[id];
+    if(p && q){ p.x=q.x; p.y=q.y; }
+  });
+}
+function suelta(e){
+  if(!drag) return;
+  if(drag.modo==='marco'){
+    var V=vw(), x0=Math.min(drag.p0s.x,drag.p1s.x), x1=Math.max(drag.p0s.x,drag.p1s.x);
+    var y0=Math.min(drag.p0s.y,drag.p1s.y), y1=Math.max(drag.p0s.y,drag.p1s.y);
+    var dentro=[];
+    obj.forEach(function(o){
+      var co=centroObj(o);
+      if(!delante(V,co,0)) return;
+      var c=pr(V,co,0);
+      if(c.x>=x0 && c.x<=x1 && c.y>=y0 && c.y<=y1) dentro.push(o.id);
+    });
+    if(dentro.length) selecciona(dentro, drag.shift);
+  }
+  if(drag.modo==='mover' && drag.movido){
+    var ps=drag.orig.map(function(q){ return q.o; }).filter(function(o){ return o.tipo==='p'; });
+    if(e && sobreCaja(e) && ps.length){
+      var ids=ps.map(function(p){ return p.id; });
+      obj=obj.filter(function(o){ return ids.indexOf(o.id)<0; });
+      sel=sel.filter(function(id){ return ids.indexOf(id)<0; });
+    }else{
+      asienta(drag);
+    }
+  }
+  drag=null;
+  draw();
+}
+cv.addEventListener('pointerup',suelta);
+cv.addEventListener('pointercancel',function(){ suelta(null); });
+cv.addEventListener('contextmenu',function(e){ e.preventDefault(); });
+cv.addEventListener('dblclick',function(e){
+  var o=objetoEn(pos(e));
+  if(o && o.tipo==='p'){ tapa([o]); }
+});
+cv.addEventListener('wheel',function(e){
+  e.preventDefault();
+  acerca(e.deltaY<0?1.12:1/1.12, pos(e));
+  draw();
+},{passive:false});
+
+cajaEl.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  var r=cajaEl.getBoundingClientRect(), k=claveEnCaja(e.clientX-r.left, e.clientY-r.top);
+  if(k<0) return;
+  var ya=enMesa(k);
+  if(ya){ sel=[ya.id]; alFrente([ya.id]); flash('Esa pieza ya está en el tablero'); return; }
+  var foto=estado(), w=s2w(pos(e))||centroVista();
+  var p=nuevaPieza(k, w);
+  sel=[p.id];
+  pushFoto(foto);
+  empiezaMover(w, pos(e), foto, true);
+  window.addEventListener('pointermove', cajaMove);
+  window.addEventListener('pointerup', cajaUp);
+  draw();
+});
+function cajaMove(e){ if(drag) mueveA(pos(e)); }
+function cajaUp(e){
+  window.removeEventListener('pointermove', cajaMove);
+  window.removeEventListener('pointerup', cajaUp);
+  suelta(e);
+}
+
+/* --- botones ----------------------------------------------------------------- */
+function dosPasos(b, aviso, accion, puede){
+  var t=null, antes=null;
+  function desarma(){
+    if(t){ clearTimeout(t); t=null; }
+    if(antes!==null){ b.innerHTML=antes; antes=null; }
+    b.classList.remove('seguro');
+  }
+  b.addEventListener('click',function(){
+    if(t){ desarma(); flashMsg=null; accion(); draw(); return; }
+    if(puede && !puede()) return;
+    antes=b.innerHTML; b.textContent='¿Seguro?'; b.classList.add('seguro');
+    flash(aviso);
+    t=setTimeout(desarma, 4000);
+  });
+}
+function filtroSacar(){
+  var v=document.getElementById('sacarQue').value;
+  if(v==='-1') return {at:-1, v:0};
+  var p=v.split(':');
+  return {at:+p[0], v:+p[1]};
+}
+function queSeVea(lista){
+  var r=stage.getBoundingClientRect();
+  if(!r.width || !r.height) return;
+  var b=cajaPantalla(lista,vw());
+  if(!b || b.x0<0 || b.y0<0 || b.x1>r.width || b.y1>r.height-40) fitView();
+}
+document.getElementById('sacar').addEventListener('click',function(){
+  var f=filtroSacar(), n=sacar(f.at,f.v);
+  if(!n.length){ flash('En la caja no queda ninguna de esas'); return; }
+  queSeVea(n);
+  flash(n.length+(n.length===1?' pieza fuera de la caja':' piezas fuera de la caja'));
+});
+document.getElementById('recoger').addEventListener('click',function(){
+  var f=filtroSacar(), n=recoger(f.at,f.v);
+  flash(n? (n+(n===1?' pieza vuelve':' piezas vuelven')+' a la caja') : 'En el tablero no hay ninguna de esas');
+});
+document.getElementById('gIzq').addEventListener('click',function(){ gira(-1); });
+document.getElementById('gDer').addEventListener('click',function(){ gira(1); });
+document.getElementById('tapar').addEventListener('click',function(){ tapa(seleccionados()); });
+document.getElementById('quitar').addEventListener('click',quitaSeleccion);
+document.getElementById('nCuerda').addEventListener('click',nuevaCuerda);
+document.getElementById('nCuadro').addEventListener('click',nuevoCuadro);
+document.getElementById('tarMas').addEventListener('click',nuevaTarjeta);
+function tarjetaSel(){ var s=seleccionados(); return (s.length===1 && s[0].tipo==='t')? s[0] : null; }
+document.getElementById('tarVal').addEventListener('change',function(){
+  var p=this.value.split(':'); tarCtl.at=+p[0]; tarCtl.v=+p[1];
+  var t=tarjetaSel();
+  if(t){ pushUndo(); t.at=tarCtl.at; t.v=tarCtl.v; }
+  draw();
+});
+document.getElementById('tarNo').addEventListener('click',function(){
+  tarCtl.no=tarCtl.no?0:1;
+  var t=tarjetaSel();
+  if(t){ pushUndo(); t.no=tarCtl.no; }
+  draw();
+});
+document.getElementById('fMenos').addEventListener('click',function(){ cambiaCuadro(-1,0); });
+document.getElementById('fMas').addEventListener('click',function(){ cambiaCuadro(1,0); });
+document.getElementById('cMenos').addEventListener('click',function(){ cambiaCuadro(0,-1); });
+document.getElementById('cMas').addEventListener('click',function(){ cambiaCuadro(0,1); });
+document.getElementById('undo').addEventListener('click',doUndo);
+dosPasos(document.getElementById('vaciar'), 'Pulsa otra vez para devolverlo todo a la caja',
+  function(){ pushUndo(); obj=[]; sel=[]; },
+  function(){ return obj.length>0; });
+function ponColores(i){
+  opt.par=Math.max(0,Math.min(PARES.length-1,i|0));
+  document.getElementById('colores').value=String(opt.par);
+  opciones();
+  pintaCaja(true);
+  draw();
+}
+document.getElementById('colores').addEventListener('change',function(){ ponColores(+this.value); });
+document.getElementById('nombres').addEventListener('change',function(e){ opt.nombres=e.target.checked?1:0; draw(); });
+document.getElementById('iman').addEventListener('change',function(e){ opt.iman=e.target.checked?1:0; });
+document.getElementById('fondo').addEventListener('change',function(){ ponFondo(this.value); });
+document.getElementById('mano').addEventListener('click',function(){
+  opt.mano=opt.mano?0:1; this.classList.toggle('on', !!opt.mano); draw();
+});
+document.getElementById('ojoIni').addEventListener('click',function(){ ponVista(0,E0); draw(); });
+document.getElementById('zoomin').addEventListener('click',function(){ acerca(1.2,centroPantalla()); draw(); });
+document.getElementById('zoomout').addEventListener('click',function(){ acerca(1/1.2,centroPantalla()); draw(); });
+document.getElementById('fit').addEventListener('click',fitView);
+function fitView(){
+  var r=stage.getBoundingClientRect(), m=50, Wd=r.width||800, Hd=r.height||560;
+  if(!obj.length){ cam.tx=0; cam.ty=0; cam.d=1200; draw(); return; }
+  var b={x0:1e9,y0:1e9,x1:-1e9,y1:-1e9};
+  obj.forEach(function(o){
+    var c=centroObj(o);
+    b.x0=Math.min(b.x0,c.x); b.x1=Math.max(b.x1,c.x); b.y0=Math.min(b.y0,c.y); b.y1=Math.max(b.y1,c.y);
+  });
+  cam.tx=(b.x0+b.x1)/2; cam.ty=(b.y0+b.y1)/2;
+  for(var it=0;it<4;it++){
+    var bp=cajaPantalla(obj,vw());
+    if(!bp){ cam.d*=1.5; continue; }
+    var k=Math.max((bp.x1-bp.x0)/(Wd-2*m), (bp.y1-bp.y0)/(Hd-2*m-30));
+    cam.d=Math.max(150, Math.min(8000, cam.d*k));
+  }
+  draw();
+}
+document.addEventListener('keydown',function(e){
+  if(e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+  var k=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey) && k==='z'){ e.preventDefault(); doUndo(); return; }
+  if(e.ctrlKey||e.metaKey||e.altKey) return;
+  if(k==='r' || e.key==='ArrowRight'){ gira(1); e.preventDefault(); }
+  else if(k==='l' || e.key==='ArrowLeft'){ gira(-1); e.preventDefault(); }
+  else if(k==='t'){ tapa(seleccionados()); }
+  else if(e.key==='Delete' || e.key==='Backspace'){ quitaSeleccion(); e.preventDefault(); }
+  else if(e.key==='Escape'){ sel=[]; draw(); }
+});
+
+/* --- guardar y abrir ------------------------------------------------------ */
+function datos(){
+  var r=function(v){ return Math.round(v*100)/100; };
+  return {formato:'dicotomino', version:1, colores:opt.par,
+    piezas:piezas().map(function(p){ var a=attrs(p.k);
+      return {color:a[0], forma:a[1], tam:a[2], altura:a[3], interior:a[4], textura:a[5],
+              x:r(p.x), y:r(p.y), r:p.r, tap:p.tap?1:0}; }),
+    cuerdas:obj.filter(function(o){ return o.tipo==='c'; }).map(function(o){
+      return {x:r(o.x), y:r(o.y), rx:r(o.rx), ry:r(o.ry), n:o.n}; }),
+    cuadros:obj.filter(function(o){ return o.tipo==='q'; }).map(function(o){
+      return {x:r(o.x), y:r(o.y), nf:o.nf, nc:o.nc, cw:r(o.cw), ch:r(o.ch)}; }),
+    tarjetas:obj.filter(function(o){ return o.tipo==='t'; }).map(function(o){
+      return {x:r(o.x), y:r(o.y), at:o.at, v:o.v, no:o.no?1:0}; })};
+}
+function descarga(blob,nombreArch){
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a'); a.download=nombreArch; a.href=url; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); },5000);
+}
+document.getElementById('save').addEventListener('click',function(){
+  descarga(new Blob([JSON.stringify(datos(),null,1)],{type:'application/json'}),'dicotomino.json');
+});
+var fileIn=document.getElementById('fileIn');
+document.getElementById('open').addEventListener('click',function(){ importMode='replace'; fileIn.value=''; fileIn.click(); });
+document.getElementById('add').addEventListener('click',function(){ importMode='add'; fileIn.value=''; fileIn.click(); });
+fileIn.addEventListener('change',function(e){ var f=e.target.files&&e.target.files[0]; if(f) leer(f); });
+function leer(f){
+  var r=new FileReader();
+  r.onload=function(){ try{ loadData(JSON.parse(r.result)); }catch(err){ flash('No he podido leer ese archivo'); } };
+  r.readAsText(f);
+}
+function entero(v,lo,hi){ return typeof v==='number' && v===Math.floor(v) && v>=lo && v<=hi; }
+function finito(v){ return typeof v==='number' && isFinite(v); }
+function limpia(d){
+  if(!d || typeof d!=='object') return null;
+  var out=[], vistas={}, i, q, j;
+  var lp=d.piezas||[], lc=d.cuerdas||[], lq=d.cuadros||[], lt=d.tarjetas||[];
+  if(!Array.isArray(lp)||!Array.isArray(lc)||!Array.isArray(lq)||!Array.isArray(lt)) return null;
+  for(i=0;i<lp.length;i++){
+    q=lp[i];
+    if(!q) return null;
+    var a=[q.color,q.forma,q.tam,q.altura,q.interior,q.textura];
+    for(j=0;j<6;j++) if(!entero(a[j],0,1)) return null;
+    if(!finito(q.x) || !finito(q.y)) return null;
+    var k=clave(a);
+    if(vistas[k]) return null;
+    vistas[k]=1;
+    out.push({tipo:'p', k:k, x:q.x, y:q.y, r:entero(q.r,0,7)?q.r:0, tap:q.tap?1:0});
+  }
+  for(i=0;i<lq.length;i++){
+    q=lq[i];
+    if(!q || !finito(q.x)||!finito(q.y)||!entero(q.nf,1,6)||!entero(q.nc,1,6)||!finito(q.cw)||!finito(q.ch)||q.cw<20||q.ch<20) return null;
+    out.push({tipo:'q', x:q.x, y:q.y, nf:q.nf, nc:q.nc, cw:q.cw, ch:q.ch});
+  }
+  for(i=0;i<lc.length;i++){
+    q=lc[i];
+    if(!q || !finito(q.x)||!finito(q.y)||!finito(q.rx)||!finito(q.ry)||q.rx<10||q.ry<10) return null;
+    out.push({tipo:'c', x:q.x, y:q.y, rx:q.rx, ry:q.ry, n:entero(q.n,0,99)?q.n:0});
+  }
+  for(i=0;i<lt.length;i++){
+    q=lt[i];
+    if(!q || !finito(q.x)||!finito(q.y)||!entero(q.at,0,5)||!entero(q.v,0,1)) return null;
+    out.push({tipo:'t', x:q.x, y:q.y, at:q.at, v:q.v, no:q.no?1:0});
+  }
+  return out;
+}
+function loadData(d){
+  var nuevos=limpia(d);
+  if(!nuevos){ flash('Ese archivo no trae nada que yo entienda'); return; }
+  pushUndo();
+  var repes=0;
+  if(importMode==='add'){
+    nuevos=nuevos.filter(function(o){ if(o.tipo==='p' && enMesa(o.k)){ repes++; return false; } return true; });
+  }else{
+    obj=[];
+    if(entero(d.colores,0,PARES.length-1)) ponColores(d.colores);
+  }
+  nuevos.forEach(function(o){ o.id=nid++; });
+  var q=nuevos.filter(function(o){ return o.tipo==='q'; });
+  obj=q.concat(obj).concat(nuevos.filter(function(o){ return o.tipo!=='q'; }));
+  sel=[];
+  fitView();
+  flash(repes? repes+(repes===1?' pieza ya estaba en el tablero y no se ha añadido':' piezas ya estaban en el tablero y no se han añadido')
+             : 'Archivo cargado');
+}
+['dragenter','dragover'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.add('show'); });
+});
+['dragleave','drop'].forEach(function(ev){
+  stage.addEventListener(ev,function(e){ e.preventDefault(); dropEl.classList.remove('show'); });
+});
+stage.addEventListener('drop',function(e){
+  var f=e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+  if(f){ importMode='replace'; leer(f); }
+});
+function lienzoPNG(){
+  var f=focal(), b=cajaPantalla(obj,camara(cam,0,0,f));
+  if(!b) return null;
+  var m=26, sc=2, W=(b.x1-b.x0)+2*m, Hh=(b.y1-b.y0)+2*m;
+  var oc=document.createElement('canvas'); oc.width=Math.ceil(W*sc); oc.height=Math.ceil(Hh*sc);
+  var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,Hh);
+  dibujaTodo(o,camara(cam,m-b.x0,m-b.y0,f),{});
+  return oc;
+}
+document.getElementById('png').addEventListener('click',function(){
+  var oc=lienzoPNG();
+  if(!oc){ flash('No hay nada que exportar'); return; }
+  oc.toBlob(function(blob){ descarga(blob,'dicotomino.png'); });
+});
+
+/* =========================================================================
+   8. INTERFAZ
+   ========================================================================= */
+var ARTICULO='https://drive.upm.es/public.php/dav/files/SYo76YApBtNN6XP/experiencias%20docentes/5_Dicotomino.pdf';
+document.getElementById('help').addEventListener('click',function(){
+  infoEl.innerHTML=ayuda();
+  infoEl.classList.toggle('show');
+});
+function ayuda(){
+  return '<div><b>Dicotominó</b><br>'+
+ 'Carlos de Castro diseñó el Dicotominó en 2024, empleándolo en formación del profesorado '+
+ '(<a href="'+ARTICULO+'" target="_blank" rel="noopener">de Castro y Nolla, 2026</a>). El nombre viene de '+
+ '«dicotomía» y «dominó». Es de la familia de los bloques lógicos de Dienes y de los de Touyarot: '+
+ '64 piezas, todas distintas, con seis variables de dos valores cada una: <b>color</b> (los dos del '+
+ 'juego), <b>forma</b> (círculo, cuadrado), <b>tamaño</b> (grande, pequeño), <b>altura</b> (alto, bajo), '+
+ '<b>interior</b> (relleno, hueco) y <b>textura</b> (liso, rayado). Las rayadas dejan ver la rejilla del '+
+ 'relleno, como las piezas impresas en 3D.</div>'+
+ '<div style="margin-top:7px"><b>Piezas que encajan</b><br>'+
+ 'Cada pieza pequeña cabe justo en el hueco de la grande hueca de su forma. Suelta una pequeña sobre '+
+ 'ese hueco y se mete dentro (con el <b>imán</b> encendido). Al mover o girar la grande, la pequeña va '+
+ 'con ella; para sacarla, arrastra la pequeña.</div>'+
+ '<div style="margin-top:7px"><b>El punto de vista</b><br>'+
+ 'Las piezas están sobre una mesa y se miran como en un programa de 3D. Arrastrando con el botón '+
+ 'izquierdo <b>en el vacío</b> se da la vuelta a la mesa: hacia arriba y hacia abajo cambia la altura '+
+ 'desde la que se mira, desde encima del todo hasta casi a ras de mesa; hacia los lados, se rodea. '+
+ 'Con el <b>botón derecho</b> (o con ✋) se desplaza el tablero, y la rueda acerca y aleja. <b>⟲</b> '+
+ 'vuelve al punto de vista de partida. En <b>Fondo</b> se elige qué hay debajo: una mesa, un cristal '+
+ 'o nada; con cristal o sin fondo se puede mirar también desde abajo.</div>'+
+ '<div style="margin-top:7px"><b>La caja</b><br>'+
+ 'Arrastra una pieza de la caja al tablero; en la caja queda su sitio vacío. Para devolverla, '+
+ 'arrástrala a la caja o pulsa <b>Quitar</b>. Con el desplegable, <b>Sacar</b> pone en el tablero, '+
+ 'desordenadas, las piezas de la caja de esa clase, y <b>Recoger</b> devuelve las del tablero. Los dos '+
+ 'colores del juego se eligen en la barra de arriba.</div>'+
+ '<div style="margin-top:7px"><b>Las piezas</b><br>'+
+ 'Se arrastran, y se giran de 45 en 45 grados con R y L. <b>Tapar</b> (T, o doble clic) pone una pieza '+
+ 'boca abajo, y entonces no se ve cuál es. La casilla <b>Nombres</b> hace que la barra de abajo diga el '+
+ 'nombre de la pieza seleccionada.</div>'+
+ '<div style="margin-top:7px"><b>Para clasificar y jugar</b><br>'+
+ 'Las <b>cuerdas</b> se cogen por la propia cuerda, y el cuadradito cambia su tamaño. Los '+
+ '<b>cuadros</b> se cogen por las líneas; sus filas y columnas se cambian en el panel cuando hay uno '+
+ 'seleccionado, y con el imán una pieza que se suelta en una casilla se centra en ella. Las '+
+ '<b>tarjetas</b> dicen un valor de una variable; con <b>No</b> lo niegan.</div>'+
+ '<div style="margin-top:7px"><b>Seleccionar varias</b><br>'+
+ 'Con Mayúsculas, arrastrando en el vacío se seleccionan con un recuadro, y pinchando se van sumando '+
+ 'o quitando. Ctrl+Z deshace.</div>'+
+ '<div style="margin-top:9px"><b>Referencia</b></div>'+
+ '<div class="ref">de Castro, C., y Nolla, Á. (2026). El Dicotominó: Un recurso para el descubrimiento de '+
+ 'patrones y el desarrollo del sentido algebraico. <i>Pensamiento Matemático</i>, <i>16</i>, 79–92. '+
+ '<a href="'+ARTICULO+'" target="_blank" rel="noopener">Enlace al artículo</a></div>'+
+ '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
+ '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
+ '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
+ 'Licencia <a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>: '+
+ 'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
+}
+function opciones(){
+  var sc=document.getElementById('colores');
+  sc.innerHTML=PARES.map(function(P,i){ return '<option value="'+i+'">'+P.n+'</option>'; }).join('');
+  sc.value=String(opt.par);
+  var s=document.getElementById('sacarQue'), val=s.value||'-1';
+  var h='<option value="-1">todas</option>';
+  ATRS.forEach(function(nom,at){
+    h+='<optgroup label="'+TITULO_AT[nom]+'">';
+    pluralesDe(at).forEach(function(t,v){ h+='<option value="'+at+':'+v+'">'+t+'</option>'; });
+    h+='</optgroup>';
+  });
+  s.innerHTML=h; s.value=val;
+  var tv=document.getElementById('tarVal');
+  h='';
+  ATRS.forEach(function(nom,at){
+    h+='<optgroup label="'+TITULO_AT[nom]+'">';
+    nombresDe(at).forEach(function(t,v){ h+='<option value="'+at+':'+v+'">'+t+'</option>'; });
+    h+='</optgroup>';
+  });
+  tv.innerHTML=h; tv.value=tarCtl.at+':'+tarCtl.v;
+  if(infoEl.classList.contains('show')) infoEl.innerHTML=ayuda();
+}
+var ultimaTarjeta=null;
+function textoHint(){
+  var s=seleccionados();
+  if(flashMsg && Date.now()-flashT<2100) return flashMsg;
+  if(drag && drag.modo==='vista') return 'Arriba y abajo, la altura desde la que se mira · a los lados, se rodea la mesa';
+  if(!obj.length) return 'Arrastra piezas desde la caja, o sácalas con «Sacar»';
+  if(s.length>1) return s.length+' cosas seleccionadas · arrástralas juntas · Supr las quita';
+  if(s.length===1){
+    var o=s[0];
+    if(o.tipo==='p'){
+      var base='R y L giran · T la tapa · Supr o arrastrarla a la caja la devuelve';
+      if(o.tap) return 'Pieza tapada · T la destapa · '+base.split(' · ')[0];
+      if(anfitrionDe(o)) base='Está metida en una grande · arrástrala para sacarla';
+      return opt.nombres? nombre(o.k)+' · '+base : base;
+    }
+    if(o.tipo==='c') return 'Arrastra la cuerda por la propia cuerda · el cuadradito cambia su tamaño';
+    if(o.tipo==='q') return 'El cuadro se coge por las líneas · filas y columnas en el panel · el cuadradito cambia las casillas';
+    return 'El desplegable y el «No» del panel cambian esta tarjeta · Supr la quita';
+  }
+  return 'Arrastra en el vacío para mirar desde otro sitio · botón derecho, desplazar · Mayúsculas, seleccionar varias';
+}
+function updateUI(){
+  var s=seleccionados(), hayP=s.some(function(o){ return o.tipo==='p'; });
+  document.getElementById('gIzq').disabled=!hayP;
+  document.getElementById('gDer').disabled=!hayP;
+  document.getElementById('tapar').disabled=!hayP;
+  document.getElementById('quitar').disabled=!s.length;
+  document.getElementById('ojoIni').disabled=vistaDePartida();
+  var t=tarjetaSel();
+  if(t && t.id!==ultimaTarjeta){
+    tarCtl.at=t.at; tarCtl.v=t.v; tarCtl.no=t.no?1:0;
+    document.getElementById('tarVal').value=t.at+':'+t.v;
+  }
+  ultimaTarjeta=t? t.id : null;
+  document.getElementById('tarNo').classList.toggle('on', !!tarCtl.no);
+  var q=(s.length===1 && s[0].tipo==='q')? s[0] : null;
+  var cq=document.getElementById('cajaCuadro');
+  cq.style.display=q?'flex':'none';
+  if(q){
+    document.getElementById('nF').textContent=q.nf;
+    document.getElementById('nC').textContent=q.nc;
+    document.getElementById('fMenos').disabled=q.nf<=1; document.getElementById('fMas').disabled=q.nf>=6;
+    document.getElementById('cMenos').disabled=q.nc<=1; document.getElementById('cMas').disabled=q.nc>=6;
+  }
+  pintaCaja(false);
+  hintEl.textContent=textoHint();
+}
+
+/* =========================================================================
+   9. ARRANQUE
+   ========================================================================= */
+function resize(){
+  var r=stage.getBoundingClientRect(), dpr=window.devicePixelRatio||1;
+  cv.width=Math.max(1,Math.round(r.width*dpr));
+  cv.height=Math.max(1,Math.round(r.height*dpr));
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  draw();
+}
+window.addEventListener('resize',resize);
+if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
+(function init(){
+  opciones();
+  resize();
+})();
+
+/* =========================================================================
+  10. AUTOCOMPROBACIÓN  ·  añade #test al final de la URL
+   ========================================================================= */
+function runSelfTest(){
+  var out=[], fails=0;
+  function ok(n,c,extra){ out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':'')); if(!c) fails++; }
+  function num(v){ return (Math.round(v*1000)/1000).toString().replace('.',','); }
+  var antes={o:obj, s:sel, n:nid, par:opt.par, nom:opt.nombres, im:opt.iman, fondo:opt.fondo, mano:opt.mano,
+             u:undoStack, cam:JSON.parse(JSON.stringify(cam))};
+  /* una cámara para pintar una pieza sola en un lienzo de 150 × 150, mirando
+     al centro de la mesa desde la altura y la vuelta que tenga cam */
+  function VT(){ return camara({tx:0,ty:0,d:800,th:cam.th,ph:cam.ph},70,70,800); }
+  function lienzoDe(p,marcada,lista){
+    var c=document.createElement('canvas'); c.width=150; c.height=150;
+    var x=c.getContext('2d');
+    if(lista){
+      var o0=obj, c0={tx:cam.tx,ty:cam.ty}; obj=lista; cam.tx=0; cam.ty=0;
+      x.fillStyle='#fff'; x.fillRect(0,0,150,150);
+      dibujaTodo(x,VT(),{});
+      obj=o0; cam.tx=c0.tx; cam.ty=c0.ty;
+    }
+    else dibujaPieza(x,VT(),p,!!marcada);
+    return c;
+  }
+  function cuenta(c){
+    var d=c.getContext('2d').getImageData(0,0,c.width,c.height).data,
+        n={tinta:0,rojo:0,verde:0,azul:0,selec:0,cara:0};
+    for(var i=0;i<d.length;i+=4){
+      var r=d[i], g=d[i+1], b=d[i+2], a=d[i+3];
+      if(a<128) continue;
+      n.tinta++;
+      if(r-g>70 && r-b>70) n.rojo++;
+      if(g-r>35 && g-b>25) n.verde++;
+      if(b-r>60 && b-g>40) n.azul++;
+      if(Math.abs(r-47)<14 && Math.abs(g-98)<14 && Math.abs(b-168)<14) n.selec++;
+      if(Math.abs(r-215)<8 && Math.abs(g-50)<8 && Math.abs(b-45)<8) n.cara++;
+    }
+    return n;
+  }
+  function pixel(c,x,y){ return c.getContext('2d').getImageData(Math.floor(x),Math.floor(y),1,1).data; }
+  function alfaEn(c,x,y){ return pixel(c,x,y)[3]; }
+  function P(k,extra){ var p={tipo:'p', id:-1, k:k, x:0, y:0, r:0, tap:0}; if(extra) for(var e in extra) p[e]=extra[e]; return p; }
+  /* color, forma, tamaño, altura, interior, textura */
+  function K6(c,f,t,h,i,x){ return clave([c,f,t,h,i,x]); }
+  function ponCam(tx,ty,d,th,ph){ cam.tx=tx; cam.ty=ty; cam.d=d; ponVista(th,ph); }
+  /* el punto de la pantalla al que hay que llevar el ratón, cogido en s, para
+     que lo cogido se mueva (dx, dy) por la mesa */
+  function destino(s,dx,dy){ var w=s2w(s); return w2s({x:w.x+dx, y:w.y+dy}); }
+
+  try{
+  opt.par=0; opt.mano=0;
+  opt.fondo='mesa';
+  ponCam(0,0,1000,0,E0);
+
+  /* --- el conjunto ------------------------------------------------------------ */
+  var claves={}, k, i, j;
+  for(k=0;k<NPIEZAS;k++) claves[clave(attrs(k))]=1;
+  ok('hay 64 piezas y la clave de cada una se recupera de sus seis atributos',
+     Object.keys(claves).length===64 && clave(attrs(63))===63, Object.keys(claves).length);
+  var reparto=[0,0,0,0,0,0,0];
+  for(i=0;i<64;i++) for(j=i+1;j<64;j++) reparto[diferencias(i,j)]++;
+  ok('ningún par de piezas es igual', reparto[0]===0, reparto.join(' / '));
+  ok('cada pieza tiene 6 que se diferencian de ella en una sola cosa', reparto[1]===64*6/2);
+  ok('los pares, por número de diferencias, suman los 2016', reparto.reduce(function(a,b){ return a+b; },0)===2016);
+  ok('el nombre de una pieza lleva sus seis valores', nombre(K6(0,0,1,1,1,1))==='Círculo rojo pequeño bajo hueco rayado',
+     nombre(K6(0,0,1,1,1,1)));
+
+  /* --- las formas y el encaje ---------------------------------------------------- */
+  function ancho(v){ var a=1e9,b=-1e9; v.forEach(function(q){ a=Math.min(a,q.x); b=Math.max(b,q.x); }); return b-a; }
+  ok('el lado del cuadrado grande es el diámetro del círculo grande', Math.abs(ancho(contorno(0,1,0))-ancho(contorno(1,1,0)))<1e-9);
+  ok('cada pequeña tiene la mitad de lado que la grande', [0,1].every(function(f){
+      return Math.abs(ancho(contorno(f,0.5,0))*2-ancho(contorno(f,1,0)))<1e-9; }));
+  ok('el hueco de la grande es exactamente la pequeña de su forma', [0,1].every(function(f){
+      var h=contorno(f,1,marco(1)), p=contorno(f,0.5,0);
+      return h.length===p.length && h.every(function(q,i2){ return Math.hypot(q.x-p[i2].x,q.y-p[i2].y)<1e-9; }); }));
+  ok('el hueco de las pequeñas huecas también cae dentro', [0,1].every(function(f){
+      var ext=contorno(f,0.5,0); return contorno(f,0.5,marco(0.5)).every(function(q){ return dentroPoli(q,ext); }); }));
+
+  /* --- dibujo ----------------------------------------------------------------- */
+  var malas=[];
+  for(k=0;k<64;k++){
+    var n=cuenta(lienzoDe(P(k))), a=attrs(k), mio=a[0]? 'verde':'rojo', otro=a[0]? 'rojo':'verde';
+    if(n[mio]<100 || n[otro]>0) malas.push(k+':'+n[mio]+'/'+n[otro]);
+  }
+  ok('las 64 piezas se pintan, y solo de su color', malas.length===0, malas.slice(0,6).join(' '));
+  opt.par=1;
+  var nAz=cuenta(lienzoDe(P(K6(0,1,0,0,0,0)))), nNe=cuenta(lienzoDe(P(K6(1,1,0,0,0,0))));
+  ok('con otros dos colores se pintan de esos', nAz.azul>1000 && nAz.rojo===0 && nNe.tinta>3000 && nNe.azul===0,
+     nAz.azul+' azul · '+nNe.tinta+' negro');
+  ok('y se llaman de otra manera', valorNombre(0,0)==='azul' && valorNombre(0,1)==='negro');
+  opt.par=0;
+  malas=[];
+  for(k=0;k<64;k++){
+    if(attrs(k)[3]!==0) continue;
+    if(!(cuenta(lienzoDe(P(k))).tinta>cuenta(lienzoDe(P(k|4))).tinta)) malas.push(k);
+  }
+  ok('cada pieza alta ocupa más que su gemela baja', malas.length===0, malas.join(','));
+  /* en las pequeñas altas el hueco es estrecho y hondo: desde la vista de
+     partida no se llega a ver la mesa, igual que con una pieza de verdad.
+     Por eso esta se mira más desde arriba. */
+  ponVista(0,75);
+  malas=[];
+  for(k=0;k<64;k++){
+    if(attrs(k)[4]!==0) continue;
+    var kh=k|2, m=pr(VT(),{x:0,y:0},alto(kh)/2);
+    if(alfaEn(lienzoDe(P(kh)),m.x,m.y)!==0 || alfaEn(lienzoDe(P(k)),m.x,m.y)<250) malas.push(k);
+  }
+  ok('por el hueco se ve lo de detrás, y las rellenas tapan ese punto', malas.length===0, malas.join(','));
+  ponVista(0,E0);
+  ok('pero por el de una pequeña alta, desde la vista de partida, ya no', (function(){
+      var kk=K6(0,0,1,0,1,0), mm=pr(VT(),{x:0,y:0},ALTO[0]/2); return alfaEn(lienzoDe(P(kk)),mm.x,mm.y)>0; })());
+  var lisa=cuenta(lienzoDe(P(K6(0,1,0,0,0,0)))), ray=cuenta(lienzoDe(P(K6(0,1,0,0,0,1))));
+  ok('la rayada tiene rejilla y la lisa no', lisa.cara>2000 && ray.cara<lisa.cara*0.75 && ray.rojo>1000,
+     lisa.cara+' → '+ray.cara);
+  /* un círculo girado 45° tiene la misma silueta: si cambia, es la rejilla */
+  ok('la rejilla gira con la pieza', (function(){
+      var d0=lienzoDe(P(K6(0,0,0,0,0,1))).getContext('2d').getImageData(0,0,150,150).data,
+          d1=lienzoDe(P(K6(0,0,0,0,0,1),{r:1})).getContext('2d').getImageData(0,0,150,150).data, n2=0;
+      for(var q=0;q<d0.length;q+=4) if(Math.abs(d0[q]-d1[q])+Math.abs(d0[q+1]-d1[q+1])>60) n2++;
+      return n2>300; })());
+  ponVista(0,90);
+  var tA=cuenta(lienzoDe(P(K6(0,1,0,0,0,0)))).tinta, tB=cuenta(lienzoDe(P(K6(0,1,0,1,0,0)))).tinta;
+  ok('desde encima del todo casi no se nota la altura (solo la perspectiva)', Math.abs(tA-tB)<tB*0.08, tA+' / '+tB);
+  ponVista(0,E0);
+  var nt=cuenta(lienzoDe(P(0,{tap:1})));
+  ok('una pieza tapada no deja ver el color', nt.rojo===0 && nt.verde===0 && nt.tinta>3000, nt.tinta);
+  opt.fondo='nada'; ponVista(0,-50);
+  var pAb=pixel(lienzoDe(P(K6(0,1,0,0,0,0))),70,70);
+  ok('sin fondo, desde abajo se ve la cara de abajo, más oscura', pAb[3]>250 && pAb[0]>140 && pAb[0]<190, pAb[0]+','+pAb[1]+','+pAb[2]);
+  ponFondo('mesa'); ponVista(0,E0);
+
+  /* --- meter una pequeña en una grande ---------------------------------------------- */
+  obj=[]; sel=[]; undoStack=[];
+  opt.iman=1;
+  var G1=nuevaPieza(K6(0,1,0,1,1,0),{x:0,y:0});       // cuadrado rojo grande bajo hueco
+  var p1=nuevaPieza(K6(1,1,1,0,0,0),{x:6,y:-5});      // cuadrado verde pequeño alto relleno
+  p1.r=2;
+  ok('una pequeña soltada sobre el hueco de la grande de su forma se mete', meteEnHueco(p1) && p1.x===0 && p1.y===0 && p1.r===G1.r);
+  ok('y entonces se sabe quién está dentro de quién', anfitrionDe(p1)===G1 && huespedDe(G1)===p1);
+  var p2=nuevaPieza(K6(1,1,1,0,0,1),{x:4,y:4});
+  ok('en una grande cabe una sola', !meteEnHueco(p2) && p2.x===4);
+  var c3=nuevaPieza(K6(1,0,1,0,0,0),{x:4,y:4});
+  ok('un círculo no se mete en un cuadrado', !meteEnHueco(c3));
+  var Gr=nuevaPieza(K6(0,1,0,1,0,0),{x:300,y:0}), p4=nuevaPieza(K6(0,1,1,1,0,0),{x:303,y:2});
+  ok('ni nada en una grande rellena', !meteEnHueco(p4));
+  var ph=nuevaPieza(K6(0,1,1,1,1,0),{x:600,y:0}), p5=nuevaPieza(K6(0,1,1,1,1,1),{x:601,y:0});
+  ok('ni en una pequeña hueca', !meteEnHueco(p5));
+  var G6=nuevaPieza(K6(1,0,0,0,1,0),{x:0,y:300}), p6=nuevaPieza(K6(0,0,1,1,1,1),{x:30,y:300});
+  ok('ni si se suelta lejos del hueco', !meteEnHueco(p6) && p6.x===30);
+  p6.x=8; p6.y=296;
+  ok('y un círculo pequeño en un círculo grande hueco, sí', meteEnHueco(p6) && anfitrionDe(p6)===G6);
+  /* con el ratón */
+  var oCap=cv.setPointerCapture;
+  cv.setPointerCapture=function(){};
+  function evP(tipo,x,y,b,shift){
+    var r=stage.getBoundingClientRect();
+    cv.dispatchEvent(new PointerEvent(tipo,{clientX:r.left+x, clientY:r.top+y, button:b, buttons:b===2?2:1,
+                                             pointerId:7, bubbles:true, shiftKey:!!shift}));
+  }
+  obj=[G1,p1]; sel=[];
+  ponCam(0,0,900,0,E0);
+  var sMarco=pr(vw(),{x:-27,y:20},alto(G1.k));         // el marco de la grande, por arriba
+  ok('pinchando en el marco se coge la grande', objetoEn(sMarco)===G1);
+  ok('y pinchando en lo que se ve de la pequeña, la pequeña', objetoEn(pr(vw(),{x:0,y:0},alto(p1.k)))===p1);
+  var dst=destino(sMarco,200,40);
+  evP('pointerdown',sMarco.x,sMarco.y,0); evP('pointermove',dst.x,dst.y,0); evP('pointerup',dst.x,dst.y,0);
+  ok('al arrastrar la grande, la pequeña va dentro', Math.abs(G1.x-200)<1e-6 && Math.abs(G1.y-40)<1e-6 &&
+     p1.x===G1.x && p1.y===G1.y, num(G1.x)+','+num(G1.y)+' / '+num(p1.x)+','+num(p1.y));
+  sel=[G1.id]; gira(1);
+  ok('al girar la grande, gira también la pequeña', G1.r===1 && p1.r===1 && anfitrionDe(p1)===G1);
+  sel=[p1.id]; gira(1);
+  ok('y girar la pequeña sola gira las dos, que dentro del hueco no puede', G1.r===2 && p1.r===2 && anfitrionDe(p1)===G1);
+  var sP=pr(vw(),{x:p1.x,y:p1.y},alto(p1.k)), sF=destino(sP,200,0);
+  evP('pointerdown',sP.x,sP.y,0); evP('pointermove',sF.x,sF.y,0); evP('pointerup',sF.x,sF.y,0);
+  ok('arrastrando la pequeña se saca', anfitrionDe(p1)===null && Math.abs(p1.x-(G1.x+200))<1e-6, num(p1.x));
+  var sV=destino(sF, G1.x+10-p1.x, G1.y+5-p1.y);
+  evP('pointerdown',sF.x,sF.y,0); evP('pointermove',sV.x,sV.y,0); evP('pointerup',sV.x,sV.y,0);
+  ok('y volviendo a soltarla en el hueco se mete otra vez', anfitrionDe(p1)===G1);
+  /* cómo se ve */
+  var lst=[{tipo:'p',id:91,k:K6(0,1,0,1,1,0),x:0,y:0,r:0,tap:0},     // grande roja baja hueca
+           {tipo:'p',id:92,k:K6(1,1,1,0,0,0),x:0,y:0,r:0,tap:0}];    // pequeña verde alta
+  ponVista(0,40);
+  var cm=lienzoDe(null,false,lst), mt=pr(VT(),{x:0,y:0},ALTO[0]), mf=pr(VT(),{x:0,y:35},ALTO[1]/2);
+  var pt=pixel(cm,mt.x,mt.y), pf=pixel(cm,mf.x,mf.y);
+  ok('la pequeña alta asoma por encima de la grande baja', pt[1]-pt[0]>35, pt[0]+','+pt[1]+','+pt[2]);
+  ok('y el canto de delante de la grande tapa a la pequeña', pf[0]-pf[1]>50, pf[0]+','+pf[1]+','+pf[2]);
+  lst[1].k=K6(1,1,1,1,0,0);                                          // pequeña verde baja
+  var cb=lienzoDe(null,false,lst), mb=pr(VT(),{x:0,y:0},ALTO[1]), pb=pixel(cb,mb.x,mb.y);
+  ok('una pequeña baja en una grande baja se ve por la boca del hueco', pb[1]-pb[0]>35, pb[0]+','+pb[1]+','+pb[2]);
+  opt.fondo='nada'; ponVista(0,-50);
+  var cd=lienzoDe(null,false,lst), pd=pixel(cd,70,70);
+  ok('y desde abajo se le ve la cara de abajo por el hueco de la grande', pd[1]-pd[0]>20, pd[0]+','+pd[1]+','+pd[2]);
+  ponFondo('mesa'); ponVista(0,E0);
+
+  /* --- la cámara y los gestos ------------------------------------------------------- */
+  var malasR=0;
+  [[0,0,1200,0,90],[50,-30,900,0,50],[0,0,700,35,30],[-200,100,1500,-120,15],[0,0,1000,170,70]].forEach(function(c2){
+    ponCam(c2[0],c2[1],c2[2],c2[3],c2[4]);
+    [{x:0,y:0},{x:123,y:-45},{x:-210,y:170}].forEach(function(q){
+      var b=s2w(w2s(q)); if(!b || Math.hypot(b.x-q.x,b.y-q.y)>1e-6) malasR++; });
+  });
+  ok('pasar de la mesa a la pantalla y volver deja el punto donde estaba', malasR===0, malasR);
+  ponVista(0,-20);
+  ok('con mesa no se puede mirar desde abajo', cam.ph===E_MESA);
+  opt.fondo='cristal'; ponVista(0,-40);
+  ok('con cristal, sí', cam.ph===-40);
+  ponFondo('mesa');
+  obj=[]; sel=[];
+  ponCam(0,0,1000,0,E0);
+  var pv=nuevaPieza(K6(0,1,0,0,0,0),{x:0,y:0});
+  var vac=w2s({x:250,y:200});
+  evP('pointerdown',vac.x,vac.y,0); evP('pointermove',vac.x+80,vac.y+60,0); evP('pointerup',vac.x+80,vac.y+60,0);
+  ok('arrastrar en el vacío gira la cámara', Math.abs(cam.ph-(E0+60*GRADO_PX.ph))<1e-9 &&
+     Math.abs(cam.th-(-80*GRADO_PX.th))<1e-9, num(cam.th)+'°, '+num(cam.ph)+'°');
+  ok('sin mover la pieza ni el punto al que se mira', pv.x===0 && pv.y===0 && cam.tx===0 && cam.ty===0);
+  var sD=w2s({x:150,y:80}), wD=s2w(sD);
+  evP('pointerdown',sD.x,sD.y,2); evP('pointermove',sD.x+70,sD.y-40,2); evP('pointerup',sD.x+70,sD.y-40,2);
+  var wD2=s2w({x:sD.x+70,y:sD.y-40});
+  ok('el botón derecho desplaza: el punto de la mesa que se coge sigue al ratón', Math.hypot(wD2.x-wD.x,wD2.y-wD.y)<1e-6);
+  ok('con Mayúsculas, un recuadro en el vacío selecciona', (function(){
+      sel=[]; var s0=w2s({x:0,y:0});
+      evP('pointerdown',s0.x-120,s0.y-120,0,true); evP('pointermove',s0.x+120,s0.y+120,0,true); evP('pointerup',s0.x+120,s0.y+120,0,true);
+      return sel.length===1 && sel[0]===pv.id; })());
+  document.getElementById('ojoIni').click();
+  ok('⟲ devuelve el punto de vista de partida', vistaDePartida());
+  cv.setPointerCapture=oCap;
+  ponCam(0,0,1000,0,E0);
+
+  /* --- la caja --------------------------------------------------------------------- */
+  obj=[]; sel=[]; undoStack=[];
+  ok('no se puede poner dos veces la misma pieza', nuevaPieza(5,{x:0,y:0})!==null && nuevaPieza(5,{x:200,y:0})===null);
+  obj=[];
+  var s1=sacar(-1,0), ks={};
+  piezas().forEach(function(p){ ks[p.k]=1; });
+  ok('«Sacar todas» pone las 64, una de cada', s1.length===64 && Object.keys(ks).length===64, s1.length);
+  ok('sin pisarse unas con otras', (function(){
+      var ps=piezas();
+      for(var a=0;a<ps.length;a++) for(var b=a+1;b<ps.length;b++)
+        if(Math.abs(ps[a].x-ps[b].x)<60 && Math.abs(ps[a].y-ps[b].y)<60) return false;
+      return true; })());
+  ok('«Recoger las rayadas» devuelve 32', recoger(5,1)===32 && piezas().length===32);
+  var s2=sacar(3,0);
+  ok('y entonces «Sacar las altas» saca las 16 altas rayadas', s2.length===16 &&
+     s2.every(function(p){ var a=attrs(p.k); return a[3]===0 && a[5]===1; }), s2.length);
+  ok('la caja sabe en qué casilla está cada pieza', (function(){
+      for(var q=0;q<64;q++){ var c=celdaCaja(q); if(claveEnCaja(c.x,c.y)!==q) return false; } return true; })());
+
+  /* --- el imán de los cuadros ----------------------------------------------------------- */
+  obj=[]; sel=[];
+  var cq={tipo:'q', id:nid++, x:0, y:0, nf:4, nc:4, cw:110, ch:110};
+  obj.push(cq);
+  var pm=nuevaPieza(K6(1,0,0,0,0,0),{x:110+40, y:220+70});
+  ok('una pieza soltada en una casilla se centra en ella', encaja(pm) && pm.x===165 && pm.y===275, num(pm.x)+','+num(pm.y));
+
+  /* --- tarjetas --------------------------------------------------------------------------- */
+  var tj={tipo:'t', id:nid++, x:0, y:0, at:0, v:0, no:1};
+  ok('una tarjeta negada dice «no rojo»', textoTarjeta(tj)==='no rojo');
+  opt.par=1;
+  ok('y con otros colores, «no azul»', textoTarjeta(tj)==='no azul');
+  opt.par=0;
+  ok('hay tarjeta para los doce valores', (function(){
+      for(var at=0;at<6;at++) for(var v=0;v<2;v++) if(!textoTarjeta({at:at,v:v,no:0})) return false; return true; })());
+
+  /* --- la barra de abajo no regala nada ------------------------------------------------------ */
+  obj=[]; sel=[];
+  var pn=nuevaPieza(K6(0,0,0,0,0,0),{x:0,y:0}); sel=[pn.id];
+  opt.nombres=0; var h0=textoHint();
+  opt.nombres=1; var h1=textoHint();
+  pn.tap=1; var h2=textoHint();
+  opt.nombres=0; pn.tap=0;
+  ok('sin «Nombres», la barra no dice qué pieza es', !/rojo|círculo|alto/i.test(h0), h0);
+  ok('con «Nombres», sí', h1.indexOf('Círculo rojo grande alto relleno liso')===0, h1.split(' · ')[0]);
+  ok('y nunca la de una pieza tapada', !/rojo|círculo|alto/i.test(h2), h2);
+
+  /* --- guardar y abrir ------------------------------------------------------------------------- */
+  obj=[]; sel=[];
+  opt.par=2;
+  nuevaPieza(K6(1,1,1,0,1,1),{x:11,y:22}).r=3;
+  nuevaPieza(K6(0,0,0,1,0,0),{x:-33,y:44}).tap=1;
+  obj.push({tipo:'c', id:nid++, x:5, y:6, rx:120, ry:80, n:2});
+  obj.unshift({tipo:'q', id:nid++, x:-200, y:-100, nf:4, nc:4, cw:90, ch:95});
+  obj.push({tipo:'t', id:nid++, x:50, y:-60, at:5, v:1, no:1});
+  function firma(){ return obj.map(function(o){ var c={}; for(var e in o) if(e!=='id') c[e]=o[e]; return JSON.stringify(c); }).join('|'); }
+  var f0=firma(), dd=JSON.parse(JSON.stringify(datos()));
+  opt.par=0;
+  importMode='replace'; loadData(dd);
+  ok('guardar y volver a abrir lo conserva todo', firma()===f0);
+  ok('y también los colores', opt.par===2 && document.getElementById('colores').value==='2');
+  importMode='add'; loadData(JSON.parse(JSON.stringify(dd)));
+  ok('al añadir el mismo archivo no se duplican las piezas', piezas().length===2 && obj.length===8, obj.length);
+  importMode='replace';
+  ok('un archivo con dos veces la misma pieza se rechaza',
+     limpia({piezas:[{color:0,forma:0,tam:0,altura:0,interior:0,textura:0,x:0,y:0},
+                     {color:0,forma:0,tam:0,altura:0,interior:0,textura:0,x:9,y:9}]})===null);
+  ok('y uno con un valor que no existe', limpia({piezas:[{color:2,forma:0,tam:0,altura:0,interior:0,textura:0,x:0,y:0}]})===null);
+  ponColores(0);
+
+  /* --- deshacer, encuadre y PNG ------------------------------------------------------------------- */
+  obj=[]; sel=[]; undoStack=[];
+  var u1=nuevaPieza(0,{x:0,y:0}); sel=[u1.id];
+  pushUndo(); u1.x=200; doUndo();
+  ok('deshacer devuelve una pieza a su sitio', Math.abs(piezas()[0].x)<1e-9);
+  obj=[]; sel=[];
+  nuevaPieza(K6(0,1,0,0,0,0),{x:0,y:0}); nuevaPieza(K6(1,0,0,0,0,1),{x:300,y:120});
+  fitView();
+  var bf=cajaPantalla(obj,vw()), rS=stage.getBoundingClientRect(), Wd=rS.width||800, Hd=rS.height||560;
+  ok('«Ajustar» deja todo dentro de la pantalla', bf.x0>=0 && bf.y0>=0 && bf.x1<=Wd && bf.y1<=Hd);
+  var np=cuenta(lienzoPNG());
+  ok('el PNG lleva lo que hay en el tablero', np.rojo>1000 && np.verde>1000, np.rojo+' / '+np.verde);
+
+  /* --- la página ------------------------------------------------------------------------------- */
+  var cs=getComputedStyle(document.body), brand=document.querySelector('#side .brand');
+  ok('la letra es la de proyectar', cs.fontSize==='16px', cs.fontSize);
+  ok('el rótulo es más grande que los títulos de sección',
+     parseFloat(getComputedStyle(brand).fontSize)>parseFloat(getComputedStyle(document.querySelector('#side h2')).fontSize));
+  var corta=[];
+  Array.prototype.forEach.call(document.querySelectorAll('#side h2, .act, .btn'),function(el){
+    if(el.offsetParent && el.scrollWidth>el.clientWidth+1) corta.push(el.id||el.textContent); });
+  ok('ningún título ni botón se corta', corta.length===0, corta.join(', '));
+  var side=document.getElementById('side');
+  ok('el panel lateral cabe sin barra', side.scrollHeight<=side.clientHeight+1, side.scrollHeight+' / '+side.clientHeight+' px');
+  var scr=Array.prototype.map.call(document.querySelectorAll('script'),function(s){ return s.textContent; }).join('');
+  ok('no hay diálogos que el marco de la web bloquee', scr.indexOf('con'+'firm(')<0 && scr.indexOf('al'+'ert(')<0 && scr.indexOf('pro'+'mpt(')<0);
+  ok('la ayuda dice quién lo diseñó, cita el artículo y lleva el enlace',
+     ayuda().indexOf('Carlos de Castro diseñó el Dicotominó en 2024')>=0 && ayuda().indexOf('Pensamiento Matemático')>0 &&
+     ayuda().indexOf(ARTICULO)>0);
+  ok('la licencia está en la ayuda', ayuda().indexOf('CC BY 4.0')>0);
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+  }
+  obj=antes.o; sel=antes.s; nid=Math.max(nid,antes.n); undoStack=antes.u; drag=null;
+  opt.nombres=antes.nom; opt.iman=antes.im; opt.mano=antes.mano;
+  try{ ponFondo(antes.fondo); }catch(e1){}
+  cam.tx=antes.cam.tx; cam.ty=antes.cam.ty; cam.d=antes.cam.d; ponVista(antes.cam.th, antes.cam.ph);
+  try{ ponColores(antes.par); }catch(e2){}
+
+  var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length
+                                         : 'LAS '+out.length+' PRUEBAS CORRECTAS');
+  var box=document.createElement('div');
+  box.style.cssText='position:fixed;inset:0;background:#fff;z-index:99;overflow:auto;padding:18px 22px;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace';
+  box.innerHTML='<div style="font:600 15px/1.3 -apple-system,Segoe UI,Roboto,sans-serif;margin-bottom:4px">'+
+      'Autocomprobación del Dicotominó</div>'+
+    '<div style="font:13px/1.4 -apple-system,Segoe UI,Roboto,sans-serif;color:'+(fails?'#c2410c':'#15803d')+';font-weight:600;margin-bottom:12px">'+
+      (fails? fails+' pruebas fallidas de '+out.length : 'Las '+out.length+' pruebas correctas')+'</div>'+
+    '<button id="cpTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Copiar informe</button> '+
+    '<button id="clTest" style="font:13px -apple-system,Segoe UI,Roboto,sans-serif;padding:6px 12px;margin-bottom:14px;'+
+      'border:1px solid #d5d9e0;border-radius:7px;background:#fff;cursor:pointer">Cerrar y usar el manipulativo</button>'+
+    '<pre style="white-space:pre-wrap;margin:0">'+
+      out.map(function(l){ return l.indexOf('FALLO')===0
+        ? '<span style="color:#c2410c;font-weight:700">'+l+'</span>' : l; }).join('\n')+'</pre>';
+  document.body.appendChild(box);
+  document.getElementById('cpTest').addEventListener('click',function(){
+    var ta=document.createElement('textarea'); ta.value=texto; document.body.appendChild(ta);
+    ta.select(); try{ document.execCommand('copy'); }catch(err){}
+    document.body.removeChild(ta); this.textContent='Copiado ✓';
+  });
+  document.getElementById('clTest').addEventListener('click',function(){ box.remove(); draw(); });
+  draw();
+}
+var testLanzado=false;
+function lanzarTest(){ if(testLanzado) return; testLanzado=true; runSelfTest(); }
+if((location.hash||'').indexOf('test')>=0) setTimeout(lanzarTest,60);
+window.addEventListener('hashchange',function(){
+  if((location.hash||'').indexOf('test')>=0) lanzarTest();
+});
+
+window.__dicotomino={
+  test:runSelfTest, attrs:attrs, clave:clave, nombre:nombre, diferencias:diferencias,
+  obj:function(){ return obj; }, sel:function(){ return sel; }, cam:function(){ return cam; },
+  vw:vw, ponVista:ponVista, ponFondo:ponFondo, w2s:w2s, s2w:s2w, acerca:acerca,
+  geo:geo, vista:vista, tocaPieza:tocaPieza, nuevaPieza:nuevaPieza, sacar:sacar, recoger:recoger,
+  meteEnHueco:meteEnHueco, anfitrionDe:anfitrionDe, huespedDe:huespedDe, encaja:encaja,
+  gira:gira, tapa:tapa, ponColores:ponColores, datos:datos, load:loadData, limpia:limpia,
+  setMode:function(m){ importMode=m; }, redraw:draw, fit:fitView, lienzoPNG:lienzoPNG
+};
+
+})();
+</script>
+</body>
+</html>

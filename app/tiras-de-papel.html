@@ -5,94 +5,112 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Tiras de papel</title>
 <style>
+  /* Los tamaños de letra están pensados para proyectar en clase: lo que en un
+     portátil se lee de cerca, en la pantalla del aula hay que leerlo desde la
+     última fila. */
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
-  body{font:13px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  body{font:16px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
        color:#2b2f36;background:#fff;display:flex;height:100%;overflow:hidden}
-  #side{width:206px;flex:0 0 206px;border-right:1px solid #e6e8ec;padding:10px 10px;overflow:auto;
+  #side{width:256px;flex:0 0 256px;border-right:1px solid #e6e8ec;padding:11px 11px;overflow:auto;
         background:#fafbfc}
   /* una sola línea siempre: si el título parte en dos, se come lo de abajo */
-  #side h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:#8a919c;
+  #side h2{font-size:13px;text-transform:uppercase;letter-spacing:.05em;color:#7b828d;
            margin:0 0 6px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;
            text-overflow:ellipsis;clear:both}
-  #side h2.sep{margin-top:16px}
+  #side h2.sep{margin-top:13px}
+  /* el rótulo de la casa, el mismo en todos los manipulativos; aquí más grande,
+     como el resto de la letra */
+  #side .brand{font-size:24px;font-weight:200;letter-spacing:.02em;color:#39404a;line-height:1.25;
+               padding:1px 2px 9px;margin-bottom:11px;border-bottom:1px solid #e3e6eb}
+  #side .brand b{font-weight:400;color:#2b2f36}
   main{flex:1;display:flex;flex-direction:column;min-width:0}
-  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:5px;padding:7px 9px;
+  #toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 9px;
            border-bottom:1px solid #e6e8ec;background:#fafbfc}
-  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:5px 9px;font-size:12.5px;
+  .btn{border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:6px 10px;font-size:15px;
        color:#3d4450;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.2}
-  .btn:hover{background:#f0f2f5}
-  .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .btn:hover:not(:disabled){background:#f0f2f5}
+  .btn.on,.btn.on:hover:not(:disabled){background:#2f62a8;border-color:#2f62a8;color:#fff}
   .btn:disabled{opacity:.4;cursor:default}
-  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
-  .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;
-       padding:3px 6px;border-radius:6px}
+  /* solo en la barra: la misma clase separa las secciones del panel, y sin
+     acotarla sus títulos se quedaban en una raya de 1 px */
+  #toolbar .sep{width:1px;height:22px;background:#dfe2e7;margin:0 3px}
+  .chk{display:inline-flex;align-items:center;gap:5px;font-size:15px;color:#4a515c;cursor:pointer;
+       padding:4px 6px;border-radius:6px}
   .chk:hover{background:#eff1f4}
-  .chk input{margin:0;cursor:pointer}
+  .chk input{margin:0;cursor:pointer;width:16px;height:16px}
   /* con flex en vez de float: un float suelto dentro del botón se escapaba y
      acababa pisando el título siguiente */
   .act{display:flex;align-items:center;justify-content:space-between;gap:6px;width:100%;margin-top:5px;
-       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:6px 8px;font-size:12px;
+       border:1px solid #d5d9e0;background:#fff;border-radius:7px;padding:7px 9px;font-size:15px;
        color:#3d4450;cursor:pointer;text-align:left;line-height:1.3}
-  .act:hover{background:#f0f2f5}
+  .act:hover:not(:disabled){background:#f0f2f5}
   .act:disabled{opacity:.4;cursor:default}
-  .act kbd{font:11px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
-  #tiraU{width:100%;height:46px;border:1px dashed #d5d9e0;border-radius:9px;background:#fff;
+  .act kbd{font:12.5px ui-monospace,Menlo,Consolas,monospace;color:#9aa1ab;flex:0 0 auto}
+  .act.on,.act.on:hover:not(:disabled){background:#2f62a8;border-color:#2f62a8;color:#fff}
+  .act.on kbd{color:#cfdcf0}
+  /* un botón que espera el segundo pinchazo para hacer lo que dice */
+  .act.seguro,.btn.seguro,.act.seguro:hover:not(:disabled),.btn.seguro:hover:not(:disabled){
+       border-color:#c2410c;color:#c2410c;background:#fff7f2;font-weight:600}
+  .fila .act{margin-top:0;flex:1;padding:7px 7px}
+  #tiraU{width:100%;height:52px;border:1px dashed #d5d9e0;border-radius:9px;background:#fff;
          cursor:grab;display:block;touch-action:none}
   #tiraU:hover{border-color:#c7ccd4;background:#f7f8fa}
-  select,input[type=text],input[type=number]{font:12px inherit;border:1px solid #d5d9e0;border-radius:6px;
-       padding:5px 6px;color:#2b2f36;background:#fff;width:100%}
+  select,input[type=text],input[type=number]{font:15px inherit;border:1px solid #d5d9e0;border-radius:6px;
+       padding:6px 7px;color:#2b2f36;background:#fff;width:100%}
   .fila{display:flex;gap:5px;align-items:stretch;margin-top:5px}
   .fila > *{min-width:0}
-  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:4px 0;font-size:12.5px;
+  .mini{border:1px solid #d5d9e0;background:#fff;border-radius:6px;padding:5px 0;font-size:16px;
         color:#3d4450;cursor:pointer;flex:1;text-align:center}
-  .mini:hover{background:#f0f2f5}
+  .mini:hover:not(:disabled){background:#f0f2f5}
   .mini:disabled{opacity:.35;cursor:default}
   .mini.ic{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-           padding:5px 2px;font-size:11px;color:#6b7280}
+           padding:6px 2px;font-size:13.5px;color:#6b7280}
   .mini.ic svg{display:block}
   #npartes{flex:1.5;display:flex;align-items:center;justify-content:center;text-align:center;
-           font-weight:600;font-size:12.5px;color:#2b2f36;line-height:1.2}
-  .nota{font-size:11px;color:#8a919c;line-height:1.5;margin-top:7px}
-  #colores{display:flex;flex-wrap:wrap;gap:5px;margin-top:2px}
-  #colores .sw{width:23px;height:23px;border-radius:6px;border:2px solid #fff;
+           font-weight:600;font-size:15px;color:#2b2f36;line-height:1.2}
+  .nota{font-size:13.5px;color:#7b828d;line-height:1.45;margin-top:7px}
+  #colores{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+  #colores .sw{width:26px;height:26px;border-radius:6px;border:2px solid #fff;
                box-shadow:0 0 0 1px #d5d9e0;cursor:pointer;padding:0}
   #colores .sw:hover{box-shadow:0 0 0 1px #9aa1ab}
   #colores .sw.on{box-shadow:0 0 0 2px #2f62a8}
-  #cajamedir .resp{display:flex;gap:4px;align-items:center;margin-top:5px}
-  #cajamedir input{text-align:center;padding:5px 2px}
-  #cajamedir .frac{display:inline-block;text-align:center;line-height:1.05}
-  #veredicto{margin-top:6px;font-size:12px;line-height:1.4;min-height:16px}
+  #cajamedir .resp{display:flex;gap:5px;align-items:center;margin-top:5px}
+  #cajamedir input{text-align:center;padding:6px 2px;font-size:17px}
+  #cajamedir .barra{font-size:21px;color:#8a919c}
+  #cajamedir .uni{font-size:18px;font-weight:600;color:#4a515c;padding:0 3px 0 1px}
+  #veredicto{margin-top:6px;font-size:15px;line-height:1.4;min-height:16px}
   #veredicto.si{color:#15803d;font-weight:600}
   #veredicto.no{color:#c2410c}
   #stage{position:relative;flex:1;min-height:0;background:#fbfbfa}
   canvas#cv{display:block;width:100%;height:100%;touch-action:none}
-  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:11.5px;
-        padding:5px 10px;border-radius:14px;pointer-events:none;max-width:calc(100% - 20px)}
-  #info{position:absolute;right:10px;top:10px;width:310px;background:#fff;border:1px solid #dfe2e7;
-        border-radius:10px;padding:11px 13px;font-size:11.5px;line-height:1.55;color:#4a515c;
-        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto}
+  #hint{position:absolute;left:10px;bottom:10px;background:rgba(28,32,38,.82);color:#fff;font-size:14.5px;
+        padding:6px 12px;border-radius:16px;pointer-events:none;max-width:calc(100% - 20px)}
+  #info{position:absolute;right:10px;top:10px;width:390px;background:#fff;border:1px solid #dfe2e7;
+        border-radius:10px;padding:12px 15px;font-size:14px;line-height:1.55;color:#4a515c;
+        box-shadow:0 6px 22px rgba(20,25,35,.12);display:none;max-height:calc(100% - 20px);overflow:auto;
+        max-width:calc(100% - 20px)}
   #info.show{display:block}
   #info b{color:#2b2f36}
   #info a{color:#2f62a8}
-  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:10.5px;
+  #info .lic{margin-top:11px;padding-top:8px;border-top:1px solid #eef0f3;font-size:12.5px;
              line-height:1.5;color:#8a919c}
   #drop{position:absolute;inset:0;background:rgba(47,98,168,.08);border:2px dashed #2f62a8;
-        display:none;align-items:center;justify-content:center;font-size:15px;color:#2f62a8;font-weight:600}
+        display:none;align-items:center;justify-content:center;font-size:18px;color:#2f62a8;font-weight:600}
   #drop.show{display:flex}
   @media (max-width:640px){
-    #side{width:150px;flex:0 0 150px;padding:8px 7px}
-    .btn{padding:5px 7px;font-size:12px}
-    #info{width:calc(100% - 20px)}
+    #side{width:176px;flex:0 0 176px;padding:8px 7px}
+    .btn{padding:5px 7px;font-size:13.5px}
+    .act,.chk,select,input[type=text]{font-size:13.5px}
   }
 </style>
 </head>
 <body>
 
   <aside id="side">
+    <div class="brand">Tiras de <b>papel</b></div>
     <h2>Tira unidad</h2>
-    <canvas id="tiraU" title="Arrástrala al tablero"></canvas>
-    <div class="nota">Arrástrala al tablero. Todas son iguales; saca las que necesites.</div>
+    <canvas id="tiraU" title="Arrástrala al tablero. Todas son iguales; saca las que necesites"></canvas>
 
     <h2 class="sep">Doblar la unidad</h2>
     <div class="fila">
@@ -100,8 +118,18 @@
       <div id="npartes">—</div>
       <button class="mini" id="mas" disabled title="Una parte más">+</button>
     </div>
-    <div class="fila" id="filaDoblar"></div>
-    <div class="nota">Solo se doblan las unidades, hasta 32 partes.</div>
+    <div class="fila" id="filaDoblar" title="Solo se doblan las unidades enteras, hasta 32 partes"></div>
+
+    <h2 class="sep">Al pinchar, seleccionar</h2>
+    <div class="fila">
+      <button class="act on" id="modoT" title="Al pinchar se selecciona la tira entera (tecla 1)">Tira<kbd>1</kbd></button>
+      <button class="act" id="modoS" title="Al pinchar en una tira doblada se selecciona solo la parte en la que se pincha (tecla 2)">Subunidad<kbd>2</kbd></button>
+    </div>
+    <div class="fila" style="margin-top:9px">
+      <button class="act" id="cortar" disabled title="Separa la subunidad seleccionada del resto de la tira; con la tira entera, la corta por todas sus marcas (tecla C)">✂ Cortar</button>
+      <button class="act" id="duplicar" disabled title="Saca una copia de la tira o de la subunidad seleccionada (tecla D)">⧉ Duplicar</button>
+    </div>
+    <button class="act" id="borrar" disabled>Quitar<kbd>Supr</kbd></button>
 
     <h2 class="sep">Tira a medir</h2>
     <select id="nivel">
@@ -110,9 +138,11 @@
       <option value="2">Difícil (hasta 1/32)</option>
     </select>
     <button class="act" id="nueva">Nueva tira al azar</button>
-    <input type="text" id="aMano" placeholder="8/5, 1 3/5, 2/3…" style="margin-top:5px"
-           title="Escribe la medida que quieres que tenga la tira">
-    <button class="act" id="crear">Crear esa tira</button>
+    <div class="fila">
+      <input type="text" id="aMano" placeholder="8/5, 1 3/5…" style="flex:1.6"
+             title="Escribe la medida que quieres que tenga la tira: 8/5, 1 3/5, 2/3…">
+      <button class="act" id="crear" style="justify-content:center" title="Crear una tira con esa medida">Crear</button>
+    </div>
 
     <h2 class="sep">Comprobar</h2>
     <div id="cajamedir"></div>
@@ -120,10 +150,6 @@
 
     <h2 class="sep">Color de la tira</h2>
     <div id="colores"></div>
-
-    <h2 class="sep">Selección</h2>
-    <button class="act" id="duplicar" disabled>Duplicar<kbd>D</kbd></button>
-    <button class="act" id="borrar" disabled>Quitar<kbd>Supr</kbd></button>
   </aside>
 
   <main>
@@ -132,7 +158,7 @@
       <button class="btn" id="vaciar" title="Quitar todas las tiras">Vaciar</button>
       <span class="sep"></span>
       <label class="chk" title="Al soltar una tira, sus extremos y sus marcas se enganchan a las de las demás"><input type="checkbox" id="iman" checked>Imán</label>
-      <label class="chk" title="Escribe 1/n dentro de cada parte de las tiras dobladas"><input type="checkbox" id="etiq">Etiquetas</label>
+      <label class="chk" title="Escribe dentro de cada parte de las tiras unidad cuánto mide, en unidades"><input type="checkbox" id="etiq">Etiquetas</label>
       <button class="btn" id="transp" title="Las tiras se vuelven translúcidas, para ver las marcas de las que quedan debajo">◑ Transparencia</button>
       <span class="sep"></span>
       <button class="btn" id="mano" title="Mover el tablero en vez de las tiras">✋</button>
@@ -168,6 +194,17 @@
    la fracción sale de medir, no de repartir una tarta.
    Por eso aquí la tira que se mide nunca dice cuánto vale, y las unidades se
    doblan pero no se estiran.
+
+   Hay tres clases de tira:
+   · 'u', la unidad entera: p/q vale siempre 1/1 y n dice en cuántas partes
+     está doblada.
+   · 't', un trozo de unidad, que sale de cortar o de duplicar una subunidad:
+     son p partes de las q en que estaba doblada la unidad, sin simplificar
+     (2/4 son dos cuartos, con su marca en medio, no un medio). Es papel de la
+     unidad y va de su mismo color. Ya no se dobla más.
+   · 'm', la tira que se mide: p/q irreducible, sin marcas y sin valor escrito.
+   La subunidad es cada una de las partes de una 'u' o de una 't': siempre
+   mide 1/den(s) de unidad, y es lo que se selecciona, se duplica y se corta.
    ========================================================================= */
 var U=280;                 // longitud de la tira unidad, en píxeles
 var ALTO=38;               // grosor de las tiras
@@ -189,12 +226,15 @@ var PALETA=[
   {f:'#5c6bc0', b:'#39479a'}    // índigo
 ];
 var colorTurno=0;
-function colorDe(s){ return s.tipo==='u' ? COLU : PALETA[(s.c||0)%PALETA.length]; }
+function colorDe(s){ return s.tipo==='m' ? PALETA[(s.c||0)%PALETA.length] : COLU; }
+function fuente(px,peso){ return (peso? peso+' ' : '')+px+'px -apple-system,Segoe UI,Roboto,sans-serif'; }
 
 /* =========================================================================
    2. ESTADO
    ========================================================================= */
 var tiras=[], sel=null, nid=1, letra=0;
+var selK=null;                     // la subunidad seleccionada dentro de la tira sel, o null si es la tira entera
+var modo='tira';                   // 'tira' o 'sub': qué selecciona un pinchazo
 var view={x:0,y:0,z:1};
 var drag=null, undoStack=[], importMode='replace';
 var opt={iman:1, etiq:0, mano:0, alfa:0};
@@ -208,14 +248,16 @@ var flashMsg=null, flashT=0;
 function w2s(p){ return {x:p.x*view.z+view.x, y:p.y*view.z+view.y}; }
 function s2w(p){ return {x:(p.x-view.x)/view.z, y:(p.y-view.y)/view.z}; }
 function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2400); }
+function foto(){ return JSON.stringify({t:tiras, s:sel, k:selK, n:nid, l:letra}); }
 function pushUndo(){
-  undoStack.push(JSON.stringify({t:tiras, s:sel, n:nid, l:letra}));
+  undoStack.push(foto());
   if(undoStack.length>90) undoStack.shift();
 }
 function doUndo(){
   if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
   var d=JSON.parse(undoStack.pop());
   tiras=d.t; sel=d.s; nid=d.n||1; letra=d.l||0;
+  selK=(d.k===null || d.k===undefined)? null : d.k;
   ponVeredicto(''); draw();
 }
 
@@ -314,13 +356,27 @@ function porId(id){
   return null;
 }
 function seleccionada(){ return sel==null? null : porId(sel); }
+/* cuántas subunidades tiene una tira, y cuántas de ellas hacen una unidad */
+function partes(s){ return s.tipo==='u'? s.n : s.tipo==='t'? s.p : 1; }
+function den(s){ return s.tipo==='u'? s.n : s.q; }
+function nuevoTrozo(p,q,P){
+  return {id:nid++, tipo:'t', p:p, q:q, n:1, c:0, x:P.x, y:P.y, nombre:''};
+}
 /* posiciones absolutas de las marcas interiores del doblado */
 function marcas(s){
-  var out=[];
-  if(s.tipo!=='u' || s.n<2) return out;
+  var out=[], N=partes(s);
+  if(s.tipo==='m' || N<2) return out;
   var L=largo(s);
-  for(var k=1;k<s.n;k++) out.push(s.x+L*k/s.n);
+  for(var k=1;k<N;k++) out.push(s.x+L*k/N);
   return out;
+}
+/* dónde empieza la subunidad número k */
+function xParte(s,k){ return s.x+largo(s)*k/partes(s); }
+/* en qué subunidad de la tira cae un punto del mundo; -1 si cae fuera */
+function parteEn(s,P){
+  if(!dentro(P,s)) return -1;
+  var N=partes(s);
+  return Math.max(0, Math.min(N-1, Math.floor((P.x-s.x)/largo(s)*N)));
 }
 /* puntos por los que engancha el imán: los dos extremos y las marcas */
 function puntosX(s){ return [s.x, s.x+largo(s)].concat(marcas(s)); }
@@ -387,9 +443,59 @@ function dobla(s,n){
   n=Math.max(1, Math.min(MAXP, Math.round(n)));
   if(n===s.n) return false;
   pushUndo();
-  s.n=n;
+  s.n=n; selK=null;                 // otras partes: la subunidad elegida ya no existe
   draw();
   return true;
+}
+
+/* --- duplicar y cortar -------------------------------------------------------
+   Duplicar saca una copia: de la tira entera, o de la subunidad elegida, que
+   sale suelta justo debajo de donde está. Es lo que permite coger un quinto y
+   llevarlo a lo largo de lo que se mide.
+   Cortar separa: con una subunidad elegida, esa cae a la fila de debajo y lo
+   que tenía a los lados se queda en su sitio, en uno o dos trozos; con la tira
+   entera, la deshace en todas sus subunidades, un poco separadas para que se
+   vea el corte. La tira que se mide no se corta, igual que no se dobla. */
+function duplica(s,k){
+  if(!s) return null;
+  var t;
+  if(k===null || k===undefined || s.tipo==='m' || partes(s)<2){
+    pushUndo();
+    t={id:nid++, tipo:s.tipo, p:s.p, q:s.q, n:s.n, c:s.c||0, x:s.x, y:s.y+ALTO+HUECO,
+       nombre:s.tipo==='m'? siguienteLetra() : ''};
+  } else {
+    if(!(k>=0 && k<partes(s))) return null;
+    pushUndo();
+    t=nuevoTrozo(1, den(s), {x:xParte(s,k), y:s.y+ALTO+HUECO});
+  }
+  tiras.push(t); sel=t.id; selK=null; ponVeredicto(''); draw();
+  return t;
+}
+function corta(s,k){
+  if(!s) return null;
+  if(s.tipo==='m'){ flash('La tira que se mide no se corta: se mide con la unidad'); return null; }
+  var N=partes(s), D=den(s), nuevas=[], i;
+  if(N<2){ flash('Se corta por las marcas: primero dobla la unidad'); return null; }
+  if(k===null || k===undefined){
+    pushUndo();
+    for(i=0;i<N;i++) nuevas.push(nuevoTrozo(1, D, {x:xParte(s,i)+i*8, y:s.y}));
+    sel=nuevas[0].id;
+  } else {
+    if(!(k>=0 && k<N)) return null;
+    pushUndo();
+    if(k>0) nuevas.push(nuevoTrozo(k, D, {x:s.x, y:s.y}));
+    if(k<N-1) nuevas.push(nuevoTrozo(N-1-k, D, {x:xParte(s,k+1), y:s.y}));
+    nuevas.push(nuevoTrozo(1, D, {x:xParte(s,k), y:s.y+ALTO+HUECO}));
+    sel=nuevas[nuevas.length-1].id;
+  }
+  tiras=tiras.filter(function(o){ return o.id!==s.id; }).concat(nuevas);
+  selK=null; ponVeredicto(''); draw();
+  return nuevas;
+}
+function ponModo(m){
+  modo = m==='sub'? 'sub' : 'tira';
+  if(modo!=='sub') selK=null;
+  draw();
 }
 
 /* =========================================================================
@@ -404,7 +510,8 @@ function rectRedondo(c,x,y,w,h,r){
   c.lineTo(x,y+r); c.quadraticCurveTo(x,y,x+r,y);
   c.closePath();
 }
-/* qué etiqueta cabe en una parte de «ancho» píxeles de pantalla */
+/* qué etiqueta cabe en una parte de «ancho» píxeles de pantalla, con la
+   tipografía que tenga puesta el contexto */
 function etiquetaParte(c,ancho,n){
   var largoT='1/'+n+' u';
   if(c.measureText(largoT).width+7<ancho) return largoT;
@@ -412,10 +519,34 @@ function etiquetaParte(c,ancho,n){
   if(c.measureText(cortoT).width+5<ancho) return cortoT;
   return '';
 }
-function drawTira(c,s,marcada){
+/* La letra de las etiquetas crece con el zoom y es grande de entrada, que esto
+   se proyecta. A cambio, en las partes estrechas no cabe: antes de quitarle la
+   unidad a la etiqueta se prueba con letra más pequeña, hasta 3/4 de la ideal;
+   después se prueba la fracción sola, hasta un mínimo que aún se lea, y solo
+   si tampoco cabe se deja la parte sin rotular. Deja puesta en el contexto la
+   tipografía con la que cabe. */
+var PX_ETIQ=15, PX_MIN=9;
+function pxEtiqueta(){ return Math.max(10, Math.min(34, PX_ETIQ*view.z)); }
+function ajustaEtiqueta(c,ancho,n,px){
+  var p, t, suelo=Math.max(PX_MIN, px*0.75);
+  for(p=px; p>=suelo-1e-9; p-=1){
+    c.font=fuente(p);
+    t=etiquetaParte(c,ancho,n);
+    if(t.indexOf('u')>=0) return {t:t, px:p};
+  }
+  for(p=px; p>=PX_MIN-1e-9; p-=1){
+    c.font=fuente(p);
+    t=etiquetaParte(c,ancho,n);
+    if(t) return {t:t, px:p};
+  }
+  return {t:'', px:0};
+}
+/* kSel es la subunidad que hay que marcar como seleccionada, o null */
+function drawTira(c,s,marcada,kSel){
   var a=w2s({x:s.x, y:s.y});
   var w=largo(s)*view.z, h=ALTO*view.z;
-  var C=colorDe(s);
+  var C=colorDe(s), N=partes(s);
+  var conSub = marcada && kSel!==null && kSel!==undefined && s.tipo!=='m' && N>1;
   c.save();
   if(opt.alfa) c.globalAlpha=0.55;              // para ver las marcas de debajo
   c.save();
@@ -424,46 +555,51 @@ function drawTira(c,s,marcada){
   c.fillStyle=C.f; c.fill();
   c.restore();
 
-  if(s.tipo==='u' && s.n>1){
+  if(s.tipo!=='m' && N>1){
     c.save();
     rectRedondo(c,a.x,a.y,w,h,3.5*view.z); c.clip();
+    if(conSub){
+      c.fillStyle='rgba(47,98,168,.22)';
+      c.fillRect(a.x+w*kSel/N, a.y, w/N, h);
+    }
     c.strokeStyle=C.b; c.lineWidth=Math.max(1.5, 1.9*view.z);
-    for(var k=1;k<s.n;k++){
-      var X=a.x+w*k/s.n;
+    for(var k=1;k<N;k++){
+      var X=a.x+w*k/N;
       c.beginPath(); c.moveTo(X,a.y); c.lineTo(X,a.y+h); c.stroke();
     }
-    if(opt.etiq){
-      c.fillStyle=C.t;
-      c.font=Math.max(8,Math.min(13,10*view.z))+'px -apple-system,Segoe UI,Roboto,sans-serif';
-      c.textAlign='center'; c.textBaseline='middle';
-      /* la etiqueta lleva la unidad: cada parte es 1/n de unidad, no 1/n a secas.
-         Si no cabe entera se pone solo la fracción, y si tampoco, nada: acercando
-         el zoom vuelve a salir. */
-      var txt=etiquetaParte(c, w/s.n, s.n);
-      if(txt) for(var j=0;j<s.n;j++) c.fillText(txt, a.x+w*(j+0.5)/s.n, a.y+h/2);
-    }
     c.restore();
-  } else if(s.tipo==='u' && opt.etiq){
+  }
+  if(s.tipo!=='m' && opt.etiq){
     c.save();
-    c.fillStyle=C.t;
-    c.font=Math.max(9,Math.min(14,11*view.z))+'px -apple-system,Segoe UI,Roboto,sans-serif';
-    c.textAlign='center'; c.textBaseline='middle';
-    if(c.measureText('1 u').width+8<w) c.fillText('1 u', a.x+w/2, a.y+h/2);
+    rectRedondo(c,a.x,a.y,w,h,3.5*view.z); c.clip();
+    c.fillStyle=C.t; c.textAlign='center'; c.textBaseline='middle';
+    if(s.tipo==='u' && N===1){
+      c.font=fuente(pxEtiqueta());
+      if(c.measureText('1 u').width+8<w) c.fillText('1 u', a.x+w/2, a.y+h/2);
+    } else {
+      /* la etiqueta lleva la unidad: cada parte es 1/n de unidad, no 1/n a secas */
+      var E=ajustaEtiqueta(c, w/N, den(s), pxEtiqueta());
+      if(E.t) for(var j=0;j<N;j++) c.fillText(E.t, a.x+w*(j+0.5)/N, a.y+h/2);
+    }
     c.restore();
   }
 
   rectRedondo(c,a.x,a.y,w,h,3.5*view.z);
-  c.lineWidth=marcada? 2.6 : 1.3;
-  c.strokeStyle=marcada? '#1f4e8c' : C.b;
+  c.lineWidth=(marcada && !conSub)? 2.6 : 1.3;
+  c.strokeStyle=(marcada && !conSub)? '#1f4e8c' : C.b;
   c.stroke();
+  if(conSub){
+    c.lineWidth=2.6; c.strokeStyle='#1f4e8c';
+    c.strokeRect(a.x+w*kSel/N, a.y, w/N, h);
+  }
   c.restore();
 
   if(s.tipo==='m'){
     c.save();
-    c.fillStyle='#8a919c';
-    c.font='600 '+Math.max(9,Math.min(14,11*view.z))+'px -apple-system,Segoe UI,Roboto,sans-serif';
+    c.fillStyle='#6b7280';
+    c.font=fuente(Math.max(11,Math.min(34,16*view.z)),'600');
     c.textAlign='right'; c.textBaseline='middle';
-    c.fillText(s.nombre, a.x-7, a.y+h/2);
+    c.fillText(s.nombre, a.x-8, a.y+h/2);
     c.restore();
   }
 }
@@ -471,7 +607,7 @@ function draw(){
   var W=cv.width/(window.devicePixelRatio||1), H=cv.height/(window.devicePixelRatio||1);
   ctx.clearRect(0,0,W,H);
   ctx.fillStyle='#fbfbfa'; ctx.fillRect(0,0,W,H);
-  tiras.forEach(function(s){ drawTira(ctx,s,s.id===sel); });
+  tiras.forEach(function(s){ drawTira(ctx,s,s.id===sel,s.id===sel? selK : null); });
   updateUI();
 }
 
@@ -486,18 +622,28 @@ function tiraEn(P){
   for(var i=tiras.length-1;i>=0;i--) if(dentro(P,tiras[i])) return tiras[i];
   return null;
 }
+/* seleccionar lo que hay en un punto: la tira, o una de sus partes si el modo
+   es el de subunidades y la tira está doblada */
+function seleccionaEn(P){
+  var t=tiraEn(P);
+  if(!t){ sel=null; selK=null; return null; }
+  var k = (modo==='sub' && t.tipo!=='m' && partes(t)>1)? parteEn(t,P) : null;
+  if(sel!==t.id || selK!==k) ponVeredicto('');
+  sel=t.id; selK=k;
+  tiras=tiras.filter(function(q){ return q.id!==t.id; }).concat([t]);   // al frente
+  return t;
+}
 cv.addEventListener('pointerdown',function(e){
   cv.setPointerCapture(e.pointerId);
   var s=pos(e), w=s2w(s);
-  var t=tiraEn(w);
-  if(t && !opt.mano && e.button!==1 && e.button!==2){
-    if(sel!==t.id){ sel=t.id; ponVeredicto(''); }
-    tiras=tiras.filter(function(q){ return q.id!==t.id; }).concat([t]);   // al frente
-    pushUndo();
-    drag={modo:'mover', w0:w, s:t, x0:t.x, y0:t.y};
-    draw(); return;
+  if(!opt.mano && e.button!==1 && e.button!==2){
+    var antes=foto(), t=seleccionaEn(w);
+    if(t){
+      drag={modo:'mover', w0:w, s0:s, s:t, x0:t.x, y0:t.y, movido:false, antes:antes};
+      draw(); return;
+    }
+    ponVeredicto('');
   }
-  if(!t && !opt.mano && e.button===0){ sel=null; ponVeredicto(''); }
   drag={modo:'pan', s0:s, v0:{x:view.x, y:view.y}};
   draw();
 });
@@ -508,14 +654,21 @@ cv.addEventListener('pointermove',function(e){
     view.x=drag.v0.x+(s.x-drag.s0.x); view.y=drag.v0.y+(s.y-drag.s0.y);
     draw(); return;
   }
+  /* un pinchazo sin arrastre es solo seleccionar: ni mueve la tira ni gasta
+     un deshacer */
+  if(!drag.movido && Math.abs(s.x-drag.s0.x)+Math.abs(s.y-drag.s0.y)<4) return;
+  drag.movido=true;
   drag.s.x=drag.x0+(w.x-drag.w0.x);
   drag.s.y=drag.y0+(w.y-drag.w0.y);
   draw();
 });
 function suelta(){
   if(!drag) return;
-  if(drag.modo==='mover') aplicaIman(drag.s);
-  drag=null;
+  var d=drag; drag=null;
+  if(d.modo==='mover' && d.movido){
+    if(d.antes){ undoStack.push(d.antes); if(undoStack.length>90) undoStack.shift(); }
+    aplicaIman(d.s);
+  }
   draw();
 }
 cv.addEventListener('pointerup',suelta);
@@ -532,11 +685,11 @@ cv.addEventListener('wheel',function(e){
 /* --- sacar unidades del menú ---------------------------------------------- */
 function pintaTiraU(){
   var c=document.getElementById('tiraU'), r=c.getBoundingClientRect();
-  var an=Math.max(120, r.width||160), al=46;
+  var an=Math.max(120, r.width||160), al=52;
   c.width=an*2; c.height=al*2;
   var o=c.getContext('2d'); o.scale(2,2);
   o.clearRect(0,0,an,al);
-  var m=10, w=an-2*m, h=22;
+  var m=10, w=an-2*m, h=27;
   o.save();
   o.shadowColor='rgba(20,25,35,.13)'; o.shadowBlur=5; o.shadowOffsetY=2;
   rectRedondo(o,m,(al-h)/2,w,h,3);
@@ -544,7 +697,7 @@ function pintaTiraU(){
   o.restore();
   rectRedondo(o,m,(al-h)/2,w,h,3);
   o.lineWidth=1.3; o.strokeStyle=COLU.b; o.stroke();
-  o.fillStyle=COLU.t; o.font='11px -apple-system,Segoe UI,Roboto,sans-serif';
+  o.fillStyle=COLU.t; o.font=fuente(15);
   o.textAlign='center'; o.textBaseline='middle';
   o.fillText('1 u', an/2, al/2);
 }
@@ -556,6 +709,7 @@ function sueltaPaleta(){
 function muevePaleta(e){
   if(!drag) return;
   var w=s2w(pos(e));
+  drag.movido=true;
   drag.s.x=drag.x0+(w.x-drag.w0.x);
   drag.s.y=drag.y0+(w.y-drag.w0.y);
   draw();
@@ -565,8 +719,8 @@ document.getElementById('tiraU').addEventListener('pointerdown',function(e){
   pushUndo();
   var w=s2w(pos(e));
   var t=nuevaUnidad({x:w.x-U/2, y:w.y-ALTO/2});
-  tiras.push(t); sel=t.id; ponVeredicto('');
-  drag={modo:'mover', w0:w, s:t, x0:t.x, y0:t.y};
+  tiras.push(t); sel=t.id; selK=null; ponVeredicto('');
+  drag={modo:'mover', w0:w, s0:pos(e), s:t, x0:t.x, y0:t.y, movido:true, antes:null};
   window.addEventListener('pointermove', muevePaleta);
   window.addEventListener('pointerup', sueltaPaleta);
   draw();
@@ -574,7 +728,7 @@ document.getElementById('tiraU').addEventListener('pointerdown',function(e){
 /* los tres botones de doblar, con su dibujito: una tira partida en dos, en tres
    y sin partir, que se entiende antes que la palabra */
 function iconoDoblar(n){
-  var w=32, h=13, s='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'+
+  var w=38, h=15, s='<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'+
     '<rect x="1" y="1" width="'+(w-2)+'" height="'+(h-2)+'" rx="2.5" fill="'+COLU.f+
     '" stroke="'+COLU.b+'" stroke-width="1"/>';
   for(var k=1;k<n;k++){
@@ -599,7 +753,7 @@ function ponTira(f){
   pushUndo();
   var P={x: tiras.length? caja(tiras).x0 : -U/2, y: filaLibre()};
   var t=nuevaMedir(f.p, f.q, P);
-  tiras.push(t); sel=t.id;
+  tiras.push(t); sel=t.id; selK=null;
   ponVeredicto('');
   fitView();
   return t;
@@ -621,36 +775,64 @@ document.getElementById('crear').addEventListener('click',function(){
   flash('Ahí tienes la tira '+t.nombre+'. En pantalla no pone cuánto mide');
 });
 
+/* --- confirmar sin diálogos --------------------------------------------------
+   Nada de diálogos del navegador: dentro de un marco con sandbox —el Moodle de un centro—
+   y en más de un visor incrustado, el navegador no enseña el diálogo y contesta
+   que no, así que el botón parece muerto. La confirmación va en el propio
+   botón: el primer pinchazo lo arma («¿Seguro?») y avisa en la barra de abajo;
+   el segundo, si llega antes de cuatro segundos, hace la acción. */
+function dosPasos(b, aviso, accion, puede){
+  var t=null, antes=null;
+  function desarma(){
+    if(t){ clearTimeout(t); t=null; }
+    if(antes!==null){ b.innerHTML=antes; antes=null; }
+    b.classList.remove('seguro');
+  }
+  b.addEventListener('click',function(){
+    if(t){ desarma(); flashMsg=null; accion(); draw(); return; }
+    if(puede && !puede()) return;
+    antes=b.innerHTML; b.textContent='¿Seguro?'; b.classList.add('seguro');
+    flash(aviso);
+    t=setTimeout(desarma, 4000);
+  });
+}
+
 /* --- comprobar la medida --------------------------------------------------- */
 function ponVeredicto(txt,clase){
   var v=document.getElementById('veredicto');
   v.textContent=txt||'';
   v.className=clase||'';
+  /* con la letra grande el panel puede necesitar barra: que el veredicto no se
+     quede escondido debajo */
+  if(txt && v.scrollIntoView){ try{ v.scrollIntoView({block:'nearest'}); }catch(err){} }
+}
+/* Los dos textos de la comprobación. La medida se escribe siempre con su
+   unidad, «8/5 u», que es como se lee en las etiquetas de las tiras. */
+function textoAcierto(nombre,num,den0,mia){
+  var extra = (num===mia.p && den0===mia.q) ? ''
+    : ' Es la misma medida que '+mia.p+'/'+mia.q+' u, que ya no se puede simplificar más.';
+  return '¡Eso es! La tira '+nombre+' mide '+num+'/'+den0+' u.'+extra;
+}
+function textoFallo(nombre,num,den0,mayor){
+  return 'Todavía no. '+num+'/'+den0+' u es '+(mayor?'más largo':'más corto')+' que la tira '+nombre+'.';
 }
 function cajaMedirUI(){
   var c=document.getElementById('cajamedir');
   var s=seleccionada();
   if(!s || s.tipo!=='m'){
-    c.innerHTML='<div class="nota" style="margin-top:0">Selecciona una tira naranja y escribe aquí lo que mide, '+
-                'en unidades.</div>';
+    c.innerHTML='<div class="nota" style="margin-top:0">Selecciona una tira a medir y escribe aquí '+
+                'cuánto mide.</div>';
     return;
   }
-  c.innerHTML='<div class="nota" style="margin-top:0">La tira <b>'+s.nombre+'</b> mide, '+
-      'en unidades:</div>'+
+  c.innerHTML='<div class="nota" style="margin-top:0">La tira <b>'+s.nombre+'</b> mide:</div>'+
     '<div class="resp">'+
-      '<input type="number" id="rNum" min="0" step="1" placeholder="—" style="flex:1">'+
-      '<span style="font-size:16px;color:#8a919c">/</span>'+
-      '<input type="number" id="rDen" min="1" step="1" placeholder="—" style="flex:1">'+
+      '<input type="number" id="rNum" min="0" step="1" placeholder="—" style="flex:1" title="Cuántas partes caben">'+
+      '<span class="barra">/</span>'+
+      '<input type="number" id="rDen" min="1" step="1" placeholder="—" style="flex:1" title="En cuántas partes has dividido la unidad">'+
+      '<span class="uni">u</span>'+
     '</div>'+
-    '<button class="act" id="comprobar">Comprobar</button>'+
-    '<button class="act" id="rendirse" style="font-size:11px;color:#9aa1ab">Ver la medida</button>';
+    '<button class="act" id="comprobar" style="justify-content:center;font-weight:600">Comprobar</button>';
   document.getElementById('comprobar').addEventListener('click',compruebaMedida);
-  document.getElementById('rendirse').addEventListener('click',function(){
-    var t=seleccionada();
-    if(!t || t.tipo!=='m') return;
-    if(!confirm('¿Seguro? Se acabó la gracia de medirla.')) return;
-    ponVeredicto('La tira '+t.nombre+' mide '+textoMixto({p:t.p,q:t.q})+' unidades.','no');
-  });
   ['rNum','rDen'].forEach(function(id){
     document.getElementById(id).addEventListener('keydown',function(e){
       if(e.key==='Enter') compruebaMedida();
@@ -669,27 +851,20 @@ function compruebaMedida(){
     ponVeredicto('Escribe cuántas partes caben y en cuántas partes has dividido la unidad.','no');
     return;
   }
-  var num=parseInt(n,10), den=parseInt(d,10);
-  if(!isFinite(num)||!isFinite(den)||den<1||num<0){
+  var num=parseInt(n,10), den0=parseInt(d,10);
+  if(!isFinite(num)||!isFinite(den0)||den0<1||num<0){
     ponVeredicto('Esos números no me valen.','no'); return;
   }
-  var f=reduce(num, den), mia={p:s.p, q:s.q};
-  if(mismaFraccion(f,mia)){
-    var extra = (num===mia.p && den===mia.q) ? ''
-      : ' Es la misma medida que '+mia.p+'/'+mia.q+', que ya no se puede simplificar más.';
-    ponVeredicto('¡Eso es! La tira '+s.nombre+' mide '+num+'/'+den+' de unidad.'+extra,'si');
-  } else {
-    var mayor = f.p*mia.q > mia.p*f.q;
-    ponVeredicto('Todavía no. '+num+'/'+den+' es un poco '+(mayor?'más largo':'más corto')+
-                 ' que la tira '+s.nombre+'.','no');
-  }
+  var f=reduce(num, den0), mia={p:s.p, q:s.q};
+  if(mismaFraccion(f,mia)) ponVeredicto(textoAcierto(s.nombre,num,den0,mia),'si');
+  else ponVeredicto(textoFallo(s.nombre,num,den0, f.p*mia.q > mia.p*f.q),'no');
 }
 /* --- color de la tira ------------------------------------------------------ */
 function coloresUI(){
   var c=document.getElementById('colores'), s=seleccionada();
   if(!s || s.tipo!=='m'){
     c.innerHTML='<div class="nota" style="margin-top:0">Selecciona una tira a medir para cambiarle '+
-                'el color. El de la unidad es siempre el mismo.</div>';
+                'el color.</div>';
     return;
   }
   c.innerHTML=PALETA.map(function(P,i){
@@ -732,23 +907,25 @@ document.getElementById('lisa').addEventListener('click',function(){
   var s=seleccionada(); if(s) dobla(s,1);
 });
 document.getElementById('duplicar').addEventListener('click',function(){
-  var s=seleccionada(); if(!s) return;
-  pushUndo();
-  var t={id:nid++, tipo:s.tipo, p:s.p, q:s.q, n:s.n, c:s.c||0, x:s.x, y:s.y+ALTO+HUECO,
-         nombre:s.tipo==='m'? siguienteLetra() : ''};
-  tiras.push(t); sel=t.id; ponVeredicto(''); draw();
+  var s=seleccionada(); if(s) duplica(s, selK);
 });
+document.getElementById('cortar').addEventListener('click',function(){
+  var s=seleccionada(); if(s) corta(s, selK);
+});
+document.getElementById('modoT').addEventListener('click',function(){ ponModo('tira'); });
+document.getElementById('modoS').addEventListener('click',function(){ ponModo('sub'); });
 document.getElementById('borrar').addEventListener('click',function(){
   var s=seleccionada(); if(!s) return;
   pushUndo();
   tiras=tiras.filter(function(q){ return q.id!==s.id; });
-  sel=null; ponVeredicto(''); draw();
+  sel=null; selK=null; ponVeredicto(''); draw();
 });
-document.getElementById('vaciar').addEventListener('click',function(){
-  if(!tiras.length) return;
-  if(!confirm('¿Quitar todas las tiras del tablero?')) return;
-  pushUndo(); tiras=[]; sel=null; ponVeredicto(''); draw();
-});
+dosPasos(document.getElementById('vaciar'), 'Pulsa otra vez para quitar todas las tiras del tablero',
+  function(){
+    if(!tiras.length) return;
+    pushUndo(); tiras=[]; sel=null; selK=null; ponVeredicto(''); draw();
+  },
+  function(){ return tiras.length>0; });
 document.getElementById('undo').addEventListener('click',doUndo);
 document.getElementById('iman').addEventListener('change',function(e){ opt.iman=e.target.checked?1:0; });
 document.getElementById('etiq').addEventListener('change',function(e){ opt.etiq=e.target.checked?1:0; draw(); });
@@ -782,15 +959,18 @@ document.addEventListener('keydown',function(e){
   var k=(e.key||'').toLowerCase();
   if((e.ctrlKey||e.metaKey) && k==='z'){ e.preventDefault(); doUndo(); return; }
   if(k==='d'){ document.getElementById('duplicar').click(); }
+  else if(k==='c'){ document.getElementById('cortar').click(); }
+  else if(k==='1'){ ponModo('tira'); }
+  else if(k==='2'){ ponModo('sub'); }
   else if(k==='+' || k==='='){ document.getElementById('mas').click(); }
   else if(k==='-'){ document.getElementById('menos').click(); }
   else if(e.key==='Delete' || e.key==='Backspace'){ document.getElementById('borrar').click(); e.preventDefault(); }
-  else if(e.key==='Escape'){ sel=null; ponVeredicto(''); draw(); }
+  else if(e.key==='Escape'){ sel=null; selK=null; ponVeredicto(''); draw(); }
 });
 
 /* --- guardar y abrir -------------------------------------------------------- */
 document.getElementById('save').addEventListener('click',function(){
-  var d={formato:'tiras-de-papel', version:1,
+  var d={formato:'tiras-de-papel', version:2,
     tiras:tiras.map(function(s){
       return {tipo:s.tipo, p:s.p, q:s.q, n:s.n, c:s.c||0,
               x:+s.x.toFixed(2), y:+s.y.toFixed(2), nombre:s.nombre}; })};
@@ -813,15 +993,18 @@ function limpiaTiras(lista){
   var out=[];
   for(var i=0;i<lista.length;i++){
     var s=lista[i];
-    var tipo = s.tipo==='m' ? 'm' : s.tipo==='u' ? 'u' : null;
+    if(!s || typeof s!=='object') return null;
+    var tipo = s.tipo==='m' ? 'm' : s.tipo==='u' ? 'u' : s.tipo==='t' ? 't' : null;
     if(!tipo) return null;
     var p=Number(s.p), q=Number(s.q), n=Number(s.n)||1;
     var x=Number(s.x), y=Number(s.y);
     if(!isFinite(p)||!isFinite(q)||!isFinite(x)||!isFinite(y)) return null;
     if(!(p>0) || !(q>0) || q>MAXP) return null;
     if(tipo==='u' && !(p===1 && q===1)) return null;      // la unidad no se estira
+    /* un trozo son p partes enteras de las q de la unidad, y menos que todas */
+    if(tipo==='t' && !(p===Math.round(p) && q===Math.round(q) && q>=2 && p<q)) return null;
     n=Math.max(1, Math.min(MAXP, Math.round(n)));
-    if(tipo==='m') n=1;
+    if(tipo!=='u') n=1;
     var col=Math.round(Number(s.c)||0);
     if(!(col>=0 && col<PALETA.length)) col=0;
     var cuantas=out.filter(function(o){ return o.tipo==='m'; }).length;
@@ -837,7 +1020,7 @@ function loadData(d){
   if(!nuevas){ flash('Ese archivo no trae tiras que yo entienda'); return; }
   pushUndo();
   tiras = (importMode==='add') ? tiras.concat(nuevas) : nuevas;
-  sel=null; ponVeredicto(''); fitView();
+  sel=null; selK=null; ponVeredicto(''); fitView();
   flash(nuevas.length+(nuevas.length===1?' tira cargada':' tiras cargadas'));
 }
 ['dragenter','dragover'].forEach(function(ev){
@@ -853,12 +1036,12 @@ stage.addEventListener('drop',function(e){
 document.getElementById('png').addEventListener('click',function(){
   var b=caja(tiras);
   if(!b){ flash('No hay nada que exportar'); return; }
-  var m=26, sc=2, W=(b.x1-b.x0)+2*m+20, H=(b.y1-b.y0)+2*m;
+  var m=26, sc=2, W=(b.x1-b.x0)+2*m+26, H=(b.y1-b.y0)+2*m;
   var oc=document.createElement('canvas'); oc.width=W*sc; oc.height=H*sc;
   var o=oc.getContext('2d'); o.scale(sc,sc); o.fillStyle='#fff'; o.fillRect(0,0,W,H);
   var g={x:view.x,y:view.y,z:view.z}, ctx0=ctx, sel0=sel;
-  view={x:m+20-b.x0, y:m-b.y0, z:1}; ctx=o; sel=null;
-  tiras.forEach(function(s){ drawTira(o,s,false); });
+  view={x:m+26-b.x0, y:m-b.y0, z:1}; ctx=o; sel=null;
+  tiras.forEach(function(s){ drawTira(o,s,false,null); });
   ctx=ctx0; view=g; sel=sel0;
   oc.toBlob(function(blob){
     var url=URL.createObjectURL(blob);
@@ -877,7 +1060,8 @@ document.getElementById('help').addEventListener('click',function(){
 });
 function ayuda(){
   return '<div><b>Tiras de papel</b><br>'+
- 'Medir es ver cuántas veces cabe la unidad en lo que se quiere medir. Como casi nunca cabe un '+
+ 'Medir es ver cuántas veces cabe la unidad en lo que se quiere medir (qué es «caber» depende de la '+
+ 'magnitud: si es longitud, como aquí, es concatenar; si es área, cubrir). Como casi nunca cabe un '+
  'número entero de veces, hay que partir la unidad en partes iguales hasta que una de ellas encaje '+
  'justo en lo que sobra: el número de partes es el denominador, y las que caben, el numerador. La '+
  'fracción sale así, de medir.</div>'+
@@ -887,23 +1071,30 @@ function ayuda(){
  'Coloca unidades una detrás de otra debajo de ella y mira lo que sobra.</div>'+
  '<div style="margin-top:7px"><b>Doblar la unidad</b><br>'+
  'Selecciona una tira unidad y usa <b>+</b>, <b>−</b> o los botones <b>×2</b> y <b>×3</b> para partirla '+
- 'en partes iguales, hasta 32. Las marcas del doblado se ven, y el imán engancha también por ellas, '+
- 'así que sirven para medir el trozo que sobra. Solo se doblan las unidades: la tira que se mide no '+
- 'se toca, igual que no se corta lo que se está midiendo.</div>'+
- '<div style="margin-top:7px"><b>Colores y transparencia</b><br>'+
- 'La unidad es siempre del mismo color, para que se reconozca de un vistazo. Cada tira que se pide '+
- 'sale de un color distinto, y se le puede cambiar en cualquier momento con la tira seleccionada. '+
- 'Las tiras se pueden montar unas encima de otras: con <b>◑ Transparencia</b> se vuelven translúcidas '+
- 'y se ven las marcas de las que quedan debajo, que es otra manera de comparar.</div>'+
+ 'en partes iguales, hasta 32. Las marcas del doblado se ven, y el imán engancha también por ellas. '+
+ 'Solo se doblan las unidades enteras: la tira que se mide no se toca, igual que no se corta lo que '+
+ 'se está midiendo.</div>'+
+ '<div style="margin-top:7px"><b>Seleccionar una subunidad</b><br>'+
+ 'Con <b>Tira</b> (tecla 1), al pinchar se elige la tira entera. Con <b>Subunidad</b> (tecla 2), se '+
+ 'elige solo la parte en la que se pincha de una unidad doblada. En los dos casos, arrastrando se '+
+ 'mueve la tira entera.</div>'+
+ '<div style="margin-top:7px"><b>Duplicar y cortar</b><br>'+
+ '<b>⧉ Duplicar</b> (tecla D) saca una copia de la tira seleccionada o, si lo seleccionado es una '+
+ 'subunidad, una copia suelta de esa subunidad, que aparece justo debajo. <b>✂ Cortar</b> (tecla C) '+
+ 'separa la subunidad seleccionada: cae a la fila de debajo y lo que tenía a los lados se queda en '+
+ 'su sitio. Con la tira entera seleccionada, la corta por todas sus marcas. Los trozos son del color '+
+ 'de la unidad, conservan sus marcas y ya no se doblan más.</div>'+
+ '<div style="margin-top:7px"><b>Etiquetas, colores y transparencia</b><br>'+
+ 'La casilla <b>Etiquetas</b> escribe en cada parte de las unidades y de sus trozos cuánto mide, en '+
+ 'unidades (u). La unidad es siempre del mismo color, para que se reconozca de un vistazo. Cada tira '+
+ 'que se pide sale de un color distinto, y se le puede cambiar con la tira seleccionada. Las tiras '+
+ 'se pueden montar unas encima de otras: con <b>◑ Transparencia</b> se vuelven translúcidas y se ven '+
+ 'las marcas de las que quedan debajo.</div>'+
  '<div style="margin-top:7px"><b>Comprobar</b><br>'+
- 'Con la tira seleccionada, escribe la medida como una fracción: arriba las partes que caben, abajo '+
- 'en cuántas partes has dividido la unidad. Vale cualquier fracción equivalente, porque 8/5 y 16/10 '+
- 'son la misma medida y dependen solo de cómo hayas doblado. Si no aciertas, te dice si te has '+
- 'quedado corto o te has pasado, que es la pista que hace falta para seguir midiendo.</div>'+
- '<div style="margin-top:7px"><b>Para pensar</b><br>'+
- '¿En cuántas partes hay que doblar la unidad para medir esta tira? ¿Y hay más de un doblado que '+
- 'sirva? Si sirve doblar en 4, ¿serviría doblar en 8? ¿Y al revés? Dos tiras distintas, ¿pueden dar '+
- 'la misma medida? Y si se cambia la unidad por otra más corta, ¿qué le pasa al número que sale?</div>'+
+ 'Con la tira seleccionada, escribe la medida como una fracción de la unidad: a la izquierda las '+
+ 'partes que caben, a la derecha en cuántas partes has dividido la unidad. Vale cualquier fracción '+
+ 'equivalente, porque 8/5 y 16/10 son la misma medida y dependen solo de cómo hayas doblado. Si no '+
+ 'aciertas, te dice si te has quedado corto o te has pasado.</div>'+
  '<div class="lic">Manipulativo de Pablo Beltrán-Pellicer · '+
  '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · '+
  '<a href="https://twitter.com/pbeltranp" target="_blank" rel="noopener">@pbeltranp</a><br>'+
@@ -911,6 +1102,23 @@ function ayuda(){
  'puedes usarlo, copiarlo y modificarlo citando la autoría.</div>';
 }
 var cacheMedir='';
+/* lo que dice la barra de abajo: qué hay seleccionado y qué se puede hacer */
+function textoAyudaBarra(){
+  var s=seleccionada();
+  if(!tiras.length) return 'Pide una tira para medir y saca unidades de la izquierda';
+  if(!s) return modo==='sub'
+    ? 'Pincha en una parte de una unidad doblada para seleccionarla'
+    : 'Arrastra las tiras para colocarlas · el imán las engancha por los extremos';
+  if(s.tipo==='m') return 'Pon unidades debajo, una detrás de otra, y mira lo que sobra';
+  var N=partes(s);
+  if(selK!==null && N>1) return 'Una subunidad seleccionada, de las '+N+' de la tira — se puede cortar o duplicar';
+  if(modo==='sub' && N>1) return 'Tira con '+N+' subunidades — pincha en una para seleccionarla';
+  if(s.tipo==='t') return N>1
+    ? 'Un trozo de unidad con '+N+' partes — se puede cortar por las marcas o duplicar'
+    : 'Una subunidad suelta — se puede duplicar y poner una detrás de otra';
+  if(N>1) return 'Las marcas también enganchan: apoya la unidad doblada donde acabe la anterior';
+  return '+ y − doblan esta unidad en partes iguales';
+}
 function updateUI(){
   var s=seleccionada();
   var esU = !!s && s.tipo==='u';
@@ -918,8 +1126,11 @@ function updateUI(){
     document.getElementById(id).disabled=!esU; });
   document.getElementById('duplicar').disabled=!s;
   document.getElementById('borrar').disabled=!s;
+  document.getElementById('cortar').disabled=!(s && s.tipo!=='m' && partes(s)>1);
+  document.getElementById('modoT').className='act'+(modo==='tira'?' on':'');
+  document.getElementById('modoS').className='act'+(modo==='sub'?' on':'');
   document.getElementById('npartes').textContent = esU
-    ? (s.n===1? 'sin doblar' : s.n+(s.n===2?' partes':' partes'))
+    ? (s.n===1? 'sin doblar' : s.n+' partes')
     : '—';
 
   var clave = s? (s.id+':'+s.tipo) : '-';
@@ -927,14 +1138,7 @@ function updateUI(){
   var claveC = s? (s.id+':'+s.tipo+':'+(s.c||0)) : '-';
   if(claveC!==cacheColor){ cacheColor=claveC; coloresUI(); }
 
-  var t;
-  if(flashMsg && Date.now()-flashT<2300) t=flashMsg;
-  else if(!tiras.length) t='Pide una tira para medir y saca unidades de la izquierda';
-  else if(esU && s.n>1) t='Las marcas también enganchan: apoya la unidad doblada donde acabe la anterior';
-  else if(esU) t='+ y − doblan esta unidad en partes iguales';
-  else if(s) t='Pon unidades debajo, una detrás de otra, y mira lo que sobra';
-  else t='Arrastra las tiras para colocarlas · el imán las engancha por los extremos';
-  hintEl.textContent=t;
+  hintEl.textContent = (flashMsg && Date.now()-flashT<2300)? flashMsg : textoAyudaBarra();
 }
 
 /* =========================================================================
@@ -1015,7 +1219,8 @@ function runSelfTest(){
 
   /* --- guardo el tablero de quien esté jugando -------------------------------- */
   var antesT=tiras, antesS=sel, antesV=view, antesI=opt.iman, antesC=colorTurno;
-  tiras=[]; sel=null; view={x:0,y:0,z:1}; opt.iman=1; colorTurno=0;
+  var antesK=selK, antesM=modo, antesE=opt.etiq, antesA=opt.alfa, antesN=nid;
+  tiras=[]; sel=null; selK=null; modo='tira'; view={x:0,y:0,z:1}; opt.iman=1; opt.etiq=0; opt.alfa=0; colorTurno=0;
 
   /* --- geometría de las tiras -------------------------------------------------- */
   var u1=nuevaUnidad({x:0,y:0});
@@ -1107,6 +1312,18 @@ function runSelfTest(){
   ok('y se sabe si la respuesta se queda corta o se pasa', (function(){
       var corta=respuesta(7,5), larga=respuesta(9,5), mia={p:8,q:5};
       return (corta.p*mia.q < mia.p*corta.q) && (larga.p*mia.q > mia.p*larga.q); })());
+
+  ok('al acertar, la medida se da en u', textoAcierto('A',8,5,{p:8,q:5})==='¡Eso es! La tira A mide 8/5 u.',
+     textoAcierto('A',8,5,{p:8,q:5}));
+  ok('con una equivalente, la irreducible también lleva su u',
+     textoAcierto('A',16,10,{p:8,q:5}).indexOf('mide 16/10 u.')>0 &&
+     textoAcierto('A',16,10,{p:8,q:5}).indexOf('que 8/5 u,')>0, textoAcierto('A',16,10,{p:8,q:5}));
+  ok('al fallar, lo mismo', textoFallo('A',7,5,false)==='Todavía no. 7/5 u es más corto que la tira A.',
+     textoFallo('A',7,5,false));
+  ok('ninguno de los textos de la comprobación dice «de unidad» ni «unidades»', (function(){
+      var todo=[textoAcierto('A',8,5,{p:8,q:5}), textoAcierto('A',16,10,{p:8,q:5}),
+                textoFallo('A',7,5,false), textoFallo('A',9,5,true)].join(' ');
+      return !/unidad/i.test(todo); })());
 
   /* --- los colores ------------------------------------------------------------------ */
   ok('la unidad tiene un color fijo, que no está en la paleta de las demás',
@@ -1219,6 +1436,302 @@ function runSelfTest(){
   ok('y uno con coordenadas que no son números',
      limpiaTiras([{tipo:'u',p:1,q:1,n:1,x:'ahí',y:0}])===null);
 
+  /* --- seleccionar una subunidad ------------------------------------------------------ */
+  tiras=[]; sel=null; selK=null; modo='tira'; undoStack=[];
+  var s5=nuevaUnidad({x:0,y:0}); s5.n=5;
+  var sm=nuevaMedir(8,5,{x:0,y:200});
+  var sl=nuevaUnidad({x:0,y:400});
+  tiras=[s5,sm,sl];
+  ok('una unidad doblada en cinco tiene cinco subunidades de 1/5 u', partes(s5)===5 && den(s5)===5);
+  ok('un punto a media tira cae en la tercera', parteEn(s5,{x:U*0.5,y:ALTO/2})===2, parteEn(s5,{x:U*0.5,y:ALTO/2}));
+  ok('los extremos caen en la primera y en la última, y fuera no cae en ninguna',
+     parteEn(s5,{x:0,y:1})===0 && parteEn(s5,{x:U,y:1})===4 && parteEn(s5,{x:U+3,y:1})===-1 &&
+     parteEn(s5,{x:10,y:ALTO+2})===-1);
+  modo='tira'; seleccionaEn({x:U*0.5,y:ALTO/2});
+  ok('en modo tira, pinchar en el tercer quinto selecciona la tira entera', sel===s5.id && selK===null);
+  modo='sub'; seleccionaEn({x:U*0.5,y:ALTO/2});
+  ok('en modo subunidad, selecciona ese quinto', sel===s5.id && selK===2, selK);
+  ok('en ese modo, una unidad sin doblar se selecciona entera', (function(){
+      seleccionaEn({x:U*0.5,y:400+ALTO/2}); return sel===sl.id && selK===null; })());
+  ok('y la tira que se mide, también: no tiene partes', (function(){
+      seleccionaEn({x:U*0.5,y:200+ALTO/2}); return sel===sm.id && selK===null; })());
+  ok('pinchar fuera de todas no deja nada seleccionado', (function(){
+      seleccionaEn({x:U*0.5,y:ALTO/2}); seleccionaEn({x:-500,y:-500}); return sel===null && selK===null; })());
+  ok('volver al modo tira suelta la subunidad', (function(){
+      modo='sub'; seleccionaEn({x:U*0.5,y:ALTO/2}); var k=selK; ponModo('tira');
+      return k===2 && selK===null && sel===s5.id; })());
+  ok('y volver a doblar, también, que esas partes ya no existen', (function(){
+      modo='sub'; seleccionaEn({x:U*0.5,y:ALTO/2}); var k=selK; dobla(s5,4); var k2=selK; dobla(s5,5); modo='tira';
+      return k===2 && k2===null; })());
+
+  /* --- duplicar ----------------------------------------------------------------------- */
+  tiras=[]; sel=null; selK=null; undoStack=[];
+  var q5=nuevaUnidad({x:40,y:0}); q5.n=5; tiras=[q5];
+  var cp=duplica(q5,2);
+  ok('duplicar una subunidad saca un trozo suelto de 1/5 u', !!cp && cp.tipo==='t' && cp.p===1 && cp.q===5 &&
+     Math.abs(largo(cp)-U/5)<1e-9, cp? num(largo(cp)/U)+' u' : 'nada');
+  ok('que aparece justo debajo de la subunidad de la que sale',
+     Math.abs(cp.x-(q5.x+2*U/5))<1e-9 && Math.abs(cp.y-(q5.y+ALTO+HUECO))<1e-9);
+  ok('y la unidad se queda entera, con sus cinco partes', tiras.length===2 && q5.tipo==='u' && q5.n===5 &&
+     Math.abs(largo(q5)-U)<1e-9);
+  ok('el trozo queda seleccionado, entero', sel===cp.id && selK===null);
+  ok('es del color de la unidad, que es papel de la unidad', colorDe(cp).f===COLU.f);
+  ok('y no lleva letra', cp.nombre==='');
+  ok('un trozo ya no se dobla', (function(){ var r=dobla(cp,2); return r===false && cp.p===1 && cp.q===5 && cp.n===1; })());
+  doUndo();
+  ok('deshacer quita la copia', tiras.length===1 && tiras[0].id===q5.id);
+  ok('duplicar la tira entera copia la unidad con su doblado', (function(){
+      var c2=duplica(q5,null);
+      var bien=!!c2 && c2.tipo==='u' && c2.n===5 && Math.abs(c2.y-(q5.y+ALTO+HUECO))<1e-9;
+      doUndo(); return bien && tiras.length===1; })());
+  ok('pedir una subunidad que no existe no hace nada', duplica(q5,7)===null && tiras.length===1);
+  ok('ocho copias de un quinto, una detrás de otra con el imán, miden lo mismo que la tira de 8/5', (function(){
+      tiras=[]; undoStack=[];
+      var M2=nuevaMedir(8,5,{x:0,y:0}), u=nuevaUnidad({x:0,y:300}); u.n=5;
+      tiras=[M2,u];
+      var fin=M2.x, i;
+      for(i=0;i<8;i++){
+        var c=duplica(u,0);
+        c.x=fin+4; c.y=M2.y+ALTO+HUECO+3;          // se suelta cerca, no en su sitio
+        aplicaIman(c);
+        if(Math.abs(c.x-fin)>1e-9) return false;
+        fin=c.x+largo(c);
+      }
+      return Math.abs(fin-(M2.x+largo(M2)))<1e-9 && tiras.length===10; })());
+  ok('y siete copias se quedan cortas', 7*(U/5)<U*8/5-1);
+  ok('duplicar la tira que se mide le pone a la copia otra letra', (function(){
+      tiras=[]; var a1=nuevaMedir(3,4,{x:0,y:0}); tiras=[a1];
+      var a2=duplica(a1,null);
+      return a2.tipo==='m' && a2.p===3 && a2.q===4 && a2.nombre!==a1.nombre; })(), 'A y B');
+
+  /* --- cortar ------------------------------------------------------------------------- */
+  function total(L){ var t=0; L.forEach(function(o){ t+=largo(o); }); return t; }
+  tiras=[]; sel=null; selK=null; undoStack=[];
+  var k5=nuevaUnidad({x:100,y:50}); k5.n=5; tiras=[k5]; sel=k5.id;
+  var C3=corta(k5,2);
+  ok('cortar el quinto de en medio deja tres trozos: 2/5 u, 2/5 u y el quinto', !!C3 && C3.length===3 &&
+     C3[0].p===2 && C3[1].p===2 && C3[2].p===1 && C3.every(function(o){ return o.tipo==='t' && o.q===5; }),
+     C3? C3.map(function(o){ return o.p+'/'+o.q; }).join(', ') : 'nada');
+  ok('entre los tres miden una unidad justa: cortar no crea ni quita papel', Math.abs(total(C3)-U)<1e-9,
+     num(total(C3)/U)+' u');
+  ok('la unidad cortada ya no está en el tablero', tiras.length===3 && !porId(k5.id));
+  ok('lo de los lados se queda donde estaba',
+     Math.abs(C3[0].x-100)<1e-9 && Math.abs(C3[0].y-50)<1e-9 &&
+     Math.abs(C3[1].x-(100+3*U/5))<1e-9 && Math.abs(C3[1].y-50)<1e-9);
+  ok('y el quinto cortado cae a la fila de debajo, en su vertical, y queda seleccionado',
+     Math.abs(C3[2].x-(100+2*U/5))<1e-9 && Math.abs(C3[2].y-(50+ALTO+HUECO))<1e-9 && sel===C3[2].id && selK===null);
+  ok('el trozo de 2/5 u conserva su marca, en el quinto', (function(){
+      var ms=marcas(C3[0]); return ms.length===1 && Math.abs(ms[0]-(100+U/5))<1e-9; })());
+  ok('y el quinto suelto no tiene ninguna', marcas(C3[2]).length===0);
+  ok('el imán engancha también por la marca de un trozo', (function(){
+      var d=nuevaUnidad({x:100+U/5+6, y:50-ALTO-HUECO+3});
+      tiras.push(d); aplicaIman(d);
+      var bien=Math.abs(d.x-(100+U/5))<1e-9 && Math.abs(d.y-(50-ALTO-HUECO))<1e-9;
+      tiras=tiras.filter(function(o){ return o.id!==d.id; });
+      return bien; })());
+  ok('un trozo de dos partes se puede volver a cortar', (function(){
+      var r=corta(C3[0],0);
+      return !!r && r.length===2 && r[0].p===1 && r[1].p===1 && r[0].q===5 && tiras.length===4; })());
+  doUndo(); doUndo();
+  ok('deshacer dos veces devuelve la unidad entera, doblada en cinco', tiras.length===1 && tiras[0].tipo==='u' &&
+     tiras[0].n===5 && Math.abs(tiras[0].x-100)<1e-9);
+  ok('cortar la primera o la última parte deja solo dos trozos', (function(){
+      var a=nuevaUnidad({x:0,y:0}); a.n=5; tiras=[a];
+      var r1=corta(a,0), bien1=!!r1 && r1.length===2 && r1[0].p===4 && r1[1].p===1 && Math.abs(r1[0].x-U/5)<1e-9;
+      var b=nuevaUnidad({x:0,y:0}); b.n=5; tiras=[b];
+      var r2=corta(b,4), bien2=!!r2 && r2.length===2 && r2[0].p===4 && r2[1].p===1 && Math.abs(r2[0].x)<1e-9 &&
+          Math.abs(r2[1].x-4*U/5)<1e-9;
+      return bien1 && bien2; })());
+  ok('con la tira entera, cortar la deshace en todas sus subunidades', (function(){
+      var a=nuevaUnidad({x:0,y:0}); a.n=4; tiras=[a];
+      var r=corta(a,null);
+      return !!r && r.length===4 && tiras.length===4 && Math.abs(total(r)-U)<1e-9 &&
+             r.every(function(o){ return o.tipo==='t' && o.p===1 && o.q===4; }) && sel===r[0].id; })(), '4 de 1/4 u');
+  ok('que quedan separadas, sin pisarse, para que se vea el corte', (function(){
+      for(var i=1;i<tiras.length;i++) if(tiras[i].x < tiras[i-1].x+largo(tiras[i-1])+1) return false;
+      return true; })());
+  ok('dos cuartos no se convierten en un medio: el trozo guarda sus cuartos', (function(){
+      var a=nuevaUnidad({x:0,y:0}); a.n=4; tiras=[a];
+      var r=corta(a,0), g=r[0];                         // quedan tres cuartos y uno suelto
+      var r2=corta(g,2), dos=r2[0];                      // de los tres, se corta el último
+      return dos.p===2 && dos.q===4 && partes(dos)===2 && den(dos)===4 && Math.abs(largo(dos)-U/2)<1e-9; })());
+  ok('una unidad sin doblar no se corta, y no cambia nada', (function(){
+      var a=nuevaUnidad({x:0,y:0}); tiras=[a]; undoStack=[];
+      return corta(a,null)===null && tiras.length===1 && tiras[0]===a && undoStack.length===0; })());
+  ok('la tira que se mide tampoco, aunque se le pida', (function(){
+      var a=nuevaMedir(8,5,{x:0,y:0}); tiras=[a]; undoStack=[];
+      return corta(a,null)===null && corta(a,1)===null && tiras.length===1 && undoStack.length===0; })());
+  ok('cortar una subunidad que no existe no hace nada', (function(){
+      var a=nuevaUnidad({x:0,y:0}); a.n=3; tiras=[a]; undoStack=[];
+      return corta(a,5)===null && tiras.length===1 && undoStack.length===0; })());
+  flashMsg=null;
+
+  /* --- los trozos se guardan --------------------------------------------------------------- */
+  ok('guardar y abrir conserva los trozos, con sus partes sin simplificar', (function(){
+      var a=nuevoTrozo(2,4,{x:5,y:6}), b=nuevoTrozo(1,5,{x:50,y:60});
+      var L=limpiaTiras(JSON.parse(JSON.stringify([a,b])));
+      return !!L && L.length===2 && L[0].tipo==='t' && L[0].p===2 && L[0].q===4 && L[1].p===1 && L[1].q===5 &&
+             Math.abs(largo(L[0])-U/2)<1e-9 && L[0].nombre===''; })());
+  ok('un trozo que mide una unidad o más se rechaza: eso no sale de cortar',
+     limpiaTiras([{tipo:'t',p:5,q:5,x:0,y:0}])===null && limpiaTiras([{tipo:'t',p:7,q:5,x:0,y:0}])===null);
+  ok('y uno con media parte, o con más de 32, también',
+     limpiaTiras([{tipo:'t',p:1.5,q:5,x:0,y:0}])===null && limpiaTiras([{tipo:'t',p:1,q:40,x:0,y:0}])===null);
+  ok('lo que no es una tira se rechaza sin romperse', limpiaTiras([null])===null && limpiaTiras(['a'])===null);
+
+  /* --- la letra de las etiquetas -------------------------------------------------------------- */
+  ok('la letra de las etiquetas crece con el zoom', (function(){
+      var z0=view.z; view.z=1; var a=pxEtiqueta(); view.z=2; var b=pxEtiqueta(); view.z=z0;
+      return a>=14 && b>a; })(), (function(){ var z0=view.z; view.z=1; var a=pxEtiqueta(); view.z=2; var b=pxEtiqueta(); view.z=z0;
+      return a+' px y '+b+' px'; })());
+  ctx.save();
+  ctx.font=fuente(15); var w15=ctx.measureText('1/12 u').width;
+  ctx.font=fuente(12); var w12=ctx.measureText('1/12 u').width, c12=ctx.measureText('1/12').width;
+  ctx.font=fuente(9);  var c9=ctx.measureText('1/12').width;
+  var eA=ajustaEtiqueta(ctx, w15+9, 12, 15);
+  var eB=ajustaEtiqueta(ctx, w12+8, 12, 15);
+  var eC=ajustaEtiqueta(ctx, c12+6, 12, 15);
+  var eD=ajustaEtiqueta(ctx, c9, 12, 15);
+  ctx.restore();
+  ok('si cabe, la etiqueta va con su unidad y a su tamaño', eA.t==='1/12 u' && eA.px===15, eA.t+' a '+eA.px+' px');
+  ok('si no cabe, antes de quitarle la unidad se achica la letra', eB.t==='1/12 u' && eB.px<15 && eB.px>=11,
+     eB.t+' a '+eB.px+' px');
+  ok('más estrecha todavía, se queda la fracción sola', eC.t==='1/12' && eC.px>=9, eC.t+' a '+eC.px+' px');
+  ok('y si no cabe ni con la letra mínima, no se escribe nada', eD.t==='', '«'+eD.t+'»');
+
+  /* --- lo que se ve ------------------------------------------------------------------------------ */
+  /* se dibuja en un lienzo aparte y se cuentan píxeles: azul es el trazo de lo
+     seleccionado; tinta oscura, la de las etiquetas */
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=U+40; oc.height=ALTO+40;
+    var o=oc.getContext('2d'), v0=view;
+    view={x:20,y:20,z:1};
+    function pinta(s,marcada,k){
+      o.setTransform(1,0,0,1,0,0); o.fillStyle='#fff'; o.fillRect(0,0,oc.width,oc.height);
+      drawTira(o,s,marcada,k);
+    }
+    function azules(x0,x1){
+      var d=o.getImageData(0,0,oc.width,oc.height).data, n=0, x, y, i;
+      for(y=0;y<oc.height;y++) for(x=Math.round(x0);x<Math.round(x1);x++){
+        i=(y*oc.width+x)*4; if(d[i+2]-d[i]>60) n++; }
+      return n;
+    }
+    function oscuros(){
+      var d=o.getImageData(0,0,oc.width,oc.height).data, n=0, i;
+      for(i=0;i<d.length;i+=4) if(d[i]<150 && d[i+1]<110 && d[i+2]<60) n++;
+      return n;
+    }
+    var t=nuevaUnidad({x:0,y:0}); t.n=5;
+    pinta(t,false,null);
+    var nada=azules(0,oc.width);
+    pinta(t,true,null);
+    var entera=azules(0,oc.width), enteraIzq=azules(15,20+U/5-10);
+    pinta(t,true,2);
+    var sub=azules(20+2*U/5-4, 20+3*U/5+4), subIzq=azules(0, 20+2*U/5-6), subDer=azules(20+3*U/5+6, oc.width);
+    ok('sin seleccionar, la tira no lleva nada de azul', nada===0, nada);
+    ok('seleccionada entera, el azul la rodea', entera>200 && enteraIzq>0, entera+' píxeles');
+    ok('con una subunidad seleccionada, el azul rodea solo ese quinto', sub>100 && subIzq===0 && subDer===0,
+       sub+' dentro, '+subIzq+' y '+subDer+' fuera');
+    opt.etiq=0; pinta(t,false,null); var sinE=oscuros();
+    opt.etiq=1; pinta(t,false,null); var conE=oscuros();
+    var tr=nuevoTrozo(1,5,{x:0,y:0}); pinta(tr,false,null); var trE=oscuros();
+    opt.etiq=0; pinta(tr,false,null); var trS=oscuros();
+    ok('las etiquetas se escriben al encenderlas, y no antes', conE>sinE+60, sinE+' → '+conE+' píxeles de tinta');
+    ok('un quinto suelto también lleva la suya', trE>trS+12, trS+' → '+trE);
+    ok('y son cinco iguales: la unidad en quintos lleva unas cinco veces la tinta del quinto suelto',
+       (conE-sinE)>3.5*(trE-trS) && (conE-sinE)<6.5*(trE-trS), num((conE-sinE)/(trE-trS))+' veces');
+    view=v0;
+  })();
+
+  /* --- la interfaz --------------------------------------------------------------------------------- */
+  ok('el panel de ayuda cuenta cómo funciona y no hace preguntas', ayuda().indexOf('¿')<0 && ayuda().indexOf('Para pensar')<0);
+  ok('y explica las herramientas nuevas', ayuda().indexOf('Duplicar')>0 && ayuda().indexOf('Cortar')>0 &&
+     ayuda().indexOf('Subunidad')>0);
+  ok('la barra de abajo dice qué hay seleccionado en cada caso', (function(){
+      var a=nuevaUnidad({x:0,y:0}); a.n=5;
+      var b=nuevoTrozo(1,5,{x:0,y:100}), c=nuevoTrozo(3,5,{x:0,y:200}), m=nuevaMedir(8,5,{x:0,y:300});
+      tiras=[a,b,c,m];
+      var T=[];
+      [[null,null,'tira'],[null,null,'sub'],[a.id,null,'tira'],[a.id,null,'sub'],[a.id,2,'sub'],
+       [b.id,null,'tira'],[c.id,null,'tira'],[m.id,null,'tira']].forEach(function(q){
+        sel=q[0]; selK=q[1]; modo=q[2]; T.push(textoAyudaBarra()); });
+      sel=null; selK=null; modo='tira'; tiras=[];
+      var distintos={}; T.forEach(function(t){ distintos[t]=1; });
+      return Object.keys(distintos).length===8 && T[4].indexOf('de las 5')>0; })());
+  ok('ningún botón depende de un diálogo del navegador, que en un marco incrustado no sale', (function(){
+      var codigo=document.querySelector('script').textContent;
+      return ['con'+'firm(', 'al'+'ert(', 'pro'+'mpt('].every(function(p){ return codigo.indexOf(p)<0; }); })());
+  ok('un botón de dos pasos no hace nada al primer pinchazo, y avisa', (function(){
+      var b=document.createElement('button'), veces=0; b.innerHTML='Hacer<kbd>X</kbd>';
+      dosPasos(b,'aviso de prueba',function(){ veces++; });
+      b.click();
+      var armado = veces===0 && b.textContent==='¿Seguro?' && b.classList.contains('seguro') && flashMsg==='aviso de prueba';
+      b.click();
+      var hecho = veces===1 && b.innerHTML==='Hacer<kbd>X</kbd>' && !b.classList.contains('seguro');
+      b.click();
+      var otraVez = veces===1 && b.textContent==='¿Seguro?';
+      b.click();
+      return armado && hecho && otraVez && veces===2; })());
+  ok('y si no hay nada que hacer, ni siquiera se arma', (function(){
+      var b=document.createElement('button'), veces=0; b.textContent='Vaciar';
+      dosPasos(b,'aviso',function(){ veces++; },function(){ return false; });
+      b.click(); b.click();
+      return veces===0 && b.textContent==='Vaciar'; })());
+  ok('la medida de una tira no se puede pedir: en el panel solo está el botón de comprobar', (function(){
+      var m=nuevaMedir(7,3,{x:0,y:0}); tiras=[m]; sel=m.id; selK=null; cacheMedir=''; updateUI();
+      var caja0=document.getElementById('cajamedir'), botones=caja0.querySelectorAll('button');
+      var bien = botones.length===1 && botones[0].id==='comprobar' &&
+                 caja0.textContent.indexOf('7/3')<0 && document.getElementById('side').textContent.indexOf('Ver la medida')<0;
+      tiras=[]; sel=null; ponVeredicto(''); updateUI();
+      return bien; })());
+  ok('ni fallando la comprobación se escapa: dice si es más corta o más larga, y nada más', (function(){
+      var m=nuevaMedir(7,3,{x:0,y:0}); tiras=[m]; sel=m.id; selK=null; cacheMedir=''; updateUI();
+      document.getElementById('rNum').value='2'; document.getElementById('rDen').value='1';
+      compruebaMedida();
+      var v=document.getElementById('veredicto').textContent;
+      tiras=[]; sel=null; ponVeredicto(''); updateUI();
+      return v==='Todavía no. 2/1 u es más corto que la tira '+m.nombre+'.' && v.indexOf('7/3')<0; })());
+  ok('«Vaciar» quita las tiras al segundo pinchazo, y se puede deshacer', (function(){
+      tiras=[nuevaUnidad({x:0,y:0}), nuevaUnidad({x:0,y:60})]; undoStack=[];
+      var b=document.getElementById('vaciar');
+      b.click(); var uno=tiras.length;
+      b.click(); var dos=tiras.length;
+      doUndo(); var tres=tiras.length;
+      tiras=[]; undoStack=[];
+      return uno===2 && dos===0 && tres===2; })());
+  flashMsg=null;
+  ok('el botón de cortar solo se enciende con algo que tenga marcas', (function(){
+      var a=nuevaUnidad({x:0,y:0}), m=nuevaMedir(8,5,{x:0,y:300}), b=document.getElementById('cortar'), r=[];
+      tiras=[a,m];
+      sel=null; updateUI(); r.push(b.disabled);
+      sel=a.id; updateUI(); r.push(b.disabled);
+      a.n=3; updateUI(); r.push(b.disabled);
+      sel=m.id; updateUI(); r.push(b.disabled);
+      sel=null; tiras=[]; updateUI();
+      return r.join()==='true,true,false,true'; })());
+  ok('el panel empieza por el rótulo del material, encima de «Tira unidad»', (function(){
+      var b=document.querySelector('#side .brand'), h=document.querySelector('#side h2');
+      return !!b && b.textContent==='Tiras de papel' && b.querySelector('b').textContent==='papel' &&
+             document.getElementById('side').firstElementChild===b && b.nextElementSibling===h &&
+             h.textContent==='Tira unidad'; })());
+  if(document.getElementById('side').offsetWidth>0){
+    ok('y el rótulo es lo más grande del panel', (function(){
+        var b=parseFloat(getComputedStyle(document.querySelector('#side .brand')).fontSize);
+        var h=parseFloat(getComputedStyle(document.querySelector('#side h2')).fontSize);
+        return b>=22 && b>h; })(), getComputedStyle(document.querySelector('#side .brand')).fontSize);
+    ok('la letra es la de proyectar: 16 px de base', parseFloat(getComputedStyle(document.body).fontSize)>=16,
+       getComputedStyle(document.body).fontSize);
+    ok('los títulos del panel se ven: ninguno se queda en una raya', (function(){
+        var hs=document.querySelectorAll('#side h2'), i;
+        for(i=0;i<hs.length;i++) if(hs[i].offsetWidth<80 || hs[i].offsetHeight<12) return false;
+        return hs.length>=6; })(), document.querySelectorAll('#side h2').length+' títulos');
+    ok('y ninguno se queda cortado con puntos suspensivos', (function(){
+        var hs=document.querySelectorAll('#side h2'), i;
+        for(i=0;i<hs.length;i++) if(hs[i].scrollWidth>hs[i].clientWidth+1) return false;
+        return true; })(), getComputedStyle(document.querySelector('#side h2')).fontSize);
+  } else {
+    out.push('--    la ventana no tiene tamaño: no se miden la letra ni los títulos del panel');
+  }
+
   /* --- deshacer ------------------------------------------------------------------------ */
   tiras=[]; sel=null; undoStack=[];
   var z1=nuevaUnidad({x:0,y:0}); tiras=[z1]; sel=z1.id;
@@ -1229,6 +1742,7 @@ function runSelfTest(){
   ok('y deshacer la devuelve', Math.abs(tiras[0].x)<1e-9, num(tiras[0].x));
 
   tiras=antesT; sel=antesS; view=antesV; opt.iman=antesI; colorTurno=antesC; undoStack=[];
+  selK=antesK; modo=antesM; opt.etiq=antesE; opt.alfa=antesA; nid=Math.max(nid,antesN); flashMsg=null;
   ponVeredicto(''); draw();
 
   }catch(errT){
@@ -1274,7 +1788,11 @@ window.__tiras={
   test:runSelfTest, U:U, MAXP:MAXP, FUERA:FUERA,
   tiras:function(){ return tiras; }, sel:function(){ return sel; },
   largo:largo, marcas:marcas, puntosX:puntosX, dentro:dentro,
-  nuevaUnidad:nuevaUnidad, nuevaMedir:nuevaMedir, dobla:dobla,
+  nuevaUnidad:nuevaUnidad, nuevaMedir:nuevaMedir, nuevoTrozo:nuevoTrozo, dobla:dobla,
+  partes:partes, den:den, parteEn:parteEn, duplica:duplica, corta:corta,
+  selK:function(){ return selK; }, modo:function(){ return modo; }, ponModo:ponModo,
+  seleccionaEn:seleccionaEn, ajustaEtiqueta:ajustaEtiqueta, pxEtiqueta:pxEtiqueta,
+  view:function(){ return view; }, s2w:s2w, w2s:w2s, undo:doUndo,
   COLU:COLU, PALETA:PALETA, colorDe:colorDe, opt:opt,
   aplicaIman:aplicaIman, engancheX:engancheX, engancheY:engancheY,
   leeFraccion:leeFraccion, reduce:reduce, mcd:mcd, textoMixto:textoMixto,

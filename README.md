@@ -4,7 +4,7 @@ Materiales manipulativos virtuales para matemáticas, implementados como página
 
 Cada manipulativo es **un único archivo HTML autocontenido**: no usa librerías externas, no necesita servidor, no necesita conexión y no guarda nada en ningún sitio. Se abre haciendo doble clic y funciona. Eso es deliberado, porque así se puede meter en el Moodle del centro, dejarlo en una memoria USB o usarlo en un aula sin wifi.
 
-Puedes probarlos aquí: **[pbeltranp.github.io/manipulativos-virtuales](https://pbeltranp.github.io/manipulativos-virtuales/)**
+Puedes probarlos aquí: **[pbeltranp.github.io/tierradenumeros-manipulativos](https://pbeltranp.github.io/tierradenumeros-manipulativos/)**
 
 Cada uno, con su explicación didáctica —para qué sirve, qué preguntas funcionan y qué conviene no contar antes de tiempo—, está en [tierradenumeros.com/manipulativos](https://tierradenumeros.com/manipulativos/). Algunos de estos manipulativos están pensados más específicamente para formación del profesorado.
 
@@ -23,8 +23,26 @@ Para crearlos hice uso de Claude. Existen webs que ya disponían de algunos simi
 | [Corcho geométrico](app/corcho.html) | Chinchetas libres y un rotulador atado con cordel que traza circunferencias y elipses |
 | [Tangram mínimo de Brügner](app/tangram-brugner.html) | Tres triángulos semejantes con los lados en razón √φ |
 | [Pattern blocks](app/pattern-blocks.html) | Las seis piezas de siempre, con imán, grupos y simetría axial |
-| [Tiras de papel](app/tiras-de-papel.html) | La fracción como medida: doblar la unidad hasta que encaje |
-| [Manteles y servilletas](app/manteles-y-servilletas.html) | Lo mismo con áreas, donde la forma del trozo importa tanto como su tamaño |
+| [Tiras de papel](app/tiras-de-papel.html) | La fracción como medida: una tira unidad que se dobla en partes iguales para medir otras |
+| [Manteles y servilletas](app/manteles-y-servilletas.html) | Lo mismo con áreas: medir manteles cubriéndolos con servilletas |
+| [En busca de la unidad perdida](app/unidad-perdida.html) | El mantel llega ya medido y lo que hay que reconstruir es la unidad |
+| [Manteles a medida](app/manteles-a-medida.html) | Llega un encargo con la medida puesta y hay que fabricar el mantel |
+| [Tiras a medida](app/tiras-a-medida.html) | Lo mismo con longitudes: fabricar la tira desde la unidad o desde otra tira |
+| [Figuras equivalentes](app/figuras-equivalentes.html) | Cortar una figura con tijeras y recomponer un rectángulo con todas las piezas |
+| [Reparto de tortillas](app/reparto-de-tortillas.html) | Repartir tortillas por fases, con la tabla y la división en caja al lado |
+| [Tortillas y platos](app/tortillas-y-platos.html) | Partir tortillas en trozos iguales y armarlas de nuevo en cada plato |
+| [Dados a medida](app/dados-a-medida.html) | Un dado configurable: caras, valores y probabilidades, con tiradas de una en una o de mil en mil |
+| [Chinchetas](app/chinchetas.html) | Tirar un puñado de chinchetas y contar cuántas caen boca arriba, con el porcentaje tapado |
+| [Cuál sobra](app/cual-sobra.html) | Generador de carteles de «¿cuál sobra?» con figuras geométricas |
+| [Palotes numéricos](app/palotes-numericos.html) | Los *number sticks* de Baroody: regletas divididas en bloques que cuentan, no solo miden |
+| [Billetes](app/billetes.html) | Billetes que se agrupan y desagrupan a mano, en la base que se elija |
+| [Constructor de algoritmos](app/constructor-de-algoritmos.html) | Montar un algoritmo de suma o resta, verlo ejecutarse y buscar los casos en los que falla |
+| [Sistemas numéricos](app/sistemas-numericos.html) | El mismo número en sistemas históricos, y un sitio para inventarse uno |
+| [La operación «de»](app/operacion-de.html) | Una fracción como cantidad y otra como operador que actúa sobre ella |
+| [Longitud × Longitud](app/longitud-x-longitud.html) | El producto de dos fracciones como área de un rectángulo construido desde la unidad |
+| [Longitud × Área](app/longitud-x-area.html) | El producto de una longitud por un área como volumen de un prisma, en 3D |
+| [Bloques de Dienes](app/bloques-de-dienes.html) | Los 48 bloques lógicos, con cuerdas, cuadros y tarjetas para clasificar, y la variante de Touyarot |
+| [Dicotominó](app/dicotomino.html) | 64 piezas con seis variables de dos valores, para buscar y crear patrones |
 
 ## Si vas a modificar alguno
 
