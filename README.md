@@ -20,7 +20,7 @@ Para crearlos hice uso de Claude. Existen webs que ya disponían de algunos simi
 | [Plaquetas numéricas](app/plaquetas.html) | Las placas de Herbinière-Lebert, superponibles para comprobar sumas |
 | [Geoplano cuadrado](app/geoplano.html) | Trama cuadrada sin límites, con goma que se estira y cordel que no |
 | [Geoplano isométrico](app/geoplano-isometrico.html) | Trama triangular, con una opción de luz que convierte los dibujos planos en cuerpos |
-| [Corcho geométrico](app/corcho.html) | Chinchetas libres y un rotulador atado con cordel que traza circunferencias y elipses |
+| [Corcho geométrico](app/corcho.html) | Chinchetas libres con goma, cordel y plástico duro, y un rotulador que se ata a ellos para trazar curvas |
 | [Tangram mínimo de Brügner](app/tangram-brugner.html) | Tres triángulos semejantes con los lados en razón √φ |
 | [Pattern blocks](app/pattern-blocks.html) | Las seis piezas de siempre, con imán, grupos y simetría axial |
 | [Tiras de papel](app/tiras-de-papel.html) | La fracción como medida: una tira unidad que se dobla en partes iguales para medir otras |

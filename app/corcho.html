@@ -25,12 +25,6 @@
   .act:hover:not(:disabled){background:#f0f2f5;border-color:#c8cdd6}
   .act:disabled{opacity:.42;cursor:default}
   .act kbd{float:right;font:inherit;font-size:10.5px;color:#9aa1ab}
-  .focobox{border:1px solid #e0d3ea;background:#faf7fd;border-radius:8px;padding:8px;margin-bottom:6px}
-  .focobox .tit{font-size:11px;line-height:1.45;color:#6b4b8a;text-align:center}
-  .focobox .tit b{color:#4c2f6b}
-  .focobox button{border:1px solid #ddd0e8;background:#fff;border-radius:6px;padding:5px 0;margin-top:6px;
-                  font-size:11.5px;color:#6b4b8a;cursor:pointer;width:100%}
-  .focobox button:hover{background:#f3ecfa}
   #medidas{font-size:11.5px;color:#6b7280;line-height:1.65;margin-top:12px;border-top:1px solid #e3e6eb;padding-top:9px}
   #medidas b{color:#2b2f36}
   #medidas .g{color:#9aa1ab}
@@ -44,7 +38,7 @@
   .btn:hover{background:#f0f2f5}
   .btn.on{background:#2f62a8;border-color:#2f62a8;color:#fff}
   .btn.on:hover{background:#2a589a}
-  .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
+  #toolbar .sep{width:1px;height:20px;background:#dfe2e7;margin:0 3px}
   .chk{display:inline-flex;align-items:center;gap:4px;font-size:12px;color:#4a515c;cursor:pointer;padding:3px 6px;border-radius:6px}
   .chk:hover{background:#eff1f4}
   .chk input{margin:0;cursor:pointer}
@@ -79,15 +73,12 @@
     <div id="swatches"></div>
     <div id="custom"><input type="color" id="cpick" value="#d23b30">otro</div>
 
-    <h2>Rotulador</h2>
-    <div class="focobox">
-      <div class="tit" id="focotxt"></div>
-      <button id="soltarFocos">soltar las chinchetas</button>
-    </div>
-
-    <h2>Figura seleccionada</h2>
+    <h2>Seleccionado</h2>
     <button class="act" id="pintar" disabled>Pintar<kbd>P</kbd></button>
     <button class="act" id="cerrar" disabled>Abrir / cerrar<kbd>C</kbd></button>
+    <button class="act" id="nudos" disabled title="Anudado, cada tramo se queda con su trozo de cuerda; sin nudos, la cuerda corre por las chinchetas">Anudar<kbd>N</kbd></button>
+    <button class="act" id="tapar" disabled title="Tapado, el rotulador se mueve sin pintar">Tapar<kbd>T</kbd></button>
+    <button class="act" id="voltear" disabled title="Le da la vuelta a la pieza de plástico, como al darle la vuelta sobre el corcho">Dar la vuelta<kbd>V</kbd></button>
     <button class="act" id="borrar" disabled>Quitar<kbd>Supr</kbd></button>
 
     <div id="medidas"></div>
@@ -99,9 +90,11 @@
       <button class="btn on" data-tool="pin" title="Poner chinchetas (1)">📌 Chincheta</button>
       <button class="btn" data-tool="goma" title="Poner una goma (2)">◯ Goma</button>
       <button class="btn" data-tool="cordel" title="Poner un cordel (3)">～ Cordel</button>
-      <button class="btn" data-tool="rot" title="Rotulador atado a las chinchetas (4)">✎ Rotulador</button>
-      <button class="btn" data-tool="move" title="Mover chinchetas y figuras (5)">✥ Mover</button>
-      <button class="btn" data-tool="del" title="Quitar (6)">✕ Quitar</button>
+      <button class="btn" data-tool="plastico" title="Poner una pieza de plástico duro, que no se deforma (4)">▰ Plástico</button>
+      <button class="btn" data-tool="rot" title="Poner un rotulador en el corcho (5)">✎ Rotulador</button>
+      <button class="btn" data-tool="move" title="Mover chinchetas y figuras (6)">✥ Mover</button>
+      <button class="btn" data-tool="del" title="Quitar (7)">✕ Quitar</button>
+      <button class="btn" id="varias" title="Seleccionar varias, sin teclado: cada toque añade o quita una chincheta o un rotulador, arrastrar en el vacío hace una caja y arrastrar una seleccionada las mueve todas (como con Mayús) (S)">⬚ Varias</button>
       <span class="sep"></span>
       <button class="btn" id="undo" title="Deshacer (Ctrl+Z)">↶</button>
       <label class="chk" title="Muestra el recuento de vértices y lados y las medidas"><input type="checkbox" id="avz">Comprobaciones</label>
@@ -141,12 +134,15 @@
    1. ESTADO
    Un corcho sin retícula: las chinchetas van donde se quiera. Las figuras no
    guardan coordenadas, sino a qué chinchetas están atadas, así que al mover
-   una chincheta la figura se deforma sola.
+   una chincheta la figura se deforma sola. Los rotuladores son chinchetas
+   con rot:true, y `sel` puede ser una figura o un rotulador.
    ========================================================================= */
 var chinchetas=[], figuras=[], trazos=[], nid=1, sel=null;
 var tool='pin', color='#d23b30';
 var view={x:0,y:0,z:1};
-var drag=null, borrador=null, focos=[], undoStack=[], importMode='replace';
+var drag=null, borrador=null, undoStack=[], importMode='replace';
+var multi=[];                               // chinchetas y rotuladores seleccionados a la vez
+var modoVarias=false;                       // el botón ⬚ Varias: como tener Mayús pulsada
 var opt={cta:0, med:0, fondo:0};
 
 var COLORS=['#d23b30','#e8890c','#e3b90b','#4f9e3f','#2f8f86','#2f62a8',
@@ -165,7 +161,8 @@ function pushUndo(){ undoStack.push(JSON.stringify({c:chinchetas,f:figuras,t:tra
   if(undoStack.length>80) undoStack.shift(); }
 function doUndo(){ if(!undoStack.length){ flash('No hay nada que deshacer'); return; }
   var st=JSON.parse(undoStack.pop());
-  chinchetas=st.c; figuras=st.f; trazos=st.t; nid=st.n; sel=null; borrador=null; draw(); }
+  chinchetas=st.c; figuras=st.f; trazos=st.t; nid=st.n; sel=null; borrador=null;
+  multi=multi.filter(function(id){ return !!pin(id); }); draw(); }
 function flash(m){ flashMsg=m; flashT=Date.now(); draw(); setTimeout(draw,2200); }
 
 /* =========================================================================
@@ -185,56 +182,238 @@ function area(f){
   for(var i=0;i<p.length;i++){ var q=p[(i+1)%p.length]; s += p[i].x*q.y - q.x*p[i].y; }
   return Math.abs(s)/2;
 }
-/* El cordel es inextensible y pasa por cada chincheta, así que cada tramo es
-   un trozo de cuerda con su propia longitud: mover una chincheta solo afecta a
-   los dos tramos que llegan a ella. La goma, en cambio, se estira sin límite. */
+/* EL CORDEL
+   Es una sola cuerda de longitud fija, atada por los dos extremos, que CORRE
+   por las chinchetas de en medio, como un cordel de verdad enrollado en ellas:
+   lo que se conserva es la longitud total, no la de cada tramo. Es lo que hace
+   falta para el trazado del jardinero, con el rotulador en medio del cordel.
+   Si se anuda en cada chincheta, cada tramo pasa a ser un trozo de cuerda con
+   su propia longitud (f.nudos y f.Ls).
+   Una «pieza» es un trozo de cuerda entre dos nudos, {segs, L, j0}: la suma de
+   sus tramos no puede pasar de L. La goma, en cambio, se estira sin límite. */
 function tramos(f){
   var p=pts(f), s=[];
   for(var i=0;i+1<p.length;i++) s.push([p[i],p[i+1]]);
   if(f.cerrada && p.length>2) s.push([p[p.length-1],p[0]]);
   return s;
 }
-function fijaLongitud(f){
-  if(f.tipo==='cordel') f.Ls=tramos(f).map(function(s){ return dist(s[0],s[1]); });
+function largoSegs(ss){ var s=0; for(var i=0;i<ss.length;i++) s+=dist(ss[i][0],ss[i][1]); return s; }
+function piezas(f){
+  if(f.tipo!=='cordel') return [];
+  var ts=tramos(f);
+  if(!ts.length) return [];
+  if(f.nudos && f.Ls && f.Ls.length===ts.length)
+    return ts.map(function(s,j){ return {segs:[s], L:f.Ls[j], j0:j}; });
+  return [{segs:ts, L:(isFinite(f.L)?f.L:largoSegs(ts)), j0:0}];
+}
+function fijaLongitud(f){                  // se ata tenso, con lo que mide ahora
+  if(f.tipo!=='cordel') return f;
+  var ts=tramos(f);
+  f.L=largoSegs(ts);
+  if(f.nudos) f.Ls=ts.map(function(s){ return dist(s[0],s[1]); }); else delete f.Ls;
   return f;
 }
+/* Cuánta cuerda hay en cada tramo. Lo que sobra en una pieza se reparte entre
+   sus tramos en proporción a lo que miden: es lo que se dibuja como panza. */
+function arcos(f){
+  var ts=tramos(f), out=ts.map(function(s){ return dist(s[0],s[1]); });
+  piezas(f).forEach(function(pz){
+    var ds=pz.segs.map(function(s){ return dist(s[0],s[1]); }), sd=0, k;
+    for(k=0;k<ds.length;k++) sd+=ds[k];
+    var sob=pz.L-sd; if(!(sob>0)) return;
+    for(k=0;k<ds.length;k++) out[pz.j0+k]=ds[k]+(sd>1e-9 ? sob*ds[k]/sd : sob/ds.length);
+  });
+  return out;
+}
+function largoCordel(f){ var a=arcos(f), s=0; for(var i=0;i<a.length;i++) s+=a[i]; return s; }
 function cordelEstirado(){
   for(var i=0;i<figuras.length;i++){
-    var f=figuras[i];
-    if(f.tipo!=='cordel' || !f.Ls) continue;
-    var ts=tramos(f);
-    for(var j=0;j<ts.length && j<f.Ls.length;j++)
-      if(dist(ts[j][0],ts[j][1]) > f.Ls[j]+1e-6) return f;
+    var ps=piezas(figuras[i]);
+    for(var j=0;j<ps.length;j++) if(largoSegs(ps[j].segs) > ps[j].L+1e-6) return figuras[i];
   }
   return null;
 }
-function holgura(f){                       // cuerda que sobra, sumando tramos
-  if(f.tipo!=='cordel' || !f.Ls) return 0;
-  var ts=tramos(f), s=0;
-  for(var j=0;j<ts.length && j<f.Ls.length;j++) s += f.Ls[j]-dist(ts[j][0],ts[j][1]);
+function holgura(f){                       // cuerda que sobra, sumando piezas
+  var s=0;
+  piezas(f).forEach(function(pz){ s+=Math.max(0, pz.L-largoSegs(pz.segs)); });
   return s;
+}
+/* Anudar reparte la cuerda entre los tramos tal y como está ahora; desanudar
+   la junta otra vez en una sola. En ningún caso cambia la longitud total. */
+function anudar(f,si){
+  if(f.tipo!=='cordel' || !!f.nudos===!!si) return;
+  var a=arcos(f);
+  if(si){ f.Ls=a; f.nudos=true; }
+  else { var s=0; a.forEach(function(v){ s+=v; }); f.L=s; f.nudos=false; delete f.Ls; }
 }
 /* Lleva el estado hasta donde el cordel dé de sí. `aplicar(t)` coloca el
    movimiento completo cuando t=1 y el punto de partida cuando t=0; si al
    final se pasa, se busca por bisección el instante justo en que el cordel
    queda tenso, para que se pueda alcanzar de verdad y no quede holgura. */
+var topeT=1;                               // hasta dónde llegó el último hastaElTope
 function hastaElTope(aplicar){
-  aplicar(1);
-  if(!cordelEstirado()) return true;
+  aplicar(1); topeT=1;
+  if(!estadoRoto()) return true;
   var lo=0, hi=1;
   for(var i=0;i<34;i++){
     var m=(lo+hi)/2;
     aplicar(m);
-    if(cordelEstirado()) hi=m; else lo=m;
+    if(estadoRoto()) hi=m; else lo=m;
   }
-  aplicar(lo);
+  aplicar(lo); topeT=lo;
   return false;
 }
-/* mueve una chincheta; si el cordel no llega, la deja donde el cordel se tensa */
+
+/* EL PLÁSTICO DURO
+   Cada lado es una tira rígida: no cambia de longitud ni se dobla (f.D, la
+   longitud de cada tramo). Las chinchetas hacen de bisagra y de clavo a la vez.
+   Al tirar de una chincheta (moverPieza):
+   · si solo le llega un lado de plástico (un extremo), ese lado gira alrededor
+     de la chincheta vecina, que hace de clavo, y lo demás no se mueve;
+   · si le llegan dos o más (una intermedia, o un vértice de una figura
+     cerrada), no puede moverse sin desclavar las otras: la pieza se traslada
+     entera, con las de plástico que compartan chincheta con ella.
+   Así las figuras cerradas no cambian nunca de forma. Por el borde se
+   traslada, y con el asa gira. Es cinemática directa: no hace falta solver. */
+function fijaForma(f){
+  if(f.tipo!=='plastico') return f;
+  f.D=tramos(f).map(function(s){ return dist(s[0],s[1]); });
+  return f;
+}
+function rigidoRoto(){
+  for(var a=0;a<figuras.length;a++){
+    var f=figuras[a];
+    if(f.tipo!=='plastico' || !f.D) continue;
+    var ts=tramos(f);
+    if(f.D.length!==ts.length) continue;
+    for(var j=0;j<ts.length;j++) if(Math.abs(dist(ts[j][0],ts[j][1])-f.D[j])>1e-4) return f;
+  }
+  return null;
+}
+/* las chinchetas unidas a esta por un lado de plástico */
+function vecinosPlastico(id){
+  var v=[];
+  figuras.forEach(function(f){
+    if(f.tipo!=='plastico') return;
+    tramos(f).forEach(function(s){
+      var o=(s[0].id===id)?s[1]:(s[1].id===id)?s[0]:null;
+      if(o && v.indexOf(o)<0) v.push(o);
+    });
+  });
+  return v;
+}
+function estadoRoto(){ return cordelEstirado() || rigidoRoto(); }
+function enPlastico(id){
+  return figuras.some(function(f){ return f.tipo==='plastico' && f.pins.indexOf(id)>=0; });
+}
+/* las chinchetas que van con estas: las de las piezas de plástico que las tocan */
+function componente(ids){
+  var set={}, cambio=true;
+  ids.forEach(function(i){ set[i]=1; });
+  while(cambio){
+    cambio=false;
+    figuras.forEach(function(f){
+      if(f.tipo!=='plastico') return;
+      if(f.pins.some(function(k){ return set[k]; }))
+        f.pins.forEach(function(k){ if(!set[k]){ set[k]=1; cambio=true; } });
+    });
+  }
+  return Object.keys(set).map(Number);
+}
+function giro(base,cx,cy,th){
+  return function(t){
+    var c=Math.cos(th*t), s=Math.sin(th*t);
+    base.forEach(function(b){ var dx=b.x-cx, dy=b.y-cy; b.q.x=cx+c*dx-s*dy; b.q.y=cy+s*dx+c*dy; });
+  };
+}
+function baseDe(ids){ return ids.map(pin).filter(Boolean).map(function(q){ return {q:q, x:q.x, y:q.y}; }); }
+/* Devuelve si la chincheta ha llegado adonde se tira. Girando alrededor de la
+   vecina no llega salvo que se tire justo sobre la circunferencia: se queda en
+   la dirección del ratón, como un compás. */
+function moverPieza(p,x,y){
+  var v=vecinosPlastico(p.id);
+  if(v.length===1){                               // un extremo: gira sobre su vecina
+    var N=v[0];
+    if(dist(p,N)<1e-9 || Math.hypot(x-N.x,y-N.y)<1e-9) return false;
+    var th=Math.atan2(y-N.y,x-N.x)-Math.atan2(p.y-N.y,p.x-N.x);
+    while(th>Math.PI) th-=2*Math.PI;
+    while(th<=-Math.PI) th+=2*Math.PI;
+    hastaElTope(giro([{q:p, x:p.x, y:p.y}],N.x,N.y,th));
+    return Math.hypot(p.x-x,p.y-y)<1e-9;
+  }
+  var base=baseDe(componente([p.id])), dx=x-p.x, dy=y-p.y;   // se desclava y va entera
+  return hastaElTope(function(t){ base.forEach(function(b){ b.q.x=b.x+dx*t; b.q.y=b.y+dy*t; }); });
+}
+function centro(f){
+  var p=pts(f), cx=0, cy=0;
+  p.forEach(function(q){ cx+=q.x; cy+=q.y; });
+  return {x:cx/p.length, y:cy/p.length};
+}
+/* Trozos de cuerda que sujetan a la chincheta `id`. */
+function restricciones(id){
+  var rs=[];
+  figuras.forEach(function(f){
+    if(f.tipo!=='cordel' || f.pins.indexOf(id)<0) return;
+    piezas(f).forEach(function(pz){
+      for(var k=0;k<pz.segs.length;k++)
+        if(pz.segs[k][0].id===id || pz.segs[k][1].id===id){ rs.push(pz); return; }
+    });
+  });
+  return rs;
+}
+function pasada(rs){
+  for(var i=0;i<rs.length;i++) if(largoSegs(rs[i].segs) > rs[i].L+1e-6) return true;
+  return false;
+}
+/* Lleva la chincheta p, que está en el sitio al que se tira, al borde de cada
+   trozo de cuerda que se pase. Cada trozo deja a p en una región convexa (la
+   suma de distancias es convexa), así que proyectar por turnos converge, y el
+   paso de Newton a lo largo del gradiente nunca se mete dentro: la función
+   convexa queda por encima de su tangente. */
+function aLaCuerda(p,rs){
+  for(var vuelta=0;vuelta<200;vuelta++){
+    var quieto=true;
+    for(var k=0;k<rs.length;k++){
+      var r=rs[k];
+      for(var it=0;it<60;it++){
+        var e=largoSegs(r.segs)-r.L;
+        if(e<=1e-9) break;
+        if(e>1e-7) quieto=false;
+        var gx=0, gy=0;
+        for(var j=0;j<r.segs.length;j++){
+          var s=r.segs[j], q=(s[0]===p)?s[1]:(s[1]===p)?s[0]:null;
+          if(!q) continue;
+          var dx=p.x-q.x, dy=p.y-q.y, d=Math.hypot(dx,dy);
+          if(d<1e-12) continue;
+          gx+=dx/d; gy+=dy/d;
+        }
+        var g2=gx*gx+gy*gy;
+        if(g2<1e-12) break;
+        p.x-=e*gx/g2; p.y-=e*gy/g2;
+      }
+    }
+    if(quieto) break;
+  }
+}
+/* Mueve una chincheta hacia (x,y). Si el cordel no llega, la deja en el punto
+   permitido más cercano: con el cordel tenso, la chincheta RESBALA por donde
+   el cordel le deja en vez de quedarse clavada. Devuelve si ha llegado. */
 function moverChincheta(id,x,y){
   var p=pin(id); if(!p) return false;
-  var ax=p.x, ay=p.y;
-  return hastaElTope(function(t){ p.x=ax+(x-ax)*t; p.y=ay+(y-ay)*t; });
+  if(enPlastico(id)) return moverPieza(p,x,y);
+  var ax=p.x, ay=p.y, rs=restricciones(id);
+  p.x=x; p.y=y;
+  if(!rs.length || !pasada(rs)) return true;
+  aLaCuerda(p,rs);
+  if(pasada(rs)){                      // red de seguridad: hasta donde dé la recta
+    var bx=p.x, by=p.y, lo=0, hi=1;
+    for(var i=0;i<40;i++){
+      var m=(lo+hi)/2; p.x=ax+(bx-ax)*m; p.y=ay+(by-ay)*m;
+      if(pasada(rs)) hi=m; else lo=m;
+    }
+    p.x=ax+(bx-ax)*lo; p.y=ay+(by-ay)*lo;
+  }
+  return false;
 }
 
 /* convexa: todos los giros del contorno en el mismo sentido */
@@ -258,35 +437,20 @@ function num(v){
 
 /* =========================================================================
    3. EL ROTULADOR
-   El rotulador va atado a las chinchetas elegidas por un cordel de longitud
-   fija. Mientras se mueve, el cordel se mantiene tenso: el rotulador solo
-   puede estar donde la suma de las distancias a las chinchetas vale lo que
-   mide el cordel. Con una chincheta eso es una circunferencia; con dos, una
-   elipse; con más, la curva de suma constante.
+   Es una pieza más del corcho: se clava como una chincheta ({rot:true, col,
+   tapado}), se le atan cordeles y gomas como a cualquier chincheta, y al
+   arrastrarlo va dejando tinta. Lo único que lo guía es el cordel: si va
+   tenso, el rotulador resbala por donde el cordel le deja (moverChincheta).
+   Tapado, se mueve sin pintar. La tinta se queda en el corcho.
    ========================================================================= */
 function sumaDist(fs,M){
   var s=0;
   for(var i=0;i<fs.length;i++) s+=Math.hypot(M.x-fs[i].x, M.y-fs[i].y);
   return s;
 }
-function tensa(fs,L,T){                    // punto de la curva más cercano a T
-  var M={x:T.x, y:T.y};
-  for(var it=0; it<60; it++){
-    var f=0, gx=0, gy=0;
-    for(var i=0;i<fs.length;i++){
-      var dx=M.x-fs[i].x, dy=M.y-fs[i].y, d=Math.hypot(dx,dy);
-      if(d<1e-9){ dx=1e-9; dy=0; d=1e-9; }
-      f+=d; gx+=dx/d; gy+=dy/d;
-    }
-    var e=L-f;
-    if(Math.abs(e)<0.02) break;
-    var g2=gx*gx+gy*gy;
-    if(g2<1e-12){ M.x+=e; break; }        // T está en el centro: se sale por un lado
-    M.x+=e*gx/g2; M.y+=e*gy/g2;
-  }
-  return M;
-}
-function focosPts(){ return focos.map(pin).filter(Boolean); }
+function esRot(p){ return !!(p && p.rot); }
+function rotSel(){ var p=(sel!=null)?pin(sel):null; return esRot(p)?p:null; }
+function colorValido(c){ return (typeof c==='string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)) ? c : null; }
 
 /* =========================================================================
    4. DIBUJO
@@ -347,6 +511,35 @@ function drawChincheta(c,p,resaltada,esFoco){
   }
   c.restore();
 }
+/* El rotulador visto desde arriba: el cuerpo del color de la tinta y, si está
+   destapado, la punta en el centro con un aro blanco alrededor. Tapado, el
+   capuchón entero, con un brillo. */
+function drawRotulador(c,p,seleccionado){
+  var q=w2s(p), col=p.col||'#d23b30';
+  c.save();
+  c.beginPath(); c.arc(q.x,q.y+2,9.5,0,6.2832);
+  c.fillStyle='rgba(60,45,25,.25)'; c.fill();
+  c.beginPath(); c.arc(q.x,q.y,9.5,0,6.2832);
+  c.fillStyle=col; c.fill();
+  c.lineWidth=1.3; c.strokeStyle='rgba(30,34,40,.55)'; c.stroke();
+  if(p.tapado){
+    c.beginPath(); c.arc(q.x-2.6,q.y-2.8,3.2,0,6.2832);
+    c.fillStyle='rgba(255,255,255,.55)'; c.fill();
+    c.beginPath(); c.arc(q.x,q.y,6,0,6.2832);
+    c.lineWidth=1; c.strokeStyle='rgba(30,34,40,.35)'; c.stroke();
+  } else {
+    c.beginPath(); c.arc(q.x,q.y,5.4,0,6.2832);
+    c.fillStyle='#fff'; c.fill();
+    c.beginPath(); c.arc(q.x,q.y,3,0,6.2832);
+    c.fillStyle=col; c.fill();
+    c.lineWidth=0.8; c.strokeStyle='rgba(30,34,40,.6)'; c.stroke();
+  }
+  if(seleccionado){
+    c.beginPath(); c.arc(q.x,q.y,14.5,0,6.2832);
+    c.lineWidth=2; c.strokeStyle='#2f62a8'; c.setLineDash([4,3]); c.stroke(); c.setLineDash([]);
+  }
+  c.restore();
+}
 /* Semiángulo del arco circular que tiene esa cuerda y esa longitud de arco:
    se resuelve θ/senθ = arco/cuerda por bisección. Sin tope, para que al juntar
    las chinchetas la cuerda sobrante siga estando toda ahí: en el límite forma
@@ -395,11 +588,11 @@ function tramoArco(c,A,B,arco,nx,ny){
 /* Camino del cordel con la cuerda que le sobra repartida entre los tramos.
    Devuelve false si está tenso, y entonces se dibuja recto. */
 function caminoCordel(c,f){
-  if(f.tipo!=='cordel' || !f.Ls) return false;
+  if(f.tipo!=='cordel') return false;
   var p=pts(f); if(p.length<2) return false;
-  var segs=tramos(f), j, hay=false;
+  var segs=tramos(f), ar=arcos(f), j, hay=false;
   for(j=0;j<segs.length;j++)
-    if((f.Ls[j]||0) - dist(segs[j][0],segs[j][1]) > 0.6){ hay=true; break; }
+    if(ar[j] - dist(segs[j][0],segs[j][1]) > 0.6){ hay=true; break; }
   if(!hay) return false;                          // todos los tramos tensos
   var cx=0, cy=0;
   p.forEach(function(q){ cx+=q.x; cy+=q.y; }); cx/=p.length; cy/=p.length;
@@ -407,7 +600,7 @@ function caminoCordel(c,f){
   c.beginPath(); c.moveTo(q0.x,q0.y);
   segs.forEach(function(s,k){
     var a=s[0], b=s[1], d=dist(a,b);
-    var arco=Math.max(d, f.Ls[k]||d);              // cada tramo, con SU sobrante
+    var arco=Math.max(d, ar[k]||d);                // cada tramo, con SU sobrante
     var nx, ny;
     if(d<1e-7){ nx=0; ny=-1; }                     // chinchetas juntas: lazo hacia arriba
     else {
@@ -431,8 +624,12 @@ function trazo(c,f,lista){
 function drawFigura(c,f,seleccionada){
   var p=pts(f); if(p.length<2) return;
   c.save();
-  if(f.cerrada && p.length>2){ rutaFigura(c,f); c.fillStyle=conAlfa(f.col,0.15); c.fill('evenodd'); }
-  if(f.tipo==='goma'){
+  if(f.cerrada && p.length>2){ rutaFigura(c,f); c.fillStyle=conAlfa(f.col,f.tipo==='plastico'?0.3:0.15); c.fill('evenodd'); }
+  if(f.tipo==='plastico'){                       // una tira ancha y translúcida, con el canto marcado
+    trazo(c,f); c.lineWidth=11; c.lineJoin='round'; c.lineCap='round';
+    c.strokeStyle=conAlfa(f.col,0.45); c.stroke();
+    trazo(c,f); c.lineWidth=1.5; c.strokeStyle=f.col; c.stroke();
+  } else if(f.tipo==='goma'){
     trazo(c,f); c.lineWidth=7; c.lineJoin='round'; c.lineCap='round';
     c.strokeStyle=conAlfa(f.col,0.30); c.stroke();
     trazo(c,f); c.lineWidth=4.2; c.strokeStyle=f.col; c.stroke();
@@ -476,8 +673,22 @@ function drawTinta(c,t){
 function escena(c,W,H,paraExportar){
   drawCorcho(c,W,H,paraExportar);
   trazos.forEach(function(t){ drawTinta(c,t); });
-  if(drag && drag.mode==='rot' && drag.trazo) drawTinta(c,drag.trazo);
+  if(drag && drag.tintas) for(var k in drag.tintas) drawTinta(c,drag.tintas[k]);
   figuras.forEach(function(f){ drawFigura(c,f,!paraExportar && f.id===sel); });
+  var fp=plasticoSel();
+  if(!paraExportar && fp && tool==='move' && pts(fp).length){   // el asa para girar
+    var a=asaDe(fp);
+    c.save();
+    c.beginPath(); c.moveTo(a.x,a.y+10); c.lineTo(a.x,a.y+30);
+    c.lineWidth=1.5; c.strokeStyle='rgba(47,98,168,.6)'; c.setLineDash([3,3]); c.stroke(); c.setLineDash([]);
+    c.beginPath(); c.arc(a.x,a.y,10,0,6.2832);
+    c.fillStyle='#fff'; c.fill(); c.lineWidth=1.6; c.strokeStyle='#2f62a8'; c.stroke();
+    c.beginPath(); c.arc(a.x,a.y,5,-2.6,1.9);
+    c.lineWidth=1.6; c.stroke();
+    var ex=a.x+5*Math.cos(1.9), ey=a.y+5*Math.sin(1.9);
+    c.beginPath(); c.moveTo(ex-3.2,ey-0.6); c.lineTo(ex,ey); c.lineTo(ex+0.6,ey-3.4); c.stroke();
+    c.restore();
+  }
   if(borrador && borrador.pins.length){
     drawFigura(c,borrador,false);
     if(borrador.prev){
@@ -486,24 +697,21 @@ function escena(c,W,H,paraExportar){
       c.beginPath(); c.moveTo(u.x,u.y); c.lineTo(v.x,v.y); c.stroke(); c.restore();
     }
   }
-  /* el cordel tenso del rotulador */
-  if(drag && drag.mode==='rot' && drag.M){
-    var m=w2s(drag.M);
+  chinchetas.forEach(function(p){
+    if(!esRot(p)) drawChincheta(c,p, !paraExportar && ((drag && drag.mode==='pin' && drag.id===p.id) ||
+                                                      multi.indexOf(p.id)>=0), false);
+  });
+  chinchetas.forEach(function(p){           // los rotuladores, por encima
+    if(esRot(p)) drawRotulador(c,p, !paraExportar && (sel===p.id || multi.indexOf(p.id)>=0));
+  });
+  if(!paraExportar && drag && drag.mode==='caja'){
+    var ca=w2s(drag.a), cb=w2s(drag.b);
     c.save();
-    focosPts().forEach(function(fp){
-      var a=w2s(fp);
-      c.beginPath(); c.moveTo(a.x,a.y); c.lineTo(m.x,m.y);
-      c.lineWidth=1.6; c.strokeStyle='rgba(108,75,182,.75)'; c.stroke();
-    });
-    c.beginPath(); c.arc(m.x,m.y,5,0,6.2832);
-    c.fillStyle=color; c.fill();
-    c.lineWidth=1.5; c.strokeStyle='#fff'; c.stroke();
+    c.fillStyle='rgba(47,98,168,.07)'; c.fillRect(Math.min(ca.x,cb.x),Math.min(ca.y,cb.y),Math.abs(cb.x-ca.x),Math.abs(cb.y-ca.y));
+    c.setLineDash([5,4]); c.lineWidth=1.3; c.strokeStyle='#2f62a8';
+    c.strokeRect(Math.min(ca.x,cb.x)+0.5,Math.min(ca.y,cb.y)+0.5,Math.abs(cb.x-ca.x),Math.abs(cb.y-ca.y));
     c.restore();
   }
-  chinchetas.forEach(function(p){
-    drawChincheta(c,p, !paraExportar && drag && drag.mode==='pin' && drag.id===p.id,
-                  !paraExportar && focos.indexOf(p.id)>=0);
-  });
 }
 function draw(){
   var W=cv.width/(window.devicePixelRatio||1), H=cv.height/(window.devicePixelRatio||1);
@@ -533,8 +741,15 @@ function figuraEn(wp){
       if(j+1===p.length && !f.cerrada) break;
       if(distSeg(wp,p[j],p[(j+1)%p.length])<=9/view.z) return f;
     }
+    if(f.tipo==='plastico' && f.cerrada && p.length>2 && dentroPoli(wp,p)) return f;  // es macizo
   }
   return null;
+}
+function dentroPoli(q,p){
+  var d=false;
+  for(var i=0,j=p.length-1;i<p.length;j=i++)
+    if(((p[i].y>q.y)!==(p[j].y>q.y)) && q.x < (p[j].x-p[i].x)*(q.y-p[i].y)/(p[j].y-p[i].y)+p[i].x) d=!d;
+  return d;
 }
 function tintaEn(wp){
   for(var i=trazos.length-1;i>=0;i--){
@@ -547,22 +762,153 @@ function tintaEn(wp){
 function terminaBorrador(){
   if(borrador && borrador.pins.length>=2){
     pushUndo(); delete borrador.prev;
-    figuras.push(fijaLongitud(borrador));      // el cordel queda de esta medida
+    figuras.push(fijaForma(fijaLongitud(borrador)));  // el cordel queda de esta medida y el plástico, de esta forma
     sel=borrador.id;
   }
   borrador=null;
 }
+/* Arrastrar una chincheta o un rotulador. Se guarda el desfase entre el
+   puntero y el centro para que no pegue un salto al cogerlo. Cada rotulador
+   destapado que se mueva durante el arrastre (el que se arrastra o los que
+   lleva pegados una pieza de plástico) deja un trazo. Se recorre en pasitos el
+   camino del puntero entre dos eventos, para que con el cordel tenso la tinta
+   siga la curva y no corte por la cuerda cuando el ratón va rápido. */
+function empiezaTinta(){
+  var t={};
+  chinchetas.forEach(function(p){
+    if(esRot(p) && !p.tapado) t[p.id]={id:nid++, col:p.col||color, pts:[{x:p.x, y:p.y}]};
+  });
+  return t;
+}
+function hayTinta(){ if(drag && drag.tintas) for(var k in drag.tintas) return true; return false; }
+function anota(t,p){
+  var u=t.pts[t.pts.length-1];
+  if(Math.hypot(p.x-u.x, p.y-u.y) > 0.6/view.z) t.pts.push({x:p.x, y:p.y});
+}
+function anotaTodos(){
+  if(!drag || !drag.tintas) return;
+  for(var k in drag.tintas){ var p=pin(+k); if(p) anota(drag.tintas[k],p); }
+}
+function empiezaArrastre(ch,wp){
+  sel=esRot(ch)?ch.id:null;
+  drag={mode:'pin', id:ch.id, movido:false, off:{x:ch.x-wp.x, y:ch.y-wp.y}, ultimo:{x:ch.x, y:ch.y},
+        tintas:empiezaTinta()};
+}
+function pasoArrastre(T){                  // T: adonde se tira, en el tablero
+  var p=pin(drag.id); if(!p) return;
+  if(!drag.movido){ pushUndo(); drag.movido=true; }
+  if(hayTinta()){
+    var a=drag.ultimo, paso=1.5/view.z;
+    var n=Math.max(1, Math.min(600, Math.ceil(dist(a,T)/paso)));
+    for(var k=1;k<=n;k++){
+      moverChincheta(p.id, a.x+(T.x-a.x)*k/n, a.y+(T.y-a.y)*k/n);
+      anotaTodos();
+    }
+  } else moverChincheta(p.id, T.x, T.y);
+  drag.ultimo={x:T.x, y:T.y};
+}
+function sueltaArrastre(){
+  if(drag && drag.tintas && drag.movido)
+    for(var k in drag.tintas) if(drag.tintas[k].pts.length>=2) trazos.push(drag.tintas[k]);
+  drag=null;
+}
+/* Girar una pieza de plástico con el asa: alrededor de su centro, con todo lo
+   que lleva pegado, en pasitos para que la tinta siga el arco. */
+function asaDe(f){
+  var p=pts(f).map(w2s), cx=0, top=1e9;
+  p.forEach(function(q){ cx+=q.x; top=Math.min(top,q.y); });
+  return {x:cx/p.length, y:top-34};
+}
+function plasticoSel(){ var f=(sel!=null)?fig(sel):null; return (f && f.tipo==='plastico')?f:null; }
+function empiezaGiro(f,wp){
+  var C=centro(f);
+  drag={mode:'girar', id:f.id, C:C, a0:Math.atan2(wp.y-C.y,wp.x-C.x), th:0, movido:false,
+        base:baseDe(componente(f.pins)), tintas:empiezaTinta()};
+}
+function pasoGiro(wp){
+  var C=drag.C, th1=Math.atan2(wp.y-C.y,wp.x-C.x)-drag.a0;
+  while(th1-drag.th>Math.PI) th1-=2*Math.PI;
+  while(th1-drag.th<-Math.PI) th1+=2*Math.PI;
+  if(!drag.movido){ pushUndo(); drag.movido=true; }
+  var R=0; drag.base.forEach(function(b){ R=Math.max(R,Math.hypot(b.x-C.x,b.y-C.y)); });
+  var n=Math.max(1, Math.min(600, Math.ceil(Math.abs(th1-drag.th)*R*view.z/1.5)));
+  var th0=drag.th;
+  for(var k=1;k<=n;k++){
+    var thk=th0+(th1-th0)*k/n, desde=drag.th;
+    var ok2=hastaElTope(function(t){ giro(drag.base,C.x,C.y,desde+(thk-desde)*t)(1); });
+    drag.th=desde+(thk-desde)*topeT;
+    anotaTodos();
+    if(!ok2){
+      if(!drag.aviso){ drag.aviso=true; flash('Hay algo que no deja girarlo: un cordel tenso u otra pieza'); }
+      break;
+    }
+  }
+}
+function voltearSel(){
+  var f=plasticoSel();
+  if(!f){ flash('Selecciona antes una pieza de plástico'); return; }
+  var C=centro(f), base=baseDe(componente(f.pins));
+  pushUndo();
+  base.forEach(function(b){ b.q.x=2*C.x-b.x; });
+  if(estadoRoto()){
+    base.forEach(function(b){ b.q.x=b.x; });
+    undoStack.pop();
+    flash('No se le puede dar la vuelta: hay algo que no deja');
+  }
+  draw();
+}
 function onDown(e){
-  cv.setPointerCapture&&cv.setPointerCapture(e.pointerId);
+  try{ if(cv.setPointerCapture && e.pointerId!==undefined) cv.setPointerCapture(e.pointerId); }catch(er){}
   var sp=evPos(e), wp=s2w(sp), ch=chinchetaEn(wp);
 
+  var fp=plasticoSel();
+  if(tool==='move' && fp && dist(sp,asaDe(fp))<=13){ empiezaGiro(fp,wp); draw(); return; }
+  /* con el rotulador, pinchar una chincheta la convierte en rotulador, y
+     conserva lo que tuviera atado */
+  if(tool==='rot' && ch && !esRot(ch)){
+    pushUndo(); ch.rot=true; ch.col=color; ch.tapado=false;
+    flash('La chincheta ahora es un rotulador'); return;
+  }
+  /* Selección de varias, con Mayús (o Ctrl) o con el botón ⬚ Varias, que hace
+     lo mismo sin teclado, para las pizarras táctiles. Tocar una que no está la
+     añade; tocar una que ya está la quita, pero solo si no se arrastra, porque
+     arrastrarla mueve todas. Arrastrar en el vacío hace una caja. */
+  var suma=!!(e.shiftKey||e.ctrlKey||e.metaKey||modoVarias);
+  if(tool==='move' && suma){
+    if(ch){
+      var ya=multi.indexOf(ch.id)>=0;
+      if(!ya) multi.push(ch.id);
+      if(multi.length>1)
+        drag={mode:'fig', id:null, from:wp, movido:false, base:baseDe(componente(multi)), tintas:empiezaTinta()};
+      else empiezaArrastre(ch,wp);
+      sel=null; drag.quitarSiClic=ya?ch.id:null;
+      draw(); return;
+    }
+    sel=null;
+    drag={mode:'caja', a:wp, b:wp, previo:multi.slice()}; draw(); return;
+  }
+  if(ch && multi.length>1 && multi.indexOf(ch.id)>=0 && (tool==='pin' || tool==='rot' || tool==='move')){
+    sel=null;                                   // se mueven todas las seleccionadas a la vez
+    drag={mode:'fig', id:null, from:wp, movido:false, base:baseDe(componente(multi)), tintas:empiezaTinta()};
+    draw(); return;
+  }
+  if(ch && (tool==='pin' || tool==='rot' || tool==='move')){
+    multi=[]; empiezaArrastre(ch,wp); draw(); return;
+  }
+  multi=[];
   if(tool==='pin'){
-    if(ch){ sel=null; drag={mode:'pin', id:ch.id, movido:false}; draw(); return; }
     pushUndo();
     chinchetas.push({id:nid++, x:wp.x, y:wp.y});
     draw(); return;
   }
-  if(tool==='goma'||tool==='cordel'){
+  if(tool==='rot'){
+    pushUndo();
+    /* no se selecciona: si no, al elegir color para lo siguiente se lo cambiaría */
+    var r={id:nid++, x:wp.x, y:wp.y, rot:true, col:color, tapado:false};
+    chinchetas.push(r); sel=null;
+    draw(); return;
+  }
+  if(tool==='goma'||tool==='cordel'||tool==='plastico'){
     if(!ch){ terminaBorrador(); draw(); return; }
     if(!borrador){ borrador={id:nid++, tipo:tool, pins:[ch.id], cerrada:false, col:color}; draw(); return; }
     var ult=borrador.pins[borrador.pins.length-1];
@@ -572,26 +918,8 @@ function onDown(e){
     if(borrador.pins.indexOf(ch.id)>=0){ flash('Esa chincheta ya está en la figura'); draw(); return; }
     borrador.pins.push(ch.id); draw(); return;
   }
-  if(tool==='rot'){
-    if(ch){                                     // atar o soltar el cordel de una chincheta
-      var k=focos.indexOf(ch.id);
-      if(k>=0) focos.splice(k,1); else focos.push(ch.id);
-      draw(); return;
-    }
-    var fs=focosPts();
-    pushUndo();
-    var t={id:nid++, col:color, pts:[{x:wp.x,y:wp.y}]};
-    if(fs.length){
-      t.L=sumaDist(fs,wp);                      // el cordel queda de esta medida
-      t.focos=focos.slice();
-      drag={mode:'rot', trazo:t, M:{x:wp.x,y:wp.y}, fs:fs, L:t.L};
-    } else {
-      drag={mode:'rot', trazo:t, M:{x:wp.x,y:wp.y}, fs:[], L:0};
-    }
-    draw(); return;
-  }
   if(tool==='del'){
-    if(ch){ pushUndo(); quitaChincheta(ch.id); draw(); return; }
+    if(ch){ pushUndo(); quitaChincheta(ch.id); if(sel===ch.id) sel=null; draw(); return; }
     var ft=figuraEn(wp);
     if(ft){ pushUndo(); figuras=figuras.filter(function(q){return q!==ft;}); if(sel===ft.id) sel=null; draw(); return; }
     var tt=tintaEn(wp);
@@ -599,26 +927,48 @@ function onDown(e){
     return;
   }
   /* mover */
-  if(ch){ sel=null; drag={mode:'pin', id:ch.id, movido:false}; draw(); return; }
   var fm=figuraEn(wp);
-  if(fm){ sel=fm.id;
-    drag={mode:'fig', id:fm.id, from:wp, movido:false,
-          base:pts(fm).map(function(q){ return {id:q.id, x:q.x, y:q.y}; })};
+  if(fm){ sel=fm.id;                          // con ella van las piezas de plástico que toque
+    drag={mode:'fig', id:fm.id, from:wp, movido:false, base:baseDe(componente(fm.pins)), tintas:empiezaTinta()};
     draw(); return; }
   sel=null;
   drag={mode:'pan', sp:sp, v0:{x:view.x,y:view.y}};
   draw();
 }
+/* Al quitar una chincheta, el cordel se suelta de ella como uno de verdad:
+   si estaba en medio, la cuerda sigue entera y ahora va directa entre las
+   vecinas (y le sobra); si era un extremo, ese tramo se va con ella. Anudado,
+   los dos tramos que llegaban a la chincheta se juntan en uno. */
+function sueltaDeCordel(f,id){
+  var n=f.pins.length, k=f.pins.indexOf(id);
+  var ar=arcos(f), ts=tramos(f), largo={}, j;
+  for(j=0;j<ts.length;j++) largo[ts[j][0].id+'>'+ts[j][1].id]=ar[j];
+  var esExtremo=!(f.cerrada && n>2) && (k===0 || k===n-1);
+  var total=largoCordel(f);
+  if(esExtremo) total-=ar[k===0?0:n-2];
+  f.pins.splice(k,1);
+  if(f.pins.length<3) f.cerrada=false;
+  if(f.nudos){
+    f.Ls=tramos(f).map(function(s){
+      var a=s[0].id, b=s[1].id;
+      if(largo[a+'>'+b]!==undefined) return largo[a+'>'+b];
+      if(largo[a+'>'+id]!==undefined && largo[id+'>'+b]!==undefined) return largo[a+'>'+id]+largo[id+'>'+b];
+      return dist(s[0],s[1]);
+    });
+  } else {
+    f.L=Math.max(total, largoSegs(tramos(f)));
+  }
+}
 function quitaChincheta(id){
-  chinchetas=chinchetas.filter(function(p){return p.id!==id;});
   figuras.forEach(function(f){
     if(f.pins.indexOf(id)<0) return;
-    f.pins=f.pins.filter(function(k){return k!==id;});
-    fijaLongitud(f);                    // cambia la estructura: se vuelve a atar
+    if(f.tipo==='cordel') sueltaDeCordel(f,id);
+    else { f.pins=f.pins.filter(function(k){return k!==id;}); if(f.pins.length<3) f.cerrada=false; fijaForma(f); }
   });
+  chinchetas=chinchetas.filter(function(p){return p.id!==id;});
   figuras=figuras.filter(function(f){return f.pins.length>=2;});
-  focos=focos.filter(function(k){return k!==id;});
   if(borrador){ borrador.pins=borrador.pins.filter(function(k){return k!==id;}); }
+  multi=multi.filter(function(k){ return k!==id; });
 }
 function onMove(e){
   var sp=evPos(e), wp=s2w(sp);
@@ -628,34 +978,41 @@ function onMove(e){
   }
   if(drag.mode==='pan'){ view.x=drag.v0.x+(sp.x-drag.sp.x); view.y=drag.v0.y+(sp.y-drag.sp.y); draw(); return; }
   if(drag.mode==='pin'){
-    if(!drag.movido){ pushUndo(); drag.movido=true; }
-    if(!moverChincheta(drag.id, wp.x, wp.y) && !drag.aviso){
-      drag.aviso=true; flash('El cordel no se estira: hasta ahí no llega');
-    }
+    if(!drag.movido && Math.hypot(wp.x+drag.off.x-drag.ultimo.x, wp.y+drag.off.y-drag.ultimo.y)*view.z<2) return;
+    pasoArrastre({x:wp.x+drag.off.x, y:wp.y+drag.off.y});
     draw(); return;
   }
   if(drag.mode==='fig'){
-    if(!drag.movido){ pushUndo(); drag.movido=true; }
+    if(!drag.movido){
+      if(Math.hypot(wp.x-drag.from.x, wp.y-drag.from.y)*view.z<2) return;   // un toque no es arrastrar
+      pushUndo(); drag.movido=true;
+    }
     var dx=wp.x-drag.from.x, dy=wp.y-drag.from.y;
     var ok2=hastaElTope(function(t){
-      drag.base.forEach(function(b){ var p2=pin(b.id); if(p2){ p2.x=b.x+dx*t; p2.y=b.y+dy*t; } });
+      drag.base.forEach(function(b){ b.q.x=b.x+dx*t; b.q.y=b.y+dy*t; });
     });
-    if(!ok2 && !drag.aviso){ drag.aviso=true; flash('Hay un cordel que no da más de sí'); }
+    anotaTodos();
+    if(!ok2 && !drag.aviso){ drag.aviso=true; flash('Hay algo que no deja: un cordel tenso u otra pieza'); }
     draw(); return;
   }
-  if(drag.mode==='rot'){
-    var M = drag.fs.length ? tensa(drag.fs, drag.L, wp) : {x:wp.x,y:wp.y};
-    var u=drag.trazo.pts[drag.trazo.pts.length-1];
-    if(Math.hypot(M.x-u.x, M.y-u.y) > 0.8/view.z) drag.trazo.pts.push(M);
-    drag.M=M; draw(); return;
-  }
+  if(drag.mode==='girar'){ pasoGiro(wp); draw(); return; }
+  if(drag.mode==='caja'){ drag.b=wp; draw(); return; }
+}
+function enCaja(a,b){
+  var x0=Math.min(a.x,b.x), x1=Math.max(a.x,b.x), y0=Math.min(a.y,b.y), y1=Math.max(a.y,b.y);
+  return chinchetas.filter(function(p){ return p.x>=x0 && p.x<=x1 && p.y>=y0 && p.y<=y1; })
+                   .map(function(p){ return p.id; });
 }
 function onUp(){
-  if(drag && drag.mode==='rot'){
-    if(drag.trazo.pts.length>=2) trazos.push(drag.trazo);
-    else undoStack.pop();
+  if(!drag) return;
+  if(drag.mode==='caja'){
+    var nuevas=enCaja(drag.a,drag.b);
+    multi=drag.previo.slice();
+    nuevas.forEach(function(id){ if(multi.indexOf(id)<0) multi.push(id); });
+    drag=null; draw(); return;
   }
-  drag=null; draw();
+  if(drag.quitarSiClic!=null && !drag.movido) multi=multi.filter(function(id){ return id!==drag.quitarSiClic; });
+  sueltaArrastre(); draw();
 }
 stage.addEventListener('wheel',function(e){
   e.preventDefault();
@@ -676,30 +1033,72 @@ window.addEventListener('keydown',function(e){
   var k=e.key.toLowerCase();
   if((e.ctrlKey||e.metaKey)&&k==='z'){ doUndo(); e.preventDefault(); return; }
   if(e.ctrlKey||e.metaKey||e.altKey) return;
-  if(k==='escape'){ borrador=null; sel=null; draw(); }
+  if(k==='escape'){ borrador=null; sel=null; multi=[]; draw(); }
   else if(e.key==='Delete'||e.key==='Backspace'){
-    if(sel!=null){ pushUndo(); figuras=figuras.filter(function(f){return f.id!==sel;}); sel=null; draw(); e.preventDefault(); } }
+    if(sel!=null || multi.length){ quitaSel(); e.preventDefault(); } }
   else if(k==='enter'){ if(borrador){ terminaBorrador(); draw(); } }
-  else if(k==='p'){ if(sel!=null){ var f=fig(sel); if(f){ pushUndo(); f.col=color; draw(); } } }
+  else if(k==='p'){ pintaSel(); }
   else if(k==='c'){ cerrarAbrir(); }
+  else if(k==='n'){ nudosSel(); }
+  else if(k==='t'){ taparSel(); }
+  else if(k==='v'){ voltearSel(); }
+  else if(k==='s'){ alternaVarias(); }
   else if(k==='1') setTool('pin');
   else if(k==='2') setTool('goma');
   else if(k==='3') setTool('cordel');
-  else if(k==='4') setTool('rot');
-  else if(k==='5') setTool('move');
-  else if(k==='6') setTool('del');
+  else if(k==='4') setTool('plastico');
+  else if(k==='5') setTool('rot');
+  else if(k==='6') setTool('move');
+  else if(k==='7') setTool('del');
 });
 function cerrarAbrir(){
-  if(sel==null){ flash('Selecciona antes una figura'); return; }
-  var f=fig(sel); if(!f || f.pins.length<3) return;
-  pushUndo(); f.cerrada=!f.cerrada;
-  if(f.tipo==='cordel' && f.Ls){
-    /* solo se añade o se quita el tramo de cierre; los demás siguen igual */
-    var p=pts(f);
-    if(f.cerrada) f.Ls.push(dist(p[p.length-1],p[0]));
-    else f.Ls.pop();
+  var f=(sel!=null)?fig(sel):null;
+  if(!f){ flash('Selecciona antes una figura'); return; }
+  if(f.pins.length<3) return;
+  pushUndo();
+  if(f.tipo==='cordel'){
+    /* se añade o se quita cuerda solo para el tramo de cierre: lo demás sigue igual */
+    var p=pts(f), cierre=dist(p[p.length-1],p[0]);
+    if(!f.cerrada){
+      if(f.nudos && f.Ls) f.Ls.push(cierre); else f.L=largoCordel(f)+cierre;
+    } else {                       // la cuerda que sobre se queda en el cordel abierto
+      if(f.nudos && f.Ls) f.Ls.pop(); else f.L=Math.max(largoCordel(f)-cierre, largoSegs(tramos(f).slice(0,-1)));
+    }
   }
+  f.cerrada=!f.cerrada;
+  fijaForma(f);                                  // el plástico gana o pierde el lado de cierre
   draw();
+}
+function pintaSel(){
+  var f=(sel!=null)?fig(sel):null, r=rotSel();
+  if(!f && !r) return;
+  pushUndo();
+  if(f) f.col=color; else r.col=color;
+  draw();
+}
+function quitaSel(){
+  if(multi.length){
+    pushUndo();
+    multi.forEach(function(id){ if(pin(id)) quitaChincheta(id); });
+    multi=[]; sel=null; draw(); return;
+  }
+  if(sel==null) return;
+  var r=rotSel();
+  pushUndo();
+  if(r) quitaChincheta(r.id);
+  else figuras=figuras.filter(function(f){return f.id!==sel;});
+  sel=null; draw();
+}
+function nudosSel(){
+  var f=(sel!=null)?fig(sel):null;
+  if(!f || f.tipo!=='cordel'){ flash('Selecciona antes un cordel'); return; }
+  pushUndo(); anudar(f,!f.nudos);
+  flash(f.nudos ? 'Anudado: cada tramo se queda con su cuerda' : 'Sin nudos: la cuerda corre por las chinchetas');
+}
+function taparSel(){
+  var r=rotSel();
+  if(!r){ flash('Selecciona antes un rotulador'); return; }
+  pushUndo(); r.tapado=!r.tapado; draw();
 }
 
 /* =========================================================================
@@ -714,15 +1113,31 @@ function cerrarAbrir(){
     w.appendChild(b);
   });
 })();
+/* Elegir un color con un rotulador seleccionado se lo cambia en el acto. El
+   selector de color manda muchos cambios seguidos al arrastrar por él: se
+   juntan en un solo deshacer si llegan al mismo rotulador en poco tiempo. */
+var ultimoTinte=null;
 function setColor(col){
   color=col;
   document.querySelectorAll('.sw').forEach(function(b){ b.classList.toggle('on', b.dataset.c===col); });
   document.getElementById('cpick').value=/^#[0-9a-f]{6}$/i.test(col)?col:'#d23b30';
-  if(borrador){ borrador.col=col; draw(); }
+  if(borrador) borrador.col=col;
+  var r=rotSel();
+  if(r && r.col!==col){
+    var ahora=Date.now();
+    if(!ultimoTinte || ultimoTinte.id!==r.id || ahora-ultimoTinte.t>1500) pushUndo();
+    ultimoTinte={id:r.id, t:ahora};
+    r.col=col;
+  }
+  draw();
 }
 document.getElementById('cpick').addEventListener('input',function(e){ setColor(e.target.value); });
 function setTool(t){
-  if(t!=='goma' && t!=='cordel') terminaBorrador();
+  if(t!=='goma' && t!=='cordel' && t!=='plastico') terminaBorrador();
+  else if(borrador && borrador.tipo!==t) terminaBorrador();
+  if(rotSel()) sel=null;                     // al cambiar de herramienta, se suelta el rotulador
+  if(t!=='move'){ multi=[]; modoVarias=false; }  // y la selección de varias, que es cosa de ✥ Mover
+  document.getElementById('varias').classList.toggle('on', modoVarias);
   tool=t;
   document.querySelectorAll('[data-tool]').forEach(function(b){ b.classList.toggle('on', b.dataset.tool===t); });
   cv.style.cursor=(t==='move')?'default':'crosshair';
@@ -731,14 +1146,21 @@ function setTool(t){
 document.querySelectorAll('[data-tool]').forEach(function(b){
   b.addEventListener('click',function(){ setTool(b.dataset.tool); });
 });
-document.getElementById('soltarFocos').addEventListener('click',function(){
-  focos=[]; draw(); });
-document.getElementById('pintar').addEventListener('click',function(){
-  if(sel==null) return; var f=fig(sel); if(!f) return; pushUndo(); f.col=color; draw(); });
+document.getElementById('pintar').addEventListener('click',pintaSel);
 document.getElementById('cerrar').addEventListener('click',cerrarAbrir);
-document.getElementById('borrar').addEventListener('click',function(){
-  if(sel==null) return; pushUndo();
-  figuras=figuras.filter(function(f){return f.id!==sel;}); sel=null; draw(); });
+document.getElementById('nudos').addEventListener('click',nudosSel);
+document.getElementById('tapar').addEventListener('click',taparSel);
+document.getElementById('voltear').addEventListener('click',voltearSel);
+function alternaVarias(){
+  var activar=!modoVarias;
+  if(activar && tool!=='move') setTool('move');
+  modoVarias=activar;
+  if(!activar) multi=[];
+  document.getElementById('varias').classList.toggle('on', modoVarias);
+  draw();
+}
+document.getElementById('varias').addEventListener('click',alternaVarias);
+document.getElementById('borrar').addEventListener('click',quitaSel);
 document.getElementById('undo').addEventListener('click',doUndo);
 document.getElementById('avz').addEventListener('change',function(e){
   document.getElementById('avanzado').classList.toggle('show', e.target.checked);
@@ -781,7 +1203,7 @@ document.getElementById('limpiaTinta').addEventListener('click',function(){
   pushUndo(); trazos=[]; draw(); });
 document.getElementById('clear').addEventListener('click',function(){
   if(!chinchetas.length && !trazos.length) return;
-  pushUndo(); chinchetas=[]; figuras=[]; trazos=[]; focos=[]; sel=null; borrador=null; draw(); });
+  pushUndo(); chinchetas=[]; figuras=[]; trazos=[]; sel=null; borrador=null; multi=[]; draw(); });
 document.getElementById('png').addEventListener('click',function(){
   var b=caja(); if(!b){ flash('No hay nada que exportar'); return; }
   var m=40, sc=2, W=(b.x1-b.x0)+2*m, H=(b.y1-b.y0)+2*m;
@@ -795,20 +1217,32 @@ document.getElementById('png').addEventListener('click',function(){
 });
 
 /* --- guardar y abrir ----------------------------------------------------- */
-document.getElementById('save').addEventListener('click',function(){
-  if(!chinchetas.length && !trazos.length){ flash('No hay nada que guardar'); return; }
+/* Versión 2: los rotuladores van como objeto {x, y, rotulador:color, tapado}
+   entre las chinchetas, y el cordel guarda su longitud total y, si está
+   anudado, la de cada tramo. Las longitudes se redondean hacia arriba, para
+   que al abrir no quede ningún tramo estirado. */
+function arriba(v){ return Math.ceil(v*100-1e-6)/100; }
+function datos(){
   var pos={}; chinchetas.forEach(function(p,i){ pos[p.id]=i; });
-  var d={formato:'corcho-geometrico', version:1,
-    chinchetas: chinchetas.map(function(p){ return [Math.round(p.x*100)/100, Math.round(p.y*100)/100]; }),
+  return {formato:'corcho-geometrico', version:2,
+    chinchetas: chinchetas.map(function(p){
+      var x=Math.round(p.x*100)/100, y=Math.round(p.y*100)/100;
+      return esRot(p) ? {x:x, y:y, rotulador:p.col, tapado:!!p.tapado} : [x,y]; }),
     figuras: figuras.map(function(f){
       var o={tipo:f.tipo, color:f.col, cerrada:!!f.cerrada,
              chinchetas:f.pins.map(function(k){ return pos[k]; }).filter(function(v){ return v!==undefined; })};
-      if(f.tipo==='cordel' && f.Ls) o.longitudes=f.Ls.map(function(v){ return Math.round(v*100)/100; });
+      if(f.tipo==='cordel'){
+        o.longitud=arriba(largoCordel(f));
+        if(f.nudos && f.Ls){ o.nudos=true; o.longitudes=f.Ls.map(arriba); }
+      }
       return o; }),
     tinta: trazos.map(function(t){
       return {color:t.col, puntos:t.pts.map(function(p){ return [Math.round(p.x*10)/10, Math.round(p.y*10)/10]; })}; })
   };
-  var blob=new Blob([JSON.stringify(d)],{type:'application/json'});
+}
+document.getElementById('save').addEventListener('click',function(){
+  if(!chinchetas.length && !trazos.length){ flash('No hay nada que guardar'); return; }
+  var blob=new Blob([JSON.stringify(datos())],{type:'application/json'});
   var url=URL.createObjectURL(blob);
   var a=document.createElement('a'); a.download='corcho.json'; a.href=url; a.click();
   setTimeout(function(){ URL.revokeObjectURL(url); },5000);
@@ -827,20 +1261,25 @@ function loadData(d){
   if(!lc || !lc.length){ flash('El archivo no contiene chinchetas'); return; }
   pushUndo();
   var nuevas=lc.map(function(p){
-    return Array.isArray(p) ? {id:nid++, x:+p[0]||0, y:+p[1]||0} : {id:nid++, x:+p.x||0, y:+p.y||0}; });
+    if(Array.isArray(p)) return {id:nid++, x:+p[0]||0, y:+p[1]||0};
+    var c={id:nid++, x:+(p&&p.x)||0, y:+(p&&p.y)||0};
+    if(p && p.rotulador){ c.rot=true; c.col=colorValido(p.rotulador)||color; c.tapado=!!p.tapado; }
+    return c;
+  });
   var nf=(d.figuras||[]).map(function(q){
+    if(!q) return null;
     var ids=(q.chinchetas||q.pins||[]).map(function(i){ var c=nuevas[i|0]; return c?c.id:null; }).filter(Boolean);
     if(ids.length<2) return null;
-    var g={id:nid++, tipo:(q.tipo==='cordel'?'cordel':'goma'), pins:ids,
-           cerrada:!!q.cerrada, col:q.color||q.col||color};
-    if(g.tipo==='cordel' && Array.isArray(q.longitudes) && q.longitudes.length)
-      g.Ls=q.longitudes.map(Number).filter(function(v){ return isFinite(v)&&v>0; });
+    var g={id:nid++, tipo:(q.tipo==='cordel'||q.tipo==='plastico'?q.tipo:'goma'), pins:ids,
+           cerrada:!!q.cerrada && ids.length>2, col:colorValido(q.color||q.col)||color};
+    if(g.tipo==='cordel') g.cuerda=q;            // se ata más abajo, ya con las chinchetas puestas
     return g;
   }).filter(Boolean);
   var nt=(d.tinta||[]).map(function(q){
+    if(!q) return null;
     var ps=(q.puntos||q.pts||[]).map(function(p){
-      return Array.isArray(p) ? {x:+p[0]||0, y:+p[1]||0} : {x:+p.x||0, y:+p.y||0}; });
-    return ps.length>=2 ? {id:nid++, col:q.color||q.col||color, pts:ps} : null;
+      return Array.isArray(p) ? {x:+p[0]||0, y:+p[1]||0} : {x:+(p&&p.x)||0, y:+(p&&p.y)||0}; });
+    return ps.length>=2 ? {id:nid++, col:colorValido(q.color||q.col)||color, pts:ps} : null;
   }).filter(Boolean);
   if(importMode==='replace'){ chinchetas=nuevas; figuras=nf; trazos=nt; }
   else {
@@ -853,9 +1292,23 @@ function loadData(d){
     }
     chinchetas=chinchetas.concat(nuevas); figuras=figuras.concat(nf); trazos=trazos.concat(nt);
   }
-  /* los cordeles sin longitud guardada se atan con la que tengan ahora */
-  nf.forEach(function(g){ if(g.tipo==='cordel' && !g.L) fijaLongitud(g); });
-  sel=null; borrador=null; focos=[]; fitView();
+  /* Cordeles. Con longitudes por tramo y sin longitud total, es un archivo de
+     la versión 1, en la que el cordel iba siempre anudado: se respeta. Nunca
+     se acepta una longitud más corta que lo que ya mide el cordel. */
+  nf.forEach(function(g){
+    if(g.tipo==='plastico'){ fijaForma(g); return; }      // la forma es la de las chinchetas guardadas
+    if(g.tipo!=='cordel') return;
+    var q=g.cuerda; delete g.cuerda;
+    var ts=tramos(g), Ls=Array.isArray(q.longitudes) ? q.longitudes.map(Number) : null;
+    var porTramo=Ls && Ls.length===ts.length && Ls.every(function(v){ return isFinite(v); });
+    if(porTramo && (q.nudos || q.longitud===undefined)){
+      g.nudos=true; g.Ls=ts.map(function(s,j){ return Math.max(Ls[j], dist(s[0],s[1])); });
+    } else {
+      g.nudos=false; fijaLongitud(g);
+      var L=+q.longitud; if(isFinite(L) && L>g.L) g.L=L;
+    }
+  });
+  sel=null; borrador=null; multi=[]; fitView();
   flash(nuevas.length+' chinchetas cargadas');
 }
 ['dragenter','dragover'].forEach(function(ev){
@@ -871,47 +1324,77 @@ document.getElementById('help').addEventListener('click',function(){ infoEl.clas
 infoEl.innerHTML=
  '<b>Corcho geométrico</b><br>Un corcho sin retícula: las chinchetas se ponen donde se quiera y se '+
  'mueven después. Las gomas y los cordeles se atan a las chinchetas, así que al mover una, la figura '+
- 'se deforma sin dejar de ser lo que era.'+
+ 'se deforma sin dejar de ser lo que era. El plástico, en cambio, no se deforma.'+
  '<div style="margin-top:7px">La <b>goma</b> se estira lo que haga falta. El <b>cordel</b> no: se queda '+
- 'con la longitud que tiene al terminar de tenderlo, y a partir de ahí, si mueves una chincheta más allá '+
- 'de donde llega, no te deja. Acercarlas siempre se puede, y entonces el cordel no se encoge: sobra '+
- 'cuerda y se dibuja la panza que hace, igual que un cordel de verdad sobre el corcho.</div>'+
- '<div style="margin-top:7px">Esa es la gracia para empezar a clasificar figuras: unir cuatro '+
- 'chinchetas y arrastrarlas para ver qué cambia y qué no; separar las que se parecen de las que no; '+
- 'discutir por qué una sigue siendo la misma clase de figura y otra ya no.</div>'+
- '<div style="margin-top:7px"><b>✎ Rotulador</b><br>Haz clic en una o varias chinchetas para atar en '+
- 'ellas el cordel: se marcan con un anillo morado. Después, arrastra por el corcho: el cordel se '+
- 'mantiene tenso y el rotulador solo puede ir por donde el cordel le deja, dejando su trazo.<br>'+
- 'Con una sola chincheta el cordel obliga a mantener la distancia. Con dos, lo que se mantiene '+
- 'constante es la suma de las distancias a las dos. Con tres o más, lo mismo con todas ellas. '+
- 'Prueba y mira qué sale.</div>'+
- '<div style="margin-top:7px">La longitud del cordel la fija el sitio donde empiezas a arrastrar: ahí '+
- 'es donde queda tenso. Si sueltas y vuelves a empezar en otro punto, el cordel es otro. Sin ninguna '+
- 'chincheta atada, el rotulador dibuja a mano alzada.</div>'+
+ 'con la longitud que tiene al terminar de tenderlo. Va atado por los extremos y <b>corre</b> por las '+
+ 'chinchetas de en medio, como uno de verdad. Si tiras de una chincheta más allá de donde llega, la '+
+ 'chincheta resbala por donde el cordel le deja. Al acercarlas, el cordel no se encoge: sobra cuerda y '+
+ 'se dibuja la panza que hace.</div>'+
+ '<div style="margin-top:7px">Con un cordel seleccionado, <b>Anudar</b> (N) le hace un nudo en cada '+
+ 'chincheta: entonces cada tramo se queda con su trozo de cuerda y ya no pasa de un lado a otro.</div>'+
+ '<div style="margin-top:7px"><b>▰ Plástico</b><br>Una pieza de plástico duro: se pone igual que la '+
+ 'goma, pero sus lados son tiras rígidas: no cambian de longitud ni se doblan. Las chinchetas hacen '+
+ 'de bisagra. Si tiras de una chincheta a la que solo llega un lado, ese lado gira alrededor de la '+
+ 'chincheta vecina y lo demás se queda. Si le llegan dos o más, las otras se desclavan y la pieza se '+
+ 'mueve entera. Con <b>✥ Mover</b> se arrastra entera por el borde (o por dentro, si está cerrada), y '+
+ 'se gira con el asa que le sale encima al seleccionarla. <b>Dar la vuelta</b> (V) la voltea. Las '+
+ 'piezas de plástico que comparten una chincheta van juntas.</div>'+
+ '<div style="margin-top:7px"><b>✎ Rotulador</b><br>Se clava en el corcho como una chincheta; si '+
+ 'pinchas en una chincheta que ya está puesta, se convierte en rotulador sin soltar lo que tenga atado. Átale un '+
+ 'cordel con <b>～ Cordel</b> o pégalo a una pieza de <b>▰ Plástico</b>, igual que a cualquier '+
+ 'chincheta, y arrástralo: va pintando por donde le dejan. Sin nada, pinta a mano alzada. Si va '+
+ 'pegado a un plástico, pinta también cuando se mueve la pieza. <b>Tapar</b> (T) lo deja moverse sin '+
+ 'pintar. Para cambiarle el color, selecciónalo y elige otro en la paleta. La tinta se queda en el '+
+ 'corcho aunque luego muevas las chinchetas.</div>'+
+ '<div style="margin-top:7px"><b>Varias a la vez</b><br>Con <b>✥ Mover</b>, Mayús + clic añade o quita '+
+ 'chinchetas y rotuladores de la selección, y Mayús + arrastrar en el vacío selecciona todo lo que quede '+
+ 'dentro de una caja. Sin teclado, en una pizarra, el botón <b>⬚ Varias</b> (S) hace lo mismo que tener '+
+ 'Mayús pulsada. Arrastrando una de las seleccionadas se mueven todas juntas, con las piezas de '+
+ 'plástico que lleven. Supr las quita y Esc las suelta.</div>'+
  '<div style="margin-top:7px">En <b>Comprobaciones</b> están el recuento de vértices y lados y las '+
  'medidas, para sacarlos cuando ya se haya mirado y discutido.</div>'+
- '<div style="margin-top:7px;color:#8a919c">Atajos: 1-6 herramientas · Intro o doble clic terminan la '+
- 'figura · Esc la cancela · C abre o cierra · P pintar · Supr quitar · Ctrl+Z deshacer.</div>'+
+ '<div style="margin-top:7px;color:#8a919c">Atajos: 1-7 herramientas · Intro o doble clic terminan la '+
+ 'figura · Esc la cancela · C abre o cierra · N anudar · T tapar · V dar la vuelta · S varias · P pintar · Supr quitar · '+
+ 'Ctrl+Z deshacer.</div>'+
  '<div class="lic">Corcho geométrico · Pablo Beltrán-Pellicer · '+
  '<a href="https://tierradenumeros.com" target="_blank" rel="noopener">tierradenumeros.com</a> · @pbeltranp<br>'+
  'Se puede usar, copiar y adaptar citando la autoría: licencia '+
  '<a href="https://creativecommons.org/licenses/by/4.0/deed.es" target="_blank" rel="noopener">CC BY 4.0</a>.</div>';
 
 function updateUI(){
-  var f = sel!=null ? fig(sel) : null;
-  ['pintar','cerrar','borrar'].forEach(function(id){ document.getElementById(id).disabled=!f; });
-  document.getElementById('focotxt').innerHTML = focos.length
-    ? 'cordel atado a <b>'+focos.length+'</b> chincheta'+(focos.length===1?'':'s')
-    : '<span style="color:#9d8ab3">Con el rotulador, haz clic en las chinchetas donde quieras atar el cordel.</span>';
+  var f = sel!=null ? fig(sel) : null, r=rotSel();
+  document.getElementById('pintar').disabled=!(f||r);
+  document.getElementById('borrar').disabled=!(f||r||multi.length);
+  document.getElementById('cerrar').disabled=!(f && f.pins.length>2);
+  var bN=document.getElementById('nudos'), bT=document.getElementById('tapar');
+  bN.disabled=!(f && f.tipo==='cordel');
+  bN.firstChild.nodeValue=(f && f.nudos)?'Quitar los nudos':'Anudar';
+  bT.disabled=!r;
+  bT.firstChild.nodeValue=(r && r.tapado)?'Destapar':'Tapar';
+  document.getElementById('voltear').disabled=!(f && f.tipo==='plastico');
 
   var h='';
-  if(borrador){
-    h='<b>Tendiendo '+(borrador.tipo==='goma'?'una goma':'un cordel')+'</b>';
+  if(multi.length && !borrador){
+    var mr=multi.filter(function(id){ return esRot(pin(id)); }).length, mc=multi.length-mr;
+    h='<b>'+multi.length+(multi.length===1?' seleccionada':' seleccionadas')+'</b><br><span class="g">'+
+      [mc?mc+(mc===1?' chincheta':' chinchetas'):'', mr?mr+(mr===1?' rotulador':' rotuladores'):'']
+        .filter(Boolean).join(' y ')+'</span>';
+  } else if(borrador){
+    h='<b>'+(borrador.tipo==='goma'?'Tendiendo una goma':borrador.tipo==='cordel'?'Tendiendo un cordel':
+             'Poniendo un plástico')+'</b>';
+  } else if(r){
+    var nc=figuras.filter(function(q){ return q.tipo==='cordel' && q.pins.indexOf(r.id)>=0; }).length;
+    var np=enPlastico(r.id);
+    h='<b>Rotulador</b><br><span class="g">'+(r.tapado?'tapado: se mueve sin pintar':'destapado: al moverlo, pinta')+
+      '<br>'+(np ? 'pegado a un plástico' : nc ? 'atado a '+nc+(nc===1?' cordel':' cordeles') : 'suelto: a mano alzada')+
+      '</span>';
   } else if(f){
     var p=pts(f);
-    h='<b>'+(f.tipo==='goma'?'Goma':'Cordel')+'</b>';
-    if(f.tipo==='cordel' && holgura(f)>0.6)
-      h+='<br><span class="g">el cordel está flojo</span>';
+    h='<b>'+({goma:'Goma', cordel:'Cordel', plastico:'Plástico duro'}[f.tipo]||'Figura')+'</b>';
+    if(f.tipo==='cordel')
+      h+='<br><span class="g">'+(f.nudos?'anudado en cada chincheta':'corre por las chinchetas')+
+         (holgura(f)>0.6?' · flojo':'')+'</span>';
+    if(f.tipo==='plastico') h+='<br><span class="g">rígido: no se deforma</span>';
     if(opt.cta||opt.med){
       h+='<br>'+p.length+' vértices · '+(f.cerrada?p.length:p.length-1)+' lados';
       if(f.cerrada && p.length>2) h+='<br>'+(convexa(f)?'convexa':'cóncava');
@@ -923,7 +1406,9 @@ function updateUI(){
       h+='<br><span class="g">los recuentos están en Comprobaciones</span>';
     }
   } else {
-    h='<span class="g">'+chinchetas.length+' chinchetas · '+figuras.length+
+    var nr=chinchetas.filter(esRot).length;
+    h='<span class="g">'+(chinchetas.length-nr)+' chinchetas · '+
+      (nr?nr+(nr===1?' rotulador · ':' rotuladores · '):'')+figuras.length+
       (figuras.length===1?' figura':' figuras')+
       (trazos.length?' · '+trazos.length+' trazos':'')+'</span>';
   }
@@ -931,13 +1416,22 @@ function updateUI(){
 
   var t;
   if(flashMsg && Date.now()-flashT<2100) t=flashMsg;
+  else if(drag && drag.movido && drag.tintas && (function(){ for(var k in drag.tintas)
+            if(drag.tintas[k].pts.length>1) return true; return false; })())
+    t='Pintando · el rotulador va por donde le dejan el cordel o el plástico';
+  else if(drag && drag.mode==='girar') t='Girando la pieza de plástico alrededor de su centro';
+  else if(tool==='plastico') t='Haz clic en chinchetas o rotuladores sucesivos para poner el plástico · vuelve al primero para cerrar · después ya no se deforma';
+  else if(tool==='move' && plasticoSel()) t='Arrastra el plástico para moverlo entero · un extremo gira sobre su vecina · gíralo con el asa · V le da la vuelta';
   else if(tool==='pin') t='Haz clic en el corcho para clavar una chincheta · arrastra una chincheta para moverla';
   else if(tool==='goma') t='Haz clic en chinchetas sucesivas para tender la goma · vuelve a la primera para cerrar la figura';
-  else if(tool==='cordel') t='Haz clic en chinchetas sucesivas para tender el cordel · vuelve a la primera para cerrar';
-  else if(tool==='rot') t = focos.length
-      ? 'Arrastra por el corcho: el cordel se mantiene tenso y el rotulador va dejando su trazo'
-      : 'Haz clic en las chinchetas donde atar el cordel · sin ninguna, el rotulador dibuja a mano alzada';
-  else if(tool==='move') t='Arrastra una chincheta para moverla y ver cómo se deforma la figura · o arrastra la figura entera';
+  else if(tool==='cordel') t='Haz clic en chinchetas o rotuladores sucesivos para tender el cordel · vuelve al primero para cerrar';
+  else if(tool==='rot') t = chinchetas.some(esRot)
+      ? 'Arrastra un rotulador para pintar · clic en el corcho para poner otro, o en una chincheta para convertirla'
+      : 'Haz clic en el corcho para poner un rotulador, o en una chincheta para convertirla en rotulador';
+  else if(drag && drag.mode==='caja') t='Seleccionando lo que quede dentro de la caja';
+  else if(tool==='move' && modoVarias) t='Varias: toca para añadir o quitar · arrastra en el vacío para hacer una caja · arrastra una seleccionada para mover todas';
+  else if(tool==='move' && multi.length>1) t='Arrastra una de las seleccionadas para mover todas · Mayús+clic quita o añade · Supr las quita · Esc suelta';
+  else if(tool==='move') t='Arrastra una chincheta, un rotulador o una figura para moverlo · Mayús+clic o Mayús+arrastrar selecciona varias';
   else t='Haz clic en una chincheta, una figura o un trazo para quitarlo';
   hintEl.textContent=t;
 }
@@ -959,12 +1453,16 @@ if(window.ResizeObserver) new ResizeObserver(resize).observe(stage);
 function runSelfTest(){
   var out=[], fails=0;
   function ok(n,c,extra){ out.push((c?'OK    ':'FALLO ')+n+(extra!==undefined?'   ['+extra+']':'')); if(!c) fails++; }
-  function limpia(){ chinchetas=[]; figuras=[]; trazos=[]; focos=[]; sel=null; borrador=null; nid=1; }
+  var guardado=JSON.stringify({c:chinchetas,f:figuras,t:trazos,n:nid,u:undoStack,v:view});
+  function limpia(){ chinchetas=[]; figuras=[]; trazos=[]; sel=null; borrador=null; drag=null; multi=[]; modoVarias=false; nid=1; }
   function clava(x,y){ var p={id:nid++, x:x, y:y}; chinchetas.push(p); return p; }
-  function figura(tipo,ps,cerrada){
+  function pon(x,y){ var p={id:nid++, x:x, y:y, rot:true, col:'#d23b30', tapado:false}; chinchetas.push(p); return p; }
+  function figura(tipo,ps,cerrada,nudos){
     var f={id:nid++, tipo:tipo, pins:ps.map(function(p){return p.id;}), cerrada:!!cerrada, col:'#d23b30'};
-    figuras.push(fijaLongitud(f)); return f;
+    if(tipo==='cordel') f.nudos=!!nudos;
+    figuras.push(fijaForma(fijaLongitud(f))); return f;
   }
+  try{
 
   /* --- las figuras van atadas a las chinchetas ---------------------------- */
   limpia();
@@ -992,23 +1490,52 @@ function runSelfTest(){
   ok('una figura abierta de tres chinchetas tiene dos lados', pts(abierta).length-1===2);
   ok('y no tiene área', area(abierta)===0);
 
-  /* --- el cordel no se estira, la goma sí --------------------------------- */
+  /* --- el cordel: una sola cuerda que corre por las chinchetas ------------ */
   limpia();
   var K1=clava(0,0), K2=clava(100,0), K3=clava(100,100);
   var cor=figura('cordel',[K1,K2,K3],false);
-  var Lcor=cor.Ls.slice();
-  ok('el cordel guarda la longitud de cada tramo', cor.Ls.length===2 &&
-     Math.abs(cor.Ls[0]-100)<1e-9 && Math.abs(cor.Ls[1]-100)<1e-9, cor.Ls.map(num).join(' + '));
-  ok('la goma no guarda longitudes', figura('goma',[K1,K2],false).Ls===undefined);
+  ok('el cordel guarda su longitud total', Math.abs(cor.L-200)<1e-9 && !cor.nudos && !cor.Ls, num(cor.L));
+  ok('la goma no guarda longitudes', figura('goma',[K1,K2],false).L===undefined);
   figuras.pop();
-  ok('mover una chincheta un poco, sin pasarse, sí se permite', moverChincheta(K3.id,100,90));
-  ok('y ningún tramo se estira', !cordelEstirado());
-  ok('llevarla muy lejos avisa de que el cordel no llega', !moverChincheta(K3.id,4000,4000));
-  ok('pero la chincheta avanza hasta donde el cordel da de sí', K3.x>100 && K3.y>90);
-  ok('y ahí el tramo queda tenso del todo, no a medias',
-     Math.abs(dist(K2,K3)-Lcor[1])<0.01, num(dist(K2,K3))+' de '+num(Lcor[1]));
-  ok('ningún tramo supera nunca su longitud', !cordelEstirado());
-  ok('estando tenso ya no hace panza', flechaArco(dist(K2,K3), dist(K2,K3))===0);
+  ok('acercar una chincheta siempre se puede', moverChincheta(K3.id,100,50) && K3.x===100 && K3.y===50);
+  ok('y entonces sobra cuerda', Math.abs(holgura(cor)-50)<1e-9, num(holgura(cor)));
+  ok('llevarla muy lejos no se puede del todo', !moverChincheta(K3.id,4000,4000));
+  ok('pero no se queda a medio camino: el cordel acaba tenso',
+     holgura(cor)<1e-5 && !cordelEstirado(), num(dist(K2,K3)));
+  ok('y la chincheta queda en la dirección en la que se tira', (function(){
+     var ux=K3.x-K2.x, uy=K3.y-K2.y, vx=4000-K2.x, vy=4000-K2.y;
+     return Math.abs(ux*vy-uy*vx)/Math.hypot(vx,vy)<1e-4 && ux*vx+uy*vy>0; })());
+  ok('tirando más allá del tope, la chincheta resbala por donde el cordel le deja', (function(){
+     var peor=0;
+     for(var a=0;a<12;a++){
+       var an=a*Math.PI/6+0.1;
+       moverChincheta(K3.id, K2.x+500*Math.cos(an), K2.y+500*Math.sin(an));
+       peor=Math.max(peor, Math.abs(dist(K2,K3)-100),
+                     Math.abs((K3.x-K2.x)/100-Math.cos(an))+Math.abs((K3.y-K2.y)/100-Math.sin(an)));
+     }
+     return peor<1e-5; })());
+  moverChincheta(K3.id,100,100);
+  moverChincheta(K1.id,50,0);                    // el tramo de la izquierda se acorta
+  moverChincheta(K3.id,100,4000);
+  ok('lo que sobra en un tramo pasa al otro: la cuerda corre por la chincheta del medio',
+     Math.abs(dist(K2,K3)-150)<1e-5, num(dist(K2,K3)));
+  ok('la longitud total no cambia al correr', Math.abs(largoCordel(cor)-200)<1e-9);
+  limpia();
+  K1=clava(0,0); K2=clava(100,0); K3=clava(100,100);
+  var anu=figura('cordel',[K1,K2,K3],false,true);
+  moverChincheta(K1.id,50,0); moverChincheta(K3.id,100,4000);
+  ok('anudado, en cambio, cada tramo va por su cuenta', Math.abs(dist(K2,K3)-100)<1e-5, num(dist(K2,K3)));
+  anudar(anu,false);
+  ok('al quitar los nudos la longitud total no cambia', Math.abs(anu.L-200)<1e-9 && !anu.Ls, num(anu.L));
+  moverChincheta(K3.id,100,4000);
+  ok('y ya puede correr la cuerda que sobraba', Math.abs(dist(K2,K3)-150)<1e-5, num(dist(K2,K3)));
+  moverChincheta(K3.id,100,40);
+  anudar(anu,true);
+  ok('al anudar, la cuerda se reparte entre los tramos sin perder nada',
+     anu.Ls.length===2 && Math.abs(anu.Ls[0]+anu.Ls[1]-200)<1e-9 &&
+     anu.Ls[0]>=dist(K1,K2)-1e-9 && anu.Ls[1]>=dist(K2,K3)-1e-9, anu.Ls.map(num).join(' + '));
+
+  /* --- la panza ----------------------------------------------------------- */
   ok('un tramo tenso no hace panza', flechaArco(100,100)===0);
   ok('cuanta más cuerda sobra, más panza', flechaArco(100,160)>flechaArco(100,120));
   ok('la panza de un arco semicircular es el radio',
@@ -1022,9 +1549,7 @@ function runSelfTest(){
   ok('y nunca baja del diámetro del lazo',
      [100,20,5,0.1,0].every(function(d){ return flechaArco(d,300)>=300/Math.PI-0.01; }),
      'suelo = '+num(300/Math.PI));
-  ok('con las chinchetas casi juntas, el cordel forma un lazo de su medida',
-     Math.abs(flechaArco(0.001,300)-300/Math.PI)<1, num(flechaArco(0.001,300))+' ≈ '+num(300/Math.PI));
-  ok('y con las chinchetas encima, también', Math.abs(flechaArco(0,300)-300/Math.PI)<1e-9);
+  ok('con las chinchetas encima, el cordel forma un lazo de su medida', Math.abs(flechaArco(0,300)-300/Math.PI)<1e-9);
   ok('el arco de la panza mide siempre lo que el cordel', (function(){
       var casos=[[100,140],[50,300],[10,300],[1,300]], bien=true;
       casos.forEach(function(t){
@@ -1033,47 +1558,64 @@ function runSelfTest(){
         if(Math.abs(2*R*th-t[1])>0.01) bien=false;
       });
       return bien; })());
-  moverChincheta(K3.id,100,10);
-  ok('acercando la chincheta, el tramo no se encoge: conserva su longitud',
-     Math.abs(cor.Ls[1]-Lcor[1])<1e-9, num(cor.Ls[1]));
-  ok('lo que pasa es que a ese tramo le sobra cuerda', cor.Ls[1]-dist(K2,K3)>50);
-  ok('desde flojo se puede volver a dejar exactamente tenso',
-     (function(){ moverChincheta(K3.id,9000,9000);
-       return Math.abs(dist(K2,K3)-Lcor[1])<0.01; })());
+  limpia();
+  K1=clava(0,0); K2=clava(100,0); K3=clava(200,0);
+  var pz=figura('cordel',[K1,K2,K3],false);
+  moverChincheta(K3.id,150,0);
+  ok('la cuerda que sobra se reparte entre los tramos y no se pierde',
+     Math.abs(arcos(pz)[0]+arcos(pz)[1]-200)<1e-9 && arcos(pz)[0]>100 && arcos(pz)[1]>50,
+     arcos(pz).map(num).join(' + '));
 
-  /* --- cada tramo va por su cuenta: el caso del triángulo ----------------- */
+  /* --- cada tramo anudado va por su cuenta: el caso del triángulo --------- */
   limpia();
   var V1=clava(0,0), V2=clava(200,0), V3=clava(100,180);   // V1V2 es el lado de abajo
-  var tri3=figura('cordel',[V1,V2,V3],true);
+  var tri3=figura('cordel',[V1,V2,V3],true,true);
   var abajo=tri3.Ls[0], izq=tri3.Ls[2];
-  ok('el triángulo de cordel guarda tres tramos', tri3.Ls.length===3);
+  ok('el triángulo anudado guarda tres tramos', tri3.Ls.length===3);
   moverChincheta(V3.id,100,60);                            // se baja solo el vértice de arriba
   ok('al mover un vértice, el tramo opuesto no cambia de longitud',
      Math.abs(tri3.Ls[0]-abajo)<1e-12, num(tri3.Ls[0])+' = '+num(abajo));
-  ok('y ese tramo sigue tenso, sin panza',
-     Math.abs(dist(V1,V2)-tri3.Ls[0])<1e-9 && flechaArco(dist(V1,V2), tri3.Ls[0])===0);
+  ok('y ese tramo sigue tenso, sin panza', Math.abs(arcos(tri3)[0]-dist(V1,V2))<1e-9);
   ok('los dos tramos que llegan al vértice movido sí quedan flojos',
      tri3.Ls[1]-dist(V2,V3)>10 && tri3.Ls[2]-dist(V3,V1)>10);
   ok('y su longitud tampoco ha cambiado', Math.abs(tri3.Ls[2]-izq)<1e-12);
-  ok('la holgura total es la suma de la de cada tramo',
-     Math.abs(holgura(tri3)-((tri3.Ls[1]-dist(V2,V3))+(tri3.Ls[2]-dist(V3,V1))))<1e-9);
-  moverChincheta(V1.id,-40,0);                             // ahora sí se toca el de abajo
+  moverChincheta(V1.id,-40,0);
   ok('moviendo un extremo del tramo de abajo, ese tramo se tensa y frena',
-     Math.abs(dist(V1,V2)-tri3.Ls[0])<0.01, num(dist(V1,V2)));
+     Math.abs(dist(V1,V2)-tri3.Ls[0])<1e-5, num(dist(V1,V2)));
+  limpia();
+  V1=clava(0,0); V2=clava(200,0); V3=clava(100,180);
+  var tri4=figura('cordel',[V1,V2,V3],true);
+  var per=tri4.L;
+  moverChincheta(V3.id,100,5000);
+  ok('sin nudos, el triángulo de cordel conserva el perímetro al tirar de un vértice',
+     Math.abs(longitud(tri4)-per)<1e-5 && V3.y>180, num(longitud(tri4))+' de '+num(per));
+  moverChincheta(V3.id,100,90);
+  ok('y al bajarlo, el lado de abajo también se afloja', arcos(tri4)[0]-dist(V1,V2)>1);
+
   limpia();
   var G1=clava(0,0), G2=clava(100,0), G3=clava(100,100);
   var gom=figura('goma',[G1,G2,G3],false);
   var Lgom=longitud(gom);
   ok('la goma sí se deja estirar todo lo que haga falta', moverChincheta(G3.id,4000,4000));
   ok('y su longitud crece sin límite', longitud(gom)>Lgom*10);
+
+  /* --- abrir y cerrar un cordel ------------------------------------------- */
   limpia();
   var C1=clava(0,0), C2=clava(60,0), C3=clava(60,60);
   var cerr=figura('cordel',[C1,C2,C3],false);
-  var antesLs=cerr.Ls.slice();
-  cerr.cerrada=true; cerr.Ls.push(dist(C3,C1));
-  ok('al cerrar solo se añade el tramo de cierre', cerr.Ls.length===3 &&
-     Math.abs(cerr.Ls[0]-antesLs[0])<1e-12 && Math.abs(cerr.Ls[1]-antesLs[1])<1e-12);
-  ok('y el cierre no queda estirado desde el principio', !cordelEstirado());
+  moverChincheta(C3.id,60,30);                     // un poco flojo
+  var Lantes=cerr.L;
+  sel=cerr.id; cerrarAbrir();
+  ok('al cerrar se añade solo la cuerda del tramo de cierre',
+     cerr.cerrada && Math.abs(cerr.L-(Lantes+dist(C3,C1)))<1e-9, num(Lantes)+' → '+num(cerr.L));
+  ok('y no queda estirado desde el principio', !cordelEstirado());
+  cerrarAbrir();
+  ok('al volver a abrirlo se recupera la longitud de antes', !cerr.cerrada && Math.abs(cerr.L-Lantes)<1e-6, num(cerr.L));
+  anudar(cerr,true); var Ls0=cerr.Ls.slice();
+  cerrarAbrir();
+  ok('anudado, al cerrar solo se añade el tramo de cierre', cerr.Ls.length===3 &&
+     Math.abs(cerr.Ls[0]-Ls0[0])<1e-12 && Math.abs(cerr.Ls[1]-Ls0[1])<1e-12);
+  sel=null; undoStack=[];
 
   /* --- quitar una chincheta ----------------------------------------------- */
   limpia();
@@ -1084,86 +1626,461 @@ function runSelfTest(){
   ok('y la figura sobrevive con un vértice menos', figuras.length===1 && pts(f4).length===3);
   quitaChincheta(P3.id); quitaChincheta(P4.id);
   ok('si quedan menos de dos chinchetas, la figura desaparece', figuras.length===0);
-
-  /* --- el rotulador: circunferencia --------------------------------------- */
   limpia();
-  var O=clava(0,0);
-  var R=120;
-  var puntos=[];
+  K1=clava(0,0); K2=clava(100,0); K3=clava(100,100);
+  var q1=figura('cordel',[K1,K2,K3],false);
+  quitaChincheta(K2.id);
+  ok('quitando la chincheta del medio, el cordel sigue entero y le sobra cuerda',
+     Math.abs(q1.L-200)<1e-9 && holgura(q1)>50, num(q1.L));
+  limpia();
+  K1=clava(0,0); K2=clava(100,0); K3=clava(100,100);
+  var q2=figura('cordel',[K1,K2,K3],false);
+  quitaChincheta(K3.id);
+  ok('quitando la de un extremo, ese tramo se va con ella', Math.abs(q2.L-100)<1e-9, num(q2.L));
+  limpia();
+  K1=clava(0,0); K2=clava(100,0); K3=clava(100,100);
+  var q3=figura('cordel',[K1,K2,K3],false,true);
+  quitaChincheta(K2.id);
+  ok('anudado, los dos tramos que llegaban a ella se juntan en uno',
+     q3.Ls.length===1 && Math.abs(q3.Ls[0]-200)<1e-9, num(q3.Ls[0]));
+
+  /* --- el rotulador: con una chincheta ------------------------------------ */
+  limpia();
+  var O=clava(0,0), RT=pon(120,0);
+  figura('cordel',[O,RT],false);
+  var lejos=[];
   for(var i=0;i<36;i++){
     var ang=i*Math.PI/18;
-    var T={x:Math.cos(ang)*400, y:Math.sin(ang)*400};   // se tira lejos
-    puntos.push(tensa([O],R,T));
+    moverChincheta(RT.id, Math.cos(ang)*400, Math.sin(ang)*400);
+    lejos.push(Math.abs(Math.hypot(RT.x,RT.y)-120));
   }
-  ok('con una chincheta, todos los puntos quedan a la misma distancia',
-     puntos.every(function(M){ return Math.abs(Math.hypot(M.x,M.y)-R)<0.05; }));
-  ok('y esa distancia es la del cordel', Math.abs(Math.hypot(puntos[0].x,puntos[0].y)-R)<0.05);
-  ok('tirando desde muy cerca también sale a la circunferencia',
-     Math.abs(Math.hypot(tensa([O],R,{x:2,y:1}).x, tensa([O],R,{x:2,y:1}).y)-R)<0.05);
-  ok('y desde muy lejos', Math.abs(Math.hypot(tensa([O],R,{x:9000,y:-4000}).x,
-     tensa([O],R,{x:9000,y:-4000}).y)-R)<0.05);
+  ok('atado a una chincheta, el rotulador no se aleja más que el cordel y no se queda clavado',
+     Math.max.apply(null,lejos)<1e-6, 'error '+Math.max.apply(null,lejos).toExponential(1));
+  ok('desde dentro se mueve libre y el cordel se afloja', moverChincheta(RT.id,10,5) && RT.x===10 && RT.y===5);
+  ok('y desde muy lejos también llega al cordel', (function(){
+     moverChincheta(RT.id,9000,-4000); return Math.abs(Math.hypot(RT.x,RT.y)-120)<1e-6; })());
 
-  /* --- el rotulador: elipse ----------------------------------------------- */
+  /* arrastrarlo de verdad, a saltos de 15°, con el ratón muy fuera del cordel */
+  limpia(); undoStack=[];
+  O=clava(0,0); RT=pon(120,0);
+  figura('cordel',[O,RT],false);
+  empiezaArrastre(RT,{x:RT.x,y:RT.y});
+  for(i=1;i<=24;i++){ var a2=i*Math.PI/12; pasoArrastre({x:400*Math.cos(a2), y:400*Math.sin(a2)}); }
+  sueltaArrastre();
+  var tr=trazos[0];
+  ok('arrastrar el rotulador deja un trazo', trazos.length===1 && tr.pts.length>100, tr?tr.pts.length+' puntos':'');
+  ok('del color del rotulador', tr && tr.col===RT.col);
+  ok('el trazo entero queda a la distancia del cordel, aunque el ratón vaya a saltos',
+     tr && tr.pts.every(function(p){ return Math.abs(Math.hypot(p.x,p.y)-120)<1e-3; }));
+  ok('va por la curva y no corta por dentro: ningún salto entre puntos seguidos', (function(){
+     var m=0; for(var j=1;j<tr.pts.length;j++) m=Math.max(m,dist(tr.pts[j-1],tr.pts[j]));
+     return m<3; })());
+  ok('y da la vuelta entera', (function(){
+     var giro=0;
+     for(var j=1;j<tr.pts.length;j++){
+       var d=Math.atan2(tr.pts[j].y,tr.pts[j].x)-Math.atan2(tr.pts[j-1].y,tr.pts[j-1].x);
+       while(d>Math.PI) d-=2*Math.PI; while(d<-Math.PI) d+=2*Math.PI; giro+=d; }
+     return Math.abs(giro-2*Math.PI)<0.05; })());
+  ok('al pintar se puede deshacer', undoStack.length===1);
+  doUndo();
+  ok('y deshacer quita el trazo y devuelve el rotulador a su sitio',
+     trazos.length===0 && Math.abs(pin(RT.id).x-120)<1e-9 && Math.abs(pin(RT.id).y)<1e-9);
+  RT=pin(RT.id);
+  empiezaArrastre(RT,{x:RT.x,y:RT.y}); sueltaArrastre();
+  ok('un clic sin arrastrar no pinta ni gasta un deshacer', trazos.length===0 && undoStack.length===0);
+  RT.tapado=true;
+  empiezaArrastre(RT,{x:RT.x,y:RT.y}); pasoArrastre({x:0,y:400}); sueltaArrastre();
+  ok('tapado, se mueve sin pintar', trazos.length===0 && Math.abs(RT.y-120)<1e-6);
+  RT.tapado=false;
   limpia();
-  var F1=clava(-80,0), F2=clava(80,0);
-  var Le=400;
-  var elip=[];
+  RT=pon(0,0);
+  empiezaArrastre(RT,{x:0,y:0}); pasoArrastre({x:300,y:40}); sueltaArrastre();
+  ok('sin cordel, el rotulador pinta a mano alzada', trazos.length===1 && RT.x===300 && RT.y===40);
+  var tinta0=JSON.stringify(trazos[0].pts);
+  moverChincheta(RT.id,-50,-50);
+  ok('la tinta se queda en el corcho aunque se mueva luego el rotulador', JSON.stringify(trazos[0].pts)===tinta0);
+
+  /* --- el rotulador en medio del cordel ----------------------------------- */
+  limpia();
+  var F1=clava(-80,0), F2=clava(80,0), RE=pon(200,0);          // 280 + 120 = 400
+  var ce=figura('cordel',[F1,RE,F2],false);
+  ok('el cordel por el rotulador mide la suma de los dos tramos', Math.abs(ce.L-400)<1e-9);
+  var sumas=[];
   for(i=0;i<48;i++){
-    var an=i*Math.PI/24;
-    elip.push(tensa([F1,F2],Le,{x:Math.cos(an)*600, y:Math.sin(an)*600}));
+    var an2=i*Math.PI/24;
+    moverChincheta(RE.id, Math.cos(an2)*600, Math.sin(an2)*600);
+    sumas.push(Math.abs(sumaDist([F1,F2],RE)-400));
   }
-  ok('con dos chinchetas, la suma de distancias es constante',
-     elip.every(function(M){ return Math.abs(sumaDist([F1,F2],M)-Le)<0.05; }));
-  ok('y vale lo que mide el cordel', Math.abs(sumaDist([F1,F2],elip[0])-Le)<0.05);
-  var semieje=Le/2, c2=80, b2=Math.sqrt(semieje*semieje-c2*c2);
-  ok('el punto más alto está a la distancia que dice la teoría',
-     elip.some(function(M){ return Math.abs(Math.abs(M.y)-b2)<0.5 && Math.abs(M.x)<0.5; }),
-     'b = '+num(b2));
-  ok('si el cordel mide justo la distancia entre las dos, la elipse se aplasta en el segmento',
-     (function(){ var M=tensa([F1,F2],160,{x:0,y:300});
-       return Math.abs(sumaDist([F1,F2],M)-160)<0.2 && Math.abs(M.y)<1; })());
-
-  /* --- el rotulador: tres o más chinchetas -------------------------------- */
+  ok('con el cordel tenso por el rotulador, la suma de sus dos tramos vale lo que el cordel',
+     Math.max.apply(null,sumas)<1e-5, 'error '+Math.max.apply(null,sumas).toExponential(1));
+  moverChincheta(RE.id,0,600);
+  var b2=Math.sqrt(200*200-80*80);
+  ok('tirando hacia arriba, el rotulador se para justo encima del medio',
+     Math.abs(RE.x)<1e-4 && Math.abs(RE.y-b2)<1e-4, num(RE.x)+' ; '+num(RE.y));
   limpia();
-  var T1=clava(-100,-60), T2=clava(100,-60), T3=clava(0,110);
-  var Lt=600;
-  var tri3=[];
+  F1=clava(-80,0); F2=clava(80,0); RE=pon(0,150);
+  var lazo=figura('cordel',[F1,F2,RE],true);                    // 160 + 2·170
+  var dosT=[];
   for(i=0;i<36;i++){
-    var a3=i*Math.PI/18;
-    tri3.push(tensa([T1,T2,T3],Lt,{x:Math.cos(a3)*800, y:Math.sin(a3)*800}));
+    var an3=i*Math.PI/18+0.05;
+    moverChincheta(RE.id, Math.cos(an3)*700, Math.sin(an3)*700);
+    dosT.push(Math.abs(sumaDist([F1,F2],RE)-(lazo.L-160)));
   }
-  ok('con tres chinchetas, la suma de las tres distancias es constante',
-     tri3.every(function(M){ return Math.abs(sumaDist([T1,T2,T3],M)-Lt)<0.05; }));
-  ok('la curva rodea a las tres chinchetas',
-     tri3.every(function(M){ return Math.hypot(M.x,M.y)>50; }));
+  ok('con un lazo cerrado por dos chinchetas y el rotulador pasa lo mismo',
+     Math.max.apply(null,dosT)<1e-5, 'suma = '+num(lazo.L-160));
+  limpia();
+  F1=clava(-80,0); F2=clava(80,0); RE=pon(0,0);
+  figura('cordel',[F1,RE,F2],false);
+  moverChincheta(RE.id,0,300);
+  ok('si el cordel mide justo lo que hay entre las chinchetas, el rotulador no sale de la recta',
+     Math.abs(RE.y)<1e-3 && Math.abs(sumaDist([F1,F2],RE)-160)<1e-6, num(RE.y));
+  limpia();
+  var A=clava(0,0), B=clava(200,0); RE=pon(100,50);
+  figura('cordel',[A,RE],false); figura('cordel',[B,RE],false);
+  moverChincheta(RE.id,100,1000);
+  ok('con dos cordeles distintos, el rotulador se para donde se tensan los dos',
+     !cordelEstirado() && dist(RE,{x:100,y:50})<0.01, num(RE.x)+' ; '+num(RE.y));
+
+  /* --- el gesto completo, como lo hace el ratón --------------------------- */
+  limpia(); undoStack=[];
+  var toolAntes=tool, colorAntes=color;
+  function evEn(x,y){ var r=cv.getBoundingClientRect(), s=w2s({x:x,y:y});
+    return {clientX:r.left+s.x, clientY:r.top+s.y}; }
+  O=clava(0,0);
+  setTool('rot'); setColor('#2f62a8');
+  onDown(evEn(0,90)); onUp();
+  var puesto=chinchetas.filter(esRot)[0];
+  ok('con ✎ Rotulador, un clic en el corcho clava un rotulador del color elegido',
+     !!puesto && puesto.col==='#2f62a8' && !puesto.tapado);
+  setColor('#4f9e3f');
+  ok('y elegir enseguida otro color para lo siguiente no se lo cambia', puesto.col==='#2f62a8' && sel==null);
+  setColor('#2f62a8');
+  setTool('cordel');
+  onDown(evEn(0,0)); onDown(evEn(puesto.x,puesto.y)); onDown(evEn(300,300));
+  var cg=figuras[0];
+  ok('con ～ Cordel se le ata un cordel como a una chincheta',
+     figuras.length===1 && cg.tipo==='cordel' && cg.pins[1]===puesto.id && Math.abs(cg.L-90)<1e-6);
+  setTool('move');
+  onDown(evEn(puesto.x+3,puesto.y));
+  onMove(evEn(400,90)); onMove(evEn(400,400)); onMove(evEn(-90,400));
+  onUp();
+  ok('y arrastrándolo con el ratón pinta por donde el cordel le deja',
+     trazos.length===1 && trazos[0].pts.every(function(p){ return Math.abs(Math.hypot(p.x,p.y)-90)<1e-3; }) &&
+     trazos[0].pts.length>50, trazos.length?trazos[0].pts.length+' puntos':'nada');
+  setTool(toolAntes); setColor(colorAntes);
+
+  /* --- el dibujo ---------------------------------------------------------- */
+  limpia();
+  O=clava(0,0); RT=pon(60,0); RT.col='#d23b30';
+  var cd=figura('cordel',[O,RT],false); cd.col='#4f9e3f';
+  moverChincheta(RT.id,30,0);
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=240; oc.height=200;
+    var o=oc.getContext('2d'), g={x:view.x,y:view.y,z:view.z};
+    o.fillStyle='#fff'; o.fillRect(0,0,240,200);
+    view={x:80,y:100,z:1};
+    var hayPanza=caminoCordel(o,cd);
+    escena(o,240,200,true);
+    view=g;
+    var dd=o.getImageData(0,0,240,200).data, rojo=0, verde=0;
+    for(var j=0;j<dd.length;j+=4){
+      if(dd[j]-dd[j+2]>60 && dd[j]-dd[j+1]>60) rojo++;
+      if(dd[j+1]-dd[j]>40 && dd[j+1]-dd[j+2]>40) verde++;
+    }
+    ok('el cordel flojo se dibuja con panza', hayPanza);
+    ok('y se ven el rotulador y el cordel', rojo>80 && verde>40, rojo+' px rojos · '+verde+' px verdes');
+  })();
+
+  /* --- el color del rotulador, una vez puesto ----------------------------- */
+  limpia(); undoStack=[];
+  var colAntes=color;
+  RT=pon(0,0); RT.col='#d23b30';
+  sel=RT.id; setColor('#4f9e3f');
+  ok('con un rotulador seleccionado, elegir un color se lo cambia', RT.col==='#4f9e3f');
+  setColor('#2f62a8');
+  ok('varios cambios seguidos gastan un solo deshacer', RT.col==='#2f62a8' && undoStack.length===1, undoStack.length);
+  doUndo();
+  ok('y deshacer le devuelve el color que tenía', pin(RT.id).col==='#d23b30');
+  sel=null; setColor(colAntes);
+  ok('sin nada seleccionado, elegir un color no toca los rotuladores', pin(RT.id).col==='#d23b30');
+  sel=RT.id; setTool('goma');
+  ok('cambiar de herramienta suelta el rotulador seleccionado', sel==null);
+  setTool(toolAntes);
+
+  /* --- el plástico duro --------------------------------------------------- */
+  limpia();
+  var PA=clava(0,0), PB=clava(120,0), PC=clava(40,90);
+  var pl=figura('plastico',[PA,PB,PC],true);
+  ok('el plástico guarda la longitud de cada lado', pl.D && pl.D.length===3,
+     pl.D?pl.D.map(num).join(' · '):'');
+  var area0p=area(pl);
+  ok('en una figura cerrada, tirar de un vértice la lleva entera adonde se tira', moverChincheta(PC.id,300,300) &&
+     Math.abs(PC.x-300)<1e-6 && Math.abs(PC.y-300)<1e-6, num(PC.x)+' ; '+num(PC.y));
+  ok('sin deformarse: mismos lados, misma área', !rigidoRoto() && Math.abs(area(pl)-area0p)<1e-6 &&
+     Math.abs(PA.x-260)<1e-6 && Math.abs(PA.y-210)<1e-6);
+
+  /* el caso de la imagen: una tira de dos lados, con una chincheta en medio */
+  limpia();
+  var V0=clava(-200,0), V1=clava(0,120), V2=clava(-20,-340);
+  var tira=figura('plastico',[V0,V1,V2],false);
+  var L01=dist(V0,V1), L12=dist(V1,V2);
+  moverChincheta(V2.id,300,-200);
+  ok('tirando del extremo de arriba, su lado gira alrededor de la chincheta del medio',
+     Math.abs(dist(V1,V2)-L12)<1e-9 && Math.abs(Math.atan2(V2.y-V1.y,V2.x-V1.x)-Math.atan2(-320,300))<1e-9,
+     num(V2.x)+' ; '+num(V2.y));
+  ok('y las otras dos se quedan clavadas', V1.x===0 && V1.y===120 && V0.x===-200 && V0.y===0);
+  ok('el ángulo en la chincheta del medio cambia: es una bisagra', (function(){
+     var a=Math.atan2(V0.y-V1.y,V0.x-V1.x)-Math.atan2(V2.y-V1.y,V2.x-V1.x);
+     var b=Math.atan2(-120,-200)-Math.atan2(-460,-20);
+     return Math.abs(Math.cos(a)-Math.cos(b))>0.1; })());
+  moverChincheta(V0.id,-200,300);
+  ok('lo mismo con el otro extremo', Math.abs(dist(V0,V1)-L01)<1e-9 && V1.x===0 && V1.y===120);
+  var antes3=[V0.x,V0.y,V2.x,V2.y];
+  ok('tirando de la del medio, se desclavan las otras y va todo entero', moverChincheta(V1.id,50,170) &&
+     Math.abs(V1.x-50)<1e-9 && Math.abs(V0.x-(antes3[0]+50))<1e-9 && Math.abs(V2.y-(antes3[3]+50))<1e-9 &&
+     !rigidoRoto());
+
+  limpia(); undoStack=[];
+  PA=clava(0,0); RT=pon(150,0);
+  figura('plastico',[PA,RT],false);
+  empiezaArrastre(RT,{x:RT.x,y:RT.y});
+  for(i=1;i<=24;i++){ var a5=i*Math.PI/12; pasoArrastre({x:60*Math.cos(a5), y:60*Math.sin(a5)}); }
+  sueltaArrastre();
+  ok('un rotulador en el extremo de una tira gira sobre la chincheta y pinta la vuelta entera',
+     trazos.length===1 && trazos[0].pts.every(function(p){ return Math.abs(Math.hypot(p.x,p.y)-150)<1e-6; }) &&
+     trazos[0].pts.length>60 && PA.x===0 && PA.y===0, trazos.length?trazos[0].pts.length+' puntos':'nada');
+  limpia(); undoStack=[];
+  PA=clava(0,0); RT=pon(80,0); PB=clava(160,0);
+  figura('plastico',[PA,RT,PB],false);
+  empiezaArrastre(RT,{x:80,y:0}); pasoArrastre({x:80,y:100}); sueltaArrastre();
+  ok('con el rotulador en medio, al tirar de él va todo entero y pinta su recorrido',
+     Math.abs(PA.y-100)<1e-9 && Math.abs(PB.y-100)<1e-9 && trazos.length===1);
+  limpia();
+  PA=clava(0,0); PB=clava(100,0); PC=clava(100,100); var PD=clava(0,100);
+  var go=figura('goma',[PB,PC,PD],false);
+  figura('plastico',[PA,PB],false);
+  moverChincheta(PB.id,0,300);
+  ok('una goma que comparte chincheta con el plástico se estira al girarlo, y lo demás de la goma se queda',
+     go.pins.length===3 && Math.abs(PB.x)<1e-9 && Math.abs(PB.y-100)<1e-9 && PC.x===100 && PD.y===100);
+  limpia();
+  PA=clava(0,0); RT=pon(100,0); var PE=clava(100,60);
+  figura('plastico',[PA,RT],false);
+  figura('cordel',[PE,RT],false);
+  moverChincheta(RT.id,0,300);
+  ok('si un cordel tenso lo frena, el plástico gira solo hasta ahí',
+     !cordelEstirado() && Math.abs(dist(PE,RT)-60)<1e-4 && Math.abs(Math.hypot(RT.x,RT.y)-100)<1e-6,
+     num(RT.x)+' ; '+num(RT.y));
+  limpia();
+  PA=clava(0,0); PB=clava(100,0); PC=clava(100,100);
+  var ab=figura('plastico',[PA,PB,PC],false);
+  sel=ab.id; cerrarAbrir(); sel=null; undoStack=[];
+  ok('al cerrar una tira de plástico, el lado nuevo también es rígido', ab.cerrada && ab.D.length===3 &&
+     moverChincheta(PA.id,-50,-50) && Math.abs(PC.x-50)<1e-9 && !rigidoRoto());
+
+  /* moverlo entero, girarlo con el asa y darle la vuelta */
+  limpia(); undoStack=[];
+  PA=clava(0,0); PB=clava(120,0); PC=clava(40,90);
+  pl=figura('plastico',[PA,PB,PC],true);
+  var cen0=centro(pl), area0=area(pl);
+  sel=pl.id; empiezaGiro(pl,{x:cen0.x+100,y:cen0.y});
+  pasoGiro({x:cen0.x, y:cen0.y+100}); sueltaArrastre();
+  var cen1=centro(pl);
+  ok('el asa lo gira alrededor de su centro sin deformarlo',
+     !rigidoRoto() && dist(cen0,cen1)<1e-9 && Math.abs(area(pl)-area0)<1e-6);
+  ok('un cuarto de vuelta, si se tira un cuarto de vuelta',
+     Math.abs(Math.atan2(PB.y-cen1.y,PB.x-cen1.x)-Math.atan2(0-cen0.y,120-cen0.x)-Math.PI/2)<1e-9);
+  ok('girar se deshace de una vez', undoStack.length===1);
+  var orient=function(){ return (PB.x-PA.x)*(PC.y-PA.y)-(PB.y-PA.y)*(PC.x-PA.x); };
+  var o0=orient();
+  voltearSel();
+  ok('dar la vuelta lo voltea: el mismo plástico, del revés', !rigidoRoto() && orient()*o0<0 &&
+     Math.abs(area(pl)-area0)<1e-6 && dist(centro(pl),cen1)<1e-9);
+  limpia();
+  PA=clava(0,0); PB=clava(120,0); PC=clava(40,90);
+  pl=figura('plastico',[PA,PB,PC],true);
+  var Q4=clava(300,0), go2=figura('goma',[PC,Q4],false);
+  setTool('move');
+  (function(){
+    var r=cv.getBoundingClientRect();
+    var s0=w2s({x:40,y:30}), s1=w2s({x:240,y:-70});
+    onDown({clientX:r.left+s0.x, clientY:r.top+s0.y});
+    onMove({clientX:r.left+s1.x, clientY:r.top+s1.y}); onUp();
+  })();
+  ok('con ✥ Mover, cogiéndolo por dentro se mueve entero, con sus chinchetas',
+     Math.abs(PA.x-200)<1e-6 && Math.abs(PA.y+100)<1e-6 && Math.abs(PC.x-240)<1e-6 && !rigidoRoto() && Q4.x===300);
+  ok('figuraEn coge el plástico cerrado por dentro, pero no una goma', figuraEn({x:240,y:-70})===pl &&
+     (function(){ var g=figura('goma',[clava(500,0),clava(600,0),clava(550,90)],true);
+                  return figuraEn({x:550,y:30})===null; })());
+  setTool(toolAntes);
+  limpia();
+  PA=clava(0,0); PB=clava(100,0); PC=clava(200,0);
+  var p1=figura('plastico',[PA,PB],false), p2=figura('plastico',[PB,PC],false);
+  ok('dos plásticos que comparten chincheta van juntos', componente([PA.id]).length===3);
+  limpia();
+  PA=clava(0,0); PB=clava(120,0); PC=clava(40,90);
+  pl=figura('plastico',[PA,PB,PC],true);
+  quitaChincheta(PC.id);
+  ok('quitando una chincheta, el plástico se queda con las demás', figuras.length===1 && pl.pins.length===2 &&
+     !pl.cerrada && pl.D.length===1);
+  (function(){
+    limpia();
+    var a=clava(0,0), b=clava(120,0), c=clava(40,90), d=clava(300,0), r=pon(360,-30);
+    var f=figura('plastico',[a,b,c],true); f.col='#e8890c';
+    figura('plastico',[d,r],false);
+    importMode='replace'; loadData(JSON.parse(JSON.stringify(datos())));
+    var ps=figuras.filter(function(g){ return g.tipo==='plastico'; });
+    ok('guardar y abrir conserva el plástico, con su color y su forma', ps.length===2 &&
+       ps[0].col==='#e8890c' && ps[0].D.length===3 && Math.abs(ps[0].D[0]-120)<1e-9 && !rigidoRoto());
+    var rr=chinchetas.filter(esRot)[0], aa=chinchetas[3];
+    moverChincheta(rr.id,500,500);
+    ok('y al abrirlo sigue siendo rígido', Math.abs(dist(aa,rr)-Math.hypot(60,30))<1e-6 && aa.x===300 && aa.y===0);
+  })();
+
+  /* --- el dibujo del plástico -------------------------------------------- */
+  limpia();
+  PA=clava(0,0); PB=clava(100,0); PC=clava(50,80);
+  pl=figura('plastico',[PA,PB,PC],true); pl.col='#4f9e3f';
+  (function(){
+    var oc=document.createElement('canvas'); oc.width=240; oc.height=200;
+    var o=oc.getContext('2d'), g={x:view.x,y:view.y,z:view.z};
+    o.fillStyle='#fff'; o.fillRect(0,0,240,200);
+    view={x:70,y:60,z:1};
+    escena(o,240,200,true);
+    view=g;
+    var dd=o.getImageData(0,0,240,200).data, verde=0;
+    for(var j=0;j<dd.length;j+=4) if(dd[j+1]-dd[j]>15 && dd[j+1]-dd[j+2]>15) verde++;
+    ok('el plástico se dibuja macizo', verde>3500, verde+' px verdes');
+  })();
+
+  /* --- convertir una chincheta en rotulador ------------------------------- */
+  limpia(); undoStack=[];
+  var toolAntes2=tool, colAntes2=color;
+  var evW=function(x,y,extra){
+    var r=cv.getBoundingClientRect(), s=w2s({x:x,y:y}), e={clientX:r.left+s.x, clientY:r.top+s.y};
+    if(extra) for(var k in extra) e[k]=extra[k];
+    return e;
+  };
+  var K0=clava(0,0), KR=clava(120,0);
+  var cz=figura('cordel',[K0,KR],false);
+  setTool('rot'); setColor('#6c4bb6');
+  onDown(evW(120,0)); onUp();
+  ok('con ✎ Rotulador, pinchar una chincheta la convierte en rotulador del color elegido',
+     esRot(KR) && KR.col==='#6c4bb6' && !KR.tapado && chinchetas.length===2);
+  ok('sin moverla y sin soltar el cordel que tenía atado',
+     KR.x===120 && KR.y===0 && figuras.length===1 && cz.pins.indexOf(KR.id)>=0);
+  ok('convertirla se deshace', undoStack.length===1);
+  doUndo();
+  ok('y deshacer la deja otra vez en chincheta', !esRot(pin(KR.id)));
+  KR=pin(KR.id);
+  onDown(evW(120,0)); onUp();
+  onDown(evW(120,0)); onMove(evW(120,300)); onUp();
+  ok('ya convertida, arrastrarla pinta por donde el cordel le deja',
+     esRot(KR) && trazos.length===1 && Math.abs(Math.hypot(KR.x,KR.y)-120)<1e-6);
+
+  /* --- varias a la vez ---------------------------------------------------- */
+  limpia(); undoStack=[];
+  setTool('move');
+  var M1=clava(0,0), M2=clava(100,0), M3=clava(300,0), MR=pon(50,80);
+  onDown(evW(0,0,{shiftKey:true})); onUp(); onDown(evW(100,0,{shiftKey:true})); onUp();
+  ok('con ✥ Mover, Mayús + clic va añadiendo a la selección',
+     multi.length===2 && multi.indexOf(M1.id)>=0 && multi.indexOf(M2.id)>=0);
+  onDown(evW(100,0,{shiftKey:true})); onUp();
+  ok('y otra vez Mayús + clic la quita', multi.length===1 && multi[0]===M1.id);
+  onDown(evW(100,0,{ctrlKey:true})); onUp();
+  ok('Ctrl + clic hace lo mismo', multi.length===2);
+  onDown(evW(-20,-20,{shiftKey:true})); onMove(evW(70,100)); onUp();
+  ok('Mayús + arrastrar en el vacío añade lo que queda dentro de la caja',
+     multi.length===3 && multi.indexOf(MR.id)>=0 && multi.indexOf(M3.id)<0, multi.length);
+  ok('seleccionar no gasta deshaceres', undoStack.length===0);
+  onDown(evW(100,0)); onMove(evW(150,40)); onUp();
+  ok('arrastrando una de las seleccionadas se mueven todas a la vez, lo mismo',
+     Math.abs(M1.x-50)<1e-6 && Math.abs(M1.y-40)<1e-6 && Math.abs(M2.x-150)<1e-6 &&
+     Math.abs(MR.x-100)<1e-6 && Math.abs(MR.y-120)<1e-6);
+  ok('y lo que no está seleccionado se queda donde estaba', M3.x===300 && M3.y===0);
+  ok('el rotulador del conjunto pinta su recorrido', trazos.length===1);
+  ok('mover el conjunto se deshace de una vez, y la selección sigue puesta',
+     undoStack.length===1 && multi.length===3);
+  limpia();
+  var N1=clava(0,0), N2=clava(100,0), N3=clava(0,200);
+  figura('plastico',[N1,N2],false);
+  multi=[N1.id,N3.id];
+  onDown(evW(0,0)); onMove(evW(30,30)); onUp();
+  ok('si una seleccionada lleva plástico, la pieza va con ella sin deformarse',
+     Math.abs(N2.x-130)<1e-6 && Math.abs(N3.y-230)<1e-6 && !rigidoRoto());
+  limpia();
+  var O1=clava(0,0), O2=clava(50,0), O3=clava(200,0);
+  figura('cordel',[O3,O2],false);
+  multi=[O1.id,O2.id];
+  onDown(evW(0,0)); onMove(evW(-200,0)); onUp();
+  ok('si se tensa un cordel atado a algo de fuera, el conjunto se para ahí',
+     !cordelEstirado() && Math.abs(O1.x)<1e-3 && Math.abs(dist(O2,O3)-150)<1e-4, num(O1.x));
+  undoStack=[];
+  quitaSel();
+  ok('Supr quita todas las seleccionadas de una vez', chinchetas.length===1 && multi.length===0 &&
+     undoStack.length===1 && figuras.length===0);
+  multi=[O3.id];
+  onDown(evW(500,500)); onUp();
+  ok('un clic en el vacío suelta la selección', multi.length===0);
+  multi=[O3.id]; setTool('goma');
+  ok('y cambiar a otra herramienta también', multi.length===0);
+  setTool(toolAntes2); setColor(colAntes2);
+
+  /* --- el botón ⬚ Varias, para seleccionar sin teclado ------------------- */
+  limpia(); undoStack=[];
+  setTool('pin');
+  var W1=clava(0,0), W2=clava(100,0), W3=clava(300,0);
+  document.getElementById('varias').click();
+  ok('⬚ Varias pasa a ✥ Mover y se queda encendido', modoVarias && tool==='move' &&
+     document.getElementById('varias').classList.contains('on'));
+  onDown(evW(0,0)); onUp(); onDown(evW(100,0)); onUp();
+  ok('con el botón, cada toque añade a la selección sin Mayús', multi.length===2);
+  onDown(evW(100,0)); onUp();
+  ok('y tocar una que ya está la quita', multi.length===1 && multi[0]===W1.id);
+  onDown(evW(100,0)); onUp();
+  onDown(evW(250,-30)); onMove(evW(350,30)); onUp();
+  ok('arrastrar en el vacío hace la caja, sin Mayús', multi.length===3);
+  onDown(evW(0,0)); onMove(evW(20,50)); onUp();
+  ok('arrastrar una seleccionada mueve todas, y no la quita de la selección',
+     Math.abs(W1.y-50)<1e-6 && Math.abs(W3.x-320)<1e-6 && multi.length===3);
+  onDown(evW(20,50)); onMove(evW(20.5,50)); onUp();
+  ok('un toque que tiembla un poco sigue siendo un toque: la quita sin mover nada',
+     multi.length===2 && Math.abs(W1.x-20)<1e-6);
+  document.getElementById('varias').click();
+  ok('al apagarlo se suelta la selección', !modoVarias && multi.length===0);
+  document.getElementById('varias').click(); setTool('goma');
+  ok('cambiar de herramienta lo apaga', !modoVarias && !document.getElementById('varias').classList.contains('on'));
+  setTool(toolAntes2);
 
   /* --- guardar y volver a abrir ------------------------------------------ */
   limpia();
-  var Q1=clava(10,20), Q2=clava(90,20), Q3=clava(50,95);
+  var Q1=clava(10,20), Q2=clava(90,20), Q3=clava(50,95), QR=pon(50,-40);
+  QR.col='#6c4bb6'; QR.tapado=true;
   var fg=figura('goma',[Q1,Q2,Q3],true); fg.col='#2f62a8';
-  var fc=figura('cordel',[Q1,Q2],false);
+  var fc=figura('cordel',[Q1,QR,Q2],false);
+  var fn=figura('cordel',[Q2,Q3],false,true);
+  moverChincheta(QR.id,50,0);                       // los dos cordeles, flojos
+  moverChincheta(Q3.id,70,60);
+  var Lfc=largoCordel(fc), Lfn=fn.Ls[0];
   trazos.push({id:nid++, col:'#4f9e3f', pts:[{x:0,y:0},{x:10,y:5},{x:20,y:0}]});
   var antesC=chinchetas.map(function(p){return p.x+','+p.y;}).join(' | ');
   var antesF=figuras.map(function(f){return f.tipo+':'+f.col+':'+f.cerrada+':'+pts(f).length;}).sort().join(' | ');
-  var pos={}; chinchetas.forEach(function(p,i){ pos[p.id]=i; });
-  var data={formato:'corcho-geometrico',version:1,
-    chinchetas:chinchetas.map(function(p){ return [p.x,p.y]; }),
-    figuras:figuras.map(function(f){ return {tipo:f.tipo,color:f.col,cerrada:f.cerrada,
-      chinchetas:f.pins.map(function(k){ return pos[k]; })}; }),
-    tinta:trazos.map(function(t){ return {color:t.col, puntos:t.pts.map(function(p){return [p.x,p.y];})}; })};
+  var data=datos();
   importMode='replace'; loadData(JSON.parse(JSON.stringify(data)));
   ok('guardar y volver a abrir conserva las chinchetas',
      chinchetas.map(function(p){return p.x+','+p.y;}).join(' | ')===antesC);
+  ok('y el rotulador, con su color y tapado', (function(){
+     var r=chinchetas.filter(esRot); return r.length===1 && r[0].col==='#6c4bb6' && r[0].tapado===true; })());
   ok('y las figuras, con su tipo y su color',
      figuras.map(function(f){return f.tipo+':'+f.col+':'+f.cerrada+':'+pts(f).length;}).sort().join(' | ')===antesF);
   ok('las figuras siguen atadas a las chinchetas correctas',
      figuras.every(function(f){ return f.pins.every(function(k){ return !!pin(k); }); }));
-  ok('y el cordel recupera la longitud de cada tramo', (function(){
-      var c=figuras.filter(function(f){return f.tipo==='cordel';})[0];
-      if(!c || !c.Ls) return false;
-      var ts=tramos(c);
-      return c.Ls.length===ts.length &&
-             c.Ls.every(function(L,j){ return Math.abs(L-dist(ts[j][0],ts[j][1]))<0.05; }); })());
+  var cs=figuras.filter(function(f){return f.tipo==='cordel';});
+  var c1=cs.filter(function(f){return !f.nudos;})[0], c2=cs.filter(function(f){return f.nudos;})[0];
+  ok('el cordel flojo recupera su longitud, no la que tenía tenso',
+     !!c1 && Math.abs(largoCordel(c1)-Lfc)<0.02 && holgura(c1)>1, c1?num(largoCordel(c1))+' = '+num(Lfc):'');
+  ok('y el anudado, sus nudos y la cuerda de cada tramo',
+     !!c2 && c2.Ls.length===1 && Math.abs(c2.Ls[0]-Lfn)<0.02);
+  ok('al abrirlo no queda ningún cordel estirado', !cordelEstirado());
   ok('y se conserva la tinta', trazos.length===1 && trazos[0].pts.length===3);
   var nAntes=chinchetas.length;
   importMode='add'; loadData(JSON.parse(JSON.stringify(data)));
@@ -1172,8 +2089,34 @@ function runSelfTest(){
       var ys=chinchetas.map(function(p){return p.y;});
       return Math.max.apply(null,ys)-Math.min.apply(null,ys) > 100; })());
   importMode='replace';
+  loadData({formato:'corcho-geometrico', version:1, chinchetas:[[0,0],[100,0],[100,100]],
+            figuras:[{tipo:'cordel', color:'#2f62a8', cerrada:false, chinchetas:[0,1,2], longitudes:[100,150]}]});
+  ok('un archivo antiguo, con el cordel por tramos, se abre anudado como era',
+     figuras.length===1 && figuras[0].nudos && figuras[0].Ls[1]===150);
+  loadData({chinchetas:[[0,0],{x:5,y:5,rotulador:'url(javascript:1)'}],
+            figuras:[{tipo:'goma', color:'"><b>', chinchetas:[0,1]}], tinta:[{color:'rojo', puntos:[[0,0],[1,1]]}]});
+  ok('un color que no es un color se descarta al abrir', colorValido(figuras[0].col)===figuras[0].col &&
+     colorValido(chinchetas[1].col)===chinchetas[1].col && colorValido(trazos[0].col)===trazos[0].col);
+  importMode='replace';
 
-  limpia(); undoStack=[]; fitView();
+  /* --- lo que no debe haber ---------------------------------------------- */
+  var src=Array.prototype.map.call(document.scripts,function(s){ return s.textContent; }).join('\n');
+  ok('ningún confirm, que en el panel no sale', src.indexOf('con'+'firm(')<0);
+  ok('la raya .sep va acotada a la barra', (function(){
+     var css=Array.prototype.map.call(document.querySelectorAll('style'),function(s){ return s.textContent; }).join('\n');
+     return !/(^|[};])\s*\.sep\s*\{/m.test(css) && /#toolbar \.sep\{/.test(css); })());
+
+  }catch(errT){
+    fails++;
+    out.push('FALLO se ha cortado aquí: '+((errT&&errT.message)||errT));
+    if(errT&&errT.stack) String(errT.stack).split('\n').slice(0,5).forEach(function(l){
+      out.push('        '+l.trim()); });
+  }
+  /* el tablero, como estaba */
+  var gd=JSON.parse(guardado);
+  chinchetas=gd.c; figuras=gd.f; trazos=gd.t; nid=gd.n; undoStack=gd.u; view=gd.v;
+  sel=null; borrador=null; drag=null; multi=[]; modoVarias=false;
+  document.getElementById('varias').classList.remove('on'); importMode='replace'; draw();
 
   /* --- informe ----------------------------------------------------------- */
   var texto=out.join('\n')+'\n\n'+(fails? fails+' PRUEBAS FALLIDAS de '+out.length : 'LAS '+out.length+' PRUEBAS CORRECTAS');
@@ -1208,12 +2151,14 @@ window.addEventListener('hashchange',function(){
 window.__corcho={
   test:runSelfTest, chinchetas:function(){return chinchetas;}, figuras:function(){return figuras;},
   trazos:function(){return trazos;}, pin:pin, fig:fig, pts:pts,
-  longitud:longitud, area:area, convexa:convexa, tensa:tensa, sumaDist:sumaDist,
+  longitud:longitud, area:area, convexa:convexa, sumaDist:sumaDist,
   moverChincheta:moverChincheta, cordelEstirado:cordelEstirado, fijaLongitud:fijaLongitud,
   flechaArco:flechaArco, anguloArco:anguloArco, hastaElTope:hastaElTope,
-  tramos:tramos, holgura:holgura,
-  quitaChincheta:quitaChincheta, load:loadData, setMode:function(m){importMode=m;},
-  redraw:draw, reset:function(){ chinchetas=[]; figuras=[]; trazos=[]; focos=[]; sel=null; }
+  tramos:tramos, holgura:holgura, piezas:piezas, arcos:arcos, anudar:anudar, largoCordel:largoCordel,
+  fijaForma:fijaForma, rigidoRoto:rigidoRoto, componente:componente, centro:centro,
+  quitaChincheta:quitaChincheta, load:loadData, datos:datos, setMode:function(m){importMode=m;},
+  view:function(){ return view; }, w2s:w2s,
+  redraw:draw, reset:function(){ chinchetas=[]; figuras=[]; trazos=[]; sel=null; }
 };
 
 })();
